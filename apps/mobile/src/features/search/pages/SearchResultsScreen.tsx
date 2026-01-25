@@ -1,11 +1,13 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, StatusBar, FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { 
   SearchResultsHeader, 
   SearchSummaryCard, 
   FilterBar, 
-  SalonCard 
+  SalonCard,
+  SearchFilters,
+  FilterState
 } from '../components';
 import { MOCK_SALONS, SEARCH_FILTERS } from '../constants';
 import { Salon } from '../types';
@@ -13,6 +15,7 @@ import { Salon } from '../types';
 export default function SearchResultsScreen() {
   const router = useRouter();
   const { address, category } = useLocalSearchParams<{ address: string; category: string }>();
+  const [isFiltersVisible, setIsFiltersVisible] = useState(false);
 
   const handleBack = useCallback(() => {
     router.back();
@@ -23,7 +26,16 @@ export default function SearchResultsScreen() {
   }, [router]);
 
   const handleFilterSelect = useCallback((filterId: string) => {
-    console.log('Filter selected:', filterId);
+    if (filterId === 'filtres') {
+      setIsFiltersVisible(true);
+    } else {
+      console.log('Filter selected:', filterId);
+    }
+  }, []);
+
+  const handleApplyFilters = useCallback((filters: FilterState) => {
+    console.log('Filters applied:', filters);
+    // Here you would typically update the list of salons based on filters
   }, []);
 
   const renderHeader = useCallback(() => (
@@ -66,6 +78,12 @@ export default function SearchResultsScreen() {
         ListHeaderComponent={renderHeader}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+      />
+
+      <SearchFilters
+        visible={isFiltersVisible}
+        onClose={() => setIsFiltersVisible(false)}
+        onApply={handleApplyFilters}
       />
     </SafeAreaView>
   );
