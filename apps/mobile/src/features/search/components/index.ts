@@ -19,3 +19,4 @@ export { StaffSelection, StaffMember } from './StaffSelection';
 export { SalonReviews } from './SalonReviews';
 export { SalonAbout } from './SalonAbout';
 export { SearchFilters, FilterState } from './SearchFilters';
+export { ServiceFilters } from './ServiceFilters';

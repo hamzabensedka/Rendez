@@ -10,6 +10,21 @@ export const FREQUENT_SEARCHES = [
   'Spa',
 ] as const;
 
+export const SERVICE_CATEGORIES = [
+  'Coiffure homme',
+  'Coiffure femme',
+  'Coiffure jeunes',
+  'Coloration',
+  'Soins cheveux',
+  'Lissage',
+  'Extensions',
+  'Barbier',
+  'Manucure',
+  'Pédicure',
+  'Soins visage',
+  'Massage',
+] as const;
+
 // Mock address data - In production, this would come from a geocoding API
 export const MOCK_ADDRESSES = [
   'Toulouse, Haute-Garonne, France',

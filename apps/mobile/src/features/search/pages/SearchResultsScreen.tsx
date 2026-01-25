@@ -7,6 +7,7 @@ import {
   FilterBar, 
   SalonCard,
   SearchFilters,
+  ServiceFilters,
   FilterState
 } from '../components';
 import { MOCK_SALONS, SEARCH_FILTERS } from '../constants';
@@ -16,6 +17,7 @@ export default function SearchResultsScreen() {
   const router = useRouter();
   const { address, category } = useLocalSearchParams<{ address: string; category: string }>();
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
+  const [isServiceFiltersVisible, setIsServiceFiltersVisible] = useState(false);
 
   const handleBack = useCallback(() => {
     router.back();
@@ -28,6 +30,8 @@ export default function SearchResultsScreen() {
   const handleFilterSelect = useCallback((filterId: string) => {
     if (filterId === 'filtres') {
       setIsFiltersVisible(true);
+    } else if (filterId === 'prestations') {
+      setIsServiceFiltersVisible(true);
     } else {
       console.log('Filter selected:', filterId);
     }
@@ -36,6 +40,11 @@ export default function SearchResultsScreen() {
   const handleApplyFilters = useCallback((filters: FilterState) => {
     console.log('Filters applied:', filters);
     // Here you would typically update the list of salons based on filters
+  }, []);
+
+  const handleApplyServiceFilters = useCallback((services: string[]) => {
+    console.log('Services applied:', services);
+    // Here you would typically update the list of salons based on service filters
   }, []);
 
   const renderHeader = useCallback(() => (
@@ -84,6 +93,12 @@ export default function SearchResultsScreen() {
         visible={isFiltersVisible}
         onClose={() => setIsFiltersVisible(false)}
         onApply={handleApplyFilters}
+      />
+
+      <ServiceFilters
+        visible={isServiceFiltersVisible}
+        onClose={() => setIsServiceFiltersVisible(false)}
+        onApply={handleApplyServiceFilters}
       />
     </SafeAreaView>
   );
