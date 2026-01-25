@@ -1,0 +1,33 @@
+{
+  "name": "planity-clone",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Planity-like booking marketplace with Apple-style UI",
+  "scripts": {
+    "dev": "nx run-many --target=serve --projects=@planity/api,@planity/mobile --parallel",
+    "build": "nx run-many --target=build --all",
+    "test": "nx run-many --target=test --all",
+    "lint": "nx run-many --target=lint --all",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "typecheck": "nx run-many --target=typecheck --all"
+  },
+  "devDependencies": {
+    "@nx/eslint": "^18.2.0",
+    "@nx/js": "^18.2.0",
+    "@nx/node": "^18.2.0",
+    "@nx/react": "^18.2.0",
+    "@nx/react-native": "^18.2.0",
+    "@nx/workspace": "^18.2.0",
+    "@types/node": "^20.11.0",
+    "eslint": "^8.57.0",
+    "nx": "^18.2.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
+

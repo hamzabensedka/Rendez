@@ -1,0 +1,362 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Extensions
+// Enable pg_trgm for text search
+// Run: CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  phone        String?
+  name         String
+  role         String    @default("client") // client, providerOwner, providerStaff, admin
+  status       String    @default("active") // active, inactive, suspended
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  // Relations
+  providerProfile Provider?
+  appointments    Appointment[]
+  reviews         Review[]
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+model Provider {
+  id           String   @id @default(uuid())
+  userId       String   @unique @map("user_id")
+  displayName  String   @map("display_name")
+  businessId   String?  @map("business_id")
+  isOwner      Boolean  @default(false) @map("is_owner")
+  permissionsJson Json? @map("permissions_json")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business Business? @relation(fields: [businessId], references: [id])
+
+  @@map("providers")
+}
+
+model Business {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  category    String?
+  timezone    String   @default("Europe/Paris")
+  phone       String?
+  email       String?
+  status      String   @default("draft") // draft, pending, active, suspended
+  ratingAvg   Float    @default(0) @map("rating_avg")
+  ratingCount Int      @default(0) @map("rating_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  // Booking policies
+  freeCancellationBeforeHours Int? @default(24) @map("free_cancellation_before_hours")
+  allowRescheduleBeforeHours   Int? @default(2) @map("allow_reschedule_before_hours")
+
+  // Relations
+  providers         Provider[]
+  locations         Location[]
+  staff             Staff[]
+  services          Service[]
+  availabilityRules AvailabilityRule[]
+  timeOffs          TimeOff[]
+  appointments      Appointment[]
+  reviews           Review[]
+  promotions        Promotion[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([category])
+  @@map("businesses")
+}
+
+model Location {
+  id         String   @id @default(uuid())
+  businessId String   @map("business_id")
+  label      String   @default("Main")
+  address1   String   @map("address_1")
+  address2   String?  @map("address_2")
+  postalCode String   @map("postal_code")
+  city       String
+  country    String   @default("FR")
+  lat        Float?
+  lng        Float?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@index([businessId])
+  @@map("locations")
+}
+
+model Staff {
+  id               String   @id @default(uuid())
+  businessId       String   @map("business_id")
+  name             String
+  roleTitle        String?  @map("role_title")
+  isActive         Boolean  @default(true) @map("is_active")
+  servicesOfferedJson Json? @map("services_offered_json")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  business         Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  availabilityRules AvailabilityRule[]
+  timeOffs         TimeOff[]
+  appointments     Appointment[]
+
+  @@index([businessId])
+  @@map("staff")
+}
+
+model Service {
+  id             String   @id @default(uuid())
+  businessId     String   @map("business_id")
+  name           String
+  description    String?  @db.Text
+  isActive       Boolean  @default(true) @map("is_active")
+  category       String?
+  baseDurationMin Int?    @map("base_duration_min")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  business        Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  serviceVariants ServiceVariant[]
+
+  @@index([businessId])
+  @@map("services")
+}
+
+model ServiceVariant {
+  id               String   @id @default(uuid())
+  serviceId        String   @map("service_id")
+  name             String
+  priceCents       Int?     @map("price_cents")
+  durationMin      Int      @map("duration_min")
+  bufferBeforeMin  Int      @default(0) @map("buffer_before_min")
+  bufferAfterMin   Int      @default(0) @map("buffer_after_min")
+  capacity         Int      @default(1)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  service          Service          @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  appointmentItems AppointmentItem[]
+
+  @@index([serviceId])
+  @@map("service_variants")
+}
+
+model AvailabilityRule {
+  id              String    @id @default(uuid())
+  businessId      String    @map("business_id")
+  staffId         String?   @map("staff_id")
+  dayOfWeek       Int       @map("day_of_week") // 0-6 (Sunday = 0)
+  startTimeLocal  String    @map("start_time_local") // HH:mm
+  endTimeLocal    String    @map("end_time_local") // HH:mm
+  effectiveFrom   DateTime? @map("effective_from")
+  effectiveTo     DateTime? @map("effective_to")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  business Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staff    Staff?    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, staffId])
+  @@map("availability_rules")
+}
+
+model TimeOff {
+  id         String   @id @default(uuid())
+  businessId String   @map("business_id")
+  staffId    String?  @map("staff_id")
+  startAtUtc DateTime @map("start_at_utc") @db.Timestamptz
+  endAtUtc   DateTime @map("end_at_utc") @db.Timestamptz
+  reason     String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  business Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staff    Staff?    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, staffId])
+  @@index([startAtUtc, endAtUtc])
+  @@map("time_offs")
+}
+
+model Appointment {
+  id              String            @id @default(uuid())
+  businessId      String            @map("business_id")
+  locationId      String            @map("location_id")
+  clientUserId    String            @map("client_user_id")
+  staffId         String?           @map("staff_id")
+  status          String            @default("BOOKED") // BOOKED, CANCELLED, COMPLETED, NO_SHOW
+  startAtUtc      DateTime          @map("start_at_utc") @db.Timestamptz
+  endAtUtc        DateTime          @map("end_at_utc") @db.Timestamptz
+  timezoneSnapshot String           @map("timezone_snapshot")
+  cancelledAt     DateTime?         @map("cancelled_at")
+  cancelReason    String?           @map("cancel_reason")
+  source          String            @default("client") // client, provider, admin
+  idempotencyKey  String?           @unique @map("idempotency_key")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  business         Business          @relation(fields: [businessId], references: [id])
+  location         Location          @relation(fields: [locationId], references: [id])
+  clientUser       User              @relation(fields: [clientUserId], references: [id])
+  staff            Staff?            @relation(fields: [staffId], references: [id])
+  appointmentItems AppointmentItem[]
+  payments         Payment[]
+  reviews          Review[]
+
+  @@index([businessId])
+  @@index([clientUserId])
+  @@index([staffId])
+  @@index([startAtUtc, endAtUtc])
+  @@index([status])
+  // Exclusion constraint for preventing overlapping appointments per staff
+  // This will be added via migration SQL
+  @@map("appointments")
+}
+
+model AppointmentItem {
+  id                      String   @id @default(uuid())
+  appointmentId           String   @map("appointment_id")
+  serviceVariantId        String   @map("service_variant_id")
+  priceCentsSnapshot      Int?     @map("price_cents_snapshot")
+  durationMinSnapshot     Int      @map("duration_min_snapshot")
+  bufferBeforeMinSnapshot Int      @default(0) @map("buffer_before_min_snapshot")
+  bufferAfterMinSnapshot  Int      @default(0) @map("buffer_after_min_snapshot")
+  quantity                Int      @default(1)
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  // Relations
+  appointment    Appointment    @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  serviceVariant ServiceVariant @relation(fields: [serviceVariantId], references: [id])
+
+  @@index([appointmentId])
+  @@map("appointment_items")
+}
+
+model Payment {
+  id           String   @id @default(uuid())
+  appointmentId String  @map("appointment_id")
+  provider     String   @default("OFFLINE") // OFFLINE, STRIPE
+  status       String   @default("pending") // pending, completed, failed, refunded
+  amountCents  Int      @map("amount_cents")
+  currency     String   @default("EUR")
+  providerRef  String?  @map("provider_ref")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  refunds     Refund[]
+
+  @@index([appointmentId])
+  @@index([status])
+  @@map("payments")
+}
+
+model Refund {
+  id          String   @id @default(uuid())
+  paymentId   String   @map("payment_id")
+  status      String   @default("pending") // pending, completed, failed
+  amountCents Int      @map("amount_cents")
+  providerRef String?  @map("provider_ref")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  payment Payment @relation(fields: [paymentId], references: [id])
+
+  @@index([paymentId])
+  @@map("refunds")
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  businessId   String   @map("business_id")
+  appointmentId String  @unique @map("appointment_id")
+  clientUserId String   @map("client_user_id")
+  rating       Int      // 1-5
+  comment      String?  @db.Text
+  status       String   @default("pending") // pending, approved, rejected
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  business    Business   @relation(fields: [businessId], references: [id])
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+  clientUser  User       @relation(fields: [clientUserId], references: [id])
+
+  @@index([businessId])
+  @@index([status])
+  @@map("reviews")
+}
+
+model Promotion {
+  id         String    @id @default(uuid())
+  businessId String    @map("business_id")
+  code       String
+  type       String    // PERCENT, FIXED
+  value      Int
+  startsAt   DateTime  @map("starts_at")
+  endsAt     DateTime  @map("ends_at")
+  usageLimit Int?      @map("usage_limit")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, code])
+  @@index([businessId])
+  @@map("promotions")
+}
+
+model Notification {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  type       String
+  channel    String    @default("EMAIL") // EMAIL, PUSH
+  payloadJson Json      @map("payload_json")
+  status     String    @default("pending") // pending, sent, failed
+  sentAt     DateTime? @map("sent_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("notifications")
+}
+

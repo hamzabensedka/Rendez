@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Rendez",
+    "slug": "rendez",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rendez.app"
+    },
+    "android": {
+      "package": "com.rendez.app"
+    },
+    "web": {},
+    "plugins": [
+      "expo-router",
+      "expo-font"
+    ],
+    "scheme": "rendez",
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    }
+  }
+}
