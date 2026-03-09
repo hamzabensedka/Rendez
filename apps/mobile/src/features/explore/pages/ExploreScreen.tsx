@@ -1,21 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
-  ImageBackground,
-  Dimensions,
   StatusBar,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { shadows } from '@planity/ui';
+import { Text, Button, Card } from '@planity/ui';
+import { colors, spacing, radius, shadows } from '@planity/ui';
 import { useAuth } from '../../../application/providers';
-import { PlanityLogo, ProfileButton } from '../../search/components';
-
-const { width } = Dimensions.get('window');
+import { AppLogo, ProfileButton } from '../../search/components';
 
 export default function ExploreScreen() {
   const router = useRouter();
@@ -31,78 +28,106 @@ export default function ExploreScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
 
-      {/* Header */}
-      <SafeAreaView style={styles.headerSafeArea}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity style={styles.regionButton} activeOpacity={0.7}>
-              <Ionicons name="globe-outline" size={20} color="black" />
-              <Text style={styles.regionText} numberOfLines={1}>
-                BE (FR)
-              </Text>
-              <Ionicons name="chevron-down" size={14} color="black" />
+          <TouchableOpacity style={styles.regionButton} activeOpacity={0.7}>
+            <Ionicons name="location-outline" size={18} color={colors.light.textSecondary} />
+            <Text variant="footnote" color={colors.light.textSecondary} style={styles.regionText} numberOfLines={1}>
+              Location
+            </Text>
+            <Ionicons name="chevron-down" size={12} color={colors.light.textSecondary} />
+          </TouchableOpacity>
+
+          <View style={styles.logoWrap}>
+            <AppLogo style={styles.logo} />
+          </View>
+
+          <ProfileButton onPress={handleProfilePress} />
+        </View>
+
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Primary search CTA */}
+          <View style={styles.heroSection}>
+            <Text variant="title2" style={styles.heroTitle}>
+              Find and book
+            </Text>
+            <Text variant="body" color={colors.light.textSecondary} style={styles.heroSubtitle}>
+              Search by service or provider
+            </Text>
+
+            <TouchableOpacity
+              style={styles.searchCard}
+              activeOpacity={0.9}
+              onPress={() => router.push('/search')}
+            >
+              <View style={styles.searchRow}>
+                <Ionicons name="search" size={20} color={colors.light.textSecondary} />
+                <Text variant="body" color={colors.light.textTertiary} style={styles.searchPlaceholder}>
+                  Service, provider, or keyword
+                </Text>
+                <View style={styles.searchIconWrap}>
+                  <Ionicons name="arrow-forward" size={18} color={colors.light.surface} />
+                </View>
+              </View>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.logoContainer}>
-            <PlanityLogo style={styles.logo} />
-          </View>
-
-          <View style={styles.headerRight}>
-            <ProfileButton onPress={handleProfilePress} />
-          </View>
-        </View>
-      </SafeAreaView>
-
-      {/* Main Content Area */}
-      <View style={styles.content}>
-        <ImageBackground
-          source={require('../../../../assets/1000_F_95434145_8Pe8nMQkCZlNAJfLAKd2HLGC9WEKV54U.jpg')}
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        >
-          <View style={styles.imageOverlay}>
-            <View style={styles.heroContent}>
-              <View style={styles.heroTextContainer}>
-                <Text 
-                  style={styles.heroTitle} 
-                  numberOfLines={1} 
-                  adjustsFontSizeToFit
-                >
-                  Réservez en beauté
-                </Text>
-                <Text style={styles.heroSubtitle}>Simple • Immédiat • 24h/24</Text>
-              </View>
-
-              <TouchableOpacity 
-                style={styles.searchBarContainer}
-                activeOpacity={0.9}
+          {/* Quick links */}
+          <View style={styles.section}>
+            <Text variant="headline" style={styles.sectionTitle}>
+              Quick access
+            </Text>
+            <View style={styles.quickRow}>
+              <TouchableOpacity
+                style={styles.quickCard}
+                activeOpacity={0.8}
                 onPress={() => router.push('/search')}
               >
-                <View style={styles.searchBar}>
-                  <Text style={styles.searchPlaceholder}>
-                    Nom du salon, prestations (coupe...)
-                  </Text>
-                  <View style={styles.searchButton}>
-                    <Ionicons name="search" size={20} color="#FFFFFF" />
-                  </View>
+                <View style={styles.quickIconWrap}>
+                  <Ionicons name="search-outline" size={24} color={colors.light.accent} />
                 </View>
+                <Text variant="footnote" weight="600" style={styles.quickLabel}>Search</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
-                style={styles.professionalButton}
-                onPress={() => router.push('/(auth)/login')}
+                style={styles.quickCard}
+                activeOpacity={0.8}
+                onPress={() => router.push('/(tabs)/bookings')}
               >
-                <Text style={styles.professionalButtonText}>
-                  Je suis un professionnel de beauté
-                </Text>
+                <View style={styles.quickIconWrap}>
+                  <Ionicons name="list-outline" size={24} color={colors.light.accent} />
+                </View>
+                <Text variant="footnote" weight="600" style={styles.quickLabel}>Bookings</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </ImageBackground>
-      </View>
+
+          {/* Provider CTA */}
+          <View style={styles.section}>
+            <Card variant="outlined" padding="lg" style={styles.providerCard}>
+              <Text variant="headline" style={styles.providerTitle}>
+                Service providers
+              </Text>
+              <Text variant="footnote" color={colors.light.textSecondary} style={styles.providerSubtitle}>
+                Manage your business and availability
+              </Text>
+              <Button
+                title="Provider login"
+                onPress={() => router.push('/(auth)/login')}
+                variant="outline"
+                size="md"
+                style={styles.providerButton}
+              />
+            </Card>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
@@ -110,139 +135,114 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.light.background,
   },
-  headerSafeArea: {
-    backgroundColor: '#FFFFFF',
-    zIndex: 10,
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.light.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    height: 60,
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-  },
-  headerLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.light.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.light.border,
   },
   regionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.xs,
+    minWidth: 80,
   },
   regionText: {
-    fontSize: 15,
-    color: '#000000',
-    fontFamily: 'Inter-Bold',
+    marginLeft: 2,
   },
-  logoContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
+  logoWrap: {
+    flex: 1,
     alignItems: 'center',
-    zIndex: -1,
+    justifyContent: 'center',
   },
   logo: {
-    fontSize: 22,
-    letterSpacing: 4,
+    fontSize: 18,
+    letterSpacing: 3,
   },
-  headerRight: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  content: {
+  scroll: {
     flex: 1,
   },
-  backgroundImage: {
-    flex: 1,
-    width: width,
+  scrollContent: {
+    padding: spacing.lg,
+    paddingBottom: spacing['3xl'],
   },
-  imageOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  heroContent: {
-    width: '100%',
-    alignItems: 'center',
-    paddingBottom: 40,
-  },
-  heroTextContainer: {
-    marginBottom: 32,
-    alignItems: 'center',
+  heroSection: {
+    marginBottom: spacing['2xl'],
   },
   heroTitle: {
-    fontSize: 40,
-    lineHeight: 45,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontFamily: 'Inter-Regular', // Adjusted to match typical "Réservez en beauté" style
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 8,
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
   heroSubtitle: {
-    fontSize: 17,
-    lineHeight: 24,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontFamily: 'Inter-Regular',
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    marginBottom: spacing.lg,
   },
-  searchBarContainer: {
-    width: '100%',
-    marginBottom: 24,
-    ...shadows.lg,
+  searchCard: {
+    backgroundColor: colors.light.surface,
+    borderRadius: radius.lg,
+    ...shadows.sm,
+    overflow: 'hidden',
   },
-  searchBar: {
+  searchRow: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    height: 55, // Slightly taller
     alignItems: 'center',
-    paddingLeft: 20,
-    paddingRight: 8,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
   },
   searchPlaceholder: {
     flex: 1,
-    fontSize: 16,
-    color: '#8E8E93',
-    fontFamily: 'Inter-Regular',
+    marginLeft: spacing.md,
   },
-  searchButton: {
-    width: 36,
-    height: 36,
-    backgroundColor: '#000000',
-    borderRadius: 10,
-    justifyContent: 'center',
+  searchIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
+    backgroundColor: colors.light.text,
     alignItems: 'center',
-  },
-  professionalButton: {
-    backgroundColor: '#1C1C1E',
-    borderRadius: 12,
-    height: 55,
-    width: '100%',
     justifyContent: 'center',
-    alignItems: 'center',
-    ...shadows.md,
   },
-  professionalButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
+  section: {
+    marginBottom: spacing.xl,
+  },
+  sectionTitle: {
+    marginBottom: spacing.md,
+  },
+  quickRow: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  quickCard: {
+    flex: 1,
+    backgroundColor: colors.light.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    alignItems: 'center',
+    ...shadows.xs,
+  },
+  quickIconWrap: {
+    marginBottom: spacing.sm,
+  },
+  quickLabel: {
+    color: colors.light.text,
+  },
+  providerCard: {
+    marginTop: spacing.xs,
+  },
+  providerTitle: {
+    marginBottom: spacing.xs,
+  },
+  providerSubtitle: {
+    marginBottom: spacing.md,
+  },
+  providerButton: {
+    alignSelf: 'flex-start',
   },
 });

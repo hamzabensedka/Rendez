@@ -1,46 +1,47 @@
 import React, { useState } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
+import { View, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { colors } from '@planity/ui';
 import { ScreenHeader, SearchInput, SearchList } from '../components';
 import { useFrequentSearches } from '../hooks';
 import { SEARCH_PLACEHOLDERS } from '../constants';
 
-/**
- * SearchScreen - Main search interface for finding businesses
- * Allows users to search by business name or services
- */
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const { searches, selectSearch } = useFrequentSearches();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
+      <SafeAreaView style={styles.safeArea}>
+        <ScreenHeader title="Search" leftIcon="close" />
 
-      <ScreenHeader title="Rechercher" leftIcon="close" />
+        <SearchInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={SEARCH_PLACEHOLDERS.BUSINESS}
+          autoFocus
+          showClearButton={false}
+        />
 
-      <SearchInput
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        placeholder={SEARCH_PLACEHOLDERS.BUSINESS}
-        autoFocus
-        showClearButton={false}
-      />
-
-      <SearchList
-        data={searches}
-        query={searchQuery}
-        onSelect={selectSearch}
-        getItemText={(item) => item}
-        title="Recherches fréquentes"
-      />
-    </SafeAreaView>
+        <SearchList
+          data={searches}
+          query={searchQuery}
+          onSelect={selectSearch}
+          getItemText={(item) => item}
+          title="Recent searches"
+        />
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.light.background,
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.light.background,
   },
 });
-

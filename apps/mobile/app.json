@@ -22,12 +22,11 @@
     ],
     "scheme": "rendez",
     "extra": {
-      "router": {
-        "origin": false
-      },
+      "router": {},
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "71437d10-d154-4254-9f57-563559d607c9"
       }
-    }
+    },
+    "owner": "hamzasedka"
   }
 }

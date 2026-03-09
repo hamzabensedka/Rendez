@@ -91,21 +91,21 @@ export const SearchFilters = React.memo<SearchFiltersProps>(function SearchFilte
             <Ionicons name="close" size={28} color="#000" />
           </TouchableOpacity>
           <TouchableOpacity onPress={handleReset}>
-            <Text style={styles.resetButton}>Réinitialiser</Text>
+            <Text style={styles.resetButton}>Reset</Text>
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Main Title */}
-          <Text style={styles.mainTitle}>Filtres</Text>
+          <Text style={styles.mainTitle}>Filters</Text>
 
-          {/* Carte Cadeau */}
+          {/* Gift card */}
           <View style={styles.giftCardSection}>
-            <Text style={styles.sectionTitle}>Carte cadeau</Text>
+            <Text style={styles.sectionTitle}>Gift card</Text>
             <View style={styles.toggleRow}>
               <View style={styles.giftCardLabelContainer}>
                 <Ionicons name="gift-outline" size={20} color="#000" style={styles.giftIcon} />
-                <Text style={styles.optionLabel}>Vente de carte cadeau</Text>
+                <Text style={styles.optionLabel}>Gift card available</Text>
               </View>
               <Switch
                 value={giftCard}
@@ -118,36 +118,36 @@ export const SearchFilters = React.memo<SearchFiltersProps>(function SearchFilte
 
           <View style={styles.divider} />
 
-          {/* Disponibilités */}
+          {/* Availability */}
           <FilterSection
-            title="Disponibilités"
+            title="Availability"
             isExpanded={expandedSections.availability}
             onToggle={() => toggleSection('availability')}
           >
-            {renderRadioButton('À tout moment', availability === 'any', () => setAvailability('any'))}
-            {renderRadioButton("Aujourd'hui", availability === 'today', () => setAvailability('today'))}
-            {renderRadioButton('Demain', availability === 'tomorrow', () => setAvailability('tomorrow'))}
-            {renderRadioButton('Choisir une date', availability === 'date', () => setAvailability('date'))}
+            {renderRadioButton('Any time', availability === 'any', () => setAvailability('any'))}
+            {renderRadioButton('Today', availability === 'today', () => setAvailability('today'))}
+            {renderRadioButton('Tomorrow', availability === 'tomorrow', () => setAvailability('tomorrow'))}
+            {renderRadioButton('Choose a date', availability === 'date', () => setAvailability('date'))}
           </FilterSection>
 
           <View style={styles.divider} />
 
-          {/* Trier par */}
+          {/* Sort by */}
           <FilterSection
-            title="Trier par"
+            title="Sort by"
             isExpanded={expandedSections.sortBy}
             onToggle={() => toggleSection('sortBy')}
           >
-            {renderRadioButton('Sans préférence', sortBy === 'none', () => setSortBy('none'))}
-            {renderRadioButton('Les mieux notés', sortBy === 'rating', () => setSortBy('rating'))}
-            {renderRadioButton('Du + cher au - cher', sortBy === 'price_desc', () => setSortBy('price_desc'))}
-            {renderRadioButton('Du - cher au + cher', sortBy === 'price_asc', () => setSortBy('price_asc'))}
+            {renderRadioButton('No preference', sortBy === 'none', () => setSortBy('none'))}
+            {renderRadioButton('Top rated', sortBy === 'rating', () => setSortBy('rating'))}
+            {renderRadioButton('Price: high to low', sortBy === 'price_desc', () => setSortBy('price_desc'))}
+            {renderRadioButton('Price: low to high', sortBy === 'price_asc', () => setSortBy('price_asc'))}
           </FilterSection>
         </ScrollView>
 
         <View style={styles.footer}>
           <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-            <Text style={styles.applyButtonText}>Enregistrer</Text>
+            <Text style={styles.applyButtonText}>Save</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

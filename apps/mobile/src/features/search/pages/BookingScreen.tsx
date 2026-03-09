@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, StatusBar, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Text, Card, Button } from '@planity/ui';
+import { colors, spacing, radius } from '@planity/ui';
 import { SalonDetailsHeader, ServiceSelection, StaffSelection, StaffMember } from '../components';
 import { MOCK_SALONS } from '../constants';
 import { ServiceItem } from '../types';
@@ -9,18 +11,9 @@ import { useAuth } from '../../../application/providers';
 
 // Mock availability data for the booking screen
 const MOCK_DATES = [
-  {
-    date: 'Jeudi 8 janvier',
-    slots: ['10:00', '11:00', '13:30', '16:00'],
-  },
-  {
-    date: 'Vendredi 9 janvier',
-    slots: ['09:00', '10:00', '14:00', '15:30'], // Populated for demo
-  },
-  {
-    date: 'Mardi 13 janvier',
-    slots: ['11:00', '16:30'],
-  },
+  { date: 'Thursday 8 Jan', slots: ['10:00', '11:00', '13:30', '16:00'] },
+  { date: 'Friday 9 Jan', slots: ['09:00', '10:00', '14:00', '15:30'] },
+  { date: 'Tuesday 13 Jan', slots: ['11:00', '16:30'] },
 ];
 
 const MOCK_STAFF: StaffMember[] = [
@@ -52,7 +45,7 @@ export default function BookingScreen() {
   const [selectedServices, setSelectedServices] = useState<ServiceItem[]>([]);
   
   // Date/Time Selection State
-  const [expandedDate, setExpandedDate] = useState<string>('Jeudi 8 janvier');
+  const [expandedDate, setExpandedDate] = useState<string>('Thursday 8 Jan');
 
   // Modals
   const [isServiceModalVisible, setServiceModalVisible] = useState(false);
@@ -126,9 +119,9 @@ export default function BookingScreen() {
   };
 
   const getSelectedStaffName = () => {
-    if (!selectedStaffId) return 'Avec qui ?';
+    if (!selectedStaffId) return 'Select staff';
     const staff = MOCK_STAFF.find(s => s.id === selectedStaffId);
-    return staff ? staff.name : 'Avec qui ?';
+    return staff ? staff.name : 'Select staff';
   };
 
   if (!salon) {
@@ -136,30 +129,29 @@ export default function BookingScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
+      <SafeAreaView style={styles.safeArea}>
       <SalonDetailsHeader onBack={handleBack} />
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Salon Name Title */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.salonName}>{salon.name}</Text>
+      <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.titleSection}>
+          <Text variant="title2">{salon.name}</Text>
+          <Text variant="footnote" color={colors.light.textSecondary}>Book an appointment</Text>
         </View>
 
-        {/* Step 1: Selected Service */}
         <View style={styles.section}>
-          <Text style={styles.stepTitle}>1. Prestation sélectionnée</Text>
-          
-          <View style={styles.card}>
+          <Text variant="headline" style={styles.sectionTitle}>1. Selected services</Text>
+          <Card padding="md" style={styles.card}>
             {selectedServices.map((service, index) => (
               <View key={`${service.id}-${index}`}>
                 <View style={styles.serviceRow}>
                   <View style={styles.serviceInfo}>
-                    <Text style={styles.serviceName}>{service.name}</Text>
-                    <Text style={styles.serviceMeta}>{service.duration} • {service.price}</Text>
+                    <Text variant="body">{service.name}</Text>
+                    <Text variant="footnote" color={colors.light.textSecondary}>{service.duration} • {service.price}</Text>
                   </View>
                   <TouchableOpacity onPress={() => handleRemoveService(index)}>
-                    <Text style={styles.deleteLink}>Supprimer</Text>
+                    <Text variant="footnote" color={colors.light.accent} style={{ textDecorationLine: 'underline' }}>Remove</Text>
                   </TouchableOpacity>
                 </View>
                 
@@ -172,24 +164,28 @@ export default function BookingScreen() {
             <TouchableOpacity 
               style={styles.staffSelector}
               onPress={() => setStaffModalVisible(true)}
+              activeOpacity={0.7}
             >
-              <Text style={styles.staffPlaceholder}>{getSelectedStaffName()}</Text>
-              <Ionicons name="chevron-down" size={20} color="#000" />
+              <Text variant="body">{getSelectedStaffName()}</Text>
+              <Ionicons name="chevron-down" size={20} color={colors.light.text} />
             </TouchableOpacity>
-          </View>
+          </Card>
 
-          <TouchableOpacity style={styles.addButton} onPress={handleAddService}>
-            <Text style={styles.addButtonText}>Ajouter une prestation à la suite</Text>
-          </TouchableOpacity>
+          <Button 
+            title="Add another service" 
+            onPress={handleAddService} 
+            variant="primary"
+            style={{ marginBottom: spacing.xl }}
+          />
         </View>
 
         {/* Step 2: Date & Time */}
         <View style={styles.section}>
-          <Text style={styles.stepTitle}>
-            2. Choix de la date & heure
+          <Text variant="headline" style={styles.sectionTitle}>
+            2. Date and time
           </Text>
           
-          <View style={styles.datesContainer}>
+          <Card padding="none" style={styles.datesContainer}>
             {MOCK_DATES.map((item, index) => {
               const isExpanded = expandedDate === item.date;
               return (
@@ -199,11 +195,11 @@ export default function BookingScreen() {
                     onPress={() => toggleDate(item.date)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.dateText}>{item.date}</Text>
+                    <Text variant="body">{item.date}</Text>
                     <Ionicons 
                       name={isExpanded ? "chevron-up" : "chevron-down"} 
                       size={16} 
-                      color="#000" 
+                      color={colors.light.text} 
                     />
                   </TouchableOpacity>
                   
@@ -215,7 +211,7 @@ export default function BookingScreen() {
                           style={styles.timeSlot}
                           onPress={() => handleTimeSlotSelect(item.date, slot)}
                         >
-                          <Text style={styles.timeSlotText}>{slot}</Text>
+                          <Text variant="body">{slot}</Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -223,9 +219,10 @@ export default function BookingScreen() {
                 </View>
               );
             })}
-          </View>
+          </Card>
         </View>
       </ScrollView>
+      </SafeAreaView>
 
       {/* Service Selection Modal */}
       <Modal
@@ -237,9 +234,9 @@ export default function BookingScreen() {
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setServiceModalVisible(false)} style={styles.closeButton}>
-              <Ionicons name="close" size={28} color="#000" />
+              <Ionicons name="close" size={28} color={colors.light.text} />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Ajouter une prestation</Text>
+            <Text variant="headline">Add a service</Text>
             <View style={styles.placeholderButton} />
           </View>
           <ScrollView style={styles.modalContent}>
@@ -264,7 +261,7 @@ export default function BookingScreen() {
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setStaffModalVisible(false)} style={styles.closeButton}>
-              <Ionicons name="close" size={28} color="#000" />
+              <Ionicons name="close" size={28} color={colors.light.text} />
             </TouchableOpacity>
             <View style={styles.placeholderButton} />
           </View>
@@ -275,183 +272,118 @@ export default function BookingScreen() {
           />
         </SafeAreaView>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.light.background,
+  },
+  safeArea: {
+    flex: 1,
   },
   content: {
     flex: 1,
-    paddingBottom: 40,
   },
-  titleContainer: {
-    padding: 16,
-    paddingBottom: 8,
+  scrollContent: {
+    paddingBottom: spacing['3xl'],
   },
-  salonName: {
-    fontSize: 22,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
-    lineHeight: 32,
-    fontWeight: '600',
+  titleSection: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
   },
   section: {
-    padding: 16,
-    paddingTop: 8,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
   },
-  stepTitle: {
-    fontSize: 18,
-    color: '#5856D6', // Planity blue/purple
-    fontFamily: 'Inter-Medium',
-    marginBottom: 16,
+  sectionTitle: {
+    color: colors.light.accent,
+    marginBottom: spacing.md,
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-    marginBottom: 16,
+    backgroundColor: colors.light.surface,
+    marginBottom: spacing.lg,
   },
   serviceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   itemDivider: {
     height: 1,
-    backgroundColor: '#F2F2F7',
-    marginBottom: 16,
+    backgroundColor: colors.light.border,
+    marginBottom: spacing.lg,
   },
   serviceInfo: {
     flex: 1,
-    marginRight: 16,
-  },
-  serviceName: {
-    fontSize: 16,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
-    marginBottom: 4,
-  },
-  serviceMeta: {
-    fontSize: 14,
-    color: '#666666',
-    fontFamily: 'Inter-Regular',
-  },
-  deleteLink: {
-    fontSize: 14,
-    color: '#5856D6',
-    fontFamily: 'Inter-Regular',
-    textDecorationLine: 'underline',
+    marginRight: spacing.lg,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F2F2F7',
-    marginBottom: 16,
+    backgroundColor: colors.light.border,
+    marginBottom: spacing.lg,
   },
   staffSelector: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
-    borderRadius: 8,
-  },
-  staffPlaceholder: {
-    fontSize: 15,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
-  },
-  addButton: {
-    backgroundColor: '#1C1C1E',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontFamily: 'Inter-Medium',
+    borderColor: colors.light.border,
+    borderRadius: radius.md,
   },
   datesContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    backgroundColor: colors.light.surface,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
   },
   dateGroup: {
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: colors.light.border,
   },
   dateHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  dateText: {
-    fontSize: 16,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
+    padding: spacing.lg,
+    backgroundColor: colors.light.surface,
   },
   slotsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: 8,
-    paddingBottom: 16,
-    gap: 12,
+    padding: spacing.sm,
+    paddingBottom: spacing.lg,
+    gap: spacing.md,
   },
   timeSlot: {
-    backgroundColor: '#f8f9fa',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 6,
+    backgroundColor: colors.light.background,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.sm,
     minWidth: '28%',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  timeSlotText: {
-    fontSize: 15,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
+    marginBottom: spacing.sm,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.light.surface,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.light.surface,
     borderBottomWidth: 0,
   },
   closeButton: {
     padding: 4,
-  },
-  modalTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#000',
-    fontFamily: 'Inter-Medium',
   },
   placeholderButton: {
     width: 36,

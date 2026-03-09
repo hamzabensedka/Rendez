@@ -1,5 +1,7 @@
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ListRenderItem } from 'react-native';
+import { View, StyleSheet, FlatList, TouchableOpacity, ListRenderItem } from 'react-native';
+import { Text } from '@planity/ui';
+import { colors, spacing } from '@planity/ui';
 import { HighlightedText } from './HighlightedText';
 
 interface SearchListProps<T> {
@@ -24,11 +26,10 @@ export function SearchList<T>({
   const renderItem: ListRenderItem<T> = useCallback(
     ({ item }) => {
       const itemText = getItemText(item);
-
       return (
         <TouchableOpacity
           style={styles.item}
-          activeOpacity={0.6}
+          activeOpacity={0.7}
           onPress={() => onSelect(item)}
           accessibilityLabel={itemText}
           accessibilityRole="button"
@@ -50,23 +51,22 @@ export function SearchList<T>({
   if (data.length === 0 && emptyMessage) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>{emptyMessage}</Text>
+        <Text variant="body" color={colors.light.textSecondary}>{emptyMessage}</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {title && <Text style={styles.title}>{title}</Text>}
+      {title ? (
+        <Text variant="headline" style={styles.sectionTitle}>{title}</Text>
+      ) : null}
       <FlatList
         data={data}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        windowSize={10}
       />
     </View>
   );
@@ -75,41 +75,30 @@ export function SearchList<T>({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    backgroundColor: '#f8f9fa',
-    paddingTop: 24,
-    zIndex: 0, // Below the search input
-    marginTop: 0, // Allow shadow to be visible
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    backgroundColor: colors.light.background,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#666666',
-    marginBottom: 20,
-    fontFamily: 'Inter-Regular',
+  sectionTitle: {
+    marginBottom: spacing.md,
   },
   list: {
-    paddingBottom: 20,
+    paddingBottom: spacing['2xl'],
   },
   item: {
-    paddingVertical: 14,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.light.border,
   },
   itemText: {
-    fontSize: 18,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
-    letterSpacing: -0.3,
+    fontSize: 16,
+    color: colors.light.text,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#666666',
-    fontFamily: 'Inter-Regular',
-    textAlign: 'center',
+    padding: spacing.xl,
   },
 });

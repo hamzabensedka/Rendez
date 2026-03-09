@@ -1,93 +1,97 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Text, Card } from '@planity/ui';
+import { colors, spacing } from '@planity/ui';
 
 interface SearchSummaryCardProps {
   category: string;
   address: string;
-  onEdit?: () => void;
+  time?: string;
+  onPress?: () => void;
 }
 
 export const SearchSummaryCard = React.memo<SearchSummaryCardProps>(function SearchSummaryCard({
   category,
   address,
-  onEdit,
+  time = 'Any time',
+  onPress,
 }) {
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
+      <Card 
+        variant="elevated" 
+        padding="md"
         style={styles.card}
-        onPress={onEdit}
-        activeOpacity={0.7}
-        accessibilityLabel="Modifier la recherche"
-        accessibilityRole="button"
       >
-        <View style={styles.content}>
-          <Ionicons name="search" size={24} color="#5856D6" style={styles.icon} />
+        <TouchableOpacity 
+          style={styles.touchable} 
+          onPress={onPress}
+          activeOpacity={0.7}
+        >
+          {/* Search Icon */}
+          <Ionicons name="search-outline" size={22} color={colors.light.accent} style={styles.icon} />
+          
+          {/* Text Content */}
           <View style={styles.textContainer}>
-            <Text style={styles.mainText} numberOfLines={1}>
-              <Text style={styles.category}>{category}</Text>
-              <Text style={styles.separator}> • </Text>
-              <Text style={styles.address}>{address}</Text>
-            </Text>
-            <Text style={styles.subtext}>À tout moment</Text>
+            <View style={styles.titleRow}>
+              <Text variant="headline" style={styles.categoryText}>{category}</Text>
+              <Text variant="body" color={colors.light.border} style={styles.separator}> • </Text>
+              <Text variant="body" numberOfLines={1} style={styles.addressText}>
+                {address}
+              </Text>
+            </View>
+            <Text variant="footnote" color={colors.light.textSecondary}>{time}</Text>
           </View>
-        </View>
-        <Ionicons name="pencil" size={20} color="#999" />
-      </TouchableOpacity>
+
+          {/* Edit/Pencil Icon */}
+          <Ionicons name="pencil-outline" size={20} color={colors.light.textSecondary} style={styles.pencilIcon} />
+        </TouchableOpacity>
+      </Card>
     </View>
   );
 });
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#f8f9fa',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
+    backgroundColor: colors.light.background,
   },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    // Card handles bg and shadow
+    // We might need to ensure Card accepts onPress if we want the ripple on the whole card, 
+    // but here we use inner TouchableOpacity
   },
-  content: {
+  touchable: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    marginRight: 16,
   },
   icon: {
-    marginRight: 16,
+    marginRight: spacing.lg,
   },
   textContainer: {
     flex: 1,
+    justifyContent: 'center',
   },
-  mainText: {
-    fontSize: 16,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 2,
   },
-  category: {
-    fontFamily: 'Inter-Regular',
+  categoryText: {
+    fontSize: 15,
   },
   separator: {
-    color: '#999',
+    fontSize: 15,
+    marginHorizontal: spacing.xs,
   },
-  address: {
-    color: '#000',
+  addressText: {
+    fontSize: 15,
+    flexShrink: 1,
   },
-  subtext: {
-    fontSize: 14,
-    color: '#666',
-    fontFamily: 'Inter-Regular',
+  pencilIcon: {
+    marginLeft: spacing.lg,
   },
 });

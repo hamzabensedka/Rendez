@@ -3,59 +3,58 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'rea
 import { Ionicons } from '@expo/vector-icons';
 
 const TAGS = [
-  'Salon de coiffure Toulouse',
-  'Coiffure femme Toulouse',
-  'Prothésiste ongulaire Toulouse',
-  'Extension de cils Toulouse',
-  'Soin du visage Toulouse',
-  'Lissage et défrisage Toulouse',
-  'Épilation Toulouse',
-  'Microblading Toulouse',
-  'Coiffure homme Toulouse',
+  'Hair salon',
+  'Women\'s hair',
+  'Nails',
+  'Lash extensions',
+  'Facial',
+  'Straightening',
+  'Waxing',
+  'Microblading',
+  'Men\'s hair',
 ];
 
 const STAFF = [
-  { id: '1', name: 'Beauté du regard', initials: 'B', image: null },
-  { id: '2', name: 'Sophia', initials: null, image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100&h=100' },
-  { id: '3', name: 'Sophia B StyleHair', initials: 'SB', image: null },
-  { id: '4', name: 'Onglerie', initials: 'O', image: null },
+  { id: '1', name: 'Studio team', initials: 'ST', image: null },
+  { id: '2', name: 'Alex', initials: null, image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100&h=100' },
+  { id: '3', name: 'Jordan', initials: 'J', image: null },
+  { id: '4', name: 'Nails', initials: 'N', image: null },
 ];
 
 const OPENING_HOURS = [
-  { day: 'Lundi', hours: '11:00 - 19:00' },
-  { day: 'Mardi', hours: '11:00 - 19:00' },
-  { day: 'Mercredi', hours: '11:00 - 18:00' },
-  { day: 'Jeudi', hours: '11:00 - 19:00' },
-  { day: 'Vendredi', hours: '11:00 - 19:00' },
-  { day: 'Samedi', hours: '09:00 - 18:00' },
-  { day: 'Dimanche', hours: 'Fermé' },
+  { day: 'Monday', hours: '11:00 - 19:00' },
+  { day: 'Tuesday', hours: '11:00 - 19:00' },
+  { day: 'Wednesday', hours: '11:00 - 18:00' },
+  { day: 'Thursday', hours: '11:00 - 19:00' },
+  { day: 'Friday', hours: '11:00 - 19:00' },
+  { day: 'Saturday', hours: '09:00 - 18:00' },
+  { day: 'Sunday', hours: 'Closed' },
 ];
 
 export const SalonAbout = React.memo(function SalonAbout() {
   return (
     <View style={styles.container}>
-      {/* Location Section */}
+      {/* Location */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Où se situe le salon ?</Text>
+        <Text style={styles.sectionTitle}>Location</Text>
         <View style={styles.locationRow}>
           <Ionicons name="location-outline" size={20} color="#000" />
-          <Text style={styles.addressText}>13 rue de Bayard , 31000 Toulouse</Text>
+          <Text style={styles.addressText}>13 Main Street, City Center</Text>
         </View>
         <View style={styles.mapContainer}>
-          {/* Mock Map Background - Using a simple colored view to represent map area */}
           <View style={styles.mapBackground} />
           <TouchableOpacity style={styles.mapButton}>
             <Ionicons name="map-outline" size={16} color="#FFFFFF" style={{marginRight: 8}} />
-            <Text style={styles.mapButtonText}>Afficher la carte</Text>
+            <Text style={styles.mapButtonText}>Show map</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.divider} />
 
-      {/* Opening Hours Section */}
+      {/* Opening hours */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Horaires d'ouverture</Text>
+        <Text style={styles.sectionTitle}>Opening hours</Text>
         <View style={styles.hoursList}>
           {OPENING_HOURS.map((item, index) => (
             <View key={index} style={styles.hourRow}>
@@ -68,9 +67,9 @@ export const SalonAbout = React.memo(function SalonAbout() {
 
       <View style={styles.divider} />
 
-      {/* Staff Section */}
+      {/* Staff */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Collaborateurs</Text>
+        <Text style={styles.sectionTitle}>Team</Text>
         <View style={styles.staffList}>
           {STAFF.map((member) => (
             <View key={member.id} style={styles.staffRow}>
@@ -89,19 +88,19 @@ export const SalonAbout = React.memo(function SalonAbout() {
 
       <View style={styles.divider} />
 
-      {/* Description Section */}
+      {/* About */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>À-propos</Text>
+        <Text style={styles.sectionTitle}>About</Text>
         <Text style={styles.descriptionText}>
-          Situé à Toulouse, vous cherchez un instant de douceur et de bien-être, rendez-vous sans attendre au numéro 13, Rue de Bayard. Là vous attend le centre d'esthétique Sophia B et des soins apte à contenter tous vos besoins...
+          A welcoming space for hair and grooming services. Modern style with attention to detail. Book your appointment online.
         </Text>
       </View>
 
       <View style={styles.divider} />
 
-      {/* Tags Section */}
+      {/* Tags */}
       <View style={[styles.section, styles.lastSection]}>
-        <Text style={styles.sectionTitle}>Dans cet établissement</Text>
+        <Text style={styles.sectionTitle}>Services at this location</Text>
         <View style={styles.tagsContainer}>
           {TAGS.map((tag, index) => (
             <View key={index} style={styles.tag}>

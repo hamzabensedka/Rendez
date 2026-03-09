@@ -1,4 +1,4 @@
-// Spacing scale (4px base)
+// Spacing scale (4px base) – product-agnostic
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -7,9 +7,10 @@ export const spacing = {
   xl: 24,
   '2xl': 32,
   '3xl': 48,
+  '4xl': 64,
 } as const;
 
-// Type scale (iOS-style)
+// Type scale – neutral, readable
 export const typography = {
   caption: {
     fontSize: 12,
@@ -25,7 +26,11 @@ export const typography = {
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '400' as const,
-    color: 'rgb(32, 32, 32)',
+  },
+  bodyEmphasis: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '600' as const,
   },
   headline: {
     fontSize: 17,
@@ -34,7 +39,7 @@ export const typography = {
   },
   title3: {
     fontSize: 20,
-    lineHeight: 24,
+    lineHeight: 26,
     fontWeight: '600' as const,
   },
   title2: {
@@ -43,78 +48,94 @@ export const typography = {
     fontWeight: '600' as const,
   },
   title1: {
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 26,
+    lineHeight: 32,
     fontWeight: '700' as const,
   },
   largeTitle: {
-    fontSize: 34,
-    lineHeight: 41,
+    fontSize: 32,
+    lineHeight: 40,
     fontWeight: '700' as const,
   },
 } as const;
 
-// Border radius
+// Border radius – subtle, modern
 export const radius = {
-  sm: 8,
+  xs: 4,
+  sm: 6,
   md: 10,
   lg: 14,
-  xl: 18,
+  xl: 20,
+  full: 9999,
 } as const;
 
-// Colors (light mode)
+// Colors – neutral palette (slate/blue-gray, no product-specific accent)
 export const colors = {
   light: {
-    background: '#F5F5F7',
+    background: '#F8FAFC',
     surface: '#FFFFFF',
-    text: '#000000',
-    textSecondary: '#6E6E73',
-    accent: '#007AFF',
-    error: '#FF3B30',
-    success: '#34C759',
-    border: '#D1D1D6',
+    surfaceSecondary: '#F1F5F9',
+    text: '#0F172A',
+    textSecondary: '#64748B',
+    textTertiary: '#94A3B8',
+    accent: '#475569',
+    accentMuted: '#E2E8F0',
+    error: '#DC2626',
+    success: '#16A34A',
+    border: '#E2E8F0',
+    borderFocus: '#64748B',
   },
   dark: {
-    background: '#000000',
-    surface: '#1C1C1E',
-    text: '#FFFFFF',
-    textSecondary: '#98989D',
-    accent: '#0A84FF',
-    error: '#FF453A',
-    success: '#30D158',
-    border: '#38383A',
+    background: '#0F172A',
+    surface: '#1E293B',
+    surfaceSecondary: '#334155',
+    text: '#F8FAFC',
+    textSecondary: '#94A3B8',
+    textTertiary: '#64748B',
+    accent: '#CBD5E1',
+    accentMuted: '#475569',
+    error: '#EF4444',
+    success: '#22C55E',
+    border: '#334155',
+    borderFocus: '#94A3B8',
   },
 } as const;
 
-// Shadows (subtle elevation)
+// Shadows – soft elevation
 export const shadows = {
-  sm: {
-    shadowColor: '#000',
+  xs: {
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 2,
+    elevation: 1,
+  },
+  sm: {
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
     elevation: 2,
   },
   md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
     elevation: 4,
   },
   lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
     elevation: 8,
   },
 } as const;
 
 // Motion
 export const motion = {
-  fast: 200,
+  fast: 150,
   normal: 250,
   slow: 350,
 } as const;
-

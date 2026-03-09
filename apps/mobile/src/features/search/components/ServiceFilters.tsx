@@ -55,7 +55,7 @@ export const ServiceFilters = React.memo<ServiceFiltersProps>(function ServiceFi
 
         <View style={styles.content}>
           {/* Main Title */}
-          <Text style={styles.mainTitle}>Prestations</Text>
+          <Text style={styles.mainTitle}>Services</Text>
 
           {/* Service Chips */}
           <ScrollView showsVerticalScrollIndicator={false}>

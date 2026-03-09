@@ -22,7 +22,7 @@ export const StaffSelection = React.memo<StaffSelectionProps>(function StaffSele
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Avec qui ?</Text>
+      <Text style={styles.title}>Who with?</Text>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* No Preference Option */}
@@ -32,7 +32,7 @@ export const StaffSelection = React.memo<StaffSelectionProps>(function StaffSele
           activeOpacity={0.7}
         >
           <View style={styles.staffInfo}>
-            <Text style={styles.staffName}>Sans préférence</Text>
+            <Text style={styles.staffName}>No preference</Text>
           </View>
           <View style={[styles.radio, isNoPreferenceSelected && styles.radioSelected]}>
             {isNoPreferenceSelected && <View style={styles.radioInner} />}

@@ -1,7 +1,9 @@
 import React, { useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Text } from '@planity/ui';
+import { colors, spacing } from '@planity/ui';
 
 interface ScreenHeaderProps {
   title: string;
@@ -11,9 +13,9 @@ interface ScreenHeaderProps {
   testID?: string;
 }
 
-export const ScreenHeader = React.memo<ScreenHeaderProps>(function ScreenHeader({ 
-  title, 
-  onBack, 
+export const ScreenHeader = React.memo<ScreenHeaderProps>(function ScreenHeader({
+  title,
+  onBack,
   leftIcon = 'chevron-back',
   rightElement,
   testID,
@@ -30,20 +32,19 @@ export const ScreenHeader = React.memo<ScreenHeaderProps>(function ScreenHeader(
 
   return (
     <View style={styles.header} testID={testID}>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.backButton}
         onPress={handleBack}
-        accessibilityLabel="Retour"
+        accessibilityLabel="Back"
         accessibilityRole="button"
-        accessibilityHint="Retourne à l'écran précédent"
       >
-        <Ionicons name={leftIcon} size={24} color="#000" />
+        <Ionicons name={leftIcon} size={24} color={colors.light.text} />
       </TouchableOpacity>
-      <Text style={styles.headerTitle} accessibilityRole="header">
+      <Text variant="headline" style={styles.headerTitle}>
         {title}
       </Text>
       <View style={styles.rightContainer}>
-        {rightElement || <View style={styles.placeholder} />}
+        {rightElement ?? <View style={styles.placeholder} />}
       </View>
     </View>
   );
@@ -54,26 +55,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 56,
-    paddingHorizontal: 8,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.light.surface,
     borderBottomWidth: 1,
-    backgroundColor: '#FFFFFF',
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: colors.light.border,
   },
   backButton: {
-    width: 45,
-    height: 44,
+    minWidth: 44,
+    minHeight: 44,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '500',
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
+    flex: 1,
+    textAlign: 'center',
   },
   rightContainer: {
-    width: 44,
+    minWidth: 44,
     alignItems: 'flex-end',
   },
   placeholder: {

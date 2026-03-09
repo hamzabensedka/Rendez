@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
+  TouchableOpacity,
   Alert,
   ActivityIndicator,
+  SafeAreaView,
+  StatusBar,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Text, Button, Card, Input } from '@planity/ui';
+import { colors, spacing } from '@planity/ui';
 import { login } from '../../../shared/lib/auth';
 import { useAuth } from '../../../application/providers';
-import { colors, spacing, typography, radius } from '@planity/ui';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -43,54 +45,70 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
-
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor={colors.light.textSecondary}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor={colors.light.textSecondary}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoCapitalize="none"
-          />
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.buttonText}>Sign In</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.linkButton}
-            onPress={() => router.push('/(auth)/register')}
-          >
-            <Text style={styles.linkText}>
-              Don't have an account? <Text style={styles.linkTextBold}>Sign Up</Text>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <Text variant="title2" style={styles.title}>
+              Welcome back
             </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+            <Text variant="body" color={colors.light.textSecondary}>
+              Sign in to continue
+            </Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text variant="headline" style={styles.sectionTitle}>
+              Sign in
+            </Text>
+            <Card variant="elevated" padding="lg" style={styles.card}>
+              <Input
+                label="Email"
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+              />
+              <Input
+                label="Password"
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+              <Button
+                title={loading ? 'Signing in…' : 'Sign in'}
+                onPress={handleLogin}
+                variant="primary"
+                disabled={loading}
+                loading={loading}
+                style={styles.button}
+              />
+            </Card>
+          </View>
+
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.linkButton}
+              onPress={() => router.push('/(auth)/register')}
+            >
+              <Text variant="body" color={colors.light.textSecondary}>
+                Don't have an account?{' '}
+                <Text variant="body" weight="600" color={colors.light.accent}>
+                  Sign up
+                </Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
@@ -100,59 +118,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.light.background,
   },
-  content: {
+  safeArea: {
     flex: 1,
-    justifyContent: 'center',
-    padding: spacing.xl,
+    backgroundColor: colors.light.background,
+  },
+  scrollContent: {
+    padding: spacing.lg,
+    paddingBottom: spacing['3xl'],
+  },
+  header: {
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xl,
   },
   title: {
-    ...typography.largeTitle,
-    color: colors.light.text,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
-  subtitle: {
-    ...typography.body,
-    color: colors.light.textSecondary,
-    marginBottom: spacing['3xl'],
+  section: {
+    marginBottom: spacing.xl,
   },
-  form: {
-    gap: spacing.lg,
+  sectionTitle: {
+    marginBottom: spacing.md,
   },
-  input: {
-    ...typography.body,
-    backgroundColor: colors.light.surface,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    color: colors.light.text,
+  card: {
+    marginTop: spacing.xs,
   },
   button: {
-    backgroundColor: colors.light.accent,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    alignItems: 'center',
-    marginTop: spacing.md,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    ...typography.headline,
-    color: '#FFFFFF',
+    marginTop: spacing.sm,
   },
   linkButton: {
-    marginTop: spacing.md,
     alignItems: 'center',
-  },
-  linkText: {
-    ...typography.body,
-    color: colors.light.textSecondary,
-  },
-  linkTextBold: {
-    ...typography.headline,
-    color: colors.light.accent,
+    paddingVertical: spacing.md,
   },
 });
-
-

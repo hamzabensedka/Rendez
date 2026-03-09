@@ -1,8 +1,15 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+  ScrollView,
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import { Text, Button, Card } from '@planity/ui';
+import { colors, spacing } from '@planity/ui';
 import { useAuth } from '../../../application/providers';
-import { colors, spacing, typography, radius } from '@planity/ui';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -25,26 +32,57 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Name</Text>
-          <Text style={styles.cardValue}>{user.name}</Text>
-
-          <Text style={styles.cardLabel}>Email</Text>
-          <Text style={styles.cardValue}>{user.email}</Text>
-
-          <Text style={styles.cardLabel}>Role</Text>
-          <Text style={styles.cardValue}>{user.role}</Text>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header - Explore style */}
+        <View style={styles.header}>
+          <Text variant="title2" style={styles.headerTitle}>
+            Profile
+          </Text>
         </View>
 
-        <TouchableOpacity style={styles.button} onPress={handleLogout}>
-          <Text style={styles.buttonText}>Sign Out</Text>
-        </TouchableOpacity>
-      </View>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.section}>
+            <Text variant="headline" style={styles.sectionTitle}>
+              Account
+            </Text>
+            <Card variant="elevated" padding="lg" style={styles.card}>
+              <View style={styles.infoRow}>
+                <Text variant="footnote" color={colors.light.textSecondary} style={styles.label}>
+                  Name
+                </Text>
+                <Text variant="body">{user.name}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text variant="footnote" color={colors.light.textSecondary} style={styles.label}>
+                  Email
+                </Text>
+                <Text variant="body">{user.email}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text variant="footnote" color={colors.light.textSecondary} style={styles.label}>
+                  Role
+                </Text>
+                <Text variant="body">{user.role}</Text>
+              </View>
+            </Card>
+          </View>
+
+          <View style={styles.section}>
+            <Button
+              title="Sign out"
+              onPress={handleLogout}
+              variant="outline"
+              style={[styles.signOutButton, { borderColor: colors.light.error }]}
+              textStyle={{ color: colors.light.error }}
+            />
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
@@ -54,45 +92,44 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.light.background,
   },
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.light.background,
+  },
   header: {
-    padding: spacing.xl,
-    paddingTop: spacing['3xl'],
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     backgroundColor: colors.light.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.light.border,
   },
-  title: {
-    ...typography.largeTitle,
-    color: colors.light.text,
+  headerTitle: {
+    marginBottom: 0,
   },
-  content: {
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
     padding: spacing.lg,
+    paddingBottom: spacing['3xl'],
   },
-  card: {
-    backgroundColor: colors.light.surface,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    marginBottom: spacing.lg,
-    gap: spacing.md,
+  section: {
+    marginBottom: spacing.xl,
   },
-  cardLabel: {
-    ...typography.footnote,
-    color: colors.light.textSecondary,
-    textTransform: 'uppercase',
-  },
-  cardValue: {
-    ...typography.body,
-    color: colors.light.text,
+  sectionTitle: {
     marginBottom: spacing.md,
   },
-  button: {
-    backgroundColor: colors.light.error,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    alignItems: 'center',
+  card: {
+    marginTop: spacing.xs,
   },
-  buttonText: {
-    ...typography.headline,
-    color: '#FFFFFF',
+  infoRow: {
+    marginBottom: spacing.md,
+  },
+  label: {
+    textTransform: 'uppercase',
+    marginBottom: spacing.xs,
+  },
+  signOutButton: {
+    alignSelf: 'stretch',
   },
 });
-
-

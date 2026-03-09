@@ -1,4 +1,4 @@
-# Planity Mobile App
+# Rendez Mobile App
 
 React Native mobile app built with Expo.
 

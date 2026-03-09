@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Text } from '@planity/ui';
+import { colors, spacing, radius, shadows } from '@planity/ui';
 
 interface SearchInputProps {
   value: string;
@@ -37,39 +39,36 @@ export const SearchInput = React.memo<SearchInputProps>(function SearchInput({
   );
 
   return (
-    <View style={styles.shadowWrapper} testID={testID}>
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputWrapper}>
+    <View style={styles.wrapper} testID={testID}>
+      <View style={styles.searchCard}>
+        <View style={styles.searchRow}>
+          <Ionicons
+            name="search"
+            size={20}
+            color={colors.light.textSecondary}
+            style={styles.searchIcon}
+          />
           <TextInput
-            style={styles.searchInput}
+            style={styles.input}
             placeholder={placeholder}
-            placeholderTextColor="rgba(60, 60, 67, 0.3)"
+            placeholderTextColor={colors.light.textTertiary}
             value={value}
             onChangeText={onChangeText}
             autoFocus={autoFocus}
             maxLength={maxLength}
-            accessibilityLabel="Champ de recherche"
-            accessibilityHint="Tapez pour rechercher"
             returnKeyType="search"
+            accessibilityLabel="Search"
           />
           {showClear ? (
             <TouchableOpacity
               onPress={handleClear}
               style={styles.clearButton}
-              accessibilityLabel="Effacer la recherche"
+              accessibilityLabel="Clear search"
               accessibilityRole="button"
             >
-              <Text style={styles.clearButtonText}>Effacer</Text>
+              <Text variant="footnote" color={colors.light.accent}>Clear</Text>
             </TouchableOpacity>
-          ) : (
-            <Ionicons
-              name="search"
-              size={20}
-              color="rgba(60, 60, 67, 0.3)"
-              style={styles.searchIcon}
-              accessibilityLabel="Icône de recherche"
-            />
-          )}
+          ) : null}
         </View>
       </View>
     </View>
@@ -77,49 +76,34 @@ export const SearchInput = React.memo<SearchInputProps>(function SearchInput({
 });
 
 const styles = StyleSheet.create({
-  shadowWrapper: {
-    // Wrapper to ensure shadow is not clipped
-    backgroundColor: 'transparent',
-    zIndex: 1,
-    elevation: 4,
-    marginBottom: 2, // Space for shadow to be visible
+  wrapper: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.light.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.light.border,
   },
-  searchContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    // Bottom-only shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 4, // Higher elevation to appear above lists
-    borderBottomWidth: 0,
+  searchCard: {
+    backgroundColor: colors.light.background,
+    borderRadius: radius.lg,
+    ...shadows.xs,
   },
-  searchInputWrapper: {
+  searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 0,
-    height: 44,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 18,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
-    paddingVertical: 8,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   searchIcon: {
-    marginLeft: 8,
+    marginRight: spacing.md,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.light.text,
+    paddingVertical: 0,
   },
   clearButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  clearButtonText: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#666666',
+    paddingLeft: spacing.sm,
   },
 });

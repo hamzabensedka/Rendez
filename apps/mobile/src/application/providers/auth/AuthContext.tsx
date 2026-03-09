@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (process.env.EXPO_PUBLIC_BYPASS_AUTH === 'true') {
       setUser({
         id: 'dev-user',
-        email: 'dev@planity.local',
+        email: 'dev@rendez.local',
         name: 'Dev User',
         role: 'client',
       });

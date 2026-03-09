@@ -2,8 +2,9 @@ import React, { useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing } from '@planity/ui';
 import { ProfileButton } from './ProfileButton';
-import { PlanityLogo } from './PlanityLogo';
+import { AppLogo } from './AppLogo';
 
 interface SalonDetailsHeaderProps {
   onBack?: () => void;
@@ -27,13 +28,13 @@ export const SalonDetailsHeader = React.memo<SalonDetailsHeaderProps>(function S
       <TouchableOpacity 
         style={styles.button}
         onPress={handleBack}
-        accessibilityLabel="Retour"
+        accessibilityLabel="Back"
         accessibilityRole="button"
       >
-        <Ionicons name="arrow-back" size={24} color="#000" />
+        <Ionicons name="arrow-back" size={24} color={colors.light.text} />
       </TouchableOpacity>
       
-      <PlanityLogo />
+      <AppLogo />
       
       <ProfileButton />
     </View>
@@ -46,10 +47,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     height: 56,
-    paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.light.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: colors.light.border,
   },
   button: {
     width: 40,

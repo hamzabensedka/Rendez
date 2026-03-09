@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Dimensions,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { colors, spacing, typography, radius, shadows } from '@planity/ui';
+import { Ionicons } from '@expo/vector-icons';
+import { Text, Card } from '@planity/ui';
+import { colors, spacing } from '@planity/ui';
 import api from '../../../shared/lib/api';
 import { useFavorites } from '../../../application/providers';
-
-const { width } = Dimensions.get('window');
+import { ScreenHeader } from '../../search/components';
 
 interface Business {
   id: string;
@@ -40,6 +41,8 @@ interface Business {
 
 type TabType = 'services' | 'about' | 'reviews';
 
+const TABS: TabType[] = ['services', 'about', 'reviews'];
+
 export default function BusinessDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -60,7 +63,7 @@ export default function BusinessDetailScreen() {
       const response = await api.get(`/businesses/${id}`);
       setBusiness(response.data);
     } catch (error) {
-      console.error('Failed to load business:', error);
+      console.error('Failed to load business', error);
     } finally {
       setLoading(false);
     }
@@ -75,160 +78,209 @@ export default function BusinessDetailScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.light.accent} />
+        <StatusBar barStyle="dark-content" />
+        <ActivityIndicator size="large" color={colors.light.text} />
       </View>
     );
   }
 
   if (!business) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>Business not found</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        <ScreenHeader title="Business" />
+        <View style={styles.center}>
+          <Text variant="body" color={colors.light.textSecondary}>
+            Business not found
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
+  const favoriteIcon = id && isFavorite(id) ? 'heart' : 'heart-outline';
+
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Image Carousel Placeholder */}
-      <View style={styles.imageContainer}>
-        <View style={styles.imagePlaceholder}>
-          <Text style={styles.imagePlaceholderText}>📸</Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
+      <ScreenHeader
+        title={business.name}
+        rightElement={
+          <TouchableOpacity
+            style={styles.favoriteHeaderButton}
+            onPress={handleToggleFavorite}
+            accessibilityLabel={id && isFavorite(id) ? 'Remove from favorites' : 'Add to favorites'}
+            accessibilityRole="button"
+          >
+            <Ionicons
+              name={favoriteIcon}
+              size={22}
+              color={id && isFavorite(id) ? colors.light.error : colors.light.text}
+            />
+          </TouchableOpacity>
+        }
+      />
+
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Image placeholder */}
+        <View style={styles.imageContainer}>
+          <View style={styles.imagePlaceholder}>
+            <Ionicons name="image-outline" size={48} color={colors.light.textTertiary} />
+          </View>
         </View>
-        <TouchableOpacity style={styles.favoriteButton} onPress={handleToggleFavorite}>
-          <Text style={styles.favoriteIcon}>{id && isFavorite(id) ? '❤️' : '🤍'}</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Business Header */}
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <Text style={styles.title}>{business.name}</Text>
+        {/* Meta block */}
+        <View style={styles.metaBlock}>
+          {business.category && (
+            <Text variant="footnote" color={colors.light.textSecondary} style={styles.category}>
+              {business.category}
+            </Text>
+          )}
+          {business.locations && business.locations.length > 0 && (
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={16} color={colors.light.textSecondary} />
+              <Text variant="body" color={colors.light.textSecondary} style={styles.locationText} numberOfLines={2}>
+                {business.locations[0].address}
+              </Text>
+            </View>
+          )}
+          {business.ratingCount > 0 && (
+            <View style={styles.ratingRow}>
+              <Ionicons name="star" size={16} color={colors.light.text} />
+              <Text variant="headline" style={styles.ratingValue}>
+                {business.ratingAvg.toFixed(1)}
+              </Text>
+              <Text variant="footnote" color={colors.light.textSecondary}>
+                ({business.ratingCount} reviews)
+              </Text>
+            </View>
+          )}
         </View>
 
-        {business.category && (
-          <View style={styles.categoryContainer}>
-            <Text style={styles.category}>{business.category}</Text>
-          </View>
-        )}
+        {/* Tabs */}
+        <View style={styles.tabsContainer}>
+          {TABS.map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.tab, activeTab === tab && styles.tabActive]}
+              onPress={() => setActiveTab(tab)}
+              accessibilityLabel={`Tab ${tab}`}
+              accessibilityRole="tab"
+            >
+              <Text
+                variant="footnote"
+                weight={activeTab === tab ? '600' : '400'}
+                color={activeTab === tab ? colors.light.text : colors.light.textSecondary}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-        {business.locations && business.locations.length > 0 && (
-          <View style={styles.locationContainer}>
-            <Text style={styles.locationIcon}>📍</Text>
-            <Text style={styles.locationText}>{business.locations[0].address}</Text>
-          </View>
-        )}
-
-        {business.ratingCount > 0 && (
-          <View style={styles.ratingContainer}>
-            <Text style={styles.ratingStar}>⭐</Text>
-            <Text style={styles.ratingText}>{business.ratingAvg.toFixed(1)}</Text>
-            <Text style={styles.ratingCount}>({business.ratingCount} reviews)</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Tabs */}
-      <View style={styles.tabsContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'services' && styles.tabActive]}
-          onPress={() => setActiveTab('services')}
-        >
-          <Text style={[styles.tabText, activeTab === 'services' && styles.tabTextActive]}>
-            Services
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'about' && styles.tabActive]}
-          onPress={() => setActiveTab('about')}
-        >
-          <Text style={[styles.tabText, activeTab === 'about' && styles.tabTextActive]}>
-            About
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'reviews' && styles.tabActive]}
-          onPress={() => setActiveTab('reviews')}
-        >
-          <Text style={[styles.tabText, activeTab === 'reviews' && styles.tabTextActive]}>
-            Reviews
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Tab Content */}
-      <View style={styles.content}>
-        {activeTab === 'services' && (
-          <View style={styles.servicesSection}>
-            {business.services.length === 0 ? (
-              <Text style={styles.emptyText}>No services available</Text>
-            ) : (
-              business.services.map((service) => (
-                <View key={service.id} style={styles.serviceGroup}>
-                  <Text style={styles.serviceGroupTitle}>{service.name}</Text>
-                  {service.serviceVariants.map((variant) => (
-                    <TouchableOpacity
-                      key={variant.id}
-                      style={styles.serviceCard}
-                      onPress={() => {
-                        router.push({
-                          pathname: '/(tabs)/booking',
-                          params: {
-                            businessId: business.id,
-                            serviceVariantId: variant.id,
-                          },
-                        });
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.serviceInfo}>
-                        <Text style={styles.serviceName}>{variant.name}</Text>
-                        <Text style={styles.serviceDuration}>{variant.durationMin} min</Text>
-                      </View>
-                      {variant.priceCents && (
-                        <Text style={styles.servicePrice}>
-                          €{(variant.priceCents / 100).toFixed(2)}
-                        </Text>
-                      )}
-                      <Text style={styles.serviceArrow}>›</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ))
-            )}
-          </View>
-        )}
-
-        {activeTab === 'about' && (
-          <View style={styles.aboutSection}>
-            {business.description ? (
-              <Text style={styles.description}>{business.description}</Text>
-            ) : (
-              <Text style={styles.emptyText}>No description available</Text>
-            )}
-          </View>
-        )}
-
-        {activeTab === 'reviews' && (
-          <View style={styles.reviewsSection}>
-            {business.ratingCount > 0 ? (
-              <View>
-                <View style={styles.ratingSummary}>
-                  <Text style={styles.ratingLarge}>{business.ratingAvg.toFixed(1)}</Text>
-                  <Text style={styles.ratingStarLarge}>⭐</Text>
-                  <Text style={styles.ratingCountLarge}>
-                    Based on {business.ratingCount} reviews
+        {/* Tab content */}
+        <View style={styles.content}>
+          {activeTab === 'services' && (
+            <View style={styles.section}>
+              {business.services.length === 0 ? (
+                <Card variant="flat" padding="lg">
+                  <Text variant="body" color={colors.light.textSecondary} style={styles.emptyText}>
+                    No services available
                   </Text>
-                </View>
-                <Text style={styles.comingSoonText}>Individual reviews coming soon</Text>
-              </View>
-            ) : (
-              <Text style={styles.emptyText}>No reviews yet</Text>
-            )}
-          </View>
-        )}
-      </View>
-    </ScrollView>
+                </Card>
+              ) : (
+                business.services.map((service) => (
+                  <View key={service.id} style={styles.serviceGroup}>
+                    <Text variant="title3" style={styles.serviceGroupTitle}>
+                      {service.name}
+                    </Text>
+                    {service.serviceVariants.map((variant) => (
+                      <TouchableOpacity
+                        key={variant.id}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          router.push({
+                            pathname: '/(tabs)/booking',
+                            params: {
+                              businessId: business.id,
+                              serviceVariantId: variant.id,
+                            },
+                          });
+                        }}
+                        accessibilityLabel={`${variant.name}, ${variant.durationMin} min`}
+                        accessibilityRole="button"
+                      >
+                        <Card variant="elevated" padding="lg" style={styles.serviceCard}>
+                          <View style={styles.serviceRow}>
+                            <View style={styles.serviceInfo}>
+                              <Text variant="headline">{variant.name}</Text>
+                              <Text variant="footnote" color={colors.light.textSecondary}>
+                                {variant.durationMin} min
+                              </Text>
+                            </View>
+                            <View style={styles.serviceRight}>
+                              {variant.priceCents != null && (
+                                <Text variant="title3" style={styles.servicePrice}>
+                                  €{(variant.priceCents / 100).toFixed(2)}
+                                </Text>
+                              )}
+                              <Ionicons name="chevron-forward" size={20} color={colors.light.textTertiary} />
+                            </View>
+                          </View>
+                        </Card>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ))
+              )}
+            </View>
+          )}
+
+          {activeTab === 'about' && (
+            <View style={styles.section}>
+              <Card variant="flat" padding="lg">
+                {business.description ? (
+                  <Text variant="body" color={colors.light.text} style={styles.description}>
+                    {business.description}
+                  </Text>
+                ) : (
+                  <Text variant="body" color={colors.light.textSecondary} style={styles.emptyText}>
+                    No description available
+                  </Text>
+                )}
+              </Card>
+            </View>
+          )}
+
+          {activeTab === 'reviews' && (
+            <View style={styles.section}>
+              <Card variant="flat" padding="lg">
+                {business.ratingCount > 0 ? (
+                  <>
+                    <View style={styles.ratingSummary}>
+                      <Text variant="largeTitle" style={styles.ratingLarge}>
+                        {business.ratingAvg.toFixed(1)}
+                      </Text>
+                      <Ionicons name="star" size={32} color={colors.light.text} style={styles.ratingStarIcon} />
+                      <Text variant="body" color={colors.light.textSecondary}>
+                        Based on {business.ratingCount} reviews
+                      </Text>
+                    </View>
+                    <Text variant="footnote" color={colors.light.textTertiary} style={styles.comingSoon}>
+                      Individual reviews coming soon
+                    </Text>
+                  </>
+                ) : (
+                  <Text variant="body" color={colors.light.textSecondary} style={styles.emptyText}>
+                    No reviews yet
+                  </Text>
+                )}
+              </Card>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -242,194 +294,123 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  scroll: {
+    flex: 1,
+  },
   imageContainer: {
     width: '100%',
-    height: 300,
-    position: 'relative',
+    height: 200,
+    backgroundColor: colors.light.surfaceSecondary,
   },
   imagePlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: colors.light.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  imagePlaceholderText: {
-    fontSize: 64,
-  },
-  favoriteButton: {
-    position: 'absolute',
-    top: spacing.lg,
-    right: spacing.lg,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  favoriteIcon: {
-    fontSize: 24,
-  },
-  header: {
-    padding: spacing.xl,
+  metaBlock: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
     backgroundColor: colors.light.surface,
-  },
-  headerTop: {
-    marginBottom: spacing.sm,
-  },
-  title: {
-    ...typography.largeTitle,
-    color: colors.light.text,
-  },
-  categoryContainer: {
-    marginBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.light.border,
   },
   category: {
-    ...typography.body,
-    color: colors.light.textSecondary,
+    marginBottom: spacing.xs,
   },
-  locationContainer: {
+  locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.sm,
     gap: spacing.xs,
-  },
-  locationIcon: {
-    fontSize: 16,
+    marginBottom: spacing.xs,
   },
   locationText: {
-    ...typography.body,
-    color: colors.light.textSecondary,
     flex: 1,
   },
-  ratingContainer: {
+  ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
   },
-  ratingStar: {
-    fontSize: 16,
+  ratingValue: {
+    marginRight: spacing.xs,
   },
-  ratingText: {
-    ...typography.headline,
-    color: colors.light.text,
-  },
-  ratingCount: {
-    ...typography.footnote,
-    color: colors.light.textSecondary,
+  favoriteHeaderButton: {
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
   },
   tabsContainer: {
     flexDirection: 'row',
     backgroundColor: colors.light.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.light.border,
-    paddingHorizontal: spacing.xl,
   },
   tab: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.lg,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
-    marginRight: spacing.xl,
+    marginBottom: -1,
   },
   tabActive: {
-    borderBottomColor: colors.light.accent,
-  },
-  tabText: {
-    ...typography.headline,
-    color: colors.light.textSecondary,
-  },
-  tabTextActive: {
-    color: colors.light.accent,
-    fontWeight: '600',
+    borderBottomColor: colors.light.text,
   },
   content: {
-    padding: spacing.xl,
+    padding: spacing.lg,
+    paddingBottom: spacing['3xl'],
   },
-  servicesSection: {
-    gap: spacing.xl,
+  section: {
+    gap: spacing.lg,
   },
   serviceGroup: {
     marginBottom: spacing.xl,
   },
   serviceGroupTitle: {
-    ...typography.title2,
-    color: colors.light.text,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   serviceCard: {
-    backgroundColor: colors.light.surface,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
     marginBottom: spacing.md,
+  },
+  serviceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    ...shadows.sm,
+    justifyContent: 'space-between',
   },
   serviceInfo: {
     flex: 1,
   },
-  serviceName: {
-    ...typography.headline,
-    color: colors.light.text,
-    marginBottom: spacing.xs,
-  },
-  serviceDuration: {
-    ...typography.footnote,
-    color: colors.light.textSecondary,
+  serviceRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   servicePrice: {
-    ...typography.title3,
-    color: colors.light.text,
-    marginRight: spacing.md,
+    marginRight: spacing.xs,
   },
-  serviceArrow: {
-    ...typography.largeTitle,
-    color: colors.light.textSecondary,
-    fontSize: 24,
-  },
-  aboutSection: {},
   description: {
-    ...typography.body,
-    color: colors.light.text,
     lineHeight: 24,
   },
-  reviewsSection: {},
+  emptyText: {
+    textAlign: 'center',
+    paddingVertical: spacing.lg,
+  },
   ratingSummary: {
     alignItems: 'center',
-    paddingVertical: spacing['2xl'],
+    paddingVertical: spacing.xl,
   },
   ratingLarge: {
-    ...typography.largeTitle,
-    color: colors.light.text,
-    fontSize: 48,
     marginBottom: spacing.sm,
   },
-  ratingStarLarge: {
-    fontSize: 32,
-    marginBottom: spacing.md,
+  ratingStarIcon: {
+    marginBottom: spacing.sm,
   },
-  ratingCountLarge: {
-    ...typography.body,
-    color: colors.light.textSecondary,
-  },
-  comingSoonText: {
-    ...typography.body,
-    color: colors.light.textSecondary,
+  comingSoon: {
     textAlign: 'center',
-    marginTop: spacing.xl,
-  },
-  emptyText: {
-    ...typography.body,
-    color: colors.light.textSecondary,
-    textAlign: 'center',
-    paddingVertical: spacing['2xl'],
-  },
-  errorText: {
-    ...typography.body,
-    color: colors.light.error,
+    marginTop: spacing.lg,
   },
 });
-
-

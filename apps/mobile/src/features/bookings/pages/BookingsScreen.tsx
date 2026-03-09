@@ -1,31 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Text } from '@planity/ui';
+import { colors, spacing, radius, shadows } from '@planity/ui';
 import { useAuth } from '../../../application/providers';
 import api from '../../../shared/lib/api';
-import { colors, spacing, typography, radius, shadows } from '@planity/ui';
 
 interface Appointment {
   id: string;
   status: string;
   startAtUtc: string;
   endAtUtc: string;
-  business: {
-    id: string;
-    name: string;
-  };
-  staff: {
-    id: string;
-    name: string;
-  } | null;
+  business: { id: string; name: string };
+  staff: { id: string; name: string } | null;
 }
 
 export default function BookingsScreen() {
@@ -66,7 +62,7 @@ export default function BookingsScreen() {
       case 'confirmed':
         return colors.light.success;
       case 'pending':
-        return '#FF9500';
+        return colors.light.textSecondary;
       case 'cancelled':
         return colors.light.error;
       default:
@@ -84,67 +80,89 @@ export default function BookingsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Bookings</Text>
-      </View>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
+      <SafeAreaView style={styles.safeArea}>
+        {/* Header - Explore style */}
+        <View style={styles.header}>
+          <Text variant="title2" style={styles.headerTitle}>
+            My bookings
+          </Text>
+        </View>
 
-      <FlatList
-        data={appointments}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.light.accent}
-          />
-        }
-        renderItem={({ item }) => {
-          const startDate = new Date(item.startAtUtc);
-          const statusColor = getStatusColor(item.status);
+        <FlatList
+          data={appointments}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.light.accent}
+            />
+          }
+          ListHeaderComponent={
+            <View style={styles.sectionHeader}>
+              <Text variant="headline" style={styles.sectionTitle}>
+                Upcoming
+              </Text>
+            </View>
+          }
+          renderItem={({ item }) => {
+            const startDate = new Date(item.startAtUtc);
+            const statusColor = getStatusColor(item.status);
 
-          return (
-            <TouchableOpacity style={styles.card} activeOpacity={0.7}>
-              <View style={styles.cardHeader}>
-                <View style={styles.cardHeaderLeft}>
-                  <Text style={styles.cardTitle}>{item.business.name}</Text>
-                  {item.staff && (
-                    <Text style={styles.cardStaff}>with {item.staff.name}</Text>
-                  )}
+            return (
+              <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardHeaderLeft}>
+                    <Text variant="title3" style={styles.cardTitle}>
+                      {item.business.name}
+                    </Text>
+                    {item.staff && (
+                      <Text variant="body" color={colors.light.textSecondary}>
+                        with {item.staff.name}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+                    <Text variant="footnote" weight="600" style={[styles.cardStatus, { color: statusColor }]}>
+                      {item.status}
+                    </Text>
+                  </View>
                 </View>
-                <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
-                  <Text style={[styles.cardStatus, { color: statusColor }]}>
-                    {item.status}
-                  </Text>
-                </View>
-              </View>
 
-              <View style={styles.cardTimeContainer}>
-                <Text style={styles.timeIcon}>🕐</Text>
-                <View style={styles.timeInfo}>
-                  <Text style={styles.cardDate}>
-                    {startDate.toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </Text>
-                  <Text style={styles.cardTime}>
-                    {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
+                <View style={styles.cardTimeContainer}>
+                  <View style={styles.timeInfo}>
+                    <Text variant="headline">
+                      {startDate.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </Text>
+                    <Text variant="body" color={colors.light.textSecondary}>
+                      {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          );
-        }}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>📅</Text>
-            <Text style={styles.emptyText}>No upcoming bookings</Text>
-            <Text style={styles.emptySubtext}>Book an appointment to see it here</Text>
-          </View>
-        }
-      />
+              </TouchableOpacity>
+            );
+          }}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text variant="title1" style={styles.emptyIcon}>
+                📅
+              </Text>
+              <Text variant="title3" style={styles.emptyText}>
+                No upcoming bookings
+              </Text>
+              <Text variant="body" color={colors.light.textSecondary} style={styles.emptySubtext}>
+                Book an appointment to see it here
+              </Text>
+            </View>
+          }
+        />
+      </SafeAreaView>
     </View>
   );
 }
@@ -154,30 +172,43 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.light.background,
   },
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.light.background,
+  },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   header: {
-    padding: spacing.xl,
-    paddingTop: spacing['3xl'],
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     backgroundColor: colors.light.surface,
-    ...shadows.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.light.border,
   },
-  title: {
-    ...typography.largeTitle,
-    color: colors.light.text,
+  headerTitle: {
+    marginBottom: 0,
+  },
+  sectionHeader: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.md,
+  },
+  sectionTitle: {
+    marginBottom: 0,
   },
   list: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing['3xl'],
   },
   card: {
     backgroundColor: colors.light.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     marginBottom: spacing.lg,
-    ...shadows.md,
+    ...shadows.sm,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -189,13 +220,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardTitle: {
-    ...typography.title3,
-    color: colors.light.text,
     marginBottom: spacing.xs,
-  },
-  cardStaff: {
-    ...typography.body,
-    color: colors.light.textSecondary,
   },
   statusBadge: {
     paddingHorizontal: spacing.md,
@@ -203,50 +228,27 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   cardStatus: {
-    ...typography.footnote,
-    fontWeight: '600',
     textTransform: 'capitalize',
   },
   cardTimeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
     paddingTop: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.light.border,
   },
-  timeIcon: {
-    fontSize: 20,
-  },
   timeInfo: {
     flex: 1,
-  },
-  cardDate: {
-    ...typography.headline,
-    color: colors.light.text,
-    marginBottom: spacing.xs,
-  },
-  cardTime: {
-    ...typography.body,
-    color: colors.light.textSecondary,
   },
   empty: {
     padding: spacing['3xl'],
     alignItems: 'center',
   },
   emptyIcon: {
-    fontSize: 64,
     marginBottom: spacing.lg,
   },
   emptyText: {
-    ...typography.title3,
-    color: colors.light.text,
     marginBottom: spacing.xs,
   },
   emptySubtext: {
-    ...typography.body,
-    color: colors.light.textSecondary,
+    textAlign: 'center',
   },
 });
-
-

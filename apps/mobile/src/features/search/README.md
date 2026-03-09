@@ -1,6 +1,6 @@
 # Search Feature
 
-This feature handles search functionality for businesses and addresses in the Planity mobile app.
+This feature handles search functionality for businesses and addresses in the Rendez mobile app.
 
 ## Architecture
 

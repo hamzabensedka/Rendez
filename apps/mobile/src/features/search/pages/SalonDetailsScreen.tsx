@@ -1,26 +1,28 @@
 import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { 
-  SalonDetailsHeader, 
-  SalonTabs, 
-  SalonImageCarousel, 
-  SalonInfo, 
+import { Text } from '@planity/ui';
+import { colors, spacing } from '@planity/ui';
+import {
+  SalonDetailsHeader,
+  SalonTabs,
+  SalonImageCarousel,
+  SalonInfo,
   ServiceSelection,
   SalonReviews,
-  SalonAbout
+  SalonAbout,
+  ScreenHeader,
 } from '../components';
 import { MOCK_SALONS } from '../constants';
 import { ServiceItem } from '../types';
 
-const TABS = ['Prendre RDV', 'Avis', 'À-propos'];
+const TABS = ['Book', 'Reviews', 'About'];
 
 export default function SalonDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState('Prendre RDV');
+  const [activeTab, setActiveTab] = useState('Book');
 
-  // Find salon by ID (in a real app, this would be an API call)
   const salon = MOCK_SALONS.find((s) => s.id === id);
 
   const handleBack = useCallback(() => {
@@ -40,7 +42,17 @@ export default function SalonDetailsScreen() {
   }, [router, salon]);
 
   if (!salon) {
-    return null; // Or a loading/error state
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        <ScreenHeader title="Provider" />
+        <View style={styles.notFound}>
+          <Text variant="body" color={colors.light.textSecondary}>
+            Provider not found
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -55,7 +67,7 @@ export default function SalonDetailsScreen() {
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {activeTab === 'Prendre RDV' ? (
+        {activeTab === 'Book' ? (
           <>
             <SalonImageCarousel images={salon.images} />
             <SalonInfo salon={salon} />
@@ -68,7 +80,7 @@ export default function SalonDetailsScreen() {
               </View>
             )}
           </>
-        ) : activeTab === 'Avis' ? (
+        ) : activeTab === 'Reviews' ? (
           <SalonReviews />
         ) : (
           <SalonAbout />
@@ -81,12 +93,20 @@ export default function SalonDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.light.background,
+  },
+  notFound: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.xl,
   },
   content: {
     flex: 1,
+    paddingBottom: spacing['3xl'],
   },
   servicesSection: {
-    marginTop: 8,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
   },
 });

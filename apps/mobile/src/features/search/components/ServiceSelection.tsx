@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Text, Button, Card } from '@planity/ui';
+import { colors, spacing, radius, shadows } from '@planity/ui';
 import { ServiceCategory, ServiceItem } from '../types';
 
 interface ServiceSelectionProps {
-  categories: ServiceCategory[];
+  categories: readonly ServiceCategory[]; // Allow readonly arrays
   onSelect?: (service: ServiceItem) => void;
   hideTitle?: boolean;
 }
@@ -25,7 +27,9 @@ export const ServiceSelection = React.memo<ServiceSelectionProps>(function Servi
 
   return (
     <View style={styles.container}>
-      {!hideTitle && <Text style={styles.title}>Choix de la prestation</Text>}
+      {!hideTitle && (
+        <Text variant="title2" style={styles.title}>Choose service</Text>
+      )}
       
       {categories.map((category) => {
         const isExpanded = expandedCategories[category.id];
@@ -36,11 +40,11 @@ export const ServiceSelection = React.memo<ServiceSelectionProps>(function Servi
               onPress={() => toggleCategory(category.id)}
               activeOpacity={0.7}
             >
-              <Text style={styles.categoryTitle}>{category.title}</Text>
+              <Text variant="body" weight="500">{category.title}</Text>
               <Ionicons 
                 name={isExpanded ? "chevron-up" : "chevron-down"} 
                 size={20} 
-                color="#000000" 
+                color={colors.light.text} 
               />
             </TouchableOpacity>
             
@@ -49,28 +53,25 @@ export const ServiceSelection = React.memo<ServiceSelectionProps>(function Servi
                 {category.items.map((item) => (
                   <View key={item.id} style={styles.itemRow}>
                     <View style={styles.itemInfo}>
-                      <Text style={styles.itemName}>{item.name}</Text>
+                      <Text variant="body" style={styles.itemName}>{item.name}</Text>
                       <View style={styles.itemMetaContainer}>
-                        <Text style={styles.itemPrice}>{item.price}</Text>
-                        <Text style={styles.itemDot}>•</Text>
-                        <Text style={styles.itemDuration}>{item.duration}</Text>
+                        <Text variant="footnote" weight="600" color={colors.light.textSecondary}>{item.price}</Text>
+                        <Text variant="footnote" color={colors.light.textSecondary} style={styles.itemDot}>•</Text>
+                        <Text variant="footnote" color={colors.light.textSecondary}>{item.duration}</Text>
                       </View>
                       {item.description && (
-                        <Text style={styles.itemDescription} numberOfLines={2}>
+                        <Text variant="caption" color={colors.light.textSecondary} style={styles.itemDescription} numberOfLines={2}>
                           {item.description}
                         </Text>
                       )}
                     </View>
                     
-                    <TouchableOpacity 
-                      style={styles.chooseButton}
-                      activeOpacity={0.8}
-                      accessibilityLabel={`Choisir ${item.name}`}
-                      accessibilityRole="button"
-                      onPress={() => onSelect?.(item)}
-                    >
-                      <Text style={styles.chooseButtonText}>Choisir</Text>
-                    </TouchableOpacity>
+                    <Button 
+                      title="Choisir" 
+                      onPress={() => onSelect?.(item)} 
+                      size="sm"
+                      variant="primary" // Dark
+                    />
                   </View>
                 ))}
               </View>
@@ -84,18 +85,15 @@ export const ServiceSelection = React.memo<ServiceSelectionProps>(function Servi
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 8,
-    backgroundColor: '#f8f9fa',
+    paddingTop: spacing.sm,
+    backgroundColor: colors.light.background,
   },
   title: {
-    fontSize: 22,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.lg,
   },
   categoryContainer: {
-    marginBottom: 10,
+    marginBottom: spacing.sm,
     backgroundColor: 'transparent',
     zIndex: 1,
   },
@@ -103,82 +101,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 2,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.light.surface,
+    ...shadows.sm,
     zIndex: 2,
   },
-  categoryTitle: {
-    fontSize: 16,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
-  },
   itemsContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.light.surface,
   },
   itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: colors.light.border,
   },
   itemInfo: {
     flex: 1,
-    paddingRight: 16,
+    paddingRight: spacing.lg,
   },
   itemName: {
-    fontSize: 15,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
     marginBottom: 6,
   },
   itemMetaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  itemPrice: {
-    fontSize: 14,
-    color: '#666666',
-    fontFamily: 'Inter-Regular',
-    fontWeight: '600',
-  },
   itemDot: {
     marginHorizontal: 6,
-    color: '#666666',
-    fontSize: 14,
-  },
-  itemDuration: {
-    fontSize: 14,
-    color: '#666666',
-    fontFamily: 'Inter-Regular',
   },
   itemDescription: {
-    fontSize: 13,
-    color: '#666666',
-    fontFamily: 'Inter-Regular',
     marginTop: 6,
     lineHeight: 18,
-  },
-  chooseButton: {
-    backgroundColor: '#1C1C1E',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-    minWidth: 80,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chooseButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontFamily: 'Inter-Medium',
   },
 });

@@ -87,13 +87,13 @@ export const SalonReviews = React.memo(function SalonReviews() {
             </View>
           </View>
           <View style={styles.criteriaRow}>
-            <Text style={styles.criteriaLabel}>Qualité de la prestation</Text>
+            <Text style={styles.criteriaLabel}>Service quality</Text>
             <View style={styles.criteriaValueContainer}>
               <Text style={styles.criteriaValue}>4,9</Text>
               <Ionicons name="star" size={12} color="#000" />
             </View>
           </View>
-          <Text style={styles.reviewCount}>315 clients ont donné leur avis</Text>
+          <Text style={styles.reviewCount}>315 reviews</Text>
         </View>
       </View>
 

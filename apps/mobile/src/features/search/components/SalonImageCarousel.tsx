@@ -3,7 +3,7 @@ import { View, Image, StyleSheet, FlatList, Dimensions, Text, TouchableOpacity, 
 import { Ionicons } from '@expo/vector-icons';
 
 interface SalonImageCarouselProps {
-  images: string[];
+  images: readonly string[];
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

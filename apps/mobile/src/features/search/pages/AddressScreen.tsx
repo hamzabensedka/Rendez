@@ -1,25 +1,27 @@
-import React, { useCallback } from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect } from 'react';
+import { View, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import { Text } from '@planity/ui';
+import { colors, spacing } from '@planity/ui';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ScreenHeader, SearchInput, AroundMeButton, AddressSuggestionList } from '../components';
 import { useAddressSearch } from '../hooks';
 import { SEARCH_PLACEHOLDERS } from '../constants';
 
-/**
- * AddressScreen - Address search interface
- * Allows users to search for addresses or use their current location
- */
 export default function AddressScreen() {
   const router = useRouter();
+  const { address: initialAddress } = useLocalSearchParams<{ address?: string }>();
   const { query, setQuery, suggestions, selectAddress } = useAddressSearch();
 
+  useEffect(() => {
+    if (initialAddress) {
+      setQuery(initialAddress);
+    }
+  }, [initialAddress, setQuery]);
+
   const handleAroundMe = useCallback(() => {
-    // TODO: Implement geolocation functionality
-    // In production: Request location permission and get coordinates
-    console.log('Around me pressed');
     router.push({
       pathname: '/search-results',
-      params: { address: 'Autour de moi', category: 'Coiffeurs' }
+      params: { address: 'Near me', category: 'Services' },
     });
   }, [router]);
 
@@ -28,47 +30,75 @@ export default function AddressScreen() {
       selectAddress(address);
       router.push({
         pathname: '/search-results',
-        params: { address: address.address, category: 'Coiffeurs' }
+        params: { address: address.address, category: 'Services' },
       });
     },
     [selectAddress, router]
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
+      <SafeAreaView style={styles.safeArea}>
+        <ScreenHeader title="Location" />
 
-      <ScreenHeader title="Adresse" />
-
-      <SearchInput
-        value={query}
-        onChangeText={setQuery}
-        placeholder={SEARCH_PLACEHOLDERS.ADDRESS}
-        autoFocus
-      />
-
-      <View style={styles.contentArea}>
-        {!query.trim() && <AroundMeButton onPress={handleAroundMe} />}
-
-        {query.trim() && (
-          <AddressSuggestionList
-            suggestions={suggestions}
-            query={query}
-            onSelect={handleSelectAddress}
+        <View style={styles.section}>
+          <Text variant="headline" style={styles.sectionTitle}>
+            Where?
+          </Text>
+          <SearchInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder={SEARCH_PLACEHOLDERS.ADDRESS}
+            autoFocus
           />
-        )}
-      </View>
-    </SafeAreaView>
+        </View>
+
+        <View style={styles.contentArea}>
+          {!query.trim() ? (
+            <View style={styles.aroundSection}>
+              <Text variant="headline" style={styles.sectionTitle}>
+                Use location
+              </Text>
+              <AroundMeButton onPress={handleAroundMe} />
+            </View>
+          ) : (
+            <AddressSuggestionList
+              suggestions={suggestions}
+              query={query}
+              onSelect={handleSelectAddress}
+            />
+          )}
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.light.background,
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.light.background,
+  },
+  section: {
+    backgroundColor: colors.light.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.light.border,
+  },
+  sectionTitle: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    marginBottom: spacing.sm,
   },
   contentArea: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.light.background,
+  },
+  aroundSection: {
+    paddingTop: spacing.lg,
   },
 });
