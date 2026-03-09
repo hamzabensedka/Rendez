@@ -21,6 +21,7 @@ View your upcoming appointments and understand what changes you can (and can’t
 
 ## Common variations
 - **MVP note (limited management)**: The current MVP provides a read-only list. There is no in-app cancel/reschedule flow yet.
+- **MVP note (refresh)**: There is no pull-to-refresh; reopen the tab or app to see new bookings.
 - **Staff shown or not**: Some bookings may show “with …”; others may have no staff listed.
 
 ## Troubleshooting

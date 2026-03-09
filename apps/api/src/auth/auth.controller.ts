@@ -6,6 +6,7 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { AuthenticatedUser } from './types/authenticated-user.type';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -39,7 +40,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get current user' })
   @ApiResponse({ status: 200, description: 'Current user info' })
-  async me(@CurrentUser() user: any) {
+  async me(@CurrentUser() user: AuthenticatedUser) {
     return { user };
   }
 }

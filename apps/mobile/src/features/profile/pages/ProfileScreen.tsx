@@ -5,6 +5,7 @@ import {
   SafeAreaView,
   StatusBar,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text, Button, Card } from '@planity/ui';
@@ -70,6 +71,22 @@ export default function ProfileScreen() {
                 <Text variant="body">{user.role}</Text>
               </View>
             </Card>
+            <TouchableOpacity
+              style={styles.linkRow}
+              onPress={() => router.push('/(tabs)/favorites')}
+              activeOpacity={0.7}
+            >
+              <Text variant="body">Favorites</Text>
+              <Text variant="footnote" color={colors.light.textSecondary}>View saved businesses</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.linkRow}
+              onPress={() => router.push('/(tabs)/bookings')}
+              activeOpacity={0.7}
+            >
+              <Text variant="body">My bookings</Text>
+              <Text variant="footnote" color={colors.light.textSecondary}>Upcoming appointments</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.section}>
@@ -124,6 +141,16 @@ const styles = StyleSheet.create({
   },
   infoRow: {
     marginBottom: spacing.md,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    backgroundColor: colors.light.surfaceSecondary,
+    borderRadius: 8,
   },
   label: {
     textTransform: 'uppercase',

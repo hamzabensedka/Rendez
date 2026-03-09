@@ -1,6 +1,26 @@
 # Search Feature
 
-This feature handles search functionality for businesses and addresses in the Rendez mobile app.
+This feature handles search functionality for businesses and addresses in the Planity mobile app.
+
+## Audit: file classification (keep / migrate / archive)
+
+| Area | Classification | Notes |
+|------|-----------------|--------|
+| **Live API usage** | Keep | `SearchResultsScreen`, `ExploreScreen` (in explore feature) use live `GET /businesses`. `BusinessCard`, `ScreenHeader` are shared with explore. |
+| **Components** (ScreenHeader, SearchInput, BusinessCard, etc.) | Keep | Reusable; some used by canonical flows (e.g. BusinessDetailScreen uses ScreenHeader). |
+| **Address** (addressService, useAddressSearch, AddressScreen) | Migrate later | Currently mock-only; connect to live API or internal strategy when product decides. |
+| **Legacy search flow** (SearchScreen, SalonDetailsScreen, SearchModeScreen, old BookingScreen/ProfileScreen in search) | Archive / prototype | Canonical booking lives at `features/booking`, profile at `features/profile`. Prefer routing to `(tabs)/booking` and `(tabs)/profile`. |
+| **Salon* components** (SalonCard, SalonDetailsHeader, SalonTabs, etc.) | Archive or rename | Naming is legacy; migrate to “business” naming if kept. |
+
+**Single active flows**: Booking = `(tabs)/booking` → `features/booking`. Profile = `(tabs)/profile` → `features/profile`. Search/discovery entry points should link to these when the user chooses to book or view profile.
+
+## Current state vs planned
+
+- **Business search / discovery**: Explore and search results can use the **live API** to list businesses (`GET /businesses`). See `ExploreScreen` and `SearchResultsScreen` where wired.
+- **Address search**: Address suggestions and "Around Me" use **mock data** (`MOCK_ADDRESSES`, stub geolocation). Documented as internal strategy until a real geocoding provider or internal address API is added.
+- **Navigation**: The canonical booking and profile flows live under `app/(tabs)/`. This search feature coexists with the live flow; entry points should route to canonical flows when possible.
+
+When reading this README, treat "API Integration" and "Geolocation" in Future Improvements as not yet done.
 
 ## Architecture
 

@@ -1,3 +1,4 @@
+export { BusinessCard, type ApiBusinessListItem } from './BusinessCard';
 export { ScreenHeader } from './ScreenHeader';
 export { SearchInput } from './SearchInput';
 export { HighlightedText } from './HighlightedText';

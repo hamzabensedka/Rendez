@@ -31,13 +31,7 @@ export default function SalonDetailsScreen() {
 
   const handleServiceSelect = useCallback((service: ServiceItem) => {
     if (salon) {
-      router.push({
-        pathname: '/booking',
-        params: {
-          salonId: salon.id,
-          serviceId: service.id,
-        },
-      });
+      router.push('/(tabs)/booking');
     }
   }, [router, salon]);
 

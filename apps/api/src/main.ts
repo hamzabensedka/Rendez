@@ -2,6 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { envSchema } from './env.validation';
+
+// Fail fast if required env vars are missing or invalid
+envSchema.validate();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

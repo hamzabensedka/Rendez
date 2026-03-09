@@ -12,12 +12,20 @@ import { UsersModule } from '../users/users.module';
     PassportModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_ACCESS_SECRET'),
-        signOptions: {
-          expiresIn: config.get<string>('JWT_ACCESS_EXPIRY', '15m'),
-        },
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>('JWT_ACCESS_SECRET');
+        if (!secret || secret.length < 16) {
+          throw new Error(
+            'JWT_ACCESS_SECRET must be set and at least 16 characters. Check apps/api/.env (see .env.example).'
+          );
+        }
+        return {
+          secret,
+          signOptions: {
+            expiresIn: config.get<string>('JWT_ACCESS_EXPIRY', '15m'),
+          },
+        };
+      },
     }),
     UsersModule,
   ],

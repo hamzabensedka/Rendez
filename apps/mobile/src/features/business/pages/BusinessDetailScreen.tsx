@@ -16,6 +16,17 @@ import api from '../../../shared/lib/api';
 import { useFavorites } from '../../../application/providers';
 import { ScreenHeader } from '../../search/components';
 
+/** Location shape from API (businesses findOne) */
+interface ApiLocation {
+  id: string;
+  label: string;
+  address1: string;
+  address2?: string | null;
+  postalCode: string;
+  city: string;
+  country: string;
+}
+
 interface Business {
   id: string;
   name: string;
@@ -33,10 +44,12 @@ interface Business {
       priceCents: number | null;
     }>;
   }>;
-  locations?: Array<{
-    id: string;
-    address: string;
-  }>;
+  locations?: ApiLocation[];
+}
+
+function formatLocationAddress(loc: ApiLocation): string {
+  const parts = [loc.address1, loc.address2, loc.postalCode, loc.city, loc.country].filter(Boolean);
+  return parts.join(', ');
 }
 
 type TabType = 'services' | 'about' | 'reviews';
@@ -62,8 +75,8 @@ export default function BusinessDetailScreen() {
     try {
       const response = await api.get(`/businesses/${id}`);
       setBusiness(response.data);
-    } catch (error) {
-      console.error('Failed to load business', error);
+    } catch {
+      setBusiness(null);
     } finally {
       setLoading(false);
     }
@@ -140,7 +153,7 @@ export default function BusinessDetailScreen() {
             <View style={styles.locationRow}>
               <Ionicons name="location-outline" size={16} color={colors.light.textSecondary} />
               <Text variant="body" color={colors.light.textSecondary} style={styles.locationText} numberOfLines={2}>
-                {business.locations[0].address}
+                {formatLocationAddress(business.locations[0])}
               </Text>
             </View>
           )}

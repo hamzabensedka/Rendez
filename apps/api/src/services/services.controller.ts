@@ -5,7 +5,6 @@ import {
   Body,
   Param,
   UseGuards,
-  Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ServicesService } from './services.service';
@@ -14,6 +13,8 @@ import { CreateServiceVariantDto } from './dto/create-service-variant.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { UserRole } from '@planity/shared';
 
 @ApiTags('services')
@@ -33,10 +34,10 @@ export class ServicesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create service (provider only)' })
   async create(
-    @Request() req: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateServiceDto & { businessId: string }
   ) {
-    return this.servicesService.create(dto.businessId, req.user.id, dto);
+    return this.servicesService.create(dto.businessId, user.id, dto);
   }
 
   @Post('provider/variants')
@@ -45,12 +46,12 @@ export class ServicesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create service variant (provider only)' })
   async createVariant(
-    @Request() req: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateServiceVariantDto & { businessId: string; serviceId: string }
   ) {
     return this.servicesService.createVariant(
       dto.businessId,
-      req.user.id,
+      user.id,
       dto.serviceId,
       dto
     );

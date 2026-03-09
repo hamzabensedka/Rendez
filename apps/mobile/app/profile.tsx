@@ -1,6 +1,9 @@
-import React from 'react';
-import ProfileScreen from '../src/features/search/pages/ProfileScreen';
+import { Redirect } from 'expo-router';
 
-export default function ProfileRoute() {
-  return <ProfileScreen />;
+/**
+ * Legacy route: redirects to the canonical profile tab.
+ * The live profile flow lives at (tabs)/profile → features/profile/pages/ProfileScreen.
+ */
+export default function ProfileRedirect() {
+  return <Redirect href="/(tabs)/profile" />;
 }

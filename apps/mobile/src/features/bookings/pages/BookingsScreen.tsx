@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Text } from '@planity/ui';
 import { colors, spacing, radius, shadows } from '@planity/ui';
+import { AppointmentStatus, getAppointmentStatusLabel } from '@planity/shared';
 import { useAuth } from '../../../application/providers';
 import api from '../../../shared/lib/api';
 
@@ -30,6 +31,7 @@ export default function BookingsScreen() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -41,11 +43,13 @@ export default function BookingsScreen() {
   }, [user]);
 
   async function loadAppointments() {
+    setLoadError(null);
     try {
       const response = await api.get('/appointments/me?upcoming=true');
       setAppointments(response.data);
-    } catch (error) {
-      console.error('Failed to load appointments:', error);
+    } catch {
+      setLoadError('Could not load bookings. Pull to try again.');
+      setAppointments([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -58,12 +62,14 @@ export default function BookingsScreen() {
   }
 
   function getStatusColor(status: string): string {
-    switch (status.toLowerCase()) {
-      case 'confirmed':
+    switch (status) {
+      case AppointmentStatus.BOOKED:
         return colors.light.success;
-      case 'pending':
+      case AppointmentStatus.CANCELLED:
+        return colors.light.error;
+      case AppointmentStatus.COMPLETED:
         return colors.light.textSecondary;
-      case 'cancelled':
+      case AppointmentStatus.NO_SHOW:
         return colors.light.error;
       default:
         return colors.light.textSecondary;
@@ -112,7 +118,11 @@ export default function BookingsScreen() {
             const statusColor = getStatusColor(item.status);
 
             return (
-              <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+              <TouchableOpacity
+                style={styles.card}
+                activeOpacity={0.8}
+                onPress={() => router.push({ pathname: '/(tabs)/bookings/[id]', params: { id: item.id } })}
+              >
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderLeft}>
                     <Text variant="title3" style={styles.cardTitle}>
@@ -126,7 +136,7 @@ export default function BookingsScreen() {
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
                     <Text variant="footnote" weight="600" style={[styles.cardStatus, { color: statusColor }]}>
-                      {item.status}
+                      {getAppointmentStatusLabel(item.status)}
                     </Text>
                   </View>
                 </View>
@@ -154,10 +164,10 @@ export default function BookingsScreen() {
                 📅
               </Text>
               <Text variant="title3" style={styles.emptyText}>
-                No upcoming bookings
+                {loadError || 'No upcoming bookings'}
               </Text>
               <Text variant="body" color={colors.light.textSecondary} style={styles.emptySubtext}>
-                Book an appointment to see it here
+                {loadError ? 'Pull down to refresh' : 'Book an appointment to see it here'}
               </Text>
             </View>
           }

@@ -4,10 +4,11 @@ A salon/beauty booking marketplace with Apple-style UI/UX, built with React Nati
 
 ## Tech Stack
 
-- **Mobile**: Expo React Native + TypeScript
+- **Mobile**: Expo React Native + TypeScript (Expo Router)
 - **Backend**: NestJS + Prisma + Postgres
-- **Cache/Jobs**: Redis + BullMQ
 - **Monorepo**: Nx
+
+Cache/Jobs (Redis + BullMQ) and admin dashboard are planned; the current codebase is the API + mobile app only.
 
 ## Getting Started
 
@@ -21,7 +22,7 @@ A salon/beauty booking marketplace with Apple-style UI/UX, built with React Nati
    ```
 
 2. **Set up environment variables:**
-   - API: Create `apps/api/.env` (see `SUPABASE_SETUP.md`)
+   - API: Copy `apps/api/.env.example` to `apps/api/.env` and set `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` (see [QUICK_START.md](QUICK_START.md) or `SUPABASE_SETUP.md`).
    - Mobile: Create `apps/mobile/.env` with `EXPO_PUBLIC_API_URL=http://localhost:3000/v1`
 
 3. **Set up database (Supabase):**
@@ -44,16 +45,16 @@ A salon/beauty booking marketplace with Apple-style UI/UX, built with React Nati
 apps/
   api/          # NestJS backend
   mobile/       # Expo React Native app
-  admin-web/    # Next.js admin dashboard (future)
 
 packages/
   shared/       # Shared types, utils, constants
   ui/           # Design tokens, components
   config/       # ESLint, TypeScript configs
 
-infra/          # Docker compose, deployment scripts
-docs/           # Architecture docs, ADRs
+docs/           # Architecture, roadmap, audit notes
 ```
+
+Planned later: admin dashboard (Next.js), Redis/BullMQ, deployment/infra.
 
 ## Development
 
@@ -66,5 +67,6 @@ docs/           # Architecture docs, ADRs
 
 ## Environment Variables
 
-See `.env.example` files in each app directory for required variables.
+- **API**: Copy `apps/api/.env.example` to `apps/api/.env` and set real values (never commit `.env` or real secrets). See [QUICK_START.md](QUICK_START.md).
+- **Mobile**: Create `apps/mobile/.env` with `EXPO_PUBLIC_API_URL` pointing at your API.
 

@@ -14,6 +14,8 @@ datasource db {
 // Enable pg_trgm for text search
 // Run: CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
+// Provider/business ownership: one User → optional Provider → optional Business; reviewed for product intent (docs/audit/07-closed-decisions.md).
+
 model User {
   id           String    @id @default(uuid())
   email        String    @unique
@@ -241,8 +243,9 @@ model Appointment {
   @@index([staffId])
   @@index([startAtUtc, endAtUtc])
   @@index([status])
-  // Exclusion constraint for preventing overlapping appointments per staff
-  // This will be added via migration SQL
+  // Overlap protection: enforced by DB exclusion constraint (see migration
+  // 20260310000000_add_appointment_overlap_exclusion). Prevents overlapping
+  // non-cancelled appointments per (businessId, staffId).
   @@map("appointments")
 }
 

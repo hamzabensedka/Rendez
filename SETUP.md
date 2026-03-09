@@ -17,8 +17,11 @@ pnpm install
 ```bash
 cd apps/api
 cp .env.example .env
-# Edit .env with your configuration
+# Edit .env: set DATABASE_URL (e.g. Supabase), JWT_ACCESS_SECRET, JWT_REFRESH_SECRET.
+# Use strong random values for secrets; never commit .env.
 ```
+
+3. **If secrets were ever exposed** (e.g. committed or shared): rotate database password and JWT secrets immediately; update `.env` and deployment config; audit git history. See `docs/audit/07-closed-decisions.md`.
 
 4. **Run database migrations:**
 ```bash

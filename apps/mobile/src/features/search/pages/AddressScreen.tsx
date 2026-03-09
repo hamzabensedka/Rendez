@@ -3,10 +3,11 @@ import { View, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
 import { Text } from '@planity/ui';
 import { colors, spacing } from '@planity/ui';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ScreenHeader, SearchInput, AroundMeButton, AddressSuggestionList } from '../components';
+import { ScreenHeader, SearchInput, AddressSuggestionList } from '../components';
 import { useAddressSearch } from '../hooks';
 import { SEARCH_PLACEHOLDERS } from '../constants';
 
+/** Address search only. "Around Me" removed until expo-location is integrated (see docs/audit/07-closed-decisions.md). */
 export default function AddressScreen() {
   const router = useRouter();
   const { address: initialAddress } = useLocalSearchParams<{ address?: string }>();
@@ -17,13 +18,6 @@ export default function AddressScreen() {
       setQuery(initialAddress);
     }
   }, [initialAddress, setQuery]);
-
-  const handleAroundMe = useCallback(() => {
-    router.push({
-      pathname: '/search-results',
-      params: { address: 'Near me', category: 'Services' },
-    });
-  }, [router]);
 
   const handleSelectAddress = useCallback(
     (address: ReturnType<typeof useAddressSearch>['suggestions'][0]) => {
@@ -57,10 +51,9 @@ export default function AddressScreen() {
         <View style={styles.contentArea}>
           {!query.trim() ? (
             <View style={styles.aroundSection}>
-              <Text variant="headline" style={styles.sectionTitle}>
-                Use location
+              <Text variant="body" color={colors.light.textSecondary} style={styles.hint}>
+                Search by address above. Location-based search coming later.
               </Text>
-              <AroundMeButton onPress={handleAroundMe} />
             </View>
           ) : (
             <AddressSuggestionList
@@ -100,5 +93,9 @@ const styles = StyleSheet.create({
   },
   aroundSection: {
     paddingTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+  },
+  hint: {
+    textAlign: 'center',
   },
 });

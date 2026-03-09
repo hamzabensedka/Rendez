@@ -19,6 +19,7 @@ export interface UseAddressSearchResult {
   readonly query: string;
   readonly setQuery: (query: string) => void;
   readonly suggestions: readonly AddressSuggestion[];
+  readonly selectedAddress: AddressSuggestion | null;
   readonly isLoading: boolean;
   readonly error: Error | null;
   readonly selectAddress: (address: AddressSuggestion) => void;

@@ -53,5 +53,11 @@ dist/
 # Logs
 logs/
 *.log
-docs/
+
+# Docs
+docs/**
+!docs/
+!docs/README.md
+!docs/audit/
+!docs/audit/**
 

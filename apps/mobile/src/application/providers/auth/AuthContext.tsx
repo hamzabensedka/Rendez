@@ -12,23 +12,32 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  error: string | null;
   login: (user: User) => void;
   logout: () => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/** Bypass is allowed only in development builds; production cannot enable it via env. */
+const isBypassAllowed =
+  typeof __DEV__ !== 'undefined' && __DEV__ === true &&
+  process.env.EXPO_PUBLIC_BYPASS_AUTH === 'true';
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
   }, []);
 
   async function checkAuth() {
-    // Dev mode: bypass authentication entirely (no login required)
-    if (process.env.EXPO_PUBLIC_BYPASS_AUTH === 'true') {
+    setError(null);
+    // Dev-only bypass: never active in production (EXPO_PUBLIC_* is build-time; production builds don't set this)
+    if (isBypassAllowed) {
       setUser({
         id: 'dev-user',
         email: 'dev@rendez.local',
@@ -44,9 +53,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (token) {
         const userData = await getCurrentUser();
         setUser(userData);
+      } else {
+        setUser(null);
       }
-    } catch {
-      // Not authenticated
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Auth check failed';
+      setError(message);
+      if (__DEV__) {
+        console.warn('[AuthContext] Bootstrap auth check failed:', e);
+      }
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -54,11 +70,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   function login(userData: User) {
     setUser(userData);
+    setError(null);
+  }
+
+  function clearError() {
+    setError(null);
   }
 
   async function logout() {
-    if (process.env.EXPO_PUBLIC_BYPASS_AUTH === 'true') {
-      // Keep the dev user signed in
+    if (isBypassAllowed) {
       return;
     }
     try {
@@ -73,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, error, login, logout, clearError }}>
       {children}
     </AuthContext.Provider>
   );

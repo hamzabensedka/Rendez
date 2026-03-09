@@ -49,3 +49,31 @@ export function getEndOfDayUtc(date: string, timezone: string): Date {
   return localToUtc(date, '23:59', timezone);
 }
 
+/** Short day label for date picker (e.g. "Mon", "Today") */
+export function getDatePickerDayLabel(date: Date, today: Date = new Date()): string {
+  const isToday =
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear();
+  if (isToday) return 'Today';
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  return days[date.getDay()];
+}
+
+/** Format for date picker button (e.g. "Mon 15") */
+export function formatDatePickerButton(date: Date, today: Date = new Date()): string {
+  const dayLabel = getDatePickerDayLabel(date, today);
+  return `${dayLabel} ${date.getDate()}`;
+}
+
+/** Generate an array of the next N days from a start date (for booking date selection). */
+export function getNextDays(startDate: Date, count: number): Date[] {
+  const out: Date[] = [];
+  const cur = new Date(startDate);
+  for (let i = 0; i < count; i++) {
+    out.push(new Date(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+}
+

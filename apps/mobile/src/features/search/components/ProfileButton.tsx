@@ -19,7 +19,7 @@ export const ProfileButton = React.memo<ProfileButtonProps>(function ProfileButt
     if (onPress) {
       onPress(e);
     } else {
-      router.push('/profile');
+      router.push('/(tabs)/profile');
     }
   };
 

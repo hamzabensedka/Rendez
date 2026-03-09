@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 
+/**
+ * Favorites are stored device-locally (SecureStore).
+ * Account-level sync or backend persistence is not implemented; add when product requires it.
+ */
 interface FavoritesContextType {
   favorites: string[];
   isFavorite: (businessId: string) => boolean;

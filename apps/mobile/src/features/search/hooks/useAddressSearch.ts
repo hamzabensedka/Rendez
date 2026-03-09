@@ -1,29 +1,31 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { AddressSuggestion, UseAddressSearchResult } from '../types';
 import { searchAddresses } from '../services/addressService';
 
+export interface UseAddressSearchOptions {
+  /** Called when user selects an address; use to wire into search/discovery state (e.g. set city/region). */
+  onSelect?: (address: AddressSuggestion) => void;
+}
+
 /**
- * Custom hook for address search functionality
- * Handles query state, filtering, and address selection
- * 
- * @returns Address search state and handlers
+ * Address search: query, suggestions (mock-backed), and selection.
+ * selectedAddress is set when user picks one; pass onSelect to wire into parent state.
  */
-export function useAddressSearch(): UseAddressSearchResult {
+export function useAddressSearch(options: UseAddressSearchOptions = {}): UseAddressSearchResult {
+  const { onSelect } = options;
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<AddressSuggestion | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  // Debounce search to avoid excessive API calls
   useEffect(() => {
     if (!query.trim()) {
       setSuggestions([]);
       return;
     }
-
     setIsLoading(true);
     setError(null);
-
     const timeoutId = setTimeout(async () => {
       try {
         const results = await searchAddresses({ query, limit: 10 });
@@ -34,8 +36,7 @@ export function useAddressSearch(): UseAddressSearchResult {
       } finally {
         setIsLoading(false);
       }
-    }, 300); // 300ms debounce
-
+    }, 300);
     return () => {
       clearTimeout(timeoutId);
       setIsLoading(false);
@@ -43,15 +44,17 @@ export function useAddressSearch(): UseAddressSearchResult {
   }, [query]);
 
   const selectAddress = useCallback((address: AddressSuggestion) => {
-    // TODO: Handle address selection - navigate to search results or save address
-    // In production: navigate to results or save to context/state
-    console.log('Selected address:', address);
-  }, []);
+    setSelectedAddress(address);
+    setQuery(address.address);
+    setSuggestions([]);
+    onSelect?.(address);
+  }, [onSelect]);
 
   return {
     query,
     setQuery,
     suggestions,
+    selectedAddress,
     isLoading,
     error,
     selectAddress,

@@ -25,33 +25,25 @@ cd apps/api
 cp .env.example .env
 ```
 
-2. Edit `apps/api/.env` and fill in:
+2. Edit `apps/api/.env` and set:
 
-**Database (Supabase):**
-- Go to your Supabase project: https://seermvgqlfnrpjprtlva.supabase.co
-- Settings → Database → Connection string
-- Copy the URI and replace `[YOUR-PASSWORD]` with your actual password
+**Database (e.g. Supabase):**
+- In your Supabase project: Settings → Database → Connection string (URI).
+- Use the URI and replace the password placeholder with your database password.
 ```bash
-DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.seermvgqlfnrpjprtlva.supabase.co:5432/postgres"
-```
-
-**JWT Secrets:**
-Generate secrets using:
-```bash
-node scripts/generate-secrets.js
-```
-Copy the two generated secrets to:
-```bash
-JWT_ACCESS_SECRET="paste-first-secret-here"
-JWT_REFRESH_SECRET="paste-second-secret-here"
+DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.YOUR_PROJECT_REF.supabase.co:5432/postgres"
 ```
 
-**Redis (Optional for MVP):**
-- Option 1: Use Upstash (free, cloud Redis): https://upstash.com → Create Redis → Copy URL
-- Option 2: Skip for MVP (Redis is only used for caching and refresh tokens - can be skipped)
+**JWT secrets (required):**
+- Generate two strong random strings (e.g. `openssl rand -base64 32` run twice).
+- Do not use example values; use different secrets for dev/staging/production.
 ```bash
-REDIS_URL="your-upstash-redis-url"  # Get from Upstash dashboard
+JWT_ACCESS_SECRET="<paste-first-generated-secret>"
+JWT_REFRESH_SECRET="<paste-second-generated-secret>"
 ```
+
+**Redis (optional for MVP):**
+- Can be skipped for local development. If needed, use e.g. Upstash and set `REDIS_URL`.
 
 ### For Mobile App
 

@@ -2,8 +2,9 @@ import { AddressSuggestion } from '../types';
 import { MOCK_ADDRESSES } from '../constants';
 
 /**
- * Address service for geocoding and address search
- * In production, this would call a real geocoding API (Google Maps, Mapbox, etc.)
+ * Address service: internal strategy (mock) until a real geocoding provider is integrated.
+ * - searchAddresses: filters MOCK_ADDRESSES; replace with Google Maps / Mapbox / or backend search when ready.
+ * - getCurrentLocation: intentionally stubbed; implement with expo-location when "Around Me" is required.
  */
 
 export interface SearchAddressParams {
@@ -48,15 +49,8 @@ export async function searchAddresses(
 }
 
 /**
- * Get user's current location
- * In production, this would use expo-location
+ * Get user's current location. Stubbed until expo-location is integrated for "Around Me".
  */
 export async function getCurrentLocation(): Promise<{ lat: number; lng: number } | null> {
-  // TODO: Implement with expo-location
-  // const { status } = await Location.requestForegroundPermissionsAsync();
-  // if (status !== 'granted') return null;
-  // const location = await Location.getCurrentPositionAsync({});
-  // return { lat: location.coords.latitude, lng: location.coords.longitude };
-  
   return null;
 }

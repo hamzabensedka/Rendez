@@ -29,25 +29,34 @@ src/
 
 ## Tech Stack
 
+**Active today:**
+
 - **Monorepo**: Nx workspace
-- **Mobile**: Expo React Native + TypeScript
+- **Mobile**: Expo React Native + TypeScript (Expo Router)
 - **Backend**: NestJS + Prisma + Postgres
-- **Cache/Jobs**: Redis + BullMQ (future)
-- **Storage**: S3-compatible (future)
+
+**Planned (not yet in repo):**
+
+- Cache/Jobs: Redis + BullMQ
+- Storage: S3-compatible
+- Admin: Next.js admin dashboard
 
 ## Project Structure
+
+**Present in repo:**
 
 ```
 apps/
   api/          # NestJS backend
   mobile/       # Expo React Native app
-  admin-web/    # Next.js admin (future)
 
 packages/
   shared/       # Shared types, utils, constants
   ui/           # Design tokens, components
   config/       # ESLint, TypeScript configs
 ```
+
+Planned: `admin-web/`, deployment/infra.
 
 ## Data Model
 
@@ -64,18 +73,22 @@ Key entities:
 
 ## Booking Engine
 
-The availability computation algorithm:
+The availability computation algorithm (implemented in `apps/api/src/availability/`):
 1. Load availability rules for the business/staff
 2. Expand rules to UTC intervals for the requested date
 3. Subtract time-off periods
 4. Subtract existing appointments
 5. Generate discrete time slots at configured intervals
-6. Cache results in Redis (future)
+6. **Caching**: In-memory TTL cache for slot results (see `CACHE_TTL_AVAILABILITY` in `@planity/shared`). For multi-instance deployments, replace with Redis using the same key shape and TTL.
 
-Double-booking prevention:
-- Database-level exclusion constraints (Postgres)
+Double-booking prevention (implemented):
+- Database-level exclusion constraints (Postgres) in the appointments schema
 - Idempotency keys for retry safety
-- Transaction-based creation
+- Transaction-based creation and cross-tenant validation in the appointments service
+
+## Public API behaviour
+
+- **Business list** (`GET /businesses`): Paginated; supports `page`, `limit` (max 100), `city`, `query`. Response shape: `{ data, total, page, limit }`.
 
 ## Security
 
@@ -91,4 +104,12 @@ Double-booking prevention:
 - User data export/deletion (V1)
 - Consent management (V1)
 - Audit logging (V1)
+
+## Platform evolution (future)
+
+The following are documented for when product scope or scale justify them:
+
+- **Caching**: Availability slots use an in-memory cache today. For horizontal scaling, introduce a shared cache (e.g. Redis) with the same key pattern `businessId:date:serviceVariantId:staffId` and TTL from `CACHE_TTL_AVAILABILITY`. Business list pagination reduces load; optional Redis caching for list responses can use `CACHE_TTL_BUSINESS_LIST`.
+- **Notifications and reminders**: Async notifications (email/SMS/push for confirmations, reminders, cancellations) are not implemented. When added, use a queue (e.g. BullMQ) and dedicated worker(s); document event types and idempotency in this section.
+- **Provider and admin surfaces**: Provider dashboard and admin web app are planned; ownership and scope to be defined with product. Keep provider/admin APIs and UI in separate modules or apps for clear boundaries.
 

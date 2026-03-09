@@ -1,5 +1,9 @@
-import BookingScreen from '../src/features/search/pages/BookingScreen';
+import { Redirect } from 'expo-router';
 
-export default function BookingRoute() {
-  return <BookingScreen />;
+/**
+ * Legacy route: redirects to the canonical booking tab.
+ * The live booking flow lives at (tabs)/booking → features/booking/pages/BookingScreen.
+ */
+export default function BookingRedirect() {
+  return <Redirect href="/(tabs)/booking" />;
 }

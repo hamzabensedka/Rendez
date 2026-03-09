@@ -2,21 +2,21 @@
 
 ## Getting Your Database Connection String
 
-1. Go to your Supabase project: https://seermvgqlfnrpjprtlva.supabase.co
-2. Navigate to **Settings** → **Database**
-3. Find the **Connection string** section
-4. Copy the **URI** connection string (it should look like):
+1. Go to your [Supabase](https://supabase.com) project dashboard.
+2. Navigate to **Settings** → **Database**.
+3. Find the **Connection string** section and copy the **URI**.
+4. It will look like (replace placeholders with your values):
    ```
-   postgresql://postgres:[YOUR-PASSWORD]@db.seermvgqlfnrpjprtlva.supabase.co:5432/postgres
+   postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
    ```
 
 ## Setting Up the Database
 
 ### Option 1: Using Prisma Migrate (Recommended)
 
-1. Update `apps/api/.env` with your Supabase connection string:
+1. Update `apps/api/.env` with your Supabase connection string (from step above):
    ```bash
-   DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.seermvgqlfnrpjprtlva.supabase.co:5432/postgres?pgbouncer=true&connection_limit=1"
+   DATABASE_URL="postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"
    ```
 
 2. Run Prisma migrations:
@@ -61,57 +61,32 @@ Since Supabase doesn't provide Redis, you have a few options:
 
 ## Environment Variables
 
-Update `apps/api/.env`:
+Copy `apps/api/.env.example` to `apps/api/.env` and set at least:
 
-```bash
-# Supabase Database
-DATABASE_URL="postgresql://postgres:[PASSWORD]@db.seermvgqlfnrpjprtlva.supabase.co:5432/postgres"
+- `DATABASE_URL` – your Supabase connection URI (see above).
+- `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` – strong random strings (see below).
 
-# Redis (Upstash or local)
-REDIS_URL="redis://localhost:6379"  # or your Upstash URL
-
-# JWT Secrets (generate strong random strings)
-# See below for how to generate these
-JWT_ACCESS_SECRET="your-secret-key-here"
-JWT_REFRESH_SECRET="your-refresh-secret-here"
-JWT_ACCESS_EXPIRY="15m"
-JWT_REFRESH_EXPIRY="7d"
-
-# App
-APP_BASE_URL="http://localhost:3000"
-PORT=3000
-NODE_ENV=development
-```
+Optional: `JWT_ACCESS_EXPIRY`, `JWT_REFRESH_EXPIRY`, `PORT`, `NODE_ENV`. Do not commit `.env` or real secrets.
 
 ## Generating JWT Secrets
 
-You need to generate secure random strings for JWT secrets. Here are several ways:
+Generate two different secure random strings (one for access, one for refresh). Examples:
 
-### Option 1: Using the provided script (Recommended)
-```bash
-node scripts/generate-secrets.js
-```
-
-### Option 2: Using OpenSSL (if installed)
+**OpenSSL:**
 ```bash
 openssl rand -base64 32
 ```
-Run this twice to get two different secrets.
+Run twice to get two secrets.
 
-### Option 3: Using Node.js directly
+**Node.js:**
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
-Run this twice to get two different secrets.
+Run twice.
 
-### Option 4: Online generator
-- Visit: https://generate-secret.vercel.app/32
-- Generate two different secrets
-
-**Important:** 
-- Use different values for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`
-- Keep these secrets secure and never commit them to git
-- Use different secrets for development, staging, and production
+**Important:**
+- Use different values for `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`.
+- Never commit `.env` or real secrets; use different secrets per environment (dev/staging/production).
 
 ## Testing the Connection
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,17 +6,40 @@ import {
   StatusBar,
   SafeAreaView,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Button, Card } from '@planity/ui';
 import { colors, spacing, radius, shadows } from '@planity/ui';
 import { useAuth } from '../../../application/providers';
-import { AppLogo, ProfileButton } from '../../search/components';
+import { AppLogo, ProfileButton, BusinessCard, type ApiBusinessListItem } from '../../search/components';
+import api from '../../../shared/lib/api';
 
 export default function ExploreScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const [businesses, setBusinesses] = useState<ApiBusinessListItem[]>([]);
+  const [businessesLoading, setBusinessesLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const res = await api.get<{ data: ApiBusinessListItem[] }>('/businesses');
+        const list = res.data?.data;
+        if (!cancelled) setBusinesses(Array.isArray(list) ? list : []);
+      } catch {
+        if (!cancelled) setBusinesses([]);
+      } finally {
+        if (!cancelled) setBusinessesLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function handleProfilePress() {
     if (user) {
@@ -77,6 +100,33 @@ export default function ExploreScreen() {
                 </View>
               </View>
             </TouchableOpacity>
+          </View>
+
+          {/* Browse businesses (live from API) */}
+          <View style={styles.section}>
+            <Text variant="headline" style={styles.sectionTitle}>
+              Browse businesses
+            </Text>
+            {businessesLoading ? (
+              <View style={styles.loadingRow}>
+                <ActivityIndicator size="small" color={colors.light.accent} />
+                <Text variant="footnote" color={colors.light.textSecondary} style={styles.loadingText}>
+                  Loading…
+                </Text>
+              </View>
+            ) : businesses.length === 0 ? (
+              <Text variant="body" color={colors.light.textSecondary} style={styles.emptyText}>
+                No businesses yet. Check back later.
+              </Text>
+            ) : (
+              businesses.slice(0, 8).map((b) => (
+                <BusinessCard
+                  key={b.id}
+                  business={b}
+                  onPress={() => router.push(`/(tabs)/business/${b.id}`)}
+                />
+              ))
+            )}
           </View>
 
           {/* Quick links */}
@@ -244,5 +294,17 @@ const styles = StyleSheet.create({
   },
   providerButton: {
     alignSelf: 'flex-start',
+  },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
+  },
+  loadingText: {
+    marginLeft: spacing.xs,
+  },
+  emptyText: {
+    paddingVertical: spacing.lg,
   },
 });

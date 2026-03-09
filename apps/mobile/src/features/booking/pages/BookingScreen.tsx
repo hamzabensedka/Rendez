@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,26 +9,11 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { generateIdempotencyKey } from '@planity/shared';
+import { getDatePickerDayLabel, buildCreateAppointmentPayload } from '@planity/shared';
 import { colors, spacing, typography, radius, shadows } from '@planity/ui';
 import api from '../../../shared/lib/api';
 import { useAuth } from '../../../application/providers';
-
-interface Slot {
-  startAt: string;
-  staffId: string | null;
-}
-
-interface ServiceVariant {
-  id: string;
-  name: string;
-  durationMin: number;
-  priceCents: number | null;
-  service: {
-    id: string;
-    name: string;
-  };
-}
+import { useBookingData } from '../hooks/useBookingData';
 
 export default function BookingScreen() {
   const { businessId, serviceVariantId } = useLocalSearchParams<{
@@ -37,183 +22,67 @@ export default function BookingScreen() {
   }>();
   const router = useRouter();
   const { user } = useAuth();
-  const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
-  const [business, setBusiness] = useState<any>(null);
-  const [serviceVariant, setServiceVariant] = useState<ServiceVariant | null>(null);
-  const [availableDates, setAvailableDates] = useState<Date[]>([]);
 
-  useEffect(() => {
-    // Require authentication to book
-    if (!user) {
-      Alert.alert('Sign In Required', 'Please sign in to book an appointment', [
-        {
-          text: 'Sign In',
-          onPress: () => router.replace('/(auth)/login'),
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-          onPress: () => router.back(),
-        },
-      ]);
-      return;
-    }
-
-    if (businessId && serviceVariantId) {
-      loadBusiness();
-      loadServiceVariant();
-      generateAvailableDates();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [businessId, serviceVariantId, user]);
-
-  useEffect(() => {
-    if (selectedDate && businessId && serviceVariantId) {
-      loadAvailability();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, businessId, serviceVariantId]);
-
-  async function loadBusiness() {
-    try {
-      const response = await api.get(`/businesses/${businessId}`);
-      setBusiness(response.data);
-    } catch (error) {
-      console.error('Failed to load business:', error);
-    }
-  }
-
-  async function loadServiceVariant() {
-    try {
-      const response = await api.get(`/businesses/${businessId}`);
-      const businessData = response.data;
-      for (const service of businessData.services || []) {
-        const variant = service.serviceVariants?.find((v: any) => v.id === serviceVariantId);
-        if (variant) {
-          setServiceVariant({
-            ...variant,
-            service: { id: service.id, name: service.name },
-          });
-          break;
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load service variant:', error);
-    }
-  }
-
-  function generateAvailableDates() {
-    const dates: Date[] = [];
-    const today = new Date();
-    for (let i = 0; i < 14; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
-      dates.push(date);
-    }
-    setAvailableDates(dates);
-  }
-
-  async function loadAvailability() {
-    if (!businessId || !serviceVariantId) return;
-
-    setLoading(true);
-    try {
-      const dateStr = selectedDate.toISOString().split('T')[0];
-      const response = await api.get(`/businesses/${businessId}/availability`, {
-        params: {
-          serviceVariantId,
-          date: dateStr,
-        },
-      });
-      setSlots(response.data.slots);
-      setSelectedSlot(null);
-    } catch (error) {
-      console.error('Failed to load availability:', error);
-      setSlots([]);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const {
+    business,
+    serviceVariant,
+    slots,
+    availableDates,
+    selectedDate,
+    setSelectedDate,
+    loadingSlots,
+  } = useBookingData(businessId, serviceVariantId);
 
   async function handleBook() {
     if (!user) {
       Alert.alert('Sign In Required', 'Please sign in to book an appointment', [
-        {
-          text: 'Sign In',
-          onPress: () => router.replace('/(auth)/login'),
-        },
+        { text: 'Sign In', onPress: () => router.replace('/(auth)/login') },
       ]);
       return;
     }
-
     if (!selectedSlot || !businessId || !serviceVariantId || !business) {
       Alert.alert('Error', 'Please select a time slot');
       return;
     }
-
     setBooking(true);
     try {
       const locationId = business.locations?.[0]?.id;
-      if (!locationId) {
-        throw new Error('Business has no locations');
-      }
-
-      await api.post('/appointments', {
+      if (!locationId) throw new Error('Business has no locations');
+      const payload = buildCreateAppointmentPayload({
         businessId,
         locationId,
-        items: [{ serviceVariantId, quantity: 1 }],
+        serviceVariantId,
         startAt: selectedSlot,
-        idempotencyKey: generateIdempotencyKey(),
       });
-
+      await api.post('/appointments', payload);
       Alert.alert('Success', 'Appointment booked!', [
-        {
-          text: 'OK',
-          onPress: () => router.replace('/(tabs)/bookings'),
-        },
+        { text: 'OK', onPress: () => router.replace('/(tabs)/bookings') },
       ]);
-    } catch (error: any) {
-      Alert.alert('Booking Failed', error.response?.data?.message || 'Failed to book appointment');
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'response' in err && typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+          ? (err as { response: { data: { message: string } } }).response.data.message
+          : 'Something went wrong. Please try again or choose another slot.';
+      Alert.alert('Booking failed', message);
     } finally {
       setBooking(false);
     }
   }
 
-  function formatDate(date: Date): string {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return `${days[date.getDay()]} ${months[date.getMonth()]} ${date.getDate()}`;
-  }
+  useEffect(() => {
+    if (!user) {
+      Alert.alert('Sign In Required', 'Please sign in to book an appointment', [
+        { text: 'Sign In', onPress: () => router.replace('/(auth)/login') },
+        { text: 'Cancel', style: 'cancel', onPress: () => router.back() },
+      ]);
+    }
+  }, [user, router]);
 
-  function isToday(date: Date): boolean {
-    const today = new Date();
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    );
-  }
+  const today = new Date();
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -221,7 +90,6 @@ export default function BookingScreen() {
         <Text style={styles.title}>Book Appointment</Text>
       </View>
 
-      {/* Selected Service */}
       {serviceVariant && (
         <View style={styles.section}>
           <Text style={styles.sectionNumber}>1.</Text>
@@ -231,19 +99,16 @@ export default function BookingScreen() {
               <Text style={styles.serviceName}>{serviceVariant.name}</Text>
               <Text style={styles.serviceDetails}>
                 {serviceVariant.durationMin} min
-                {serviceVariant.priceCents &&
-                  ` • €${(serviceVariant.priceCents / 100).toFixed(2)}`}
+                {serviceVariant.priceCents != null && ` • €${(serviceVariant.priceCents / 100).toFixed(2)}`}
               </Text>
             </View>
           </View>
         </View>
       )}
 
-      {/* Date Selection */}
       <View style={styles.section}>
         <Text style={styles.sectionNumber}>2.</Text>
         <Text style={styles.sectionTitle}>Choose Date & Time</Text>
-
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -259,7 +124,7 @@ export default function BookingScreen() {
                 onPress={() => setSelectedDate(date)}
               >
                 <Text style={[styles.dateDay, isSelected && styles.dateDaySelected]}>
-                  {isToday(date) ? 'Today' : formatDate(date).split(' ')[0]}
+                  {getDatePickerDayLabel(date, today)}
                 </Text>
                 <Text style={[styles.dateNumber, isSelected && styles.dateNumberSelected]}>
                   {date.getDate()}
@@ -269,7 +134,7 @@ export default function BookingScreen() {
           })}
         </ScrollView>
 
-        {loading ? (
+        {loadingSlots ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color={colors.light.accent} />
           </View>
@@ -317,60 +182,18 @@ export default function BookingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.light.background,
-  },
-  header: {
-    padding: spacing.xl,
-    paddingTop: spacing['3xl'],
-    backgroundColor: colors.light.surface,
-  },
-  title: {
-    ...typography.largeTitle,
-    color: colors.light.text,
-  },
-  section: {
-    padding: spacing.xl,
-    backgroundColor: colors.light.surface,
-    marginTop: spacing.md,
-  },
-  sectionNumber: {
-    ...typography.largeTitle,
-    color: colors.light.accent,
-    fontSize: 28,
-    marginBottom: spacing.xs,
-  },
-  sectionTitle: {
-    ...typography.title2,
-    color: colors.light.text,
-    marginBottom: spacing.lg,
-  },
-  serviceCard: {
-    backgroundColor: colors.light.background,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    ...shadows.sm,
-  },
-  serviceInfo: {
-    flex: 1,
-  },
-  serviceName: {
-    ...typography.title3,
-    color: colors.light.text,
-    marginBottom: spacing.xs,
-  },
-  serviceDetails: {
-    ...typography.body,
-    color: colors.light.textSecondary,
-  },
-  dateScroll: {
-    marginBottom: spacing.lg,
-  },
-  dateContainer: {
-    paddingRight: spacing.xl,
-    gap: spacing.md,
-  },
+  container: { flex: 1, backgroundColor: colors.light.background },
+  header: { padding: spacing.xl, paddingTop: spacing['3xl'], backgroundColor: colors.light.surface },
+  title: { ...typography.largeTitle, color: colors.light.text },
+  section: { padding: spacing.xl, backgroundColor: colors.light.surface, marginTop: spacing.md },
+  sectionNumber: { ...typography.largeTitle, color: colors.light.accent, fontSize: 28, marginBottom: spacing.xs },
+  sectionTitle: { ...typography.title2, color: colors.light.text, marginBottom: spacing.lg },
+  serviceCard: { backgroundColor: colors.light.background, borderRadius: radius.lg, padding: spacing.lg, ...shadows.sm },
+  serviceInfo: { flex: 1 },
+  serviceName: { ...typography.title3, color: colors.light.text, marginBottom: spacing.xs },
+  serviceDetails: { ...typography.body, color: colors.light.textSecondary },
+  dateScroll: { marginBottom: spacing.lg },
+  dateContainer: { paddingRight: spacing.xl, gap: spacing.md },
   dateButton: {
     width: 70,
     height: 80,
@@ -382,42 +205,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: spacing.md,
   },
-  dateButtonSelected: {
-    backgroundColor: colors.light.accent,
-    borderColor: colors.light.accent,
-  },
-  dateDay: {
-    ...typography.footnote,
-    color: colors.light.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  dateDaySelected: {
-    color: '#FFFFFF',
-  },
-  dateNumber: {
-    ...typography.title2,
-    color: colors.light.text,
-  },
-  dateNumberSelected: {
-    color: '#FFFFFF',
-  },
-  loadingContainer: {
-    padding: spacing['2xl'],
-    alignItems: 'center',
-  },
-  emptyContainer: {
-    padding: spacing['2xl'],
-    alignItems: 'center',
-  },
-  emptyText: {
-    ...typography.body,
-    color: colors.light.textSecondary,
-  },
-  slotsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-  },
+  dateButtonSelected: { backgroundColor: colors.light.accent, borderColor: colors.light.accent },
+  dateDay: { ...typography.footnote, color: colors.light.textSecondary, marginBottom: spacing.xs },
+  dateDaySelected: { color: '#FFFFFF' },
+  dateNumber: { ...typography.title2, color: colors.light.text },
+  dateNumberSelected: { color: '#FFFFFF' },
+  loadingContainer: { padding: spacing['2xl'], alignItems: 'center' },
+  emptyContainer: { padding: spacing['2xl'], alignItems: 'center' },
+  emptyText: { ...typography.body, color: colors.light.textSecondary },
+  slotsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   slotButton: {
     backgroundColor: colors.light.background,
     borderRadius: radius.lg,
@@ -428,36 +224,11 @@ const styles = StyleSheet.create({
     borderColor: colors.light.border,
     ...shadows.sm,
   },
-  slotButtonSelected: {
-    backgroundColor: colors.light.accent,
-    borderColor: colors.light.accent,
-  },
-  slotText: {
-    ...typography.headline,
-    color: colors.light.text,
-  },
-  slotTextSelected: {
-    color: '#FFFFFF',
-  },
-  footer: {
-    padding: spacing.xl,
-    paddingBottom: spacing['3xl'],
-  },
-  bookButton: {
-    backgroundColor: colors.light.accent,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    alignItems: 'center',
-    ...shadows.md,
-  },
-  bookButtonDisabled: {
-    opacity: 0.6,
-  },
-  bookButtonText: {
-    ...typography.headline,
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
+  slotButtonSelected: { backgroundColor: colors.light.accent, borderColor: colors.light.accent },
+  slotText: { ...typography.headline, color: colors.light.text },
+  slotTextSelected: { color: '#FFFFFF' },
+  footer: { padding: spacing.xl, paddingBottom: spacing['3xl'] },
+  bookButton: { backgroundColor: colors.light.accent, borderRadius: radius.lg, padding: spacing.lg, alignItems: 'center', ...shadows.md },
+  bookButtonDisabled: { opacity: 0.6 },
+  bookButtonText: { ...typography.headline, color: '#FFFFFF', fontWeight: '600' },
 });
-
-
