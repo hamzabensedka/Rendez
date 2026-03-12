@@ -33,11 +33,12 @@ export default function LoginScreen() {
       const response = await login({ email, password });
       setAuthUser(response.user);
       router.replace('/(tabs)');
-    } catch (error: any) {
-      Alert.alert(
-        'Login Failed',
-        error.response?.data?.message || 'Invalid credentials'
-      );
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      Alert.alert('Login Failed', message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }

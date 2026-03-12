@@ -7,9 +7,16 @@ import { APP_DISPLAY_NAME } from './AppLogo';
 
 type AuthMode = 'login' | 'signup';
 
+export interface AuthFormData {
+  email: string;
+  password: string;
+  phone: string;
+  acceptedCGU: boolean;
+}
+
 interface AuthFormProps {
   initialMode?: AuthMode;
-  onSubmit: (mode: AuthMode, data: any) => void;
+  onSubmit: (mode: AuthMode, data: AuthFormData) => void;
 }
 
 export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
@@ -17,7 +24,7 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
   onSubmit,
 }) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
-  
+
   // Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -59,11 +66,11 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
             <Text variant="footnote" style={styles.forgotPasswordText}>Forgot password?</Text>
           </TouchableOpacity>
 
-          <Button 
-            title="Sign in" 
-            onPress={handleSubmit} 
-            variant="primary" 
-            style={styles.mainButton} 
+          <Button
+            title="Sign in"
+            onPress={handleSubmit}
+            variant="primary"
+            style={styles.mainButton}
           />
 
           {/* Divider */}
@@ -76,16 +83,16 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
           {/* Signup Link Section */}
           <Text variant="title3" style={styles.sectionTitleCenter}>New to {APP_DISPLAY_NAME}?</Text>
 
-          <Button 
-            title="Create account" 
-            onPress={toggleMode} 
-            variant="outline" 
-            style={styles.secondaryButton} 
+          <Button
+            title="Create account"
+            onPress={toggleMode}
+            variant="outline"
+            style={styles.secondaryButton}
           />
 
-          <Button 
-            title="Cookie settings" 
-            variant="ghost" 
+          <Button
+            title="Cookie settings"
+            variant="ghost"
             size="sm"
             style={{ alignSelf: 'center' }}
           />
@@ -129,8 +136,8 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
             secureTextEntry
           />
 
-          <TouchableOpacity 
-            style={styles.checkboxContainer} 
+          <TouchableOpacity
+            style={styles.checkboxContainer}
             onPress={() => setAcceptedCGU(!acceptedCGU)}
             activeOpacity={0.8}
           >
@@ -140,11 +147,11 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
             <Text variant="body" style={styles.checkboxLabel}>I accept the <Text style={styles.linkText}>terms of service</Text>.</Text>
           </TouchableOpacity>
 
-          <Button 
-            title="Create account" 
-            onPress={handleSubmit} 
-            variant="primary" 
-            style={styles.mainButton} 
+          <Button
+            title="Create account"
+            onPress={handleSubmit}
+            variant="primary"
+            style={styles.mainButton}
           />
 
           <Text variant="caption" color={colors.light.textSecondary} style={styles.legalText}>
@@ -159,11 +166,11 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
 
           <Text variant="title3" style={styles.sectionTitleCenter}>Already have an account?</Text>
 
-          <Button 
-            title="Sign in" 
-            onPress={toggleMode} 
-            variant="outline" 
-            style={styles.secondaryButton} 
+          <Button
+            title="Sign in"
+            onPress={toggleMode}
+            variant="outline"
+            style={styles.secondaryButton}
           />
         </>
       )}

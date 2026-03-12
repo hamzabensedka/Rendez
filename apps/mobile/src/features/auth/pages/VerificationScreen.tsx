@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  TextInput,
   Alert,
   ActivityIndicator,
 } from 'react-native';
@@ -15,9 +14,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { register } from '../../../shared/lib/auth';
 import { useAuth } from '../../../application/providers';
 
-const OTP_LENGTH = 6;
-const RESEND_COOLDOWN_SEC = 59;
-
 export default function VerificationScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -26,51 +22,15 @@ export default function VerificationScreen() {
   const email = pendingRegistration?.email ?? '';
   const password = pendingRegistration?.password ?? '';
 
-  const [code, setCode] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [loading, setLoading] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const inputRefs = useRef<(TextInput | null)[]>([]);
 
   useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const t = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [resendCooldown]);
-
-  function handleCodeChange(index: number, value: string) {
-    if (value.length > 1) {
-      const digits = value.replace(/\D/g, '').slice(0, OTP_LENGTH).split('');
-      const next = [...code];
-      digits.forEach((d, i) => {
-        if (index + i < OTP_LENGTH) next[index + i] = d;
-      });
-      setCode(next);
-      const focusIdx = Math.min(index + digits.length, OTP_LENGTH - 1);
-      inputRefs.current[focusIdx]?.focus();
-      return;
+    if (!pendingRegistration?.email || !pendingRegistration?.password) {
+      router.back();
     }
-    const digit = value.replace(/\D/g, '');
-    const next = [...code];
-    next[index] = digit;
-    setCode(next);
-    if (digit && index < OTP_LENGTH - 1) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  }
+  }, [pendingRegistration, router]);
 
-  function handleKeyPress(index: number, key: string) {
-    if (key === 'Backspace' && !code[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  }
-
-  async function handleVerify() {
-    const fullCode = code.join('');
-    if (fullCode.length !== OTP_LENGTH) {
-      Alert.alert('Error', 'Please enter the 6-digit code');
-      return;
-    }
-
+  async function handleCreateAccount() {
     setLoading(true);
     try {
       const name = (email || '').split('@')[0] || 'User';
@@ -83,93 +43,67 @@ export default function VerificationScreen() {
         error && typeof error === 'object' && 'response' in error
           ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
           : undefined;
-      Alert.alert('Verification Failed', message || 'Could not complete verification');
+      Alert.alert('Registration Failed', message || 'Could not create your account');
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => {
-    if (!pendingRegistration?.email || !pendingRegistration?.password) {
-      router.back();
-    }
-  }, [pendingRegistration, router]);
-
-  function handleResend() {
-    if (resendCooldown > 0) return;
-    setResendCooldown(RESEND_COOLDOWN_SEC);
-    Alert.alert('Code sent', 'A new code has been sent to your number.');
-  }
-
   const displayPhone = phone || 'your number';
-  const fullCode = code.join('');
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.headerBack}
+          accessibilityLabel="Back"
+          accessibilityRole="button"
+        >
           <Ionicons name="arrow-back" size={24} color={colors.light.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>VERIFICATION</Text>
+        <Text style={styles.headerTitle}>CONFIRM DETAILS</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.content}>
         <View style={styles.iconWrap}>
-          <Ionicons name="shield-checkmark" size={32} color="#FFF" />
+          <Ionicons name="person-outline" size={32} color="#FFF" />
         </View>
 
-        <Text style={styles.title}>Verify your number</Text>
+        <Text style={styles.title}>Confirm your details</Text>
         <Text style={styles.instruction}>
-          We've sent a 6-digit code to <Text style={styles.phoneHighlight}>{displayPhone}</Text>
+          Review and create your account. We'll use this information for your booking.
         </Text>
 
-        <View style={styles.otpRow}>
-          {code.map((digit, index) => (
-            <TextInput
-              key={index}
-              ref={(r) => { inputRefs.current[index] = r; }}
-              style={styles.otpInput}
-              value={digit}
-              onChangeText={(v) => handleCodeChange(index, v)}
-              onKeyPress={({ nativeEvent }) => handleKeyPress(index, nativeEvent.key)}
-              keyboardType="number-pad"
-              maxLength={6}
-              selectTextOnFocus
-            />
-          ))}
+        <View style={styles.detailsCard}>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Email</Text>
+            <Text style={styles.detailValue} numberOfLines={1}>
+              {email || '—'}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Phone</Text>
+            <Text style={styles.detailValue} numberOfLines={1}>
+              {displayPhone}
+            </Text>
+          </View>
         </View>
 
         <TouchableOpacity
-          style={[styles.verifyButton, (fullCode.length !== OTP_LENGTH || loading) && styles.verifyButtonDisabled]}
-          onPress={handleVerify}
-          disabled={fullCode.length !== OTP_LENGTH || loading}
+          style={[styles.createButton, loading && styles.createButtonDisabled]}
+          onPress={handleCreateAccount}
+          disabled={loading}
+          accessibilityLabel="Create my account"
+          accessibilityRole="button"
         >
           {loading ? (
             <ActivityIndicator color="#FFF" />
           ) : (
-            <Text style={styles.verifyButtonText}>VERIFY</Text>
+            <Text style={styles.createButtonText}>CREATE MY ACCOUNT</Text>
           )}
         </TouchableOpacity>
-
-        <View style={styles.resendWrap}>
-          <Text style={styles.resendPrompt}>Didn't receive a code?</Text>
-          <TouchableOpacity
-            onPress={handleResend}
-            disabled={resendCooldown > 0}
-            style={styles.resendButton}
-          >
-            <Text style={[styles.resendText, resendCooldown > 0 && styles.resendTextDisabled]}>
-              RESEND CODE
-            </Text>
-            {resendCooldown > 0 && (
-              <Text style={styles.resendTimer}>
-                ({String(Math.floor(resendCooldown / 60)).padStart(2, '0')}:
-                {String(resendCooldown % 60).padStart(2, '0')})
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );
@@ -235,68 +169,40 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     lineHeight: 24,
   },
-  phoneHighlight: {
-    fontWeight: '600',
-    color: colors.light.text,
-  },
-  otpRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 8,
+  detailsCard: {
+    backgroundColor: colors.light.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.light.border,
+    padding: spacing.lg,
     marginBottom: spacing.xl,
   },
-  otpInput: {
-    width: 48,
-    height: 64,
-    borderWidth: 2,
-    borderColor: colors.light.border,
-    borderRadius: 12,
-    backgroundColor: colors.light.surface,
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.light.text,
-    textAlign: 'center',
-    padding: 0,
+  detailRow: {
+    marginBottom: spacing.md,
   },
-  verifyButton: {
+  detailLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    color: colors.light.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  detailValue: {
+    fontSize: 16,
+    color: colors.light.text,
+  },
+  createButton: {
     height: 56,
     borderRadius: 12,
     backgroundColor: colors.light.text,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.xl,
   },
-  verifyButtonDisabled: { opacity: 0.5 },
-  verifyButtonText: {
+  createButtonDisabled: { opacity: 0.5 },
+  createButtonText: {
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 2,
     color: '#FFF',
-  },
-  resendWrap: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  resendPrompt: {
-    fontSize: 14,
-    color: colors.light.textSecondary,
-  },
-  resendButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  resendText: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: colors.light.text,
-  },
-  resendTextDisabled: {
-    color: colors.light.textTertiary,
-  },
-  resendTimer: {
-    fontSize: 14,
-    color: colors.light.textTertiary,
   },
 });

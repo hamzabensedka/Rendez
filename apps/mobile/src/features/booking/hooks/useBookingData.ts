@@ -2,22 +2,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { getNextDays } from '@planity/shared';
 import api from '../../../shared/lib/api';
 
-/** Generate mock slots for a given date when API is unreachable or returns empty (e.g. 09:00–18:00 every 30 min). */
-function getFallbackSlotsForDate(date: Date): Array<{ startAt: string; staffId: string | null }> {
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const day = date.getDate();
-  const slots: Array<{ startAt: string; staffId: string | null }> = [];
-  for (let hour = 9; hour <= 17; hour++) {
-    for (const minute of [0, 30]) {
-      if (hour === 17 && minute === 30) break;
-      const d = new Date(year, month, day, hour, minute, 0, 0);
-      slots.push({ startAt: d.toISOString(), staffId: null });
-    }
-  }
-  return slots;
-}
-
 export interface Slot {
   startAt: string;
   staffId: string | null;
@@ -51,12 +35,13 @@ export interface UseBookingDataResult {
   setSelectedDate: (d: Date) => void;
   loadingBusiness: boolean;
   loadingSlots: boolean;
+  slotsError: boolean;
   loadAvailability: () => Promise<void>;
 }
 
 /**
  * Loads business + selected service variant and manages availability slots.
- * Use when the screen has businessId and serviceVariantId (e.g. from route params).
+ * On API failure or empty response, slots are empty and slotsError is true (no mock slots).
  */
 export function useBookingData(
   businessId: string | undefined,
@@ -68,6 +53,7 @@ export function useBookingData(
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [loadingBusiness, setLoadingBusiness] = useState(true);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotsError, setSlotsError] = useState(false);
 
   const availableDates = getNextDays(new Date(), 14);
 
@@ -101,19 +87,18 @@ export function useBookingData(
   const loadAvailability = useCallback(async () => {
     if (!businessId || !serviceVariantId) return;
     setLoadingSlots(true);
+    setSlotsError(false);
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
       const response = await api.get(`/businesses/${businessId}/availability`, {
         params: { serviceVariantId, date: dateStr },
       });
       const apiSlots = response.data?.slots ?? [];
-      if (apiSlots.length > 0) {
-        setSlots(apiSlots);
-      } else {
-        setSlots(getFallbackSlotsForDate(selectedDate));
-      }
+      setSlots(Array.isArray(apiSlots) ? apiSlots : []);
+      setSlotsError(apiSlots.length === 0);
     } catch {
-      setSlots(getFallbackSlotsForDate(selectedDate));
+      setSlots([]);
+      setSlotsError(true);
     } finally {
       setLoadingSlots(false);
     }
@@ -138,6 +123,7 @@ export function useBookingData(
     setSelectedDate,
     loadingBusiness,
     loadingSlots,
+    slotsError,
     loadAvailability,
   };
 }

@@ -42,7 +42,7 @@ export const SalonImageCarousel = React.memo<SalonImageCarouselProps>(function S
     </View>
   ), []);
 
-  const getItemLayout = useCallback((_: any, index: number) => ({
+  const getItemLayout = useCallback((_: unknown, index: number) => ({
     length: SCREEN_WIDTH,
     offset: SCREEN_WIDTH * index,
     index,
@@ -67,21 +67,21 @@ export const SalonImageCarousel = React.memo<SalonImageCarouselProps>(function S
         windowSize={3}
         removeClippedSubviews={false}
       />
-      
+
       {/* Navigation Arrows */}
       {activeIndex > 0 && (
-        <TouchableOpacity 
-          style={[styles.arrowButton, styles.leftArrow]} 
+        <TouchableOpacity
+          style={[styles.arrowButton, styles.leftArrow]}
           onPress={handlePrev}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       )}
-      
+
       {activeIndex < images.length - 1 && (
-        <TouchableOpacity 
-          style={[styles.arrowButton, styles.rightArrow]} 
+        <TouchableOpacity
+          style={[styles.arrowButton, styles.rightArrow]}
           onPress={handleNext}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >

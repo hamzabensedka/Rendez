@@ -30,15 +30,15 @@ export const SalonCard = React.memo<SalonCardProps>(function SalonCard({
 
   const renderImageItem = useCallback(({ item }: { item: string }) => (
     <View style={{ width: CARD_WIDTH, height: 200 }}>
-      <Image 
-        source={{ uri: item }} 
-        style={styles.image} 
-        resizeMode="cover" 
+      <Image
+        source={{ uri: item }}
+        style={styles.image}
+        resizeMode="cover"
       />
     </View>
   ), []);
 
-  const getItemLayout = useCallback((_: any, index: number) => ({
+  const getItemLayout = useCallback((_: unknown, index: number) => ({
     length: CARD_WIDTH,
     offset: CARD_WIDTH * index,
     index,
@@ -49,12 +49,12 @@ export const SalonCard = React.memo<SalonCardProps>(function SalonCard({
   }, []);
 
   return (
-    <Card 
-      variant="elevated" 
-      padding="none" 
+    <Card
+      variant="elevated"
+      padding="none"
       style={styles.container}
     >
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={onPress}
         activeOpacity={0.9}
         accessibilityLabel={`Salon ${salon.name}`}
@@ -78,16 +78,16 @@ export const SalonCard = React.memo<SalonCardProps>(function SalonCard({
             removeClippedSubviews={false}
             style={styles.slider}
           />
-          
+
           {/* Pagination Dots */}
           <View style={styles.dotsContainer}>
             {salon.images.map((_, index) => (
-              <View 
-                key={index} 
+              <View
+                key={index}
                 style={[
-                  styles.dot, 
+                  styles.dot,
                   index === activeIndex && styles.activeDot
-                ]} 
+                ]}
               />
             ))}
           </View>
@@ -109,8 +109,8 @@ export const SalonCard = React.memo<SalonCardProps>(function SalonCard({
                     </Text>
                 </View>
              </View>
-             <Badge 
-               label={salon.rating.toString().replace('.', ',')} 
+             <Badge
+               label={salon.rating.toString().replace('.', ',')}
                icon={<Ionicons name="star" size={10} color={colors.light.surface} />}
                variant="default" // Customize badge later for rating style
                style={{ backgroundColor: colors.light.text, borderRadius: radius.sm }}
@@ -138,7 +138,7 @@ export const SalonCard = React.memo<SalonCardProps>(function SalonCard({
                 </ScrollView>
                 </View>
             )}
-            
+
             {salon.availability.afternoon.length > 0 && (
                 <View style={styles.timeRow}>
                 <Text variant="caption" weight="600" color={colors.light.textSecondary} style={styles.timeLabel}>PM</Text>
@@ -175,11 +175,11 @@ export const SalonCard = React.memo<SalonCardProps>(function SalonCard({
             </View>
           )}
 
-          <Button 
-            title="Gift" 
-            variant="outline" 
+          <Button
+            title="Gift"
+            variant="outline"
             size="md"
-            onPress={() => {}} 
+            onPress={() => {}}
             leftIcon={<Ionicons name="gift-outline" size={16} color={colors.light.text} />}
             style={{ marginTop: spacing.md, marginBottom: spacing.md }}
           />

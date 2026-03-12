@@ -16,8 +16,8 @@ export const FilterBar = React.memo<FilterBarProps>(function FilterBar({
 }) {
   return (
     <View style={styles.container}>
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
@@ -29,10 +29,10 @@ export const FilterBar = React.memo<FilterBarProps>(function FilterBar({
             variant="secondary"
             size="sm"
             leftIcon={filter.icon ? (
-              <Ionicons 
-                name={filter.icon as any} 
-                size={18} 
-                color={colors.light.accent} 
+              <Ionicons
+                name={filter.icon as React.ComponentProps<typeof Ionicons>['name']}
+                size={18}
+                color={colors.light.accent}
               />
             ) : undefined}
             style={styles.chip}

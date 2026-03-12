@@ -17,10 +17,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../../application/providers';
 
 const COUNTRY_OPTIONS = [
-  { code: 'US', label: 'US' },
-  { code: 'UK', label: 'UK' },
-  { code: 'FR', label: 'FR' },
+  { code: 'US', label: 'US', dialCode: '+1' },
+  { code: 'UK', label: 'UK', dialCode: '+44' },
+  { code: 'FR', label: 'FR', dialCode: '+33' },
 ];
+
+/** Booking flow step index (1-based) for progress bar. Step 3 = identification/register. */
+const BOOKING_STEP_INDEX = 3;
+const BOOKING_STEP_TOTAL = 4;
+const BOOKING_PROGRESS_PERCENT = `${(BOOKING_STEP_INDEX / BOOKING_STEP_TOTAL) * 100}%`;
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -49,7 +54,11 @@ export default function RegisterScreen() {
       Alert.alert('Error', 'Please enter a valid mobile number');
       return;
     }
-    const displayPhone = trimmedMobile.startsWith('+') ? trimmedMobile : `+33 ${trimmedMobile.replace(/(\d{2})(?=\d)/g, '$1 ')}`;
+    const countryOption = COUNTRY_OPTIONS.find((o) => o.code === country);
+    const dialCode = countryOption?.dialCode ?? '+33';
+    const displayPhone = trimmedMobile.startsWith('+')
+      ? trimmedMobile
+      : `${dialCode} ${trimmedMobile.replace(/(\d{2})(?=\d)/g, '$1 ')}`;
     setPendingRegistration({ email: trimmedEmail, password });
     if (isBookingFlow) {
       router.push({ pathname: '/(tabs)/booking/verification', params: { phone: displayPhone } });
@@ -61,7 +70,12 @@ export default function RegisterScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.headerBack}
+          accessibilityLabel="Back"
+          accessibilityRole="button"
+        >
           <Ionicons name="arrow-back" size={24} color={colors.light.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>IDENTIFICATION</Text>
@@ -71,10 +85,10 @@ export default function RegisterScreen() {
       <View style={styles.progressSection}>
         <View style={styles.progressRow}>
           <Text style={styles.progressLabel}>Booking Progress</Text>
-          <Text style={styles.progressStep}>3 of 4</Text>
+          <Text style={styles.progressStep}>{BOOKING_STEP_INDEX} of {BOOKING_STEP_TOTAL}</Text>
         </View>
         <View style={styles.progressBarBg}>
-          <View style={[styles.progressBarFill, { width: '75%' }]} />
+          <View style={[styles.progressBarFill, { width: BOOKING_PROGRESS_PERCENT }]} />
         </View>
       </View>
 
@@ -105,6 +119,8 @@ export default function RegisterScreen() {
                     const next = COUNTRY_OPTIONS[(idx + 1) % COUNTRY_OPTIONS.length];
                     setCountry(next.code);
                   }}
+                  accessibilityLabel={`Country, ${country}. Double tap to change.`}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.selectText}>{country}</Text>
                   <Ionicons name="chevron-down" size={20} color={colors.light.text} />
@@ -155,6 +171,8 @@ export default function RegisterScreen() {
                 onPress={() => setShowPassword((v) => !v)}
                 style={styles.eyeButton}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                accessibilityRole="button"
               >
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -168,13 +186,19 @@ export default function RegisterScreen() {
           <TouchableOpacity
             style={styles.submitButton}
             onPress={handleSubmitForVerification}
+            accessibilityLabel="Create my account"
+            accessibilityRole="button"
           >
             <Text style={styles.submitButtonText}>CREATE MY ACCOUNT</Text>
           </TouchableOpacity>
 
           <View style={styles.loginRow}>
             <Text style={styles.loginPrompt}>Already have an account?</Text>
-            <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
+            <TouchableOpacity
+              onPress={() => router.replace('/(auth)/login')}
+              accessibilityLabel="Already have an account? Log in"
+              accessibilityRole="button"
+            >
               <Text style={styles.loginLink}>LOG IN</Text>
             </TouchableOpacity>
           </View>

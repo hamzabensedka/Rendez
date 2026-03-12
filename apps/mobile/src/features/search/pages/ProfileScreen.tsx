@@ -12,7 +12,7 @@ import { Text } from '@planity/ui';
 import { colors, spacing } from '@planity/ui';
 import { useRouter } from 'expo-router';
 import { AppLogo } from '../components/AppLogo';
-import { AuthForm } from '../components/AuthForm';
+import { AuthForm, type AuthFormData } from '../components/AuthForm';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function ProfileScreen() {
     router.back();
   };
 
-  const handleAuthSubmit = (mode: string, data: any) => {
+  const handleAuthSubmit = (mode: string, data: AuthFormData) => {
     console.log(`Auth submitted [${mode}]:`, data);
   };
 
