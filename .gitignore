@@ -55,7 +55,17 @@ logs/
 *.log
 
 # Docs
-docs/**
+docs/user-roadmap/
+docs/user-roadmap/**
+docs/stitch_onboarding_welcome_to_bookly/
+docs/stitch_onboarding_welcome_to_bookly/**
+docs/skills/
+docs/skills/**
+docs/skills/**/*.md
+docs/skills/**/*.ts
+docs/skills/**/*.tsx
+docs/skills/**/*.js
+docs/skills/**/*.jsx
 !docs/
 !docs/README.md
 !docs/audit/
