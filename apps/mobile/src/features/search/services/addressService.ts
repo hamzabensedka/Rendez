@@ -35,13 +35,15 @@ export async function searchAddresses(
     address.toLowerCase().includes(normalizedQuery)
   )
     .slice(0, limit)
-    .map((address, index) => {
-      const parts = address.split(',').map((p) => p.trim());
+    .map((addr, index) => {
+      const parts = addr.split(',').map((p) => p.trim());
+      const city = parts.length > 1 ? parts[parts.length - 1] : undefined;
+      const country = city === 'Toulouse' ? 'France' : city === 'Paris' ? 'France' : city === 'London' ? 'UK' : city === 'New York' ? 'USA' : undefined;
       return {
-        id: `address-${index}-${address}`,
-        address,
-        city: parts[0],
-        country: parts[parts.length - 1],
+        id: `address-${index}-${addr}`,
+        address: addr,
+        city,
+        country,
       };
     });
 

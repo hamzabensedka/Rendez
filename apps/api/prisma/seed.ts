@@ -191,7 +191,307 @@ async function main() {
     });
   }
 
+  // ——— 3 coiffeur shops for testing ———
+  const coiffeurShops = [
+    {
+      name: 'Coiffure Élégance',
+      slug: 'coiffure-elegance',
+      description: 'Salon de coiffure moderne au cœur de Paris. Coupe, coloration et soins.',
+      category: 'Coiffure',
+      city: 'Paris',
+      address1: '45 Avenue des Champs-Élysées',
+      postalCode: '75008',
+      staffName: 'Sophie',
+      staffTitle: 'Styliste',
+      ratingAvg: 4.8,
+      ratingCount: 124,
+    },
+    {
+      name: 'Le Salon du Marais',
+      slug: 'salon-marais',
+      description: 'Coiffure tendance dans le Marais. Expertise coupe femme et homme.',
+      category: 'Coiffure',
+      city: 'Paris',
+      address1: '12 Rue de Rivoli',
+      postalCode: '75004',
+      staffName: 'Thomas',
+      staffTitle: 'Coiffeur',
+      ratingAvg: 4.6,
+      ratingCount: 89,
+    },
+    {
+      name: 'Boucles & Co',
+      slug: 'boucles-co',
+      description: 'Spécialiste des coupes et colorations. Ambiance conviviale.',
+      category: 'Coiffure',
+      city: 'Lyon',
+      address1: '8 Rue de la République',
+      postalCode: '69002',
+      staffName: 'Marie',
+      staffTitle: 'Coloriste',
+      ratingAvg: 4.9,
+      ratingCount: 156,
+    },
+  ];
+
+  for (const shop of coiffeurShops) {
+    const existing = await prisma.business.findUnique({ where: { slug: shop.slug }, include: { staff: true } });
+    if (existing) continue; // already seeded
+
+    const biz = await prisma.business.create({
+      data: {
+        name: shop.name,
+        slug: shop.slug,
+        description: shop.description,
+        category: shop.category,
+        timezone: 'Europe/Paris',
+        phone: '+33012345678',
+        email: `contact@${shop.slug.replace(/-/g, '')}.fr`,
+        status: 'active',
+        ratingAvg: shop.ratingAvg,
+        ratingCount: shop.ratingCount,
+        freeCancellationBeforeHours: 24,
+        allowRescheduleBeforeHours: 2,
+        locations: {
+          create: {
+            label: 'Principal',
+            address1: shop.address1,
+            postalCode: shop.postalCode,
+            city: shop.city,
+            country: 'FR',
+          },
+        },
+      },
+    });
+
+    const staffMember = await prisma.staff.create({
+      data: {
+        businessId: biz.id,
+        name: shop.staffName,
+        roleTitle: shop.staffTitle,
+        isActive: true,
+      },
+    });
+
+    await prisma.service.create({
+      data: {
+        businessId: biz.id,
+        name: 'Coupe',
+        description: 'Coupe et coiffage',
+        category: 'Coiffure',
+        baseDurationMin: 45,
+        isActive: true,
+        serviceVariants: {
+          create: [
+            { name: 'Coupe femme', priceCents: 4500, durationMin: 45, bufferBeforeMin: 5, bufferAfterMin: 10, capacity: 1 },
+            { name: 'Coupe homme', priceCents: 2800, durationMin: 30, bufferBeforeMin: 5, bufferAfterMin: 5, capacity: 1 },
+          ],
+        },
+      },
+    });
+
+    await prisma.service.create({
+      data: {
+        businessId: biz.id,
+        name: 'Coloration',
+        description: 'Coloration complète ou mèches',
+        category: 'Coiffure',
+        baseDurationMin: 90,
+        isActive: true,
+        serviceVariants: {
+          create: [
+            { name: 'Coloration complète', priceCents: 7500, durationMin: 90, bufferBeforeMin: 10, bufferAfterMin: 10, capacity: 1 },
+            { name: 'Mèches', priceCents: 9500, durationMin: 120, bufferBeforeMin: 10, bufferAfterMin: 15, capacity: 1 },
+          ],
+        },
+      },
+    });
+
+    await prisma.service.create({
+      data: {
+        businessId: biz.id,
+        name: 'Brushing',
+        description: 'Brushing et mise en pli',
+        category: 'Coiffure',
+        baseDurationMin: 30,
+        isActive: true,
+        serviceVariants: {
+          create: [
+            { name: 'Brushing', priceCents: 2200, durationMin: 30, bufferBeforeMin: 5, bufferAfterMin: 5, capacity: 1 },
+          ],
+        },
+      },
+    });
+
+    for (const dayOfWeek of daysOfWeek) {
+      await prisma.availabilityRule.create({
+        data: {
+          businessId: biz.id,
+          staffId: staffMember.id,
+          dayOfWeek,
+          startTimeLocal: '09:00',
+          endTimeLocal: '19:00',
+        },
+      });
+    }
+  }
+
+  // ——— 3 salons in Toulouse ———
+  const toulouseSalons = [
+    {
+      name: 'Coiffure Capitole',
+      slug: 'coiffure-capitole-toulouse',
+      description: 'Salon de coiffure au pied du Capitole. Coupe, coloration et soins capillaires.',
+      category: 'Coiffure',
+      city: 'Toulouse',
+      address1: '15 Place du Capitole',
+      postalCode: '31000',
+      lat: 43.6047,
+      lng: 1.4442,
+      staffName: 'Léa',
+      staffTitle: 'Styliste',
+      ratingAvg: 4.7,
+      ratingCount: 98,
+    },
+    {
+      name: 'Salon Garonne',
+      slug: 'salon-garonne-toulouse',
+      description: 'Coiffure et barbier près des quais. Ambiance décontractée, expertise homme et femme.',
+      category: 'Coiffure',
+      city: 'Toulouse',
+      address1: '42 Quai de la Daurade',
+      postalCode: '31000',
+      lat: 43.5989,
+      lng: 1.4342,
+      staffName: 'Antoine',
+      staffTitle: 'Coiffeur-Barbier',
+      ratingAvg: 4.5,
+      ratingCount: 67,
+    },
+    {
+      name: 'Boucles Roses',
+      slug: 'boucles-roses-toulouse',
+      description: 'Spécialiste coloration et mèches dans la ville rose. Conseils personnalisés.',
+      category: 'Coiffure',
+      city: 'Toulouse',
+      address1: '8 Rue du Taur',
+      postalCode: '31000',
+      lat: 43.6072,
+      lng: 1.4419,
+      staffName: 'Claire',
+      staffTitle: 'Coloriste',
+      ratingAvg: 4.9,
+      ratingCount: 112,
+    },
+  ];
+
+  for (const shop of toulouseSalons) {
+    const existing = await prisma.business.findUnique({ where: { slug: shop.slug }, include: { staff: true } });
+    if (existing) continue;
+
+    const biz = await prisma.business.create({
+      data: {
+        name: shop.name,
+        slug: shop.slug,
+        description: shop.description,
+        category: shop.category,
+        timezone: 'Europe/Paris',
+        phone: '+33512345678',
+        email: `contact@${shop.slug.replace(/-/g, '').replace('toulouse', '')}.fr`,
+        status: 'active',
+        ratingAvg: shop.ratingAvg,
+        ratingCount: shop.ratingCount,
+        freeCancellationBeforeHours: 24,
+        allowRescheduleBeforeHours: 2,
+        locations: {
+          create: {
+            label: 'Principal',
+            address1: shop.address1,
+            postalCode: shop.postalCode,
+            city: shop.city,
+            country: 'FR',
+            lat: shop.lat,
+            lng: shop.lng,
+          },
+        },
+      },
+    });
+
+    const staffMember = await prisma.staff.create({
+      data: {
+        businessId: biz.id,
+        name: shop.staffName,
+        roleTitle: shop.staffTitle,
+        isActive: true,
+      },
+    });
+
+    await prisma.service.create({
+      data: {
+        businessId: biz.id,
+        name: 'Coupe',
+        description: 'Coupe et coiffage',
+        category: 'Coiffure',
+        baseDurationMin: 45,
+        isActive: true,
+        serviceVariants: {
+          create: [
+            { name: 'Coupe femme', priceCents: 4200, durationMin: 45, bufferBeforeMin: 5, bufferAfterMin: 10, capacity: 1 },
+            { name: 'Coupe homme', priceCents: 2600, durationMin: 30, bufferBeforeMin: 5, bufferAfterMin: 5, capacity: 1 },
+          ],
+        },
+      },
+    });
+
+    await prisma.service.create({
+      data: {
+        businessId: biz.id,
+        name: 'Coloration',
+        description: 'Coloration complète ou mèches',
+        category: 'Coiffure',
+        baseDurationMin: 90,
+        isActive: true,
+        serviceVariants: {
+          create: [
+            { name: 'Coloration complète', priceCents: 7200, durationMin: 90, bufferBeforeMin: 10, bufferAfterMin: 10, capacity: 1 },
+            { name: 'Mèches', priceCents: 8800, durationMin: 120, bufferBeforeMin: 10, bufferAfterMin: 15, capacity: 1 },
+          ],
+        },
+      },
+    });
+
+    await prisma.service.create({
+      data: {
+        businessId: biz.id,
+        name: 'Brushing',
+        description: 'Brushing et mise en pli',
+        category: 'Coiffure',
+        baseDurationMin: 30,
+        isActive: true,
+        serviceVariants: {
+          create: [
+            { name: 'Brushing', priceCents: 2000, durationMin: 30, bufferBeforeMin: 5, bufferAfterMin: 5, capacity: 1 },
+          ],
+        },
+      },
+    });
+
+    for (const dayOfWeek of daysOfWeek) {
+      await prisma.availabilityRule.create({
+        data: {
+          businessId: biz.id,
+          staffId: staffMember.id,
+          dayOfWeek,
+          startTimeLocal: '09:00',
+          endTimeLocal: '19:00',
+        },
+      });
+    }
+  }
+
   console.log('✅ Seeding completed!');
+  console.log('   + 3 coiffeur shops: Coiffure Élégance, Le Salon du Marais, Boucles & Co');
+  console.log('   + 3 salons Toulouse: Coiffure Capitole, Salon Garonne, Boucles Roses');
   console.log('\n📝 Test accounts:');
   console.log('Admin: admin@planity.com / admin123');
   console.log('Provider: provider@planity.com / provider123');

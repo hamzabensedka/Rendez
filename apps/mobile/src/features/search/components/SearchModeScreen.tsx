@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Modal, TouchableOpacity, SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppLogo } from './AppLogo';
 import { ProfileButton } from './ProfileButton';
@@ -38,7 +39,7 @@ export const SearchModeScreen = React.memo<SearchModeScreenProps>(function Searc
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.backButton}>

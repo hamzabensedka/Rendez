@@ -1,13 +1,24 @@
 import React, { useCallback, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, StatusBar } from 'react-native';
-import { Text } from '@planity/ui';
-import { colors, spacing } from '@planity/ui';
+import {
+  View,
+  StyleSheet,
+  StatusBar,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ScreenHeader, SearchInput, AddressSuggestionList } from '../components';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, radius } from '@planity/ui';
+import { Text } from '@planity/ui';
+import { SearchInput, AddressSuggestionList } from '../components';
 import { useAddressSearch } from '../hooks';
-import { SEARCH_PLACEHOLDERS } from '../constants';
+import { SEARCH_PLACEHOLDERS, DEFAULT_LOCATION_SUGGESTIONS } from '../constants';
+import type { AddressSuggestion } from '../types';
 
-/** Address search only. "Around Me" removed until expo-location is integrated (see docs/audit/07-closed-decisions.md). */
+const EXPLORE_IMAGE_URI = 'https://picsum.photos/seed/explore-map/800/450';
+
 export default function AddressScreen() {
   const router = useRouter();
   const { address: initialAddress } = useLocalSearchParams<{ address?: string }>();
@@ -20,7 +31,7 @@ export default function AddressScreen() {
   }, [initialAddress, setQuery]);
 
   const handleSelectAddress = useCallback(
-    (address: ReturnType<typeof useAddressSearch>['suggestions'][0]) => {
+    (address: AddressSuggestion) => {
       selectAddress(address);
       router.push({
         pathname: '/search-results',
@@ -30,39 +41,93 @@ export default function AddressScreen() {
     [selectAddress, router]
   );
 
+  const handleClear = useCallback(() => {
+    setQuery('');
+  }, [setQuery]);
+
+  const handleExploreCurrentArea = useCallback(() => {
+    router.push({ pathname: '/search-results', params: { category: 'Services' } });
+  }, [router]);
+
+  const showSuggestions = query.trim().length > 0;
+  const listSuggestions = showSuggestions ? suggestions : DEFAULT_LOCATION_SUGGESTIONS;
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
-      <SafeAreaView style={styles.safeArea}>
-        <ScreenHeader title="Location" />
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+        {/* Header: back + WHERE? + Clear */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+              accessibilityLabel="Back"
+              accessibilityRole="button"
+            >
+              <Ionicons name="arrow-back" size={24} color={colors.light.text} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>WHERE?</Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleClear}
+            style={styles.clearButton}
+            accessibilityLabel="Clear"
+            accessibilityRole="button"
+          >
+            <Text style={styles.clearText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
 
-        <View style={styles.section}>
-          <Text variant="headline" style={styles.sectionTitle}>
-            Where?
-          </Text>
+        {/* Search */}
+        <View style={styles.searchSection}>
           <SearchInput
             value={query}
             onChangeText={setQuery}
-            placeholder={SEARCH_PLACEHOLDERS.ADDRESS}
+            placeholder={SEARCH_PLACEHOLDERS.LOCATION}
             autoFocus
+            showClearButton={false}
+            variant="pill"
           />
         </View>
 
-        <View style={styles.contentArea}>
-          {!query.trim() ? (
-            <View style={styles.aroundSection}>
-              <Text variant="body" color={colors.light.textSecondary} style={styles.hint}>
-                Search by address above. Location-based search coming later.
-              </Text>
+        {/* Content: Suggested Locations + List + Explore card */}
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={true}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.sectionLabel}>SUGGESTED LOCATIONS</Text>
+
+          {listSuggestions.length > 0 ? (
+            <View style={styles.listWrap}>
+              <AddressSuggestionList
+                suggestions={listSuggestions}
+                query={query}
+                onSelect={handleSelectAddress}
+                scrollEnabled={false}
+              />
             </View>
-          ) : (
-            <AddressSuggestionList
-              suggestions={suggestions}
-              query={query}
-              onSelect={handleSelectAddress}
+          ) : null}
+
+          {/* Explore current area card */}
+          <TouchableOpacity
+            style={styles.exploreCard}
+            activeOpacity={0.9}
+            onPress={handleExploreCurrentArea}
+            accessibilityLabel="Explore current area"
+            accessibilityRole="button"
+          >
+            <Image
+              source={{ uri: EXPLORE_IMAGE_URI }}
+              style={styles.exploreImage}
+              resizeMode="cover"
             />
-          )}
-        </View>
+            <View style={styles.exploreOverlay} />
+            <Text style={styles.exploreLabel}>EXPLORE CURRENT AREA</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </SafeAreaView>
     </View>
   );
@@ -75,27 +140,95 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    backgroundColor: colors.light.background,
-  },
-  section: {
     backgroundColor: colors.light.surface,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl + spacing.sm,
+    paddingBottom: spacing.xl,
     borderBottomWidth: 1,
     borderBottomColor: colors.light.border,
   },
-  sectionTitle: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    marginBottom: spacing.sm,
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
   },
-  contentArea: {
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    color: colors.light.text,
+    textTransform: 'uppercase',
+  },
+  clearButton: {
+    padding: spacing.sm,
+  },
+  clearText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 3,
+    color: colors.light.text,
+    textTransform: 'uppercase',
+  },
+  searchSection: {
+    paddingHorizontal: 0,
+    paddingTop: spacing.xl,
+    backgroundColor: colors.light.surface,
+  },
+  scroll: {
     flex: 1,
     backgroundColor: colors.light.background,
   },
-  aroundSection: {
-    paddingTop: spacing.lg,
-    paddingHorizontal: spacing.lg,
+  scrollContent: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing['3xl'],
   },
-  hint: {
-    textAlign: 'center',
+  sectionLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 4,
+    color: colors.light.text,
+    marginBottom: spacing.xl,
+    textTransform: 'uppercase',
+  },
+  listWrap: {
+    marginBottom: 0,
+  },
+  exploreCard: {
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    aspectRatio: 16 / 9,
+    marginTop: spacing.xl,
+    marginBottom: spacing.xl,
+  },
+  exploreImage: {
+    width: '100%',
+    height: '100%',
+  },
+  exploreOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '55%',
+    backgroundColor: 'rgba(15,23,42,0.6)',
+  },
+  exploreLabel: {
+    position: 'absolute',
+    left: spacing.xl,
+    bottom: spacing.xl,
+    right: spacing.xl,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 2,
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
   },
 });

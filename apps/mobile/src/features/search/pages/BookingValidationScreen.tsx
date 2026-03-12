@@ -1,5 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
-import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, StatusBar, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Text, Card, Button } from '@planity/ui';
 import { colors, spacing } from '@planity/ui';
@@ -71,7 +72,7 @@ export default function BookingValidationScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
       <SalonDetailsHeader onBack={handleBack} />
 
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

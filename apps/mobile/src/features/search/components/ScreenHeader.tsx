@@ -11,6 +11,8 @@ interface ScreenHeaderProps {
   leftIcon?: keyof typeof Ionicons.glyphMap;
   rightElement?: React.ReactNode;
   testID?: string;
+  /** Hide bottom border (e.g. search landing) */
+  noBorder?: boolean;
 }
 
 export const ScreenHeader = React.memo<ScreenHeaderProps>(function ScreenHeader({
@@ -19,6 +21,7 @@ export const ScreenHeader = React.memo<ScreenHeaderProps>(function ScreenHeader(
   leftIcon = 'chevron-back',
   rightElement,
   testID,
+  noBorder,
 }) {
   const router = useRouter();
 
@@ -31,7 +34,7 @@ export const ScreenHeader = React.memo<ScreenHeaderProps>(function ScreenHeader(
   }, [onBack, router]);
 
   return (
-    <View style={styles.header} testID={testID}>
+    <View style={[styles.header, noBorder && styles.headerNoBorder]} testID={testID}>
       <TouchableOpacity
         style={styles.backButton}
         onPress={handleBack}
@@ -57,9 +60,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
+    paddingTop: spacing.xl + spacing.sm,
     backgroundColor: colors.light.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.light.border,
+  },
+  headerNoBorder: {
+    borderBottomWidth: 0,
   },
   backButton: {
     minWidth: 44,

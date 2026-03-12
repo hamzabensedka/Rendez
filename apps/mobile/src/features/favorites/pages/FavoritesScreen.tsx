@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
   ScrollView,
 } from 'react-native';
@@ -52,7 +52,7 @@ export default function FavoritesScreen() {
   }, [favorites.join(',')]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>

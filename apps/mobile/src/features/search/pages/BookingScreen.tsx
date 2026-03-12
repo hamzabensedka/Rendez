@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, StatusBar, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Card, Button } from '@planity/ui';
@@ -131,7 +132,7 @@ export default function BookingScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
       <SalonDetailsHeader onBack={handleBack} />
 
       <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -231,7 +232,7 @@ export default function BookingScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setServiceModalVisible(false)}
       >
-        <SafeAreaView style={styles.modalContainer}>
+        <SafeAreaView style={styles.modalContainer} edges={['top', 'left', 'right', 'bottom']}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setServiceModalVisible(false)} style={styles.closeButton}>
               <Ionicons name="close" size={28} color={colors.light.text} />
@@ -258,7 +259,7 @@ export default function BookingScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setStaffModalVisible(false)}
       >
-        <SafeAreaView style={styles.modalContainer}>
+        <SafeAreaView style={styles.modalContainer} edges={['top', 'left', 'right', 'bottom']}>
           <View style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setStaffModalVisible(false)} style={styles.closeButton}>
               <Ionicons name="close" size={28} color={colors.light.text} />

@@ -9,6 +9,11 @@ interface User {
   role: string;
 }
 
+export interface PendingRegistration {
+  email: string;
+  password: string;
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -16,6 +21,8 @@ interface AuthContextType {
   login: (user: User) => void;
   logout: () => Promise<void>;
   clearError: () => void;
+  pendingRegistration: PendingRegistration | null;
+  setPendingRegistration: (data: PendingRegistration | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,6 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingRegistration, setPendingRegistration] = useState<PendingRegistration | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -93,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, logout, clearError }}>
+    <AuthContext.Provider value={{ user, loading, error, login, logout, clearError, pendingRegistration, setPendingRegistration }}>
       {children}
     </AuthContext.Provider>
   );

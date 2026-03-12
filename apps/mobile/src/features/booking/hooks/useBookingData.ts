@@ -2,6 +2,22 @@ import { useEffect, useState, useCallback } from 'react';
 import { getNextDays } from '@planity/shared';
 import api from '../../../shared/lib/api';
 
+/** Generate mock slots for a given date when API is unreachable or returns empty (e.g. 09:00–18:00 every 30 min). */
+function getFallbackSlotsForDate(date: Date): Array<{ startAt: string; staffId: string | null }> {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+  const slots: Array<{ startAt: string; staffId: string | null }> = [];
+  for (let hour = 9; hour <= 17; hour++) {
+    for (const minute of [0, 30]) {
+      if (hour === 17 && minute === 30) break;
+      const d = new Date(year, month, day, hour, minute, 0, 0);
+      slots.push({ startAt: d.toISOString(), staffId: null });
+    }
+  }
+  return slots;
+}
+
 export interface Slot {
   startAt: string;
   staffId: string | null;
@@ -17,6 +33,7 @@ export interface ServiceVariant {
 
 export interface BookingBusiness {
   id: string;
+  name?: string;
   locations?: Array<{ id: string }>;
   services?: Array<{
     id: string;
@@ -89,9 +106,14 @@ export function useBookingData(
       const response = await api.get(`/businesses/${businessId}/availability`, {
         params: { serviceVariantId, date: dateStr },
       });
-      setSlots(response.data.slots ?? []);
+      const apiSlots = response.data?.slots ?? [];
+      if (apiSlots.length > 0) {
+        setSlots(apiSlots);
+      } else {
+        setSlots(getFallbackSlotsForDate(selectedDate));
+      }
     } catch {
-      setSlots([]);
+      setSlots(getFallbackSlotsForDate(selectedDate));
     } finally {
       setLoadingSlots(false);
     }

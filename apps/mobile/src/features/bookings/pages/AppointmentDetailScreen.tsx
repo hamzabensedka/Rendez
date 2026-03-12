@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -80,7 +80,7 @@ export default function AppointmentDetailScreen() {
 
   if (error || !appointment) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -101,7 +101,7 @@ export default function AppointmentDetailScreen() {
   const statusColor = getStatusColor(appointment.status);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>

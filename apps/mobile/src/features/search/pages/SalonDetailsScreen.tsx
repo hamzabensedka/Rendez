@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, SafeAreaView, StatusBar, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, StatusBar, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Text } from '@planity/ui';
 import { colors, spacing } from '@planity/ui';
@@ -37,7 +38,7 @@ export default function SalonDetailsScreen() {
 
   if (!salon) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
         <StatusBar barStyle="dark-content" />
         <ScreenHeader title="Provider" />
         <View style={styles.notFound}>
@@ -50,7 +51,7 @@ export default function SalonDetailsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
       <StatusBar barStyle="dark-content" />
       <SalonDetailsHeader onBack={handleBack} />
       

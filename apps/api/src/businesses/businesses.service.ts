@@ -75,10 +75,18 @@ export class BusinessesService {
     return { data, total, page: safePage, limit: safeLimit };
   }
 
-  async findOne(id: string) {
+  /** UUID regex (8-4-4-4-12 hex); if not matching, treat param as slug. */
+  private isUuid(id: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  }
+
+  async findOne(idOrSlug: string) {
+    const byId = this.isUuid(idOrSlug)
+      ? { id: idOrSlug }
+      : { slug: idOrSlug };
     const business = await this.prisma.business.findFirst({
       where: {
-        id,
+        ...byId,
         status: 'active',
         deletedAt: null,
       },
