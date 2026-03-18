@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@planity/ui';
@@ -13,9 +15,11 @@ import { colors, spacing } from '@planity/ui';
 import { useRouter } from 'expo-router';
 import { AppLogo } from '../components/AppLogo';
 import { AuthForm, type AuthFormData } from '../components/AuthForm';
+import { useKeyboardHeight } from '../../../application/hooks/useKeyboardHeight';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const keyboardHeight = useKeyboardHeight();
 
   const handleBack = () => {
     router.back();
@@ -37,18 +41,28 @@ export default function ProfileScreen() {
           <View style={styles.placeholder} />
         </View>
 
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+          keyboardVerticalOffset={0}
         >
-          <View style={styles.section}>
-            <Text variant="headline" style={styles.sectionTitle}>
-              Sign in or create an account
-            </Text>
-            <AuthForm onSubmit={handleAuthSubmit} />
-          </View>
-        </ScrollView>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: spacing['3xl'] + keyboardHeight },
+            ]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.section}>
+              <Text variant="headline" style={styles.sectionTitle}>
+                Sign in or create an account
+              </Text>
+              <AuthForm onSubmit={handleAuthSubmit} />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );
@@ -83,6 +97,9 @@ const styles = StyleSheet.create({
     width: 44,
   },
   scroll: {
+    flex: 1,
+  },
+  keyboardView: {
     flex: 1,
   },
   scrollContent: {

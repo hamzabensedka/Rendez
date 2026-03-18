@@ -17,6 +17,8 @@ export interface ApiBusinessListItem {
     postalCode: string;
     city: string;
     country?: string;
+    lat?: number | null;
+    lng?: number | null;
   }>;
 }
 

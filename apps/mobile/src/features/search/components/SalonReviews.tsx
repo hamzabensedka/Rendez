@@ -1,134 +1,125 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import api from '../../../shared/lib/api';
 
-interface Review {
+interface ApiReview {
   id: string;
   rating: number;
-  text: string;
-  date: string;
-  response?: {
-    author: string;
-    text: string;
-  };
+  comment: string | null;
+  createdAt: string;
+  clientName: string;
 }
 
-const MOCK_REVIEWS: Review[] = [
-  {
-    id: '1',
-    rating: 5.0,
-    text: "Magnifique j'ai fais une Barbie j'adore ! Grazie Mille 💅🏼💗",
-    date: '08/11/2025',
-    response: {
-      author: 'Sophia B',
-      text: 'Merci',
-    },
-  },
-  {
-    id: '2',
-    rating: 5.0,
-    text: "Je suis très contente des extensions très douce malgré qu'il me restait de la colle dans les cils à cause des faux cils , patiente et très gentille !",
-    date: '15/09/2025',
-    response: {
-      author: 'Sophia B',
-      text: 'Merci a vous faut eviter de venir avec des faux cils ❤️ merci de votre retour',
-    },
-  },
-  {
-    id: '3',
-    rating: 5.0,
-    text: "Des ongles parfaits et un personnel au top je recommande +++",
-    date: '06/01/2026',
-    response: {
-      author: 'Sophia B',
-      text: 'Merci',
-    },
-  },
-  {
-    id: '4',
-    rating: 5.0,
-    text: "Parfait comme d'habitude !",
-    date: '04/01/2026',
-    response: {
-      author: 'Sophia B',
-      text: 'Merci',
-    },
-  },
-];
+interface ReviewsResponse {
+  data: ApiReview[];
+  total: number;
+  page: number;
+  limit: number;
+  ratingAvg: number;
+  ratingCount: number;
+}
 
-export const SalonReviews = React.memo(function SalonReviews() {
+interface SalonReviewsProps {
+  businessId: string;
+}
+
+function formatDate(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  } catch {
+    return iso;
+  }
+}
+
+export const SalonReviews = React.memo(function SalonReviews({ businessId }: SalonReviewsProps) {
+  const [data, setData] = useState<ReviewsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!businessId) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await api.get<ReviewsResponse>(`/businesses/${businessId}/reviews`, {
+          params: { page: 1, limit: 20 },
+        });
+        if (!cancelled) setData(res.data);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load reviews');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [businessId]);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="small" color="#1C1C1E" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
+
+  const reviews = data?.data ?? [];
+  const ratingAvg = data?.ratingAvg ?? 0;
+  const ratingCount = data?.ratingCount ?? 0;
+  const ratingStr = ratingAvg.toFixed(1).replace('.', ',');
+
   return (
     <View style={styles.container}>
       {/* Summary Card */}
       <View style={styles.summaryCard}>
         <View style={styles.ratingLeft}>
-          <Text style={styles.ratingBig}>4,9</Text>
+          <Text style={styles.ratingBig}>{ratingStr}</Text>
         </View>
         <View style={styles.ratingRight}>
-          <View style={styles.criteriaRow}>
-            <Text style={styles.criteriaLabel}>Accueil</Text>
-            <View style={styles.criteriaValueContainer}>
-              <Text style={styles.criteriaValue}>4,9</Text>
-              <Ionicons name="star" size={12} color="#000" />
-            </View>
-          </View>
-          <View style={styles.criteriaRow}>
-            <Text style={styles.criteriaLabel}>Propreté</Text>
-            <View style={styles.criteriaValueContainer}>
-              <Text style={styles.criteriaValue}>4,9</Text>
-              <Ionicons name="star" size={12} color="#000" />
-            </View>
-          </View>
-          <View style={styles.criteriaRow}>
-            <Text style={styles.criteriaLabel}>Cadre & Ambiance</Text>
-            <View style={styles.criteriaValueContainer}>
-              <Text style={styles.criteriaValue}>4,9</Text>
-              <Ionicons name="star" size={12} color="#000" />
-            </View>
-          </View>
-          <View style={styles.criteriaRow}>
-            <Text style={styles.criteriaLabel}>Service quality</Text>
-            <View style={styles.criteriaValueContainer}>
-              <Text style={styles.criteriaValue}>4,9</Text>
-              <Ionicons name="star" size={12} color="#000" />
-            </View>
-          </View>
-          <Text style={styles.reviewCount}>315 reviews</Text>
+          <Text style={styles.reviewCount}>
+            {ratingCount === 0 ? 'No reviews yet' : `${ratingCount} review${ratingCount === 1 ? '' : 's'}`}
+          </Text>
         </View>
       </View>
 
       {/* Reviews List */}
       <View style={styles.reviewsList}>
-        {MOCK_REVIEWS.map((review) => (
-          <View key={review.id} style={styles.reviewItem}>
-            <View style={styles.reviewHeader}>
-              <Text style={styles.reviewRating}>{review.rating.toString().replace('.', ',')}</Text>
-              <Ionicons name="star" size={14} color="#000" />
-            </View>
-            
-            <Text style={styles.reviewText}>{review.text}</Text>
-            <Text style={styles.reviewDate}>{review.date}</Text>
-
-            {review.response && (
-              <View style={styles.responseContainer}>
-                <Text style={styles.responseAuthor}>Réponse de {review.response.author}</Text>
-                <Text style={styles.responseText}>{review.response.text}</Text>
+        {reviews.length === 0 ? (
+          <Text style={styles.emptyText}>No reviews yet</Text>
+        ) : (
+          reviews.map((review) => (
+            <View key={review.id} style={styles.reviewItem}>
+              <View style={styles.reviewHeader}>
+                <Text style={styles.reviewRating}>{review.rating}</Text>
+                <Ionicons name="star" size={14} color="#000" />
+                {review.clientName ? (
+                  <Text style={styles.reviewAuthor}> · {review.clientName}</Text>
+                ) : null}
               </View>
-            )}
-          </View>
-        ))}
-      </View>
-
-      {/* Pagination */}
-      <View style={styles.pagination}>
-        <TouchableOpacity style={styles.pageButton} disabled>
-          <Ionicons name="arrow-back" size={16} color="#E5E5EA" />
-          <Text style={[styles.pageButtonText, styles.pageButtonDisabled]}>Page précédente</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.pageButton}>
-          <Text style={styles.pageButtonText}>Page suivante</Text>
-          <Ionicons name="arrow-forward" size={16} color="#000" />
-        </TouchableOpacity>
+              {review.comment ? (
+                <Text style={styles.reviewText}>{review.comment}</Text>
+              ) : null}
+              <Text style={styles.reviewDate}>{formatDate(review.createdAt)}</Text>
+            </View>
+          ))
+        )}
       </View>
     </View>
   );
@@ -166,36 +157,24 @@ const styles = StyleSheet.create({
   ratingRight: {
     flex: 1,
     padding: 16,
-  },
-  criteriaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  criteriaLabel: {
-    fontSize: 14,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
-  },
-  criteriaValueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  criteriaValue: {
-    fontSize: 14,
-    color: '#000000',
-    fontFamily: 'Inter-Medium',
-    marginRight: 4,
+    justifyContent: 'center',
   },
   reviewCount: {
     fontSize: 13,
     color: '#666666',
     fontFamily: 'Inter-Regular',
-    marginTop: 12,
   },
   reviewsList: {
     marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#666666',
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#666666',
   },
   reviewItem: {
     backgroundColor: '#FFFFFF',
@@ -219,6 +198,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Medium',
     marginRight: 4,
   },
+  reviewAuthor: {
+    fontSize: 13,
+    color: '#666666',
+    marginLeft: 4,
+  },
   reviewText: {
     fontSize: 15,
     color: '#000000',
@@ -230,42 +214,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666666',
     fontFamily: 'Inter-Regular',
-    marginBottom: 12,
-  },
-  responseContainer: {
-    backgroundColor: '#f8f9fa',
-    padding: 12,
-    borderRadius: 6,
-  },
-  responseAuthor: {
-    fontSize: 14,
-    color: '#666666',
-    fontFamily: 'Inter-Regular',
-    marginBottom: 4,
-  },
-  responseText: {
-    fontSize: 14,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
-    lineHeight: 20,
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  pageButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  pageButtonText: {
-    fontSize: 14,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
-    marginHorizontal: 8,
-  },
-  pageButtonDisabled: {
-    color: '#E5E5EA',
   },
 });

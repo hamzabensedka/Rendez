@@ -14,7 +14,7 @@ import { colors, spacing, radius } from '@planity/ui';
 import { Text } from '@planity/ui';
 import { SearchInput, AddressSuggestionList } from '../components';
 import { useAddressSearch } from '../hooks';
-import { SEARCH_PLACEHOLDERS, DEFAULT_LOCATION_SUGGESTIONS } from '../constants';
+import { SEARCH_PLACEHOLDERS, FALLBACK_CITY_SUGGESTIONS } from '../constants';
 import type { AddressSuggestion } from '../types';
 
 const EXPLORE_IMAGE_URI = 'https://picsum.photos/seed/explore-map/800/450';
@@ -22,7 +22,7 @@ const EXPLORE_IMAGE_URI = 'https://picsum.photos/seed/explore-map/800/450';
 export default function AddressScreen() {
   const router = useRouter();
   const { address: initialAddress } = useLocalSearchParams<{ address?: string }>();
-  const { query, setQuery, suggestions, selectAddress } = useAddressSearch();
+  const { query, setQuery, suggestions, selectAddress, isLoading } = useAddressSearch();
 
   useEffect(() => {
     if (initialAddress) {
@@ -49,8 +49,25 @@ export default function AddressScreen() {
     router.push({ pathname: '/search-results', params: { category: 'Services' } });
   }, [router]);
 
-  const showSuggestions = query.trim().length > 0;
-  const listSuggestions = showSuggestions ? suggestions : DEFAULT_LOCATION_SUGGESTIONS;
+  const handleSubmitSearch = useCallback(() => {
+    const trimmed = query.trim();
+    if (trimmed) {
+      router.push({
+        pathname: '/search-results',
+        params: { address: trimmed, category: 'Services' },
+      });
+    }
+  }, [query, router]);
+
+  const fallbackSuggestions: AddressSuggestion[] =
+    query.trim() && suggestions.length === 0 && !isLoading
+      ? FALLBACK_CITY_SUGGESTIONS.filter(
+          (s) =>
+            s.city.toLowerCase().includes(query.trim().toLowerCase()) ||
+            s.country.toLowerCase().includes(query.trim().toLowerCase())
+        ).map((s) => ({ id: s.id, address: s.address, city: s.city, country: s.country }))
+      : [];
+  const listSuggestions = suggestions.length > 0 ? suggestions : fallbackSuggestions;
 
   return (
     <View style={styles.container}>
@@ -85,6 +102,7 @@ export default function AddressScreen() {
             value={query}
             onChangeText={setQuery}
             placeholder={SEARCH_PLACEHOLDERS.LOCATION}
+            onSubmitEditing={handleSubmitSearch}
             autoFocus
             showClearButton={false}
             variant="pill"
@@ -109,7 +127,11 @@ export default function AddressScreen() {
                 scrollEnabled={false}
               />
             </View>
-          ) : null}
+          ) : (
+            <Text style={styles.emptyHint}>
+              {query.trim() ? 'No suggestions. Type a city name or press Search to use your text.' : 'Type to search for a location'}
+            </Text>
+          )}
 
           {/* Explore current area card */}
           <TouchableOpacity
@@ -197,6 +219,11 @@ const styles = StyleSheet.create({
     color: colors.light.text,
     marginBottom: spacing.xl,
     textTransform: 'uppercase',
+  },
+  emptyHint: {
+    fontSize: 14,
+    color: colors.light.textSecondary,
+    marginBottom: spacing.lg,
   },
   listWrap: {
     marginBottom: 0,

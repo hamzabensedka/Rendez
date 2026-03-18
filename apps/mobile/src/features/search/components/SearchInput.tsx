@@ -13,6 +13,8 @@ interface SearchInputProps {
   autoFocus?: boolean;
   maxLength?: number;
   testID?: string;
+  /** Called when user submits (e.g. presses search/return key). Use to navigate to results. */
+  onSubmitEditing?: () => void;
   /** Pill style: rounded-full, soft background, no border (search landing) */
   variant?: 'default' | 'pill';
 }
@@ -26,6 +28,7 @@ export const SearchInput = React.memo<SearchInputProps>(function SearchInput({
   autoFocus = false,
   maxLength,
   testID,
+  onSubmitEditing,
   variant = 'default',
 }) {
   const handleClear = useCallback(() => {
@@ -56,6 +59,7 @@ export const SearchInput = React.memo<SearchInputProps>(function SearchInput({
               placeholderTextColor={colors.light.textTertiary}
               value={value}
               onChangeText={onChangeText}
+              onSubmitEditing={onSubmitEditing}
               autoFocus={autoFocus}
               maxLength={maxLength}
               returnKeyType="search"
@@ -81,6 +85,7 @@ export const SearchInput = React.memo<SearchInputProps>(function SearchInput({
             placeholderTextColor={colors.light.textTertiary}
             value={value}
             onChangeText={onChangeText}
+            onSubmitEditing={onSubmitEditing}
             autoFocus={autoFocus}
             maxLength={maxLength}
             returnKeyType="search"

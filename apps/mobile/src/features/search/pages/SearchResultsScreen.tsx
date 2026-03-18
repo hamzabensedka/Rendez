@@ -1,7 +1,8 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, StyleSheet, StatusBar, FlatList, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, StatusBar, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@planity/ui';
 import { colors, spacing } from '@planity/ui';
 import {
@@ -17,15 +18,11 @@ import {
   FilterState,
   type ApiBusinessListItem,
 } from '../components';
-import {
-  TOULOUSE_SALONS_FALLBACK,
-  DEFAULT_SALON_IMAGES,
-  DEFAULT_BOOKING_SLOTS,
-  RESULT_FILTER_PILLS,
-} from '../constants';
+import { DEFAULT_SALON_IMAGES, RESULT_FILTER_PILLS } from '../constants';
 import api from '../../../shared/lib/api';
+import MapSearchScreen from './MapSearchScreen';
 
-/** Map API business to RENDEZ-style card data (image, rating, verified, slots). */
+/** Map API business to RENDEZ-style card data (image, rating, verified). No fake slots; use empty or "Book to see times". */
 function mapBusinessToRendezCard(b: ApiBusinessListItem): RendezSalonCardData {
   const address =
     b.locations && b.locations.length > 0
@@ -40,7 +37,7 @@ function mapBusinessToRendezCard(b: ApiBusinessListItem): RendezSalonCardData {
     priceLevel: '€€€',
     categories: b.category || 'Hair, Nails, Skincare',
     imageUri: DEFAULT_SALON_IMAGES[0],
-    slots: [...DEFAULT_BOOKING_SLOTS],
+    slots: [],
     verified: true,
   };
 }
@@ -51,21 +48,25 @@ export default function SearchResultsScreen() {
 
   const [businesses, setBusinesses] = useState<ApiBusinessListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isFiltersVisible, setIsFiltersVisible] = useState(false);
   const [isServiceFiltersVisible, setIsServiceFiltersVisible] = useState(false);
   const [isTimeFilterVisible, setIsTimeFilterVisible] = useState(false);
   const [selectedTime, setSelectedTime] = useState(time || 'Any time');
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
-  // Do not put full address in API query or no business will match. When user selected a location,
-  // filter by city only so all businesses in that city are shown.
-  const city = address && address.includes(',') ? address.split(',').pop()?.trim() : undefined;
+  // Use city name for API filter. "Toulouse, France" → city "Toulouse"; "Paris" → city "Paris".
+  const city = address?.trim()
+    ? (address.includes(',') ? address.split(',')[0]?.trim() : address.trim())
+    : undefined;
   const query = city ? undefined : ([category, address].filter(Boolean).join(' ') || undefined);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       setLoading(true);
+      setError(null);
       try {
         const res = await api.get<{ data: ApiBusinessListItem[] }>('/businesses', {
           params: { query: query || undefined, city: city || undefined },
@@ -73,13 +74,25 @@ export default function SearchResultsScreen() {
         const list = res.data?.data;
         const items = Array.isArray(list) ? list : [];
         if (!cancelled) {
-          setBusinesses(
-            items.length > 0 ? items : city && city.toLowerCase() === 'toulouse' ? [...TOULOUSE_SALONS_FALLBACK] : []
-          );
+          setBusinesses(items);
         }
-      } catch {
+      } catch (e: unknown) {
         if (!cancelled) {
-          setBusinesses(city && city.toLowerCase() === 'toulouse' ? [...TOULOUSE_SALONS_FALLBACK] : []);
+          setBusinesses([]);
+          const message =
+            e && typeof e === 'object' && 'message' in e && typeof (e as Error).message === 'string'
+              ? (e as Error).message
+              : 'Failed to load results';
+          const isNetworkError =
+            message === 'Network Error' ||
+            message.includes('Network request failed') ||
+            message.includes('ECONNREFUSED') ||
+            message.includes('ENOTFOUND');
+          setError(
+            isNetworkError
+              ? 'Cannot reach the server. On a device or emulator, set EXPO_PUBLIC_API_URL to your computer’s IP (e.g. http://192.168.1.x:3000/v1) and ensure the API is running.'
+              : message
+          );
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -129,20 +142,17 @@ export default function SearchResultsScreen() {
     setIsSearchExpanded(prev => !prev);
   }, []);
 
-  // Handlers for interactions INSIDE Expanded View
+  // Handlers for interactions INSIDE Expanded View (search/address screens removed; just close)
   const handleCategoryPress = useCallback(() => {
-    router.push('/search');
-  }, [router]);
+    setIsSearchExpanded(false);
+  }, []);
 
   const handleAddressPress = useCallback(() => {
-    router.push({
-      pathname: '/address',
-      params: { address: address } // Pass the current address to pre-fill
-    });
-  }, [router, address]);
+    setIsSearchExpanded(false);
+  }, []);
 
   const handleTimePress = useCallback(() => {
-    setIsTimeFilterVisible(true); 
+    setIsTimeFilterVisible(true);
   }, []);
 
   const renderHeader = useCallback(() => (
@@ -166,18 +176,26 @@ export default function SearchResultsScreen() {
               onPress={handleToggleSearch}
             />
           </View>
-          <RendezFilterPills
-            pills={RESULT_FILTER_PILLS}
-            onSelect={(id) => {
-              if (id === 'availability') setIsTimeFilterVisible(true);
-              else if (id === 'specialties') setIsServiceFiltersVisible(true);
-              else setIsFiltersVisible(true);
-            }}
-          />
+          <View style={styles.pillsRow}>
+            <TouchableOpacity
+              style={[styles.mapPill, viewMode === 'list' && styles.mapPillActive]}
+              onPress={() => setViewMode('list')}
+            >
+              <Ionicons name="list-outline" size={16} color={viewMode === 'list' ? colors.light.background : colors.light.text} />
+              <Text variant="footnote" style={[styles.mapPillText, viewMode === 'list' && styles.mapPillTextActive]}>Liste</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.mapPill, viewMode === 'map' && styles.mapPillActive]}
+              onPress={() => setViewMode('map')}
+            >
+              <Ionicons name="map-outline" size={16} color={viewMode === 'map' ? colors.light.background : colors.light.text} />
+              <Text variant="footnote" style={[styles.mapPillText, viewMode === 'map' && styles.mapPillTextActive]}>Carte</Text>
+            </TouchableOpacity>
+          </View>
         </>
       )}
     </View>
-  ), [address, category, selectedTime, isSearchExpanded, handleToggleSearch, handleFilterSelect, handleCategoryPress, handleAddressPress, handleTimePress]);
+  ), [address, category, selectedTime, isSearchExpanded, viewMode, handleToggleSearch, handleFilterSelect, handleCategoryPress, handleAddressPress, handleTimePress]);
 
   const renderItem = useCallback(
     ({ item, index }: { item: ApiBusinessListItem; index: number }) => {
@@ -201,25 +219,33 @@ export default function SearchResultsScreen() {
       <StatusBar barStyle="dark-content" />
       <SearchResultsHeader onBack={handleBack} />
 
-      <FlatList
-        data={businesses}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={renderHeader}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            {loading ? (
-              <ActivityIndicator size="small" color={colors.light.accent} />
-            ) : (
-              <Text variant="body" color={colors.light.textSecondary}>
-                No results. Try adjusting your search or filters.
-              </Text>
-            )}
-          </View>
-        }
-      />
+      {/* Header (search bar + Liste/Carte pills) always visible so user can switch views */}
+      {renderHeader()}
+
+      {viewMode === 'list' ? (
+        <FlatList
+          data={businesses}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              {loading ? (
+                <ActivityIndicator size="small" color={colors.light.accent} />
+              ) : (
+                <Text variant="body" color={colors.light.textSecondary}>
+                  {error || 'No results. Try adjusting your search or filters.'}
+                </Text>
+              )}
+            </View>
+          }
+        />
+      ) : (
+        <View style={styles.mapWrapper}>
+          <MapSearchScreen embedded initialBusinesses={businesses} />
+        </View>
+      )}
 
       {/* Filter Modals */}
       <SearchFilters
@@ -257,6 +283,32 @@ const styles = StyleSheet.create({
   },
   searchBarWrapper: {
     marginBottom: spacing.md,
+  },
+  pillsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  mapPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 999,
+    backgroundColor: colors.light.surfaceSecondary,
+  },
+  mapPillText: {
+    color: colors.light.text,
+  },
+  mapPillActive: {
+    backgroundColor: colors.light.text,
+  },
+  mapPillTextActive: {
+    color: colors.light.background,
+  },
+  mapWrapper: {
+    flex: 1,
   },
   listContent: {
     paddingHorizontal: spacing.lg,
