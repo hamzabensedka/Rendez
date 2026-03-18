@@ -5,11 +5,13 @@
   "description": "Planity-like booking marketplace with Apple-style UI",
   "scripts": {
     "dev": "nx run-many --target=serve --projects=@planity/api,@planity/mobile --parallel",
+    "prisma:generate": "pnpm --filter @planity/api prisma:generate",
     "build": "nx run-many --target=build --all",
     "test": "nx run-many --target=test --all",
     "lint": "nx run-many --target=lint --all",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "typecheck": "nx run-many --target=typecheck --all"
+    "typecheck": "nx run-many --target=typecheck --all",
+    "postinstall": "node scripts/patch-android-cmake-path.js"
   },
   "devDependencies": {
     "@nx/eslint": "^18.2.0",
@@ -28,6 +30,23 @@
     "node": ">=18.0.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@8.15.0"
+  "packageManager": "pnpm@8.15.0",
+  "pnpm": {
+    "packageExtensions": {
+      "react-native-safe-area-context": {
+        "dependencies": {
+          "react-native-builder-bob": "^0.23.0"
+        }
+      },
+      "expo-status-bar": {
+        "dependencies": {
+          "expo-module-scripts": "^3.0.0"
+        }
+      }
+    },
+    "patchedDependencies": {
+      "react-native-reanimated@4.1.6": "patches/react-native-reanimated@4.1.6.patch"
+    }
+  }
 }
 
