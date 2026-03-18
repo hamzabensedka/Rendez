@@ -1,23 +1,31 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import api from '../../../shared/lib/api';
+
+export interface FavoriteItem {
+  businessId: string;
+  businessName?: string;
+  createdAt: string;
+}
 
 /**
- * Favorites are stored device-locally (SecureStore).
- * Account-level sync or backend persistence is not implemented; add when product requires it.
+ * Favorites: API is source of truth (GET/POST/DELETE /users/me/favorites).
+ * When not authenticated, API returns 401 and we show empty list.
  */
 interface FavoritesContextType {
   favorites: string[];
+  favoriteItems: FavoriteItem[];
   isFavorite: (businessId: string) => boolean;
   toggleFavorite: (businessId: string) => Promise<void>;
   loading: boolean;
 }
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
-const FAVORITES_KEY = 'favorites';
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const favorites = favoriteItems.map((item) => item.businessId);
 
   useEffect(() => {
     loadFavorites();
@@ -25,23 +33,13 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   async function loadFavorites() {
     try {
-      const stored = await SecureStore.getItemAsync(FAVORITES_KEY);
-      if (stored) {
-        setFavorites(JSON.parse(stored));
-      }
-    } catch (error) {
-      console.error('Failed to load favorites:', error);
+      const res = await api.get<FavoriteItem[]>('/users/me/favorites');
+      const list = Array.isArray(res.data) ? res.data : [];
+      setFavoriteItems(list);
+    } catch {
+      setFavoriteItems([]);
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function saveFavorites(newFavorites: string[]) {
-    try {
-      await SecureStore.setItemAsync(FAVORITES_KEY, JSON.stringify(newFavorites));
-      setFavorites(newFavorites);
-    } catch (error) {
-      console.error('Failed to save favorites:', error);
     }
   }
 
@@ -50,14 +48,22 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function toggleFavorite(businessId: string) {
-    const newFavorites = isFavorite(businessId)
-      ? favorites.filter((id) => id !== businessId)
-      : [...favorites, businessId];
-    await saveFavorites(newFavorites);
+    const currentlyFavorite = isFavorite(businessId);
+    try {
+      if (currentlyFavorite) {
+        await api.delete(`/users/me/favorites/${businessId}`);
+        setFavoriteItems((prev) => prev.filter((item) => item.businessId !== businessId));
+      } else {
+        await api.post('/users/me/favorites', { businessId });
+        await loadFavorites();
+      }
+    } catch {
+      // Leave state unchanged on error (e.g. 401)
+    }
   }
 
   return (
-    <FavoritesContext.Provider value={{ favorites, isFavorite, toggleFavorite, loading }}>
+    <FavoritesContext.Provider value={{ favorites, favoriteItems, isFavorite, toggleFavorite, loading }}>
       {children}
     </FavoritesContext.Provider>
   );
@@ -70,5 +76,3 @@ export function useFavorites() {
   }
   return context;
 }
-
-

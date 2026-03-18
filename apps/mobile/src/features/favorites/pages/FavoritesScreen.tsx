@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
@@ -12,44 +12,10 @@ import { useRouter } from 'expo-router';
 import { Text } from '@planity/ui';
 import { colors, spacing, radius, shadows } from '@planity/ui';
 import { useFavorites } from '../../../application/providers';
-import api from '../../../shared/lib/api';
-
-interface FavoriteBusiness {
-  id: string;
-  name: string;
-}
 
 export default function FavoritesScreen() {
   const router = useRouter();
-  const { favorites } = useFavorites();
-  const [businesses, setBusinesses] = useState<FavoriteBusiness[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (favorites.length === 0) {
-      setBusinesses([]);
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const results = await Promise.all(
-          favorites.map(async (id) => {
-            const res = await api.get<{ id: string; name: string }>(`/businesses/${id}`);
-            return { id: res.data.id, name: res.data.name };
-          })
-        );
-        if (!cancelled) setBusinesses(results);
-      } catch {
-        if (!cancelled) setBusinesses([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [favorites.join(',')]);
+  const { favoriteItems, loading } = useFavorites();
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
@@ -65,21 +31,23 @@ export default function FavoritesScreen() {
           <View style={styles.center}>
             <ActivityIndicator size="large" color={colors.light.accent} />
           </View>
-        ) : businesses.length === 0 ? (
+        ) : favoriteItems.length === 0 ? (
           <View style={styles.center}>
             <Text variant="body" color={colors.light.textSecondary} style={styles.emptyText}>
               No favorites yet. Add some from a business page.
             </Text>
           </View>
         ) : (
-          businesses.map((b) => (
+          favoriteItems.map((item) => (
             <TouchableOpacity
-              key={b.id}
+              key={item.businessId}
               style={styles.card}
               activeOpacity={0.8}
-              onPress={() => router.push(`/(tabs)/business/${b.id}`)}
+              onPress={() => router.push(`/(tabs)/business/${item.businessId}`)}
             >
-              <Text variant="headline" style={styles.cardTitle}>{b.name}</Text>
+              <Text variant="headline" style={styles.cardTitle}>
+                {item.businessName ?? item.businessId}
+              </Text>
               <Text variant="footnote" color={colors.light.textSecondary}>View details</Text>
             </TouchableOpacity>
           ))

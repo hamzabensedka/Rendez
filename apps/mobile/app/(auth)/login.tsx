@@ -1,6 +1,6 @@
-import { Redirect } from 'expo-router';
+import LoginScreen from '../../src/features/auth/pages/LoginScreen';
 
 export default function Login() {
-  return <Redirect href="/(tabs)/explore" />;
+  return <LoginScreen />;
 }
 

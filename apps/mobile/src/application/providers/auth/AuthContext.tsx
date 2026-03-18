@@ -27,11 +27,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/** Bypass is allowed only in development builds; production cannot enable it via env. */
-const isBypassAllowed =
-  typeof __DEV__ !== 'undefined' && __DEV__ === true &&
-  process.env.EXPO_PUBLIC_BYPASS_AUTH === 'true';
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,18 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function checkAuth() {
     setError(null);
-    // Dev-only bypass: never active in production (EXPO_PUBLIC_* is build-time; production builds don't set this)
-    if (isBypassAllowed) {
-      setUser({
-        id: 'dev-user',
-        email: 'dev@rendez.local',
-        name: 'Dev User',
-        role: 'client',
-      });
-      setLoading(false);
-      return;
-    }
-
     try {
       const token = await SecureStore.getItemAsync('accessToken');
       if (token) {
@@ -86,9 +69,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function logout() {
-    if (isBypassAllowed) {
-      return;
-    }
     try {
       await apiLogout();
     } catch {

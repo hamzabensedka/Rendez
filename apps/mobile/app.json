@@ -18,7 +18,8 @@
     "web": {},
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      "@maplibre/maplibre-react-native"
     ],
     "scheme": "rendez",
     "extra": {

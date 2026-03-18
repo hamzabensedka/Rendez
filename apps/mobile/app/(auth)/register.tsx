@@ -1,6 +1,6 @@
-import { Redirect } from 'expo-router';
+import RegisterScreen from '../../src/features/auth/pages/RegisterScreen';
 
 export default function Register() {
-  return <Redirect href="/(tabs)/explore" />;
+  return <RegisterScreen />;
 }
 

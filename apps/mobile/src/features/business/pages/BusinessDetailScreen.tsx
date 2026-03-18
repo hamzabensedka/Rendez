@@ -18,8 +18,10 @@ import { colors, spacing, radius, shadows } from '@planity/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../../shared/lib/api';
+import { BOTTOM_NAV_TOTAL, useIsBottomNavVisible } from '../../../application/components/BottomNav';
 import { useFavorites } from '../../../application/providers';
-import { DEFAULT_SALON_IMAGES, TOULOUSE_SALONS_DETAIL_FALLBACK } from '../../search/constants';
+import { DEFAULT_SALON_IMAGES } from '../../search/constants';
+import { SalonReviews } from '../../search/components';
 
 /** Location shape from API (businesses findOne) */
 interface ApiLocation {
@@ -72,6 +74,7 @@ export default function BusinessDetailScreen() {
   }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const isBottomNavVisible = useIsBottomNavVisible();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,9 +91,7 @@ export default function BusinessDetailScreen() {
       const response = await api.get(`/businesses/${id}`);
       setBusiness(response.data);
     } catch {
-      // When API is unreachable (e.g. device can't hit localhost), use Toulouse fallback if id is a known slug
-      const fallback = id ? TOULOUSE_SALONS_DETAIL_FALLBACK[id] : null;
-      setBusiness(fallback ?? null);
+      setBusiness(null);
     } finally {
       setLoading(false);
     }
@@ -98,10 +99,12 @@ export default function BusinessDetailScreen() {
 
   const handleShare = async () => {
     if (!business) return;
+    const appUrl = process.env.EXPO_PUBLIC_APP_URL || 'https://rendez.app';
+    const shareUrl = `${appUrl.replace(/\/$/, '')}/business/${business.id}`;
     try {
       await Share.share({
-        message: `Check out ${business.name} on Rendez!`,
-        url: `https://rendez.app/business/${business.id}`, // Mock URL
+        message: `Check out ${business.name}!`,
+        url: shareUrl,
       });
     } catch (error) {
       console.error(error);
@@ -204,30 +207,32 @@ export default function BusinessDetailScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
-        contentContainerStyle={{ paddingBottom: 120 }}
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingBottom: 120 + (isBottomNavVisible ? BOTTOM_NAV_TOTAL + insets.bottom : 0),
+        }}
         bounces={false}
       >
         {/* Top Nav - in white padding area */}
         <View style={[styles.navBar, { paddingTop: insets.top, paddingHorizontal: HERO_PADDING }]}>
-          <TouchableOpacity 
-            onPress={() => router.back()} 
+          <TouchableOpacity
+            onPress={() => router.back()}
             style={styles.navButton}
           >
             <Ionicons name="arrow-back" size={24} color={colors.light.text} />
           </TouchableOpacity>
-          
+
           <View style={styles.navActions}>
             <TouchableOpacity onPress={handleShare} style={styles.navButton}>
               <Ionicons name="share-outline" size={24} color={colors.light.text} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => id && toggleFavorite(id)} style={styles.navButton}>
-              <Ionicons 
-                name={isFav ? "heart" : "heart-outline"} 
-                size={24} 
-                color={isFav ? colors.light.error : colors.light.text} 
+              <Ionicons
+                name={isFav ? "heart" : "heart-outline"}
+                size={24}
+                color={isFav ? colors.light.error : colors.light.text}
               />
             </TouchableOpacity>
           </View>
@@ -257,7 +262,7 @@ export default function BusinessDetailScreen() {
             <Text style={styles.salonName}>{business.name}</Text>
             <Ionicons name="checkmark-circle" size={24} color={colors.light.text} />
           </View>
-          
+
           {business.locations && business.locations.length > 0 && (
             <View style={styles.locationRow}>
               <Ionicons name="location-sharp" size={16} color={colors.light.textSecondary} />
@@ -408,17 +413,30 @@ export default function BusinessDetailScreen() {
             })}
           </View>
         </View>
+
+        {/* Reviews */}
+        {id ? <SalonReviews businessId={id} /> : null}
       </ScrollView>
 
       {/* Floating Bottom Bar */}
-      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            bottom: isBottomNavVisible ? BOTTOM_NAV_TOTAL + insets.bottom : 0,
+            paddingBottom: isBottomNavVisible
+              ? BOTTOM_NAV_TOTAL - insets.bottom
+              : Math.max(insets.bottom, 60),
+          },
+        ]}
+      >
         <View style={styles.priceContainer}>
           <Text style={styles.startingFrom}>STARTING FROM</Text>
           <Text style={styles.priceValue}>
             {minPrice ? `$${(minPrice / 100).toFixed(2)}` : '—'}
           </Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.bookButton}
           onPress={handleBookAppointment}
         >

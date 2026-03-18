@@ -1,5 +1,10 @@
-import SalonDetailsScreen from '../../src/features/search/pages/SalonDetailsScreen';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 
-export default function SalonDetailsRoute() {
-  return <SalonDetailsScreen />;
+/**
+ * Legacy route: redirects to the canonical business detail (API-backed).
+ */
+export default function SalonRedirect() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  if (!id) return null;
+  return <Redirect href={`/(tabs)/business/${id}`} />;
 }

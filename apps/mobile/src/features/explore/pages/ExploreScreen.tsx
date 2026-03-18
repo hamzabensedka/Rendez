@@ -19,7 +19,7 @@ export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
 
   function handleReserverUnSoin() {
-    router.push('/search');
+    router.push('/search-results');
   }
 
   function handleEspacePro() {
