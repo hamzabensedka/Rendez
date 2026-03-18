@@ -7,6 +7,9 @@ import { BusinessesModule } from './businesses/businesses.module';
 import { ServicesModule } from './services/services.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { FavoritesModule } from './favorites/favorites.module';
+import { PlacesModule } from './places/places.module';
+import { ConfigModule as AppConfigModule } from './config/config.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -22,12 +25,15 @@ import { PrismaModule } from './prisma/prisma.module';
       },
     ]),
     PrismaModule,
+    AppConfigModule,
     AuthModule,
     UsersModule,
     BusinessesModule,
     ServicesModule,
     AvailabilityModule,
     AppointmentsModule,
+    FavoritesModule,
+    PlacesModule,
   ],
 })
 export class AppModule {}
