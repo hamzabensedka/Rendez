@@ -1,0 +1,13 @@
+diff --git a/android/build.gradle b/android/build.gradle
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -196,4 +196,5 @@
+                         "-DWORKLETS_BUNDLE_MODE=${BUNDLE_MODE}",
+                         "-DWORKLETS_VERSION=${WORKLETS_VERSION}",
+                         "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
+-                        "-DWORKLETS_FEATURE_FLAGS=${WORKLETS_FEATURE_FLAGS}"
++                        "-DWORKLETS_FEATURE_FLAGS=${WORKLETS_FEATURE_FLAGS}",
++                        "-DCMAKE_OBJECT_PATH_MAX=512"
+                 abiFilters (*reactNativeArchitectures())
+                 targets("worklets")
+             }
