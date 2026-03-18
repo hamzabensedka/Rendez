@@ -9,6 +9,8 @@ interface BookingFooterProps {
   disabled: boolean;
   loading: boolean;
   paddingBottom?: number;
+  /** Offset from bottom (e.g. for global bottom nav). When set, the bar is positioned above it. */
+  bottomOffset?: number;
 }
 
 export function BookingFooter({
@@ -18,9 +20,10 @@ export function BookingFooter({
   disabled,
   loading,
   paddingBottom = 24,
+  bottomOffset = 0,
 }: BookingFooterProps) {
   return (
-    <View style={[styles.bottomBar, { paddingBottom }]}>
+    <View style={[styles.bottomBar, { paddingBottom, bottom: bottomOffset }]}>
       <View style={styles.totalBlock}>
         <Text style={styles.totalLabel}>TOTAL PRICE</Text>
         <Text style={styles.totalValue}>

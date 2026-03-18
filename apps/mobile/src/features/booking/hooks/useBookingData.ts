@@ -95,7 +95,7 @@ export function useBookingData(
       });
       const apiSlots = response.data?.slots ?? [];
       setSlots(Array.isArray(apiSlots) ? apiSlots : []);
-      setSlotsError(apiSlots.length === 0);
+      setSlotsError(false);
     } catch {
       setSlots([]);
       setSlotsError(true);

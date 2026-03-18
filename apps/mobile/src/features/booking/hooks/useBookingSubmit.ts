@@ -14,6 +14,18 @@ export interface UseBookingSubmitParams {
   displayName: string;
 }
 
+function formatSuccessDate(isoDate: string): string {
+  const d = new Date(isoDate);
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+function formatSuccessTime(isoDate: string): string {
+  const d = new Date(isoDate);
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
 export function useBookingSubmit(params: UseBookingSubmitParams) {
   const router = useRouter();
   const { user } = useAuth();
@@ -51,10 +63,27 @@ export function useBookingSubmit(params: UseBookingSubmitParams) {
         startAt: selectedSlot,
         idempotencyKey: generateIdempotencyKey(),
       };
-      await api.post('/appointments', payload);
-      Alert.alert('Success', 'Appointment booked!', [
-        { text: 'OK', onPress: () => router.replace('/(tabs)/bookings') },
-      ]);
+      const { data } = await api.post<{ id?: string }>('/appointments', payload);
+      const loc = business?.locations?.[0] as { address1?: string; postalCode?: string; city?: string } | undefined;
+      const address = loc
+        ? [loc.address1, loc.postalCode, loc.city].filter(Boolean).join(', ')
+        : '';
+      const totalMinutes = selectedServices.reduce((sum, s) => sum + (s.durationMin ?? 0), 0);
+      const serviceLabel = selectedServices.length === 1
+        ? selectedServices[0].name
+        : selectedServices.map((s) => s.name).join(', ');
+      router.replace({
+        pathname: '/(tabs)/booking/success',
+        params: {
+          businessName: displayName,
+          serviceLabel,
+          durationMinutes: String(totalMinutes),
+          dateFormatted: formatSuccessDate(selectedSlot),
+          timeFormatted: formatSuccessTime(selectedSlot),
+          address: address || undefined,
+          appointmentId: data?.id,
+        },
+      });
     } catch (err: unknown) {
       const message =
         err && typeof err === 'object' && 'response' in err &&

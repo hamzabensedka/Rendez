@@ -1,5 +1,9 @@
-import BookingValidationScreen from '../src/features/search/pages/BookingValidationScreen';
+import { Redirect } from 'expo-router';
 
-export default function BookingValidationRoute() {
-  return <BookingValidationScreen />;
+/**
+ * Legacy route: redirects to the canonical booking tab.
+ * The real booking flow is (tabs)/booking with businessId and serviceVariantId from BusinessDetailScreen.
+ */
+export default function BookingValidationRedirect() {
+  return <Redirect href="/(tabs)/booking" />;
 }

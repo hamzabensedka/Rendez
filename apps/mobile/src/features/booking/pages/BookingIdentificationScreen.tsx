@@ -1,15 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '@planity/ui';
+import { Input, Button } from '@planity/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { login } from '../../../shared/lib/auth';
+import { useAuth } from '../../../application/providers';
+import { useKeyboardHeight } from '../../../application/hooks/useKeyboardHeight';
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -31,6 +39,7 @@ function formatSummaryTime(isoDate: string): string {
 export default function BookingIdentificationScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { login: setAuthUser } = useAuth();
   const {
     selectedSlot,
     existingServices,
@@ -42,6 +51,12 @@ export default function BookingIdentificationScreen() {
     businessId: string;
     businessName?: string;
   }>();
+
+  const keyboardHeight = useKeyboardHeight();
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
 
   const servicesLabel = React.useMemo(() => {
     if (!existingServices) return '';
@@ -60,8 +75,29 @@ export default function BookingIdentificationScreen() {
     router.back();
   }
 
-  function handleLogIn() {
-    router.replace('/(auth)/login');
+  function handleSignInTap() {
+    setShowLoginForm(true);
+  }
+
+  async function handleLoginSubmit() {
+    if (!email.trim() || !password) {
+      Alert.alert('Error', 'Please enter email and password');
+      return;
+    }
+    setLoginLoading(true);
+    try {
+      const response = await login({ email: email.trim(), password });
+      setAuthUser(response.user);
+      router.replace('/(tabs)');
+    } catch (error: unknown) {
+      const message =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      Alert.alert('Login Failed', message || 'Invalid credentials');
+    } finally {
+      setLoginLoading(false);
+    }
   }
 
   function handleCreateAccount() {
@@ -78,7 +114,19 @@ export default function BookingIdentificationScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        keyboardVerticalOffset={0}
+      >
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: spacing['3xl'] + keyboardHeight },
+          ]}
+          keyboardShouldPersistTaps="handled"
+        >
         <Text style={styles.screenTitle}>AUTHENTICATION</Text>
 
         {/* Summary card - unchanged */}
@@ -115,12 +163,51 @@ export default function BookingIdentificationScreen() {
             <View style={styles.orLine} />
           </View>
 
-          <Text style={styles.authHeading}>Already have an account?</Text>
-          <TouchableOpacity style={styles.secondaryButton} onPress={handleLogIn} activeOpacity={0.8}>
-            <Text style={styles.secondaryButtonText}>SIGN IN</Text>
-          </TouchableOpacity>
+          {!showLoginForm ? (
+            <>
+              <Text style={styles.authHeading}>Already have an account?</Text>
+              <TouchableOpacity style={styles.secondaryButton} onPress={handleSignInTap} activeOpacity={0.8}>
+                <Text style={styles.secondaryButtonText}>SIGN IN</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <Animated.View
+              key="login-form"
+              entering={FadeInDown.duration(320)}
+              exiting={FadeOutUp.duration(200)}
+              style={styles.loginFormWrap}
+            >
+              <Text style={styles.authHeading}>Sign in</Text>
+              <Input
+                label="Email"
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+              />
+              <Input
+                label="Password"
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+              <Button
+                title={loginLoading ? 'Signing in…' : 'Sign in'}
+                onPress={handleLoginSubmit}
+                variant="primary"
+                disabled={loginLoading}
+                loading={loginLoading}
+                style={styles.loginSubmitButton}
+              />
+            </Animated.View>
+          )}
         </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -167,6 +254,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   scroll: {
+    flex: 1,
+  },
+  keyboardView: {
     flex: 1,
   },
   scrollContent: {
@@ -303,5 +393,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 2,
     color: colors.light.text,
+  },
+  loginFormWrap: {
+    gap: 0,
+  },
+  loginSubmitButton: {
+    marginTop: spacing.md,
   },
 });
