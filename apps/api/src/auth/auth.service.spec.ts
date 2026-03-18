@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { ConflictException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserRole } from '@planity/shared';
@@ -97,7 +97,7 @@ describe('AuthService', () => {
     });
 
     it('throws ConflictException when email already in use', async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+      const prismaError = new PrismaClientKnownRequestError('Unique constraint failed', {
         code: 'P2002',
         clientVersion: '5.x',
       });

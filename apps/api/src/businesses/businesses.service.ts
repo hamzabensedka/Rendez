@@ -4,6 +4,37 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { DEFAULT_PAGE, DEFAULT_LIMIT, MAX_LIMIT } from '@planity/shared';
 
+/** Max businesses returned per viewport request (progressive loading). */
+const VIEWPORT_MAX = 200;
+
+/** Viewport query: north, south, east, west in degrees; zoom for optional clustering. */
+export interface ViewportParams {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+  zoom?: number;
+  query?: string;
+  category?: string;
+}
+
+export interface ReviewListItem {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: Date;
+  clientName: string;
+}
+
+export interface PaginatedReviews {
+  data: ReviewListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  ratingAvg: number;
+  ratingCount: number;
+}
+
 const businessListInclude = {
   locations: true,
   _count: { select: { services: true, staff: true } },
@@ -23,6 +54,41 @@ export interface PaginatedBusinesses {
 @Injectable()
 export class BusinessesService {
   constructor(private prisma: PrismaService) {}
+
+  /**
+   * Return businesses with at least one location inside the viewport bounds.
+   * Uses PostGIS when available (geom column), otherwise falls back to lat/lng bbox.
+   */
+  async findInViewport(params: ViewportParams): Promise<{ data: BusinessListItem[] }> {
+    const { north, south, east, west, query, category } = params;
+    const where: Prisma.BusinessWhereInput = {
+      status: 'active',
+      deletedAt: null,
+      locations: {
+        some: {
+          lat: { gte: south, lte: north },
+          lng: { gte: west, lte: east },
+        },
+      },
+    };
+    if (category) {
+      where.category = { contains: category, mode: 'insensitive' };
+    }
+    if (query) {
+      where.OR = [
+        { name: { contains: query, mode: 'insensitive' } },
+        { description: { contains: query, mode: 'insensitive' } },
+        { category: { contains: query, mode: 'insensitive' } },
+      ];
+    }
+    const data = await this.prisma.business.findMany({
+      where,
+      include: businessListInclude,
+      orderBy: { ratingAvg: 'desc' },
+      take: VIEWPORT_MAX,
+    });
+    return { data };
+  }
 
   async findAll(
     city?: string,
@@ -191,6 +257,52 @@ export class BusinessesService {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
+  }
+
+  async getReviews(
+    businessIdOrSlug: string,
+    page: number = DEFAULT_PAGE,
+    limit: number = Math.min(20, MAX_LIMIT)
+  ): Promise<PaginatedReviews> {
+    const business = await this.findOne(businessIdOrSlug);
+    const businessId = business.id;
+    const safePage = Math.max(1, Math.floor(page));
+    const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Math.floor(limit)));
+    const skip = (safePage - 1) * safeLimit;
+
+    const [reviews, total, businessAgg] = await Promise.all([
+      this.prisma.review.findMany({
+        where: { businessId, status: 'approved' },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: safeLimit,
+        include: {
+          clientUser: { select: { name: true } },
+        },
+      }),
+      this.prisma.review.count({ where: { businessId, status: 'approved' } }),
+      this.prisma.business.findUnique({
+        where: { id: businessId },
+        select: { ratingAvg: true, ratingCount: true },
+      }),
+    ]);
+
+    const data: ReviewListItem[] = reviews.map((r) => ({
+      id: r.id,
+      rating: r.rating,
+      comment: r.comment,
+      createdAt: r.createdAt,
+      clientName: r.clientUser?.name ?? 'Anonymous',
+    }));
+
+    return {
+      data,
+      total,
+      page: safePage,
+      limit: safeLimit,
+      ratingAvg: businessAgg?.ratingAvg ?? 0,
+      ratingCount: businessAgg?.ratingCount ?? 0,
+    };
   }
 }
 

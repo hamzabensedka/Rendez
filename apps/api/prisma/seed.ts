@@ -48,17 +48,20 @@ async function main() {
     },
   });
 
-  // Create business
+  // Create business (Toulouse)
   const business = await prisma.business.upsert({
     where: { slug: 'salon-lumiere' },
-    update: {},
+    update: {
+      description: 'A beautiful salon in the heart of Toulouse',
+      phone: '+33512345678',
+    },
     create: {
       name: 'Salon Lumière',
       slug: 'salon-lumiere',
-      description: 'A beautiful salon in the heart of Paris',
+      description: 'A beautiful salon in the heart of Toulouse',
       category: 'Hair Salon',
       timezone: 'Europe/Paris',
-      phone: '+33123456789',
+      phone: '+33512345678',
       email: 'contact@salonlumiere.fr',
       status: 'active',
       freeCancellationBeforeHours: 24,
@@ -66,14 +69,26 @@ async function main() {
       locations: {
         create: {
           label: 'Main',
-          address1: '123 Rue de la Paix',
-          postalCode: '75001',
-          city: 'Paris',
+          address1: '10 Rue du Taur',
+          postalCode: '31000',
+          city: 'Toulouse',
           country: 'FR',
-          lat: 48.8566,
-          lng: 2.3522,
+          lat: 43.6047,
+          lng: 1.4442,
         },
       },
+    },
+  });
+
+  // Ensure Salon Lumière location is Toulouse (in case it was seeded before with Paris)
+  await prisma.location.updateMany({
+    where: { businessId: business.id },
+    data: {
+      address1: '10 Rue du Taur',
+      postalCode: '31000',
+      city: 'Toulouse',
+      lat: 43.6047,
+      lng: 1.4442,
     },
   });
 
@@ -178,7 +193,8 @@ async function main() {
   });
 
   // Create availability rules (Monday-Friday, 9am-6pm)
-  const daysOfWeek = [1, 2, 3, 4, 5]; // Monday to Friday
+  // Staff-level rules (for when staffId is passed)
+  const daysOfWeek = [1, 2, 3, 4, 5]; // Monday to Friday (0=Sunday in API)
   for (const dayOfWeek of daysOfWeek) {
     await prisma.availabilityRule.create({
       data: {
@@ -190,17 +206,31 @@ async function main() {
       },
     });
   }
+  // Business-level rules (no staffId) so app gets slots when it doesn't send staffId
+  for (const dayOfWeek of daysOfWeek) {
+    await prisma.availabilityRule.create({
+      data: {
+        businessId: business.id,
+        staffId: null,
+        dayOfWeek,
+        startTimeLocal: '09:00',
+        endTimeLocal: '18:00',
+      },
+    });
+  }
 
-  // ——— 3 coiffeur shops for testing ———
+  // ——— 3 coiffeur shops for testing (all Toulouse) ———
   const coiffeurShops = [
     {
       name: 'Coiffure Élégance',
       slug: 'coiffure-elegance',
-      description: 'Salon de coiffure moderne au cœur de Paris. Coupe, coloration et soins.',
+      description: 'Salon de coiffure moderne au cœur de Toulouse. Coupe, coloration et soins.',
       category: 'Coiffure',
-      city: 'Paris',
-      address1: '45 Avenue des Champs-Élysées',
-      postalCode: '75008',
+      city: 'Toulouse',
+      address1: '45 Rue de la Pomme',
+      postalCode: '31000',
+      lat: 43.605,
+      lng: 1.442,
       staffName: 'Sophie',
       staffTitle: 'Styliste',
       ratingAvg: 4.8,
@@ -209,11 +239,13 @@ async function main() {
     {
       name: 'Le Salon du Marais',
       slug: 'salon-marais',
-      description: 'Coiffure tendance dans le Marais. Expertise coupe femme et homme.',
+      description: 'Coiffure tendance à Toulouse. Expertise coupe femme et homme.',
       category: 'Coiffure',
-      city: 'Paris',
-      address1: '12 Rue de Rivoli',
-      postalCode: '75004',
+      city: 'Toulouse',
+      address1: '12 Rue du Capitole',
+      postalCode: '31000',
+      lat: 43.6035,
+      lng: 1.446,
       staffName: 'Thomas',
       staffTitle: 'Coiffeur',
       ratingAvg: 4.6,
@@ -224,9 +256,11 @@ async function main() {
       slug: 'boucles-co',
       description: 'Spécialiste des coupes et colorations. Ambiance conviviale.',
       category: 'Coiffure',
-      city: 'Lyon',
-      address1: '8 Rue de la République',
-      postalCode: '69002',
+      city: 'Toulouse',
+      address1: '8 Rue des Filatiers',
+      postalCode: '31000',
+      lat: 43.5989,
+      lng: 1.4342,
       staffName: 'Marie',
       staffTitle: 'Coloriste',
       ratingAvg: 4.9,
@@ -259,6 +293,8 @@ async function main() {
             postalCode: shop.postalCode,
             city: shop.city,
             country: 'FR',
+            lat: shop.lat,
+            lng: shop.lng,
           },
         },
       },
@@ -328,6 +364,15 @@ async function main() {
         data: {
           businessId: biz.id,
           staffId: staffMember.id,
+          dayOfWeek,
+          startTimeLocal: '09:00',
+          endTimeLocal: '19:00',
+        },
+      });
+      await prisma.availabilityRule.create({
+        data: {
+          businessId: biz.id,
+          staffId: null,
           dayOfWeek,
           startTimeLocal: '09:00',
           endTimeLocal: '19:00',
@@ -486,16 +531,251 @@ async function main() {
           endTimeLocal: '19:00',
         },
       });
+      await prisma.availabilityRule.create({
+        data: {
+          businessId: biz.id,
+          staffId: null,
+          dayOfWeek,
+          startTimeLocal: '09:00',
+          endTimeLocal: '19:00',
+        },
+      });
+    }
+  }
+
+  // ——— Test salon Toulouse: full booking simulation (dates + heures) ———
+  const testSalonSlug = 'salon-test-reservation-toulouse';
+  const existingTestSalon = await prisma.business.findUnique({
+    where: { slug: testSalonSlug },
+    include: { staff: true, locations: true },
+  });
+  if (!existingTestSalon) {
+    const testSalon = await prisma.business.create({
+      data: {
+        name: 'Salon Test Réservation Toulouse',
+        slug: testSalonSlug,
+        description:
+          'Salon de test pour simuler une réservation complète. Ouvert du lundi au samedi, 9h-19h.',
+        category: 'Coiffure',
+        timezone: 'Europe/Paris',
+        phone: '+33561234567',
+        email: 'contact@salontest-toulouse.fr',
+        status: 'active',
+        ratingAvg: 4.8,
+        ratingCount: 42,
+        freeCancellationBeforeHours: 24,
+        allowRescheduleBeforeHours: 2,
+        locations: {
+          create: {
+            label: 'Principal',
+            address1: '7 Place du Capitole',
+            postalCode: '31000',
+            city: 'Toulouse',
+            country: 'FR',
+            lat: 43.604652,
+            lng: 1.444209,
+          },
+        },
+      },
+    });
+
+    const staff1 = await prisma.staff.create({
+      data: {
+        businessId: testSalon.id,
+        name: 'Julie',
+        roleTitle: 'Styliste',
+        isActive: true,
+      },
+    });
+    const staff2 = await prisma.staff.create({
+      data: {
+        businessId: testSalon.id,
+        name: 'Marc',
+        roleTitle: 'Coiffeur',
+        isActive: true,
+      },
+    });
+
+    const serviceCoupe = await prisma.service.create({
+      data: {
+        businessId: testSalon.id,
+        name: 'Coupe',
+        description: 'Coupe et coiffage',
+        category: 'Coiffure',
+        baseDurationMin: 45,
+        isActive: true,
+        serviceVariants: {
+          create: [
+            {
+              name: 'Coupe femme',
+              priceCents: 4500,
+              durationMin: 45,
+              bufferBeforeMin: 5,
+              bufferAfterMin: 10,
+              capacity: 1,
+            },
+            {
+              name: 'Coupe homme',
+              priceCents: 2800,
+              durationMin: 30,
+              bufferBeforeMin: 5,
+              bufferAfterMin: 5,
+              capacity: 1,
+            },
+          ],
+        },
+      },
+    });
+
+    const serviceColoration = await prisma.service.create({
+      data: {
+        businessId: testSalon.id,
+        name: 'Coloration',
+        description: 'Coloration complète ou mèches',
+        category: 'Coiffure',
+        baseDurationMin: 90,
+        isActive: true,
+        serviceVariants: {
+          create: [
+            {
+              name: 'Coloration complète',
+              priceCents: 7200,
+              durationMin: 90,
+              bufferBeforeMin: 10,
+              bufferAfterMin: 10,
+              capacity: 1,
+            },
+          ],
+        },
+      },
+    });
+
+    const serviceBrushing = await prisma.service.create({
+      data: {
+        businessId: testSalon.id,
+        name: 'Brushing',
+        description: 'Brushing et mise en pli',
+        category: 'Coiffure',
+        baseDurationMin: 30,
+        isActive: true,
+        serviceVariants: {
+          create: [
+            {
+              name: 'Brushing',
+              priceCents: 2000,
+              durationMin: 30,
+              bufferBeforeMin: 5,
+              bufferAfterMin: 5,
+              capacity: 1,
+            },
+          ],
+        },
+      },
+    });
+
+    // Horaires: lundi à samedi 9h–19h (dayOfWeek: 1=Mon … 6=Sat, 0=Sun)
+    const daysOpen = [1, 2, 3, 4, 5, 6];
+    for (const dayOfWeek of daysOpen) {
+      await prisma.availabilityRule.create({
+        data: {
+          businessId: testSalon.id,
+          staffId: staff1.id,
+          dayOfWeek,
+          startTimeLocal: '09:00',
+          endTimeLocal: '19:00',
+        },
+      });
+      await prisma.availabilityRule.create({
+        data: {
+          businessId: testSalon.id,
+          staffId: staff2.id,
+          dayOfWeek,
+          startTimeLocal: '09:00',
+          endTimeLocal: '19:00',
+        },
+      });
+      await prisma.availabilityRule.create({
+        data: {
+          businessId: testSalon.id,
+          staffId: null,
+          dayOfWeek,
+          startTimeLocal: '09:00',
+          endTimeLocal: '19:00',
+        },
+      });
+    }
+
+    console.log('   + 1 salon test réservation: Salon Test Réservation Toulouse (Toulouse, 7 Place du Capitole)');
+  }
+
+  // Ensure all salons are located in Toulouse (update any existing locations from previous seeds)
+  const toulouseSpots: { lat: number; lng: number; address1: string }[] = [
+    { lat: 43.6047, lng: 1.4442, address1: '10 Rue du Taur' },
+    { lat: 43.605, lng: 1.442, address1: '45 Rue de la Pomme' },
+    { lat: 43.6035, lng: 1.446, address1: '12 Rue du Capitole' },
+    { lat: 43.5989, lng: 1.4342, address1: '8 Rue des Filatiers' },
+    { lat: 43.6047, lng: 1.4442, address1: '15 Place du Capitole' },
+    { lat: 43.5989, lng: 1.4342, address1: '42 Quai de la Daurade' },
+    { lat: 43.6072, lng: 1.4419, address1: '8 Rue du Taur' },
+    { lat: 43.604652, lng: 1.444209, address1: '7 Place du Capitole' },
+  ];
+  const allLocations = await prisma.location.findMany({ select: { id: true } });
+  for (let i = 0; i < allLocations.length; i++) {
+    const spot = toulouseSpots[i % toulouseSpots.length];
+    await prisma.location.update({
+      where: { id: allLocations[i].id },
+      data: {
+        city: 'Toulouse',
+        postalCode: '31000',
+        address1: spot.address1,
+        lat: spot.lat,
+        lng: spot.lng,
+      },
+    });
+  }
+  if (allLocations.length > 0) {
+    console.log(`   + Updated ${allLocations.length} location(s) to Toulouse`);
+  }
+
+  // Backfill: ensure every business with availability has business-level rules (staffId null)
+  // so the app gets slots when it doesn't send staffId
+  const businessesWithRules = await prisma.business.findMany({
+    where: { availabilityRules: { some: {} } },
+    select: { id: true },
+  });
+  const daysMonSat = [1, 2, 3, 4, 5, 6];
+  for (const b of businessesWithRules) {
+    const hasNullStaffRule = await prisma.availabilityRule.findFirst({
+      where: { businessId: b.id, staffId: null },
+    });
+    if (!hasNullStaffRule) {
+      for (const dayOfWeek of daysMonSat) {
+        await prisma.availabilityRule.create({
+          data: {
+            businessId: b.id,
+            staffId: null,
+            dayOfWeek,
+            startTimeLocal: '09:00',
+            endTimeLocal: '19:00',
+          },
+        });
+      }
+      console.log('   + Backfilled business-level availability for business', b.id);
     }
   }
 
   console.log('✅ Seeding completed!');
   console.log('   + 3 coiffeur shops: Coiffure Élégance, Le Salon du Marais, Boucles & Co');
   console.log('   + 3 salons Toulouse: Coiffure Capitole, Salon Garonne, Boucles Roses');
+  console.log('   + 1 salon test: Salon Test Réservation Toulouse (slug: salon-test-reservation-toulouse)');
   console.log('\n📝 Test accounts:');
   console.log('Admin: admin@planity.com / admin123');
   console.log('Provider: provider@planity.com / provider123');
   console.log('Client: client@planity.com / client123');
+  console.log('\n📅 Simuler une réservation (client):');
+  console.log('  1. Se connecter avec client@planity.com / client123');
+  console.log('  2. Rechercher "Toulouse" ou ouvrir le salon "Salon Test Réservation Toulouse"');
+  console.log('  3. Choisir une prestation (ex: Coupe femme), une date (lun–sam), un créneau puis confirmer.');
 }
 
 main()

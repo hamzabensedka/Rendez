@@ -39,6 +39,56 @@ export class BusinessesController {
     return this.businessesService.findAll(city, query, pageNum, limitNum);
   }
 
+  @Get('viewport')
+  @ApiOperation({ summary: 'Businesses in map viewport (north, south, east, west)' })
+  @ApiQuery({ name: 'north', required: true, description: 'North bound (latitude)' })
+  @ApiQuery({ name: 'south', required: true, description: 'South bound (latitude)' })
+  @ApiQuery({ name: 'east', required: true, description: 'East bound (longitude)' })
+  @ApiQuery({ name: 'west', required: true, description: 'West bound (longitude)' })
+  @ApiQuery({ name: 'zoom', required: false, description: 'Zoom level (for future clustering)' })
+  @ApiQuery({ name: 'query', required: false })
+  @ApiQuery({ name: 'category', required: false })
+  async getViewport(
+    @Query('north') north: string,
+    @Query('south') south: string,
+    @Query('east') east: string,
+    @Query('west') west: string,
+    @Query('zoom') zoom?: string,
+    @Query('query') query?: string,
+    @Query('category') category?: string
+  ) {
+    const n = parseFloat(north);
+    const s = parseFloat(south);
+    const e = parseFloat(east);
+    const w = parseFloat(west);
+    if (Number.isNaN(n) || Number.isNaN(s) || Number.isNaN(e) || Number.isNaN(w)) {
+      return { data: [] };
+    }
+    return this.businessesService.findInViewport({
+      north: n,
+      south: s,
+      east: e,
+      west: w,
+      zoom: zoom ? parseInt(zoom, 10) : undefined,
+      query,
+      category,
+    });
+  }
+
+  @Get(':id/reviews')
+  @ApiOperation({ summary: 'Get business reviews (paginated)' })
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'limit', required: false })
+  async getReviews(
+    @Param('id') id: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    return this.businessesService.getReviews(id, pageNum, limitNum);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get business details' })
   async findOne(@Param('id') id: string) {
