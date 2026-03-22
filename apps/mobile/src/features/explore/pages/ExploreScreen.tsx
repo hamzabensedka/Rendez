@@ -11,6 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, radius } from '@planity/ui';
+import { ProfileButton } from '../../search/components/ProfileButton';
 
 const HERO_IMAGE = require('../../../../assets/u1759489536_Create_a_916_vertical_image_for_a_mobile_salon_bo_a3a9c926-12e6-48dd-a1f3-2185d18a697d_3.png');
 
@@ -32,6 +33,12 @@ export default function ExploreScreen() {
       <ImageBackground source={HERO_IMAGE} style={styles.backgroundImage} resizeMode="cover">
         <View style={styles.overlay} />
       </ImageBackground>
+
+      {/* Profile Button - Top Right */}
+      <ProfileButton
+        variant="light"
+        style={[styles.profileButton, { top: insets.top + 16 }]}
+      />
 
       <KeyboardAvoidingView
         style={[styles.content, { paddingTop: insets.top + 72, paddingBottom: insets.bottom + 24 }]}
@@ -141,5 +148,10 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     color: '#fff',
     textTransform: 'uppercase',
+  },
+  profileButton: {
+    position: 'absolute',
+    right: 24,
+    zIndex: 10,
   },
 });

@@ -14,6 +14,7 @@ import { Text } from '@planity/ui';
 import { colors, spacing, radius, shadows } from '@planity/ui';
 import { AppointmentStatus, getAppointmentStatusLabel } from '@planity/shared';
 import { useAuth } from '../../../application/providers';
+import { ProfileButton } from '../../search/components/ProfileButton';
 import api from '../../../shared/lib/api';
 
 interface Appointment {
@@ -88,11 +89,12 @@ export default function BookingsScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-        {/* Header - Explore style */}
+        {/* Header */}
         <View style={styles.header}>
           <Text variant="title2" style={styles.headerTitle}>
             My bookings
           </Text>
+          <ProfileButton />
         </View>
 
         <FlatList
@@ -192,6 +194,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     backgroundColor: colors.light.surface,

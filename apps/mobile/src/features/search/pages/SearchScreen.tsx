@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing, radius, shadows } from '@planity/ui';
 import { Text } from '@planity/ui';
 import { ScreenHeader, SearchInput } from '../components';
+import { ProfileButton } from '../components/ProfileButton';
 import { useFrequentSearches } from '../hooks';
 import { SEARCH_PLACEHOLDERS, FREQUENT_SEARCHES, TRENDING_NEAR_YOU } from '../constants';
 
@@ -49,7 +50,7 @@ export default function SearchScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-        <ScreenHeader title="SEARCH" leftIcon="close" noBorder />
+        <ScreenHeader title="SEARCH" leftIcon="close" noBorder rightElement={<ProfileButton />} />
 
         <ScrollView
           style={styles.scroll}

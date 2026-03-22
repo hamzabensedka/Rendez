@@ -15,7 +15,7 @@ import {
   BookingFooter,
   AddServiceModal,
 } from '../components';
-import { BOTTOM_NAV_TOTAL, useIsBottomNavVisible } from '../../../application/components/BottomNav';
+
 import type { BookingCartItem } from '../types';
 
 /** Step 2 of 4: Date & Time selection. All UI strings in this flow are en-only until i18n is added. */
@@ -43,7 +43,7 @@ export default function BookingScreen() {
   }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const isBottomNavVisible = useIsBottomNavVisible();
+
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [addServiceModalVisible, setAddServiceModalVisible] = useState(false);
 
@@ -117,10 +117,11 @@ export default function BookingScreen() {
     setAddServiceModalVisible(false);
   }
 
-  const footerBottomOffset = isBottomNavVisible ? BOTTOM_NAV_TOTAL + insets.bottom : 0;
+  // Footer sits at safe area bottom
+  const footerBottomOffset = insets.bottom;
 
   return (
-    <View style={[styles.container, { paddingBottom: 120 + footerBottomOffset }]}>
+    <View style={[styles.container, { paddingBottom: 140 + footerBottomOffset }]}>
       <BookingHeader title={displayName} paddingTop={insets.top} />
       <BookingProgressBar
         stepLabel={BOOKING_STEP_LABEL}
@@ -154,7 +155,6 @@ export default function BookingScreen() {
         onConfirm={() => submit.handleConfirmDate(selectedSlot)}
         disabled={!selectedSlot || cart.selectedServices.length === 0}
         loading={submit.booking}
-        paddingBottom={Math.max(insets.bottom, 24)}
         bottomOffset={footerBottomOffset}
       />
 

@@ -18,7 +18,7 @@ import { colors, spacing, radius, shadows } from '@planity/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '../../../shared/lib/api';
-import { BOTTOM_NAV_TOTAL, useIsBottomNavVisible } from '../../../application/components/BottomNav';
+import { ProfileButton } from '../../search/components/ProfileButton';
 import { useFavorites } from '../../../application/providers';
 import { DEFAULT_SALON_IMAGES } from '../../search/constants';
 import { SalonReviews } from '../../search/components';
@@ -74,7 +74,7 @@ export default function BusinessDetailScreen() {
   }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const isBottomNavVisible = useIsBottomNavVisible();
+
   const { isFavorite, toggleFavorite } = useFavorites();
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
@@ -211,7 +211,8 @@ export default function BusinessDetailScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: 120 + (isBottomNavVisible ? BOTTOM_NAV_TOTAL + insets.bottom : 0),
+          // Extra padding to ensure content can scroll above the bottom bar
+          paddingBottom: 140 + insets.bottom,
         }}
         bounces={false}
       >
@@ -235,6 +236,7 @@ export default function BusinessDetailScreen() {
                 color={isFav ? colors.light.error : colors.light.text}
               />
             </TouchableOpacity>
+            <ProfileButton />
           </View>
         </View>
 
@@ -422,12 +424,7 @@ export default function BusinessDetailScreen() {
       <View
         style={[
           styles.bottomBar,
-          {
-            bottom: isBottomNavVisible ? BOTTOM_NAV_TOTAL + insets.bottom : 0,
-            paddingBottom: isBottomNavVisible
-              ? BOTTOM_NAV_TOTAL - insets.bottom
-              : Math.max(insets.bottom, 60),
-          },
+          { bottom: insets.bottom },
         ]}
       >
         <View style={styles.priceContainer}>
@@ -659,7 +656,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.light.border,
     paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingTop: 16,
+    paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
@@ -683,7 +681,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 56,
     backgroundColor: '#000',
-    borderRadius: 12,
+    borderRadius: 999,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',

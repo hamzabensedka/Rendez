@@ -11,11 +11,20 @@ import {
 import { useRouter } from 'expo-router';
 import { Text } from '@planity/ui';
 import { colors, spacing, radius, shadows } from '@planity/ui';
-import { useFavorites } from '../../../application/providers';
+import { useAuth, useFavorites } from '../../../application/providers';
+import { ProfileButton } from '../../search/components/ProfileButton';
 
 export default function FavoritesScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const { favoriteItems, loading } = useFavorites();
+
+  // Redirect to login if not authenticated
+  React.useEffect(() => {
+    if (!user) {
+      router.replace('/login');
+    }
+  }, [user, router]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
@@ -25,6 +34,7 @@ export default function FavoritesScreen() {
           <Text variant="body" color={colors.light.accent}>Back</Text>
         </TouchableOpacity>
         <Text variant="title2" style={styles.headerTitle}>Favorites</Text>
+        <ProfileButton />
       </View>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {loading ? (

@@ -6,8 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing } from '@planity/ui';
 import { useAuth } from '../providers';
 
-const BOTTOM_NAV_HEIGHT = 56;
-const BOTTOM_NAV_MARGIN = 10;
+// Height of the visible nav content (icons + padding). Does NOT include safe area.
+const BOTTOM_NAV_CONTENT_HEIGHT = 56;  // Adjust this value (56 = more compact, 64 = more spacious)
 
 /** Whether the global bottom nav is currently visible (hidden when not logged in or on Explore). */
 export function useIsBottomNavVisible(): boolean {
@@ -39,8 +39,9 @@ export function BottomNav() {
       style={[
         styles.container,
         {
-          paddingBottom: Math.max(insets.bottom, spacing.sm),
-          marginBottom: BOTTOM_NAV_MARGIN,
+          // Total height = content + safe area, positioned at bottom
+          height: BOTTOM_NAV_CONTENT_HEIGHT + insets.bottom,
+          paddingBottom: insets.bottom,
         },
       ]}
     >
@@ -78,7 +79,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
-    minHeight: BOTTOM_NAV_HEIGHT,
+    // Content area height - icons will be centered in this space
+    height: BOTTOM_NAV_CONTENT_HEIGHT,
     borderTopWidth: 1,
     borderTopColor: colors.light.border,
     backgroundColor: '#fff',
@@ -90,5 +92,8 @@ const styles = StyleSheet.create({
   },
 });
 
-/** Height of bottom nav (for layout padding). Includes margin. */
-export const BOTTOM_NAV_TOTAL = BOTTOM_NAV_HEIGHT + BOTTOM_NAV_MARGIN;
+/**
+ * Total height to add when positioning elements above the bottom nav.
+ * This is the content height only - safe area is added separately via insets.bottom.
+ */
+export const BOTTOM_NAV_TOTAL = BOTTOM_NAV_CONTENT_HEIGHT;

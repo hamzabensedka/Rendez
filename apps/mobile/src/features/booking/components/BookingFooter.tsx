@@ -8,8 +8,7 @@ interface BookingFooterProps {
   onConfirm: () => void;
   disabled: boolean;
   loading: boolean;
-  paddingBottom?: number;
-  /** Offset from bottom (e.g. for global bottom nav). When set, the bar is positioned above it. */
+  /** Offset from bottom (e.g. for global bottom nav + safe area). The bar is positioned at this value. */
   bottomOffset?: number;
 }
 
@@ -19,11 +18,10 @@ export function BookingFooter({
   onConfirm,
   disabled,
   loading,
-  paddingBottom = 24,
   bottomOffset = 0,
 }: BookingFooterProps) {
   return (
-    <View style={[styles.bottomBar, { paddingBottom, bottom: bottomOffset }]}>
+    <View style={[styles.bottomBar, { bottom: bottomOffset }]}>
       <View style={styles.totalBlock}>
         <Text style={styles.totalLabel}>TOTAL PRICE</Text>
         <Text style={styles.totalValue}>
@@ -58,6 +56,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
     backgroundColor: colors.light.surface,
     borderTopWidth: 1,
     borderTopColor: colors.light.border,
