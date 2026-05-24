@@ -57,6 +57,7 @@ export const SalonCard = React.memo<SalonCardProps>(function SalonCard({
       <TouchableOpacity
         onPress={onPress}
         activeOpacity={0.9}
+        accessibilityRole="button"
         accessibilityLabel={`Salon ${salon.name}`}
       >
         {/* Image Slider Section */}

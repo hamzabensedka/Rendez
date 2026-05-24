@@ -102,7 +102,7 @@ export default function BookingScreen() {
       setAddServiceModalVisible(true);
     } else if (businessId) {
       router.push({
-        pathname: '/(tabs)/business/[id]',
+        pathname: '/(main)/business/[id]',
         params: {
           id: businessId,
           addToBooking: '1',

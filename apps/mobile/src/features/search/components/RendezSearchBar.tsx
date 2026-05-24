@@ -6,15 +6,19 @@ import { colors, spacing, radius } from '@planity/ui';
 
 interface RendezSearchBarProps {
   categoryLabel: string;
-  address: string;
+  /** When null/empty, shows addressPlaceholder instead of "Near me" */
+  addressLine: string;
+  addressPlaceholder?: string;
   onPress: () => void;
 }
 
 export const RendezSearchBar = React.memo<RendezSearchBarProps>(function RendezSearchBar({
   categoryLabel,
-  address,
+  addressLine,
+  addressPlaceholder = 'Adresses, ville',
   onPress,
 }) {
+  const hasAddress = Boolean(addressLine?.trim());
   return (
     <TouchableOpacity
       style={styles.container}
@@ -38,9 +42,9 @@ export const RendezSearchBar = React.memo<RendezSearchBarProps>(function RendezS
           variant="body"
           color={colors.light.textSecondary}
           numberOfLines={1}
-          style={styles.address}
+          style={[styles.address, !hasAddress && styles.addressPlaceholder]}
         >
-          {address}
+          {hasAddress ? addressLine : addressPlaceholder}
         </Text>
       </View>
       <View style={styles.editButton}>
@@ -82,6 +86,10 @@ const styles = StyleSheet.create({
   },
   address: {
     flex: 1,
+  },
+  addressPlaceholder: {
+    fontStyle: 'italic',
+    opacity: 0.85,
   },
   editButton: {
     width: 32,

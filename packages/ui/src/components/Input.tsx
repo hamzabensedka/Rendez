@@ -62,7 +62,12 @@ export const Input: React.FC<InputProps> = ({
         {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
         
         {secureTextEntry && (
-          <TouchableOpacity onPress={togglePasswordVisibility} style={styles.eyeIcon}>
+          <TouchableOpacity
+            onPress={togglePasswordVisibility}
+            style={styles.eyeIcon}
+            accessibilityRole="button"
+            accessibilityLabel={isPasswordVisible ? 'Hide password' : 'Show password'}
+          >
             <Ionicons
               name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
               size={20}

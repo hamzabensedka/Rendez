@@ -7,6 +7,7 @@ import {
   CACHE_TTL_AVAILABILITY,
 } from '@planity/shared';
 import type { Business, ServiceVariant } from '@prisma/client';
+import { RedisCacheService } from '../redis/redis-cache.service';
 
 /** Interval in UTC for availability computation */
 interface UtcInterval {
@@ -14,23 +15,20 @@ interface UtcInterval {
   end: Date;
 }
 
-/** Cache entry for availability slots */
-interface AvailabilityCacheEntry {
-  result: {
-    date: string;
-    timezone: string;
-    slotStepMin: number;
-    slots: Array< { startAt: string; staffId: string | null }>;
-  };
-  expiresAt: number;
+/** Response shape for available slots (also used as cache payload). */
+export interface AvailabilitySlotsResponse {
+  date: string;
+  timezone: string;
+  slotStepMin: number;
+  slots: Array<{ startAt: string; staffId: string | null }>;
 }
 
 @Injectable()
 export class AvailabilityService {
-  /** In-memory cache for slot results; replace with Redis for multi-instance. */
-  private readonly slotCache = new Map<string, AvailabilityCacheEntry>();
-
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly cache: RedisCacheService
+  ) {}
 
   async getAvailableSlots(
     businessId: string,
@@ -38,8 +36,13 @@ export class AvailabilityService {
     serviceVariantId: string,
     staffId?: string
   ) {
-    const cacheKey = [businessId, date, serviceVariantId, staffId ?? ''].join(':');
-    const cached = this.getCachedSlots(cacheKey);
+    const cacheKey = `planity:availability:slots:${[
+      businessId,
+      date,
+      serviceVariantId,
+      staffId ?? '',
+    ].join(':')}`;
+    const cached = await this.cache.getJson<AvailabilitySlotsResponse>(cacheKey);
     if (cached) return cached;
 
     const { business, variant } = await this.loadBusinessAndVariant(
@@ -54,7 +57,7 @@ export class AvailabilityService {
     const endOfDayUtc = getEndOfDayUtc(date, timezone);
 
     const [rules, timeOffs, appointments] = await Promise.all([
-      this.loadRulesForDay(businessId, date, staffId),
+      this.loadRulesForDay(businessId, date, timezone, staffId),
       this.loadTimeOffsInRange(businessId, startOfDayUtc, endOfDayUtc, staffId),
       this.loadAppointmentsInRange(
         businessId,
@@ -69,18 +72,15 @@ export class AvailabilityService {
       timezone,
       rules
     );
-    const afterTimeOff = this.subtractTimeOffsFromIntervals(openFromRules, timeOffs);
-    const afterAppointments = this.subtractAppointmentsFromIntervals(
-      afterTimeOff,
-      appointments
-    );
+    const afterTimeOff = this.subtractIntervals(openFromRules, timeOffs);
+    const afterAppointments = this.subtractIntervals(afterTimeOff, appointments);
     const slots = this.generateSlotsFromIntervals(
       afterAppointments,
       requiredDuration,
       staffId ?? null
     );
 
-    const result = {
+    const result: AvailabilitySlotsResponse = {
       date,
       timezone,
       slotStepMin: DEFAULT_SLOT_STEP_MIN,
@@ -90,28 +90,8 @@ export class AvailabilityService {
       })),
     };
 
-    this.setCachedSlots(cacheKey, result, CACHE_TTL_AVAILABILITY);
+    await this.cache.setJson(cacheKey, result, CACHE_TTL_AVAILABILITY);
     return result;
-  }
-
-  private getCachedSlots(key: string): AvailabilityCacheEntry['result'] | null {
-    const entry = this.slotCache.get(key);
-    if (!entry || Date.now() > entry.expiresAt) {
-      if (entry) this.slotCache.delete(key);
-      return null;
-    }
-    return entry.result;
-  }
-
-  private setCachedSlots(
-    key: string,
-    result: AvailabilityCacheEntry['result'],
-    ttlSeconds: number
-  ): void {
-    this.slotCache.set(key, {
-      result,
-      expiresAt: Date.now() + ttlSeconds * 1000,
-    });
   }
 
   private async loadBusinessAndVariant(
@@ -132,9 +112,13 @@ export class AvailabilityService {
   private async loadRulesForDay(
     businessId: string,
     date: string,
+    timezone: string,
     staffId?: string
   ) {
     const dayOfWeek = DateTime.fromISO(date).weekday % 7;
+    const dayStartUtc = getStartOfDayUtc(date, timezone);
+    const dayEndUtc = getEndOfDayUtc(date, timezone);
+
     return this.prisma.availabilityRule.findMany({
       where: {
         businessId,
@@ -142,13 +126,13 @@ export class AvailabilityService {
         dayOfWeek,
         OR: [
           { effectiveFrom: null },
-          { effectiveFrom: { lte: new Date(date) } },
+          { effectiveFrom: { lte: dayEndUtc } },
         ],
         AND: [
           {
             OR: [
               { effectiveTo: null },
-              { effectiveTo: { gte: new Date(date) } },
+              { effectiveTo: { gte: dayStartUtc } },
             ],
           },
         ],
@@ -207,51 +191,23 @@ export class AvailabilityService {
     return intervals;
   }
 
-  private subtractTimeOffsFromIntervals(
+  private subtractIntervals(
     intervals: UtcInterval[],
-    timeOffs: Array<{ startAtUtc: Date; endAtUtc: Date }>
+    busy: Array<{ startAtUtc: Date; endAtUtc: Date }>
   ): UtcInterval[] {
     const result: UtcInterval[] = [];
     for (const interval of intervals) {
       let currentStart = interval.start;
       const end = interval.end;
-      const overlapping = timeOffs
-        .filter(
-          (to) => to.startAtUtc < end && to.endAtUtc > currentStart
-        )
+      const overlapping = busy
+        .filter((b) => b.startAtUtc < end && b.endAtUtc > currentStart)
         .sort((a, b) => a.startAtUtc.getTime() - b.startAtUtc.getTime());
-      for (const to of overlapping) {
-        if (currentStart < to.startAtUtc) {
-          result.push({ start: currentStart, end: to.startAtUtc });
+      for (const b of overlapping) {
+        if (currentStart < b.startAtUtc) {
+          result.push({ start: currentStart, end: b.startAtUtc });
         }
         currentStart = new Date(
-          Math.max(currentStart.getTime(), to.endAtUtc.getTime())
-        );
-      }
-      if (currentStart < end) {
-        result.push({ start: currentStart, end });
-      }
-    }
-    return result;
-  }
-
-  private subtractAppointmentsFromIntervals(
-    intervals: UtcInterval[],
-    appointments: Array<{ startAtUtc: Date; endAtUtc: Date }>
-  ): UtcInterval[] {
-    const result: UtcInterval[] = [];
-    for (const interval of intervals) {
-      let currentStart = interval.start;
-      const end = interval.end;
-      const overlapping = appointments
-        .filter((apt) => apt.startAtUtc < end && apt.endAtUtc > currentStart)
-        .sort((a, b) => a.startAtUtc.getTime() - b.startAtUtc.getTime());
-      for (const apt of overlapping) {
-        if (currentStart < apt.startAtUtc) {
-          result.push({ start: currentStart, end: apt.startAtUtc });
-        }
-        currentStart = new Date(
-          Math.max(currentStart.getTime(), apt.endAtUtc.getTime())
+          Math.max(currentStart.getTime(), b.endAtUtc.getTime())
         );
       }
       if (currentStart < end) {

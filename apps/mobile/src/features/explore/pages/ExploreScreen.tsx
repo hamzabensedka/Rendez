@@ -24,7 +24,7 @@ export default function ExploreScreen() {
   }
 
   function handleEspacePro() {
-    router.push('/(tabs)/profile');
+    router.push('/(main)/profile');
   }
 
   return (
@@ -53,6 +53,9 @@ export default function ExploreScreen() {
         <View style={styles.interactionSection}>
           <View style={styles.buttons}>
             <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Réserver un soin"
+              accessibilityHint="Ouvre la recherche de salons"
               style={styles.primaryButton}
               onPress={handleReserverUnSoin}
               activeOpacity={0.9}
@@ -60,6 +63,9 @@ export default function ExploreScreen() {
               <Text style={styles.primaryButtonText}>Réserver un soin</Text>
             </TouchableOpacity>
             <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Espace Professionnel"
+              accessibilityHint="Ouvre le profil ou l’espace pro"
               style={styles.secondaryButton}
               onPress={handleEspacePro}
               activeOpacity={0.9}

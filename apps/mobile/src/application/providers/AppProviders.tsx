@@ -14,6 +14,8 @@ import {
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 
+import { QueryClientProvider } from '@tanstack/react-query';
+import { appQueryClient } from '../query/queryClient';
 import { AuthProvider } from './auth/AuthContext';
 import { FavoritesProvider } from './favorites/FavoritesContext';
 
@@ -43,9 +45,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <FavoritesProvider>{children}</FavoritesProvider>
-        </AuthProvider>
+        <QueryClientProvider client={appQueryClient}>
+          <AuthProvider>
+            <FavoritesProvider>{children}</FavoritesProvider>
+          </AuthProvider>
+        </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

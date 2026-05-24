@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { RedisCacheService } from '../redis/redis-cache.service';
 
 export interface PlaceSuggestion {
   id: string;
@@ -26,41 +27,49 @@ interface NominatimResult {
   };
 }
 
-/** In-memory cache entry for geocoding (Nominatim policy: cache results). */
-interface CacheEntry {
-  results: PlaceSuggestion[];
-  expiresAt: number;
-}
-
 const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org/search';
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
-const NOMINATIM_MIN_INTERVAL_MS = 1100; // 1 req/sec + margin
+const CACHE_TTL_SEC = 24 * 60 * 60; // 24h
+const NOMINATIM_LOCK_KEY = 'planity:places:nominatim:lock';
+const NOMINATIM_LOCK_TTL_SEC = 2;
+const NOMINATIM_LOCK_SPIN_MS = 15_000;
 
 @Injectable()
 export class PlacesService {
-  private lastNominatimCall = 0;
-  private cache = new Map<string, CacheEntry>();
-
-  constructor(private config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly cache: RedisCacheService
+  ) {}
 
   async suggest(q: string, limit = 10): Promise<PlaceSuggestion[]> {
-    const key = `suggest:${q.trim().toLowerCase()}:${limit}`;
-    const cached = this.cache.get(key);
-    if (cached && cached.expiresAt > Date.now()) {
-      return cached.results;
+    const countryCodes = (
+      this.config.get<string>('PLACES_COUNTRY_CODES') ?? 'fr'
+    )
+      .split(',')
+      .map((c) => c.trim().toLowerCase())
+      .filter(Boolean)
+      .join(',');
+    const key = `planity:places:suggest:${countryCodes}:${q.trim().toLowerCase()}:${Math.min(limit, 10)}`;
+    const cached = await this.cache.getJson<PlaceSuggestion[]>(key);
+    if (cached) {
+      return cached;
     }
 
     if (!q?.trim()) {
       return [];
     }
 
-    await this.rateLimitNominatim();
+    await this.cache.acquireLockSpin(
+      NOMINATIM_LOCK_KEY,
+      NOMINATIM_LOCK_TTL_SEC,
+      NOMINATIM_LOCK_SPIN_MS
+    );
 
     const params = new URLSearchParams({
       q: q.trim(),
       format: 'json',
       addressdetails: '1',
       limit: String(Math.min(limit, 10)),
+      ...(countryCodes ? { countrycodes: countryCodes } : {}),
     });
     const url = `${NOMINATIM_BASE}?${params.toString()}`;
     const userAgent = this.getUserAgent();
@@ -69,7 +78,9 @@ export class PlacesService {
       const res = await fetch(url, {
         headers: { 'User-Agent': userAgent },
       });
-      if (!res.ok) return [];
+      if (!res.ok) {
+        return [];
+      }
       const data = (await res.json()) as NominatimResult[];
       const results: PlaceSuggestion[] = (data ?? []).slice(0, limit).map((f, i) => {
         const lat = parseFloat(f.lat);
@@ -86,26 +97,11 @@ export class PlacesService {
           lng: Number.isNaN(lng) ? undefined : lng,
         };
       });
-      this.cache.set(key, {
-        results,
-        expiresAt: Date.now() + CACHE_TTL_MS,
-      });
+      await this.cache.setJson(key, results, CACHE_TTL_SEC);
       return results;
     } catch {
       return [];
     }
-  }
-
-  /** Enforce Nominatim 1 request/second policy. */
-  private async rateLimitNominatim(): Promise<void> {
-    const now = Date.now();
-    const elapsed = now - this.lastNominatimCall;
-    if (elapsed < NOMINATIM_MIN_INTERVAL_MS) {
-      await new Promise((r) =>
-        setTimeout(r, NOMINATIM_MIN_INTERVAL_MS - elapsed)
-      );
-    }
-    this.lastNominatimCall = Date.now();
   }
 
   /** Required by Nominatim usage policy. */

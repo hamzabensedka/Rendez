@@ -8,7 +8,14 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
-import { AppointmentStatus, AppointmentSource, UserRole } from '@planity/shared';
+import {
+  AppointmentStatus,
+  AppointmentSource,
+  UserRole,
+  DEFAULT_PAGE,
+  DEFAULT_LIMIT,
+  MAX_LIMIT,
+} from '@planity/shared';
 import { generateIdempotencyKey } from '@planity/shared';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
@@ -194,7 +201,12 @@ export class AppointmentsService {
     return /exclusion|conflict|duplicate key|unique constraint/i.test(msg);
   }
 
-  async findUserAppointments(userId: string, upcoming = true) {
+  async findUserAppointments(
+    userId: string,
+    upcoming = true,
+    page: number = DEFAULT_PAGE,
+    limit: number = DEFAULT_LIMIT
+  ) {
     const now = new Date();
     const where: Prisma.AppointmentWhereInput = {
       clientUserId: userId,
@@ -210,45 +222,61 @@ export class AppointmentsService {
       ];
     }
 
-    return this.prisma.appointment.findMany({
-      where,
-      include: {
-        business: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
+    const safePage = Math.max(1, Math.floor(page));
+    const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Math.floor(limit)));
+    const skip = (safePage - 1) * safeLimit;
+
+    const [data, total] = await Promise.all([
+      this.prisma.appointment.findMany({
+        where,
+        include: {
+          business: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
           },
-        },
-        location: {
-          select: {
-            id: true,
-            label: true,
-            address1: true,
-            city: true,
+          location: {
+            select: {
+              id: true,
+              label: true,
+              address1: true,
+              city: true,
+            },
           },
-        },
-        staff: {
-          select: {
-            id: true,
-            name: true,
+          staff: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
-        },
-        appointmentItems: {
-          include: {
-            serviceVariant: {
-              select: {
-                id: true,
-                name: true,
+          appointmentItems: {
+            include: {
+              serviceVariant: {
+                select: {
+                  id: true,
+                  name: true,
+                },
               },
             },
           },
         },
-      },
-      orderBy: {
-        startAtUtc: upcoming ? 'asc' : 'desc',
-      },
-    });
+        orderBy: {
+          startAtUtc: upcoming ? 'asc' : 'desc',
+        },
+        skip,
+        take: safeLimit,
+      }),
+      this.prisma.appointment.count({ where }),
+    ]);
+
+    return {
+      data,
+      total,
+      page: safePage,
+      limit: safeLimit,
+    };
   }
 
   async findOne(id: string, requester: AuthenticatedUser) {

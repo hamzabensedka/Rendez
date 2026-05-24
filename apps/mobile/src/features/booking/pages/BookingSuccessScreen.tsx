@@ -268,7 +268,7 @@ export default function BookingSuccessScreen() {
   const address = params.address ?? '—';
 
   const handleClose = () => {
-    router.replace('/(tabs)/bookings');
+    router.replace('/(main)/bookings');
   };
 
   const handleAddToCalendar = () => {
@@ -284,14 +284,14 @@ export default function BookingSuccessScreen() {
 
   const handleManageBooking = () => {
     if (params.appointmentId) {
-      router.replace(`/(tabs)/bookings/${params.appointmentId}`);
+      router.replace(`/(main)/bookings/${params.appointmentId}`);
     } else {
-      router.replace('/(tabs)/bookings');
+      router.replace('/(main)/bookings');
     }
   };
 
   const handleBackToHome = () => {
-    router.replace('/(tabs)/explore');
+    router.replace('/(main)/explore');
   };
 
   return (

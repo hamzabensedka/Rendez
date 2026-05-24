@@ -4,7 +4,7 @@
  * - Queries only on map movement end, zoom change, or "Search in this zone".
  * - Geocoding: backend proxy (Nominatim). Locate me: center on user location.
  */
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -26,10 +26,17 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@planity/ui';
 import { useFavorites } from '../../../application/providers';
-import { DEFAULT_SALON_IMAGES } from '../constants';
 import { OSM_RASTER_STYLE } from '../constants/mapStyle';
-import api from '../../../shared/lib/api';
 import { fetchViewportBusinesses } from '../services/viewportService';
+import { useBusinessesSearchQuery } from '../../../application/query/hooks';
+import {
+  type MapBusiness,
+  getDisplayPrice,
+  getCardImageUri,
+  businessToFeature,
+  businessesToGeoJSON,
+} from '../map/mapSearchGeo';
+import { MapSearchBottomCard } from '../components/MapSearchBottomCard';
 import { getCurrentLocation } from '../services/addressService';
 import type { ApiBusinessListItem } from '../components';
 import Constants from 'expo-constants';
@@ -84,22 +91,6 @@ const bw = {
   white: '#FFFFFF',
 };
 
-interface MapBusiness extends ApiBusinessListItem {
-  _minPrice?: number;
-}
-
-function getDisplayPrice(b: MapBusiness): string {
-  if (b._minPrice != null) return `${Math.round(b._minPrice / 100)}€`;
-  return '—';
-}
-
-/** Pick a stable placeholder image per business so the card image changes when selecting another pin. */
-function getCardImageUri(businessId: string): string {
-  let n = 0;
-  for (let i = 0; i < businessId.length; i++) n = (n * 31 + businessId.charCodeAt(i)) >>> 0;
-  return DEFAULT_SALON_IMAGES[n % DEFAULT_SALON_IMAGES.length];
-}
-
 /** Default Paris center when location unavailable */
 const DEFAULT_CENTER: [number, number] = [2.3522, 48.8566];
 const DEFAULT_ZOOM = 14;
@@ -107,29 +98,6 @@ const VIEWPORT_DEBOUNCE_MS = 400;
 const LOADING_TIMEOUT_MS = 12000;
 /** Delta for fallback bounds when getVisibleBounds fails (approx ~5km) */
 const FALLBACK_DELTA = 0.05;
-
-function businessToFeature(b: MapBusiness) {
-  const loc = b.locations?.[0];
-  const lng = loc?.lng ?? 0;
-  const lat = loc?.lat ?? 0;
-  return {
-    type: 'Feature' as const,
-    id: b.id,
-    properties: { businessId: b.id, name: b.name },
-    geometry: { type: 'Point' as const, coordinates: [lng, lat] },
-  };
-}
-
-function businessesToGeoJSON(businesses: MapBusiness[]) {
-  const features = businesses
-    .filter((b) => {
-      const lat = b.locations?.[0]?.lat;
-      const lng = b.locations?.[0]?.lng;
-      return lat != null && lng != null && (lat !== 0 || lng !== 0);
-    })
-    .map(businessToFeature);
-  return { type: 'FeatureCollection' as const, features };
-}
 
 interface MapSearchScreenProps {
   /** When true, hide the top header (back/logo/profile) for embedding inside SearchResultsScreen */
@@ -140,10 +108,58 @@ interface MapSearchScreenProps {
 
 export default function MapSearchScreen({ embedded, initialBusinesses }: MapSearchScreenProps) {
   const router = useRouter();
-  const { address, category } = useLocalSearchParams<{ address?: string; category?: string }>();
+  const searchParams = useLocalSearchParams<{
+    address?: string;
+    city?: string;
+    categories?: string;
+    nearMe?: string;
+    availDate?: string;
+  }>();
   const { isFavorite, toggleFavorite } = useFavorites();
 
-  const [searchQuery] = useState('');
+  const addressParam = searchParams.address?.trim() ?? '';
+  const cityParam = searchParams.city?.trim() ?? '';
+  const categoriesParam = searchParams.categories?.trim() ?? '';
+  const nearMe = searchParams.nearMe === '1';
+  const availDateParam = searchParams.availDate?.trim() ?? '';
+
+  const categorySlugs = useMemo(
+    () => categoriesParam.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+    [categoriesParam]
+  );
+  const categoriesCsv = categorySlugs.join(',');
+
+  const [nearCoords, setNearCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (!nearMe) {
+      setNearCoords(null);
+      return;
+    }
+    let cancelled = false;
+    getCurrentLocation().then((c) => {
+      if (!cancelled && c) setNearCoords(c);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [nearMe]);
+
+  const apiCity = useMemo(() => {
+    if (nearMe) return undefined;
+    if (cityParam) return cityParam;
+    if (addressParam.includes(',')) return addressParam.split(',')[0]?.trim() || undefined;
+    return undefined;
+  }, [nearMe, cityParam, addressParam]);
+
+  const apiQuery = useMemo(() => {
+    if (nearMe || apiCity) return undefined;
+    if (addressParam) return addressParam;
+    return undefined;
+  }, [nearMe, apiCity, addressParam]);
+
+  const searchEnabled = !nearMe || nearCoords != null;
+
   const [businesses, setBusinesses] = useState<MapBusiness[]>(() =>
     Array.isArray(initialBusinesses) && initialBusinesses.length > 0
       ? initialBusinesses.map((b) => ({ ...b }))
@@ -152,7 +168,6 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
   const [selectedBusiness, setSelectedBusiness] = useState<MapBusiness | null>(null);
   const [previousBusiness, setPreviousBusiness] = useState<MapBusiness | null>(null);
   const [loading, setLoading] = useState(false);
-  const [categoryLabel] = useState(category || 'Coiffure');
   const [mapReady, setMapReady] = useState(false);
   const initialFetchDoneRef = useRef(false);
 
@@ -175,8 +190,14 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
 
   const hasNativeMap = Boolean(MapView && Camera && ShapeSource && (SymbolLayer || CircleLayer) && Images);
 
-  const city = address && address.includes(',') ? address.split(',').pop()?.trim() : undefined;
-  const query = city ? undefined : ([category, address].filter(Boolean).join(' ') || undefined);
+  const searchListQuery = useBusinessesSearchQuery({
+    query: apiQuery,
+    city: apiCity,
+    categories: categorySlugs.length ? categorySlugs : undefined,
+    nearMeCoords: nearMe && nearCoords ? nearCoords : null,
+    availDate: availDateParam || undefined,
+    enabled: searchEnabled,
+  });
 
   // Kick off location fetch immediately on mount — runs in parallel with map loading.
   useEffect(() => {
@@ -188,8 +209,9 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
       const list = await fetchViewportBusinesses({
         ...bounds,
         zoom,
-        query: searchQuery.trim() || undefined,
-        category: categoryLabel !== 'Coiffure' ? categoryLabel : undefined,
+        query: apiQuery || undefined,
+        categories: categoriesCsv || undefined,
+        availDate: availDateParam || undefined,
       });
       const withPrice: MapBusiness[] = list.map((b) => ({ ...b }));
       // Only replace businesses when we got results — never wipe with empty so markers don't disappear
@@ -202,7 +224,7 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
       }
       setLoading(false);
     },
-    [searchQuery, categoryLabel]
+    [apiQuery, categoriesCsv, availDateParam]
   );
 
   const onRegionDidChange = useCallback((event?: any) => {
@@ -313,31 +335,20 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, hasNativeMap, initialBusinesses]);
 
-  // When native map is not available (Expo Go), load businesses by city/query so the card still works.
+  // When native map is not available (Expo Go), mirror list search via React Query.
   useEffect(() => {
     if (hasNativeMap) return;
-    let cancelled = false;
-    setLoading(true);
-    api
-      .get<{ data: ApiBusinessListItem[] }>('/businesses', {
-        params: { query: query || undefined, city: city || undefined, limit: 50 },
-      })
-      .then((res) => {
-        if (cancelled) return;
-        const list = Array.isArray(res.data?.data) ? res.data.data : [];
-        setBusinesses(list.map((b) => ({ ...b })));
-        if (list.length > 0) setSelectedBusiness(list[0] as MapBusiness);
-      })
-      .catch(() => {
-        if (!cancelled) setBusinesses([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [hasNativeMap, query, city]);
+    const list: ApiBusinessListItem[] = searchListQuery.data ?? [];
+    setBusinesses(list.map((b: ApiBusinessListItem) => ({ ...b })));
+    if (list.length > 0) {
+      setSelectedBusiness((prev) => prev ?? (list[0] as MapBusiness));
+    }
+  }, [hasNativeMap, searchListQuery.data]);
+
+  useEffect(() => {
+    if (hasNativeMap) return;
+    setLoading(searchListQuery.isPending);
+  }, [hasNativeMap, searchListQuery.isPending]);
 
   useEffect(() => {
     if (businesses.length > 0 && !selectedBusiness) setSelectedBusiness(businesses[0]);
@@ -347,7 +358,7 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
   const handleMapReady = useCallback(() => setMapReady(true), []);
 
   const handleBack = useCallback(() => router.back(), [router]);
-  const handleProfile = useCallback(() => router.push('/(tabs)/profile'), [router]);
+  const handleProfile = useCallback(() => router.push('/(main)/profile'), [router]);
 
   const handleSearchInZone = useCallback(async () => {
     if (!MapView || !mapRef.current) return;
@@ -394,11 +405,11 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
   }, []);
 
   const handleBook = useCallback(() => {
-    if (selectedBusiness) router.push(`/(tabs)/business/${selectedBusiness.id}`);
+    if (selectedBusiness) router.push(`/(main)/business/${selectedBusiness.id}`);
   }, [selectedBusiness, router]);
 
   const handleCardPress = useCallback(() => {
-    if (selectedBusiness) router.push(`/(tabs)/business/${selectedBusiness.id}`);
+    if (selectedBusiness) router.push(`/(main)/business/${selectedBusiness.id}`);
   }, [selectedBusiness, router]);
 
   /*
@@ -572,24 +583,46 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
                 onPress={handleMarkerPress}
               >
                 {usePinIcon && SymbolLayerComponent ? (
-                  <SymbolLayerComponent
-                    id="business-markers"
-                    sourceID="businesses"
-                    style={{
-                      iconImage: 'salonPin',
-                      iconSize: [
-                        'interpolate',
-                        ['linear'],
-                        ['zoom'],
-                        10, 0.032,
-                        14, 0.058,
-                        18, 0.088,
-                      ],
-                      iconAllowOverlap: true,
-                      iconIgnorePlacement: true,
-                      iconAnchor: 'bottom',
-                    }}
-                  />
+                  <>
+                    {CircleLayerComponent ? (
+                      <CircleLayerComponent
+                        id="business-markers-badge"
+                        sourceID="businesses"
+                        style={{
+                          circleRadius: [
+                            'interpolate',
+                            ['linear'],
+                            ['zoom'],
+                            10, 5.5,
+                            14, 8.5,
+                            18, 12,
+                          ],
+                          circleColor: bw.white,
+                          circleStrokeWidth: 1,
+                          circleStrokeColor: bw.primary,
+                          circlePitchScale: 'map',
+                        }}
+                      />
+                    ) : null}
+                    <SymbolLayerComponent
+                      id="business-markers"
+                      sourceID="businesses"
+                      style={{
+                        iconImage: 'salonPin',
+                        iconSize: [
+                          'interpolate',
+                          ['linear'],
+                          ['zoom'],
+                          10, 0.013,
+                          14, 0.024,
+                          18, 0.036,
+                        ],
+                        iconAllowOverlap: true,
+                        iconIgnorePlacement: true,
+                        iconAnchor: 'center',
+                      }}
+                    />
+                  </>
                 ) : CircleLayerComponent ? (
                   <CircleLayerComponent
                     id="business-markers"
@@ -599,13 +632,13 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
                         'interpolate',
                         ['linear'],
                         ['zoom'],
-                        10, 8,
-                        14, 14,
-                        18, 20,
+                        10, 4,
+                        14, 7,
+                        18, 10,
                       ],
-                      circleColor: bw.primary,
-                      circleStrokeWidth: 3,
-                      circleStrokeColor: bw.white,
+                      circleColor: bw.white,
+                      circleStrokeWidth: 1,
+                      circleStrokeColor: bw.primary,
                       circlePitchScale: 'map',
                     }}
                   />
@@ -641,42 +674,14 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
         </View>
 
         {selectedBusiness && (
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={handleCardPress}
-            style={styles.bottomCard}
-          >
-            <View style={[styles.cardSlideContainer, { width: cardWidth }]}>
-              <Animated.View
-                style={[styles.carouselStrip, { width: cardWidth * 3 }, stripAnimatedStyle]}
-              >
-                <View style={[styles.carouselCard, { width: cardWidth }]}>
-                  <View style={styles.cardSlideSlotSingle}>
-                    <View style={styles.bottomCardInner}>
-                      {renderCardInner(selectedBusiness)}
-                    </View>
-                  </View>
-                </View>
-                <View style={[styles.carouselCard, { width: cardWidth }]}>
-                  <View style={styles.cardSlideSlotSingle}>
-                    <View style={styles.bottomCardInner}>
-                      {renderCardInner(previousBusiness ?? selectedBusiness)}
-                    </View>
-                  </View>
-                </View>
-                <View style={[styles.carouselCard, { width: cardWidth }]}>
-                  <View style={styles.cardSlideSlotSingle}>
-                    <View style={styles.bottomCardInner}>
-                      <>
-                        <View style={styles.emptyCardPlaceholder} />
-                        <View style={styles.emptyCardPlaceholderContent} />
-                      </>
-                    </View>
-                  </View>
-                </View>
-              </Animated.View>
-            </View>
-          </TouchableOpacity>
+          <MapSearchBottomCard
+            cardWidth={cardWidth}
+            stripAnimatedStyle={stripAnimatedStyle}
+            selectedBusiness={selectedBusiness}
+            previousBusiness={previousBusiness}
+            onCardPress={handleCardPress}
+            renderCard={renderCardInner}
+          />
         )}
       </SafeAreaView>
     </View>
@@ -765,45 +770,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 4,
   },
-  bottomCard: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 16,
-    overflow: 'hidden',
-    minHeight: 120,
-  },
-  cardSlideContainer: {
-    overflow: 'hidden',
-  },
-  carouselStrip: {
-    flexDirection: 'row',
-  },
-  carouselCard: {
-    flexShrink: 0,
-  },
-  cardSlideSlotSingle: {
-    borderRadius: 16,
-    backgroundColor: bw.white,
-    borderWidth: 1,
-    borderColor: bw.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  emptyCardPlaceholder: {
-    width: 96,
-    height: 96,
-    borderRadius: 12,
-    backgroundColor: bw.surface,
-  },
-  emptyCardPlaceholderContent: {
-    flex: 1,
-    minHeight: 96,
-  },
-  bottomCardInner: { flexDirection: 'row', padding: 12, gap: 16 },
   cardImage: { width: 96, height: 96, borderRadius: 12, backgroundColor: bw.surface },
   cardImageBw: { opacity: 0.9 },
   cardContent: { flex: 1, justifyContent: 'space-between', minHeight: 96 },

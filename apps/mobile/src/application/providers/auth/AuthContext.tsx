@@ -1,12 +1,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { getCurrentUser, logout as apiLogout } from '../../../shared/lib/auth';
+import { appQueryClient } from '../../query/queryClient';
 
 interface User {
   id: string;
   email: string;
   name: string;
   role: string;
+  status?: string;
+  createdAt?: string;
 }
 
 export interface PendingRegistration {
@@ -74,9 +77,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore errors
     } finally {
+      appQueryClient.clear();
       setUser(null);
-      await SecureStore.deleteItemAsync('accessToken');
-      await SecureStore.deleteItemAsync('refreshToken');
     }
   }
 

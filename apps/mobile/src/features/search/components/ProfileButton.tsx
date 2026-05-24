@@ -28,7 +28,7 @@ export const ProfileButton = React.memo<ProfileButtonProps>(function ProfileButt
       router.push('/login');
     } else {
       // Logged in - go to profile
-      router.push('/(tabs)/profile');
+      router.push('/(main)/profile');
     }
   };
 

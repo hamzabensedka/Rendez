@@ -1,5 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { PlacesService } from './places.service';
 
 @ApiTags('places')
@@ -7,6 +8,7 @@ import { PlacesService } from './places.service';
 export class PlacesController {
   constructor(private placesService: PlacesService) {}
 
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   @Get('suggest')
   @ApiOperation({ summary: 'Address/place suggestions (geocoding proxy)' })
   @ApiQuery({ name: 'q', required: false, description: 'Search query' })

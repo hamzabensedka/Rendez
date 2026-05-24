@@ -95,6 +95,7 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
             variant="ghost"
             size="sm"
             style={{ alignSelf: 'center' }}
+            onPress={() => {}}
           />
         </>
       ) : (

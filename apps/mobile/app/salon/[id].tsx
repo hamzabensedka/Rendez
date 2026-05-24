@@ -6,5 +6,5 @@ import { Redirect, useLocalSearchParams } from 'expo-router';
 export default function SalonRedirect() {
   const { id } = useLocalSearchParams<{ id: string }>();
   if (!id) return null;
-  return <Redirect href={`/(tabs)/business/${id}`} />;
+  return <Redirect href={`/(main)/business/${id}`} />;
 }

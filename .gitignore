@@ -37,6 +37,10 @@ lerna-debug.log*
 # OS
 Thumbs.db
 
+# Local design exports / screenshots (keep out of version control)
+stitch_premium_salon_search_results_v1/
+screenshot.png
+
 # Nx
 .nx/cache
 .nx/workspace-data

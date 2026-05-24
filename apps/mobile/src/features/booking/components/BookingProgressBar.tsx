@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, type DimensionValue } from 'react-native';
 import { colors, spacing } from '@planity/ui';
 
 interface BookingProgressBarProps {
@@ -16,7 +16,7 @@ export function BookingProgressBar({ stepLabel, title, progressPercent }: Bookin
         <Text style={styles.progressTitle}>{title}</Text>
       </View>
       <View style={styles.progressBarBg}>
-        <View style={[styles.progressBarFill, { width: progressPercent }]} />
+        <View style={[styles.progressBarFill, { width: progressPercent as DimensionValue }]} />
       </View>
     </View>
   );

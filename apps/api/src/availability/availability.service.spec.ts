@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { AvailabilityService } from './availability.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisCacheService } from '../redis/redis-cache.service';
 import { DateTime } from 'luxon';
 
 describe('AvailabilityService', () => {
@@ -20,12 +21,18 @@ describe('AvailabilityService', () => {
 
   let mockPrisma: ReturnType<typeof createMockPrisma>;
 
+  const mockCache = {
+    getJson: jest.fn().mockResolvedValue(null),
+    setJson: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     mockPrisma = createMockPrisma();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AvailabilityService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: RedisCacheService, useValue: mockCache },
       ],
     }).compile();
 

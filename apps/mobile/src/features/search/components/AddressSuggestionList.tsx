@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import { StyleSheet, FlatList, TouchableOpacity, ListRenderItem, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Platform, type ViewStyle } from 'react-native';
+import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '@planity/ui';
 import { Text } from '@planity/ui';
@@ -71,14 +72,20 @@ export const AddressSuggestionList = React.memo<AddressSuggestionListProps>(
     const keyExtractor = useCallback((item: AddressSuggestion) => item.id, []);
 
     return (
-      <FlatList
+      <FlashList
         data={suggestions}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         contentContainerStyle={styles.list}
-        style={[styles.container, !scrollEnabled && styles.containerNoScroll]}
+        style={
+          StyleSheet.flatten([
+            styles.container,
+            !scrollEnabled ? styles.containerNoScroll : undefined,
+          ]) as ViewStyle
+        }
         showsVerticalScrollIndicator={scrollEnabled}
         scrollEnabled={scrollEnabled}
+        removeClippedSubviews={Platform.OS === 'android'}
       />
     );
   }

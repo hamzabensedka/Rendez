@@ -1,98 +1,158 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Switch, SafeAreaView } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { Calendar } from 'react-native-calendars';
+import { colors, spacing, radius } from '@planity/ui';
+
+export type TimeFilterPreset = 'any' | 'today' | 'tomorrow' | 'custom';
+
+export interface TimeFilterApplyPayload {
+  preset: TimeFilterPreset;
+  /** YYYY-MM-DD when preset is today, tomorrow, or custom */
+  availDate?: string;
+  /** Row label in search UI */
+  summary: string;
+}
 
 interface TimeFilterProps {
   visible: boolean;
   onClose: () => void;
-  onApply: (time: string) => void;
-  currentTime: string;
+  onApply: (payload: TimeFilterApplyPayload) => void;
+  /** ISO date when a concrete day is selected */
+  initialAvailDate?: string;
+  initialSummary?: string;
+}
+
+function formatYmd(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseInitial(avail?: string, summary?: string): {
+  preset: TimeFilterPreset;
+  selectedDay: string;
+} {
+  if (!avail?.trim()) {
+    return { preset: 'any', selectedDay: formatYmd(new Date()) };
+  }
+  const s = summary?.toLowerCase() ?? '';
+  if (s.includes("aujourd'hui") || s.includes('today')) {
+    return { preset: 'today', selectedDay: avail.trim() };
+  }
+  if (s.includes('demain') || s.includes('tomorrow')) {
+    return { preset: 'tomorrow', selectedDay: avail.trim() };
+  }
+  return { preset: 'custom', selectedDay: avail.trim() };
 }
 
 export const TimeFilter = React.memo<TimeFilterProps>(function TimeFilter({
   visible,
   onClose,
   onApply,
-  currentTime,
+  initialAvailDate,
+  initialSummary,
 }) {
-  const [giftCard, setGiftCard] = useState(false);
-  const [selectedTime, setSelectedTime] = useState(currentTime || 'Any time');
+  const [{ preset, selectedDay }, setState] = useState(() =>
+    parseInitial(initialAvailDate, initialSummary)
+  );
+
+  useEffect(() => {
+    if (visible) {
+      setState(parseInitial(initialAvailDate, initialSummary));
+    }
+  }, [visible, initialAvailDate, initialSummary]);
 
   const handleApply = useCallback(() => {
-    onApply(selectedTime);
-    onClose();
-  }, [selectedTime, onApply, onClose]);
+    const today = formatYmd(new Date());
+    const tomorrowDate = new Date();
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrow = formatYmd(tomorrowDate);
 
-  const renderRadioButton = (
-    label: string, 
-    value: string
-  ) => {
-    const isSelected = selectedTime === value;
+    let payload: TimeFilterApplyPayload;
+    if (preset === 'any') {
+      payload = { preset: 'any', summary: 'N’importe quand' };
+    } else if (preset === 'today') {
+      payload = { preset: 'today', availDate: today, summary: "Aujourd'hui" };
+    } else if (preset === 'tomorrow') {
+      payload = { preset: 'tomorrow', availDate: tomorrow, summary: 'Demain' };
+    } else {
+      payload = {
+        preset: 'custom',
+        availDate: selectedDay,
+        summary: selectedDay,
+      };
+    }
+    onApply(payload);
+    onClose();
+  }, [preset, selectedDay, onApply, onClose]);
+
+  const renderRadio = (label: string, value: TimeFilterPreset) => {
+    const isSelected = preset === value;
     return (
-      <TouchableOpacity 
-        style={styles.radioRow} 
-        onPress={() => setSelectedTime(value)} 
-        activeOpacity={0.7}
-      >
-        <View style={styles.radioCircle}>
-          {isSelected && <View style={styles.radioDot} />}
-        </View>
+      <TouchableOpacity style={styles.radioRow} onPress={() => setState((s) => ({ ...s, preset: value }))} activeOpacity={0.7}>
+        <View style={styles.radioCircle}>{isSelected ? <View style={styles.radioDot} /> : null}</View>
         <Text style={styles.radioLabel}>{label}</Text>
       </TouchableOpacity>
     );
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <SafeAreaView style={styles.container}>
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={28} color="#000" />
+          <TouchableOpacity onPress={onClose} style={styles.closeButton} accessibilityRole="button">
+            <Ionicons name="close" size={28} color={colors.light.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>When</Text>
+          <Text style={styles.headerTitle}>Quand</Text>
           <View style={styles.placeholder} />
         </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Gift card */}
-          <View style={styles.giftCardSection}>
-            <Text style={styles.sectionTitle}>Gift card</Text>
-            <View style={styles.toggleRow}>
-              <View style={styles.giftCardLabelContainer}>
-                <Ionicons name="gift-outline" size={20} color="#000" style={styles.giftIcon} />
-                <Text style={styles.optionLabel}>Gift card available</Text>
-              </View>
-              <Switch
-                value={giftCard}
-                onValueChange={setGiftCard}
-                trackColor={{ false: '#E5E5EA', true: '#000000' }}
-                thumbColor="#FFFFFF"
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <View style={styles.optionsSection}>
+            {renderRadio('N’importe quand', 'any')}
+            {renderRadio("Aujourd'hui", 'today')}
+            {renderRadio('Demain', 'tomorrow')}
+            {renderRadio('Choisir une date', 'custom')}
+          </View>
+
+          {preset === 'custom' ? (
+            <View style={styles.calendarWrap}>
+              <Calendar
+                current={selectedDay}
+                onDayPress={(day) => setState((s) => ({ ...s, selectedDay: day.dateString }))}
+                markedDates={{
+                  [selectedDay]: {
+                    selected: true,
+                    selectedColor: colors.light.text,
+                  },
+                }}
+                theme={{
+                  todayTextColor: colors.light.accent,
+                  arrowColor: colors.light.text,
+                  monthTextColor: colors.light.text,
+                  textDayFontFamily: 'System',
+                  textMonthFontFamily: 'System',
+                  textDayHeaderFontFamily: 'System',
+                  selectedDayBackgroundColor: colors.light.text,
+                  selectedDayTextColor: colors.light.background,
+                }}
+                style={styles.calendar}
               />
             </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          {/* Time options */}
-          <View style={styles.optionsSection}>
-            {renderRadioButton('Any time', 'Any time')}
-            {renderRadioButton('Today', 'Today')}
-            {renderRadioButton('Tomorrow', 'Tomorrow')}
-            {renderRadioButton('Choose a date', 'Choose a date')}
-          </View>
+          ) : null}
         </ScrollView>
 
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
-            <Text style={styles.applyButtonText}>Save</Text>
+          <TouchableOpacity style={styles.applyButton} onPress={handleApply} accessibilityRole="button">
+            <Text style={styles.applyButtonText}>Enregistrer</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   );
 });
@@ -100,7 +160,7 @@ export const TimeFilter = React.memo<TimeFilterProps>(function TimeFilter({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.light.background,
   },
   header: {
     flexDirection: 'row',
@@ -115,8 +175,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000',
-    fontFamily: 'Inter-Medium',
+    color: colors.light.text,
   },
   placeholder: {
     width: 36,
@@ -126,40 +185,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
   },
-  sectionTitle: {
-    fontSize: 18,
-    color: '#000000',
-    fontFamily: 'Inter-Medium',
-    marginBottom: 16,
-  },
-  giftCardSection: {
-    marginBottom: 8,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  giftCardLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  giftIcon: {
-    marginRight: 12,
-  },
-  optionLabel: {
-    fontSize: 16,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#F2F2F7',
-    marginVertical: 16,
-  },
   optionsSection: {
     gap: 16,
+    marginBottom: 16,
   },
   radioRow: {
     flexDirection: 'row',
@@ -171,7 +199,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#000000',
+    borderColor: colors.light.text,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -180,27 +208,37 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#000000',
+    backgroundColor: colors.light.text,
   },
   radioLabel: {
     fontSize: 16,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
+    color: colors.light.text,
+  },
+  calendarWrap: {
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.light.border,
+    overflow: 'hidden',
+    marginBottom: 24,
+    backgroundColor: colors.light.surface,
+  },
+  calendar: {
+    paddingBottom: spacing.sm,
   },
   footer: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#F2F2F7',
+    borderTopColor: colors.light.border,
   },
   applyButton: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: colors.light.text,
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: radius.md,
     alignItems: 'center',
   },
   applyButtonText: {
-    color: '#FFFFFF',
+    color: colors.light.background,
     fontSize: 16,
-    fontFamily: 'Inter-Medium',
+    fontWeight: '600',
   },
 });

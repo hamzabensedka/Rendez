@@ -39,7 +39,7 @@ export function useBookingSubmit(params: UseBookingSubmitParams) {
     }
     if (!user) {
       router.push({
-        pathname: '/(tabs)/booking/identification',
+        pathname: '/(main)/booking/identification',
         params: {
           selectedSlot,
           existingServices: JSON.stringify(selectedServices),
@@ -73,7 +73,7 @@ export function useBookingSubmit(params: UseBookingSubmitParams) {
         ? selectedServices[0].name
         : selectedServices.map((s) => s.name).join(', ');
       router.replace({
-        pathname: '/(tabs)/booking/success',
+        pathname: '/(main)/booking/success',
         params: {
           businessName: displayName,
           serviceLabel,

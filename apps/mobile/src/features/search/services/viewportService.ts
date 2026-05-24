@@ -17,6 +17,8 @@ export interface ViewportParams extends ViewportBounds {
   zoom?: number;
   query?: string;
   category?: string;
+  categories?: string;
+  availDate?: string;
 }
 
 export interface ViewportBusinessesResponse {
@@ -30,7 +32,7 @@ export interface ViewportBusinessesResponse {
 export async function fetchViewportBusinesses(
   params: ViewportParams
 ): Promise<ApiBusinessListItem[]> {
-  const { north, south, east, west, zoom, query, category } = params;
+  const { north, south, east, west, zoom, query, category, categories, availDate } = params;
   try {
     const res = await api.get<ViewportBusinessesResponse>('/businesses/viewport', {
       params: {
@@ -41,6 +43,8 @@ export async function fetchViewportBusinesses(
         ...(zoom != null && !Number.isNaN(zoom) && { zoom }),
         ...(query?.trim() && { query: query.trim() }),
         ...(category?.trim() && { category: category.trim() }),
+        ...(categories?.trim() && { categories: categories.trim() }),
+        ...(availDate?.trim() && { availDate: availDate.trim() }),
       },
     });
     const data = res.data?.data;

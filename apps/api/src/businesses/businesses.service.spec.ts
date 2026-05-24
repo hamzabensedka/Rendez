@@ -109,4 +109,63 @@ describe('BusinessesService', () => {
       );
     });
   });
+
+  describe('findAll', () => {
+    beforeEach(() => {
+      prisma.business.findMany.mockResolvedValue([]);
+      prisma.business.count.mockResolvedValue(0);
+    });
+
+    it('passes category slug list when categories filter is set', async () => {
+      await service.findAll(undefined, undefined, 1, 20, {
+        categories: 'coiffure,spa',
+      });
+
+      expect(prisma.business.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            category: { in: ['coiffure', 'spa'], mode: 'insensitive' },
+          }),
+        })
+      );
+    });
+
+    it('passes geo bbox when lat and lng are set', async () => {
+      await service.findAll(undefined, undefined, 1, 20, {
+        lat: 43.6,
+        lng: 1.44,
+        radiusKm: 10,
+      });
+
+      expect(prisma.business.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            locations: expect.objectContaining({
+              some: expect.objectContaining({
+                AND: expect.any(Array),
+              }),
+            }),
+          }),
+        })
+      );
+    });
+
+    it('adds weekday availability when availDate is valid', async () => {
+      await service.findAll(undefined, undefined, 1, 20, {
+        availDate: '2026-04-06',
+      });
+
+      expect(prisma.business.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            AND: expect.arrayContaining([
+              expect.objectContaining({
+                availabilityRules: { some: { dayOfWeek: expect.any(Number) } },
+              }),
+            ]),
+          }),
+        })
+      );
+    });
+  });
 });

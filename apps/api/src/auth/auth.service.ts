@@ -3,10 +3,12 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserRole } from '@planity/shared';
+import { hashRefreshToken, jwtExpiryToMs } from './utils/refresh-token.util';
 
 @Injectable()
 export class AuthService {
@@ -58,6 +60,14 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        status: true,
+        passwordHash: true,
+      },
     });
 
     if (!user || user.status !== 'active') {
@@ -87,29 +97,81 @@ export class AuthService {
     };
   }
 
-  /** Refresh tokens: signature-only validation for now. Revocation/rotation = future work (docs/audit/07-closed-decisions.md). */
+  /**
+   * Validates refresh JWT, checks persisted session hash, rotates refresh (delete old + new session).
+   */
   async refreshToken(refreshToken: string) {
+    let payload: { sub: string; email: string };
     try {
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: this.config.get<string>('JWT_REFRESH_SECRET'),
-      });
-
-      const user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
-        select: { id: true, email: true, status: true },
-      });
-
-      if (!user || user.status !== 'active') {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      return this.generateTokens(user.id, user.email);
+      payload = this.jwtService.verify<{ sub: string; email: string }>(
+        refreshToken,
+        {
+          secret: this.config.get<string>('JWT_REFRESH_SECRET'),
+        }
+      );
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
+
+    const tokenHash = hashRefreshToken(refreshToken);
+    const session = await this.prisma.refreshTokenSession.findUnique({
+      where: { tokenHash },
+    });
+
+    if (
+      !session ||
+      session.userId !== payload.sub ||
+      session.revokedAt !== null ||
+      session.expiresAt < new Date()
+    ) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, email: true, status: true },
+    });
+
+    if (!user || user.status !== 'active') {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.refreshTokenSession.delete({ where: { id: session.id } });
+      const tokens = await this.signTokenPair(user.id, user.email);
+      await this.storeRefreshSession(user.id, tokens.refreshToken, tx);
+      return tokens;
+    });
   }
 
-  private async generateTokens(userId: string, email: string) {
+  /** Revoke a single refresh session after JWT verification. */
+  async logoutWithRefreshToken(refreshToken: string): Promise<void> {
+    try {
+      const payload = this.jwtService.verify<{ sub: string }>(refreshToken, {
+        secret: this.config.get<string>('JWT_REFRESH_SECRET'),
+      });
+      const tokenHash = hashRefreshToken(refreshToken);
+      await this.prisma.refreshTokenSession.deleteMany({
+        where: { tokenHash, userId: payload.sub },
+      });
+    } catch {
+      // Invalid or already-rotated token: idempotent logout
+    }
+  }
+
+  /** Revoke all refresh sessions for the user (e.g. password reset / sign-out everywhere). */
+  async logoutAllForUser(userId: string): Promise<void> {
+    await this.prisma.refreshTokenSession.deleteMany({
+      where: { userId },
+    });
+  }
+
+  private refreshSessionExpiry(): Date {
+    const exp = this.config.get<string>('JWT_REFRESH_EXPIRY', '7d');
+    return new Date(Date.now() + jwtExpiryToMs(exp));
+  }
+
+  private async signTokenPair(userId: string, email: string) {
     const payload = { sub: userId, email };
 
     const [accessToken, refreshToken] = await Promise.all([
@@ -120,13 +182,25 @@ export class AuthService {
       }),
     ]);
 
-    // Store refresh token in Redis (simplified for MVP - can use Redis later)
-    // For now, we'll validate on each refresh
+    return { accessToken, refreshToken };
+  }
 
-    return {
-      accessToken,
-      refreshToken,
-    };
+  private async storeRefreshSession(
+    userId: string,
+    refreshToken: string,
+    tx: Prisma.TransactionClient | PrismaService = this.prisma
+  ): Promise<void> {
+    const tokenHash = hashRefreshToken(refreshToken);
+    const expiresAt = this.refreshSessionExpiry();
+    await tx.refreshTokenSession.create({
+      data: { userId, tokenHash, expiresAt },
+    });
+  }
+
+  private async generateTokens(userId: string, email: string) {
+    const tokens = await this.signTokenPair(userId, email);
+    await this.storeRefreshSession(userId, tokens.refreshToken);
+    return tokens;
   }
 
   async validateUser(userId: string) {

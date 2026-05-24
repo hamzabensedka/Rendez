@@ -18,10 +18,16 @@ describe('AuthService', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    refreshTokenSession: {
+      create: jest.fn().mockResolvedValue({}),
+      findUnique: jest.fn(),
+      delete: jest.fn(),
+      deleteMany: jest.fn(),
+    },
   };
 
   const mockJwtService = {
-    signAsync: jest.fn().mockResolvedValue('token'),
+    signAsync: jest.fn().mockResolvedValue('jwt-token'),
     verify: jest.fn(),
   };
 

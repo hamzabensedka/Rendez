@@ -25,6 +25,5 @@ export { SalonReviews } from './SalonReviews';
 export { SalonAbout } from './SalonAbout';
 export { SearchFilters, FilterState } from './SearchFilters';
 export { ServiceFilters } from './ServiceFilters';
-export { TimeFilter } from './TimeFilter';
-export { SearchModeScreen } from './SearchModeScreen';
+export { TimeFilter, type TimeFilterApplyPayload } from './TimeFilter';
 export { AuthForm } from './AuthForm';

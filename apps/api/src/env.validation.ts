@@ -34,6 +34,59 @@ function validateEnv(): Record<string, string | number> {
     }
   }
 
+  const allowedOrigins = process.env.ALLOWED_ORIGINS;
+  if (allowedOrigins !== undefined && allowedOrigins !== '') {
+    const origins = allowedOrigins
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+    if (origins.length === 0) {
+      errors.push(
+        'ALLOWED_ORIGINS must be a comma-separated list of origins, or omit it to use defaults.'
+      );
+    } else {
+      for (const origin of origins) {
+        if (origin === '*') continue;
+        try {
+          const u = new URL(origin);
+          if (!/^https?:$/i.test(u.protocol)) {
+            errors.push(
+              `ALLOWED_ORIGINS entry "${origin}" must use http:// or https:// (or use * in development only).`
+            );
+          }
+        } catch {
+          errors.push(
+            `ALLOWED_ORIGINS entry "${origin}" is not a valid URL. Use full origins like https://app.example.com`
+          );
+        }
+      }
+    }
+  }
+
+  const redisUrl = process.env.REDIS_URL;
+  if (redisUrl !== undefined && redisUrl.trim() !== '') {
+    try {
+      const u = new URL(redisUrl.trim());
+      if (!/^rediss?:$/i.test(u.protocol)) {
+        errors.push('REDIS_URL must be a redis:// or rediss:// URL when set.');
+      }
+    } catch {
+      errors.push('REDIS_URL must be a valid URL when set.');
+    }
+  }
+
+  const appUrl = process.env.APP_URL;
+  if (appUrl !== undefined && appUrl.trim() !== '') {
+    try {
+      const u = new URL(appUrl.trim());
+      if (!/^https?:$/i.test(u.protocol)) {
+        errors.push('APP_URL must be an http:// or https:// URL.');
+      }
+    } catch {
+      errors.push('APP_URL must be a valid URL when set.');
+    }
+  }
+
   if (errors.length > 0) {
     throw new Error(
       `Environment validation failed:\n${errors.map((e) => `  - ${e}`).join('\n')}\n\n` +

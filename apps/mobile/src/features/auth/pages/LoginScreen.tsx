@@ -4,12 +4,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -46,7 +46,7 @@ export default function LoginScreen() {
     try {
       const response = await login({ email, password });
       setAuthUser(response.user);
-      router.replace('/(tabs)');
+      router.replace('/(main)');
     } catch (error: unknown) {
       const message =
         error && typeof error === 'object' && 'response' in error

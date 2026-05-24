@@ -1,6 +1,6 @@
 # Bottom navigation bar – side effects and mitigations
 
-When the shared bottom menu bar was added to the `(tabs)` layout, it introduced the following side effects and how they are handled.
+When the shared bottom menu bar was added to the `(main)` layout, it introduced the following side effects and how they are handled.
 
 ---
 
@@ -8,7 +8,7 @@ When the shared bottom menu bar was added to the `(tabs)` layout, it introduced 
 
 **Cause:** The Stack had a global `contentStyle: { paddingBottom: … }` so content would sit above the nav. On **Explore** the nav is intentionally hidden, but the padding was still applied, so the screen showed a big empty white strip at the bottom.
 
-**Fix:** Padding is now applied **only when the nav is visible**. In `(tabs)/_layout.tsx` we use `useSegments()` and set:
+**Fix:** Padding is now applied **only when the nav is visible**. In `(main)/_layout.tsx` we use `useSegments()` and set:
 
 - `paddingBottom: 0` when the active route is **explore**
 - `paddingBottom: BOTTOM_NAV_TOTAL + insets.bottom` on all other tabs

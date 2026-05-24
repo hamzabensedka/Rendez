@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ListRenderItem } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { FlashList, type ListRenderItem } from '@shopify/flash-list';
 import { Text } from '@planity/ui';
 import { colors, spacing } from '@planity/ui';
 import { HighlightedText } from './HighlightedText';
@@ -61,12 +62,13 @@ export function SearchList<T>({
       {title ? (
         <Text variant="headline" style={styles.sectionTitle}>{title}</Text>
       ) : null}
-      <FlatList
-        data={data}
+      <FlashList
+        data={[...data]}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={Platform.OS === 'android'}
       />
     </View>
   );

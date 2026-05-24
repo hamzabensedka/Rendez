@@ -44,13 +44,23 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
 }
 
 export async function logout(): Promise<void> {
-  await SecureStore.deleteItemAsync('accessToken');
-  await SecureStore.deleteItemAsync('refreshToken');
+  try {
+    const refreshToken = await SecureStore.getItemAsync('refreshToken');
+    if (refreshToken) {
+      await api.post('/auth/logout', { refreshToken });
+    }
+  } catch {
+    // Still clear local session if revoke fails (e.g. offline)
+  } finally {
+    await SecureStore.deleteItemAsync('accessToken');
+    await SecureStore.deleteItemAsync('refreshToken');
+  }
 }
 
 export async function getCurrentUser() {
   const response = await api.get('/auth/me');
-  return response.data.user;
+  // Canonical GET /auth/me returns the user profile object (same shape as former GET /users/me).
+  return response.data;
 }
 
 

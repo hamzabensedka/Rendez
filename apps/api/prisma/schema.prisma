@@ -10,6 +10,57 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  client
+  providerOwner
+  providerStaff
+  admin
+}
+
+enum UserStatus {
+  active
+  inactive
+  suspended
+}
+
+enum BusinessStatus {
+  draft
+  pending
+  active
+  suspended
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum AppointmentSource {
+  client
+  provider
+  admin
+}
+
+enum ReviewStatus {
+  pending
+  approved
+  rejected
+}
+
+enum PaymentProvider {
+  OFFLINE
+  STRIPE
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+  refunded
+}
+
 // Extensions
 // Enable pg_trgm for text search
 // Run: CREATE EXTENSION IF NOT EXISTS pg_trgm;
@@ -22,8 +73,8 @@ model User {
   passwordHash String    @map("password_hash")
   phone        String?
   name         String
-  role         String    @default("client") // client, providerOwner, providerStaff, admin
-  status       String    @default("active") // active, inactive, suspended
+  role         UserRole   @default(client)
+  status       UserStatus @default(active)
   lastLoginAt  DateTime? @map("last_login_at")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
@@ -35,8 +86,23 @@ model User {
   reviews         Review[]
   notifications   Notification[]
   favorites       Favorite[]
+  refreshTokenSessions RefreshTokenSession[]
 
   @@map("users")
+}
+
+model RefreshTokenSession {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_token_sessions")
 }
 
 model Provider {
@@ -45,6 +111,7 @@ model Provider {
   displayName  String   @map("display_name")
   businessId   String?  @map("business_id")
   isOwner      Boolean  @default(false) @map("is_owner")
+  // Reserved for future RBAC; validate when used (avoid untyped drift).
   permissionsJson Json? @map("permissions_json")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
@@ -56,6 +123,15 @@ model Provider {
   @@map("providers")
 }
 
+// Canonical salon/service types for search filters (French labels). Business.category stores slug.
+model ServiceCategory {
+  slug      String @id
+  label     String
+  sortOrder Int    @default(0) @map("sort_order")
+
+  @@map("service_categories")
+}
+
 model Business {
   id          String   @id @default(uuid())
   name        String
@@ -65,7 +141,7 @@ model Business {
   timezone    String   @default("Europe/Paris")
   phone       String?
   email       String?
-  status      String   @default("draft") // draft, pending, active, suspended
+  status      BusinessStatus @default(draft)
   ratingAvg   Float    @default(0) @map("rating_avg")
   ratingCount Int      @default(0) @map("rating_count")
   createdAt   DateTime @default(now()) @map("created_at")
@@ -122,6 +198,7 @@ model Staff {
   name             String
   roleTitle        String?  @map("role_title")
   isActive         Boolean  @default(true) @map("is_active")
+  // Reserved for staff–service mapping; prefer relations or typed DTOs when implemented.
   servicesOfferedJson Json? @map("services_offered_json")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
@@ -220,13 +297,13 @@ model Appointment {
   locationId      String            @map("location_id")
   clientUserId    String            @map("client_user_id")
   staffId         String?           @map("staff_id")
-  status          String            @default("BOOKED") // BOOKED, CANCELLED, COMPLETED, NO_SHOW
+  status          AppointmentStatus @default(BOOKED)
   startAtUtc      DateTime          @map("start_at_utc") @db.Timestamptz
   endAtUtc        DateTime          @map("end_at_utc") @db.Timestamptz
   timezoneSnapshot String           @map("timezone_snapshot")
   cancelledAt     DateTime?         @map("cancelled_at")
   cancelReason    String?           @map("cancel_reason")
-  source          String            @default("client") // client, provider, admin
+  source          AppointmentSource @default(client)
   idempotencyKey  String?           @unique @map("idempotency_key")
   createdAt       DateTime          @default(now()) @map("created_at")
   updatedAt       DateTime          @updatedAt @map("updated_at")
@@ -273,8 +350,8 @@ model AppointmentItem {
 model Payment {
   id           String   @id @default(uuid())
   appointmentId String  @map("appointment_id")
-  provider     String   @default("OFFLINE") // OFFLINE, STRIPE
-  status       String   @default("pending") // pending, completed, failed, refunded
+  provider     PaymentProvider @default(OFFLINE)
+  status       PaymentStatus   @default(pending)
   amountCents  Int      @map("amount_cents")
   currency     String   @default("EUR")
   providerRef  String?  @map("provider_ref")
@@ -313,7 +390,7 @@ model Review {
   clientUserId String   @map("client_user_id")
   rating       Int      // 1-5
   comment      String?  @db.Text
-  status       String   @default("pending") // pending, approved, rejected
+  status       ReviewStatus @default(pending)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 

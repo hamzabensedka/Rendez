@@ -32,7 +32,9 @@ export default function RegisterScreen() {
   const segments = useSegments();
   const insets = useSafeAreaInsets();
   const { setPendingRegistration } = useAuth();
-  const isBookingFlow = Array.isArray(segments) && segments[0] === '(tabs)' && segments[1] === 'booking';
+  const seg = segments as string[];
+  const isBookingFlow =
+    Array.isArray(seg) && seg[0] === '(main)' && seg.length > 1 && seg[1] === 'booking';
   const [country, setCountry] = useState('US');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
@@ -61,7 +63,7 @@ export default function RegisterScreen() {
       : `${dialCode} ${trimmedMobile.replace(/(\d{2})(?=\d)/g, '$1 ')}`;
     setPendingRegistration({ email: trimmedEmail, password });
     if (isBookingFlow) {
-      router.push({ pathname: '/(tabs)/booking/verification', params: { phone: displayPhone } });
+      router.push({ pathname: '/(main)/booking/verification', params: { phone: displayPhone } });
     } else {
       router.replace({ pathname: '/(auth)/verification', params: { phone: displayPhone } });
     }

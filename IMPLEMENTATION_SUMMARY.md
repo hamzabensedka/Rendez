@@ -43,7 +43,7 @@ All endpoints below are implemented and used by the mobile app unless noted.
 | | POST | `/auth/login` | No | Login; returns access + refresh tokens. |
 | | POST | `/auth/refresh` | No | Refresh access token (body: refreshToken). |
 | | GET | `/auth/me` | JWT | Current user from token. |
-| **Users** | GET | `/users/me` | JWT | Current user profile. |
+| **Auth** | GET | `/auth/me` | JWT | Current user profile (canonical). |
 | **Businesses** | GET | `/businesses` | No | List businesses (paginated; optional `city`, `query`, `page`, `limit`). |
 | | GET | `/businesses/:id` | No | Business detail (active only); includes locations (with `address`), services, staff, review count. |
 | | GET | `/businesses/:id/services` | No | Services for a business. |
@@ -54,9 +54,9 @@ All endpoints below are implemented and used by the mobile app unless noted.
 | | GET | `/appointments/me` | JWT | My appointments (query `upcoming=true|false`). |
 | | GET | `/appointments/:id` | JWT | Appointment detail (ownership-aware; returns `location.address`). |
 | | POST | `/appointments/:id/cancel` | JWT | Cancel (ownership/business-scoped). |
-| **Services** | GET | `/services/businesses/:businessId` | No | Services by business. |
-| | POST | `/services/provider` | JWT (provider/admin) | Create service. |
-| | POST | `/services/provider/variants` | JWT (provider/admin) | Create service variant. |
+| **Businesses** | GET | `/businesses/:businessId/services` | No | Services by business. |
+| | POST | `/businesses/:businessId/services` | JWT (provider/admin) | Create service. |
+| | POST | `/businesses/:businessId/services/:serviceId/variants` | JWT (provider/admin) | Create service variant. |
 
 **Backend behaviour (implemented):**
 

@@ -37,7 +37,7 @@ export default function VerificationScreen() {
       const response = await register({ email: email || '', name, password: password || '' });
       setPendingRegistration(null);
       setAuthUser(response.user);
-      router.replace('/(tabs)');
+      router.replace('/(main)');
     } catch (error: unknown) {
       const message =
         error && typeof error === 'object' && 'response' in error

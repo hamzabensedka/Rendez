@@ -32,15 +32,23 @@ export class AppointmentsController {
   }
 
   @Get('me')
-  @ApiOperation({ summary: 'Get my appointments' })
+  @ApiOperation({ summary: 'Get my appointments (paginated)' })
   @ApiQuery({ name: 'upcoming', required: false, type: Boolean })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number (1-based)' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page (max 100)' })
   async getMyAppointments(
     @CurrentUser() user: AuthenticatedUser,
-    @Query('upcoming') upcoming?: string
+    @Query('upcoming') upcoming?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
   ) {
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
     return this.appointmentsService.findUserAppointments(
       user.id,
-      upcoming !== 'false'
+      upcoming !== 'false',
+      pageNum,
+      limitNum
     );
   }
 

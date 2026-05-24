@@ -88,7 +88,7 @@ export default function BookingIdentificationScreen() {
     try {
       const response = await login({ email: email.trim(), password });
       setAuthUser(response.user);
-      router.replace('/(tabs)');
+      router.replace('/(main)');
     } catch (error: unknown) {
       const message =
         error && typeof error === 'object' && 'response' in error
@@ -101,7 +101,7 @@ export default function BookingIdentificationScreen() {
   }
 
   function handleCreateAccount() {
-    router.push('/(tabs)/booking/register');
+    router.push('/(main)/booking/register');
   }
 
   return (

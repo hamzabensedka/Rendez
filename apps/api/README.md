@@ -15,14 +15,28 @@ pnpm install
 # You need:
 # - DATABASE_URL (from Supabase)
 # - JWT_ACCESS_SECRET & JWT_REFRESH_SECRET (generate with: node scripts/generate-secrets.js)
-# - REDIS_URL (optional - use Upstash or skip for MVP)
+# - ALLOWED_ORIGINS (comma-separated browser origins; see .env.example)
+# - APP_URL (optional; public app URL for config/deep links)
+# - REDIS_URL (optional; shared cache + Nominatim coordination for multi-instance)
+# - NOMINATIM_EMAIL (optional; recommended for geocoding User-Agent policy)
+#
+# Production DB: consider connection pool tuning on DATABASE_URL, e.g.
+#   ?connection_limit=5&pool_timeout=20
 ```
 
 3. Run database migrations:
 ```bash
 pnpm prisma:generate
-pnpm prisma:migrate
+pnpm prisma migrate deploy
 ```
+(Use `pnpm prisma:migrate` for interactive `migrate dev` in local development.)
+
+**If `20260405140000_enums_trgm_review_stats` failed with `operator does not exist: "AppointmentStatus" = text`:** an older version of that migration altered `appointments.status` before dropping the overlap exclusion constraint. The migration file is fixed (drop constraint first, convert columns, then re-add exclusion using `'CANCELLED'::"AppointmentStatus"`). Mark the failed run rolled back, then deploy again:
+```bash
+pnpm prisma migrate resolve --rolled-back 20260405140000_enums_trgm_review_stats
+pnpm prisma migrate deploy
+```
+The updated SQL is idempotent (safe if some enum steps already ran).
 
 4. Seed the database:
 ```bash
@@ -35,7 +49,7 @@ pnpm start:dev
 ```
 
 The API will be available at `http://localhost:3000/v1`
-Swagger documentation at `http://localhost:3000/api`
+Swagger documentation at `http://localhost:3000/api` (disabled when `NODE_ENV=production`)
 
 ## Test Accounts
 
@@ -54,8 +68,10 @@ After seeding:
 ### Auth
 - `POST /v1/auth/register` - Register new user
 - `POST /v1/auth/login` - Login
-- `POST /v1/auth/refresh` - Refresh token
-- `GET /v1/auth/me` - Get current user
+- `POST /v1/auth/refresh` - Refresh token (rotates refresh session server-side)
+- `POST /v1/auth/logout` - Revoke refresh token (body: `{ "refreshToken"?: string }`)
+- `POST /v1/auth/logout-all` - Revoke all refresh sessions (JWT required)
+- `GET /v1/auth/me` - Current user profile (canonical; includes `createdAt`, `status`)
 
 ### Businesses
 - `GET /v1/businesses` - List businesses
@@ -68,12 +84,12 @@ After seeding:
 
 ### Appointments
 - `POST /v1/appointments` - Create appointment
-- `GET /v1/appointments/me` - Get my appointments
+- `GET /v1/appointments/me` - Get my appointments (`?page=&limit=&upcoming=`)
 - `GET /v1/appointments/:id` - Get appointment details
 - `POST /v1/appointments/:id/cancel` - Cancel appointment
 
 ### Provider (requires auth)
-- `POST /v1/provider/businesses` - Create business
-- `POST /v1/provider/services` - Create service
-- `POST /v1/provider/service-variants` - Create service variant
+- `POST /v1/businesses` - Create business (provider owner / admin)
+- `POST /v1/businesses/:businessId/services` - Create service
+- `POST /v1/businesses/:businessId/services/:serviceId/variants` - Create service variant
 

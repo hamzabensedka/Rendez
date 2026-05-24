@@ -52,6 +52,7 @@ export const RendezSalonCard = React.memo<RendezSalonCardProps>(function RendezS
       activeOpacity={1}
       onPress={onPress}
       style={styles.card}
+      accessibilityRole="button"
       accessibilityLabel={`Salon ${data.name}`}
     >
       {/* Image with overlays */}
@@ -87,7 +88,7 @@ export const RendezSalonCard = React.memo<RendezSalonCardProps>(function RendezS
           <Text variant="title1" weight="700" numberOfLines={1} style={styles.name}>
             {data.name}
           </Text>
-          {data.verified !== false && (
+          {data.verified === true && (
             <View style={styles.verifiedRow}>
               <Ionicons name="checkmark-circle" size={14} color="#2563eb" />
               <Text variant="caption" weight="700" style={styles.verifiedText}>

@@ -1,6 +1,9 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import { AvailabilityService } from './availability.service';
+import {
+  AvailabilityService,
+  type AvailabilitySlotsResponse,
+} from './availability.service';
 
 @ApiTags('availability')
 @Controller('businesses/:businessId/availability')
@@ -17,7 +20,7 @@ export class AvailabilityController {
     @Query('serviceVariantId') serviceVariantId: string,
     @Query('date') date: string,
     @Query('staffId') staffId?: string
-  ) {
+  ): Promise<AvailabilitySlotsResponse> {
     return this.availabilityService.getAvailableSlots(
       businessId,
       date,

@@ -1,91 +1,94 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { SERVICE_CATEGORIES } from '../constants';
+import { useServiceCategoriesQuery, type ServiceCategoryDto } from '../../../application/query/hooks';
 
 interface ServiceFiltersProps {
   visible: boolean;
   onClose: () => void;
-  onApply: (selectedServices: string[]) => void;
+  onApply: (selectedSlugs: string[]) => void;
+  initialSlugs: string[];
 }
 
 export const ServiceFilters = React.memo<ServiceFiltersProps>(function ServiceFilters({
   visible,
   onClose,
   onApply,
+  initialSlugs,
 }) {
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const { data: categories = [], isPending, isError } = useServiceCategoriesQuery();
+  const [selectedSlugs, setSelectedSlugs] = useState<string[]>(initialSlugs);
+
+  useEffect(() => {
+    if (visible) {
+      setSelectedSlugs(initialSlugs);
+    }
+  }, [visible, initialSlugs]);
 
   const handleReset = useCallback(() => {
-    setSelectedServices([]);
+    setSelectedSlugs([]);
   }, []);
 
   const handleApply = useCallback(() => {
-    onApply(selectedServices);
+    onApply(selectedSlugs);
     onClose();
-  }, [selectedServices, onApply, onClose]);
+  }, [selectedSlugs, onApply, onClose]);
 
-  const toggleService = (service: string) => {
-    setSelectedServices(prev => {
-      if (prev.includes(service)) {
-        return prev.filter(s => s !== service);
-      } else {
-        return [...prev, service];
-      }
-    });
+  const toggleSlug = (slug: string) => {
+    setSelectedSlugs((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    );
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <SafeAreaView style={styles.container}>
-        {/* Top Bar: Close (Left) & Reset (Right) */}
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
         <View style={styles.topBar}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton} accessibilityRole="button">
             <Ionicons name="close" size={28} color="#000" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleReset}>
+          <TouchableOpacity onPress={handleReset} accessibilityRole="button">
             <Text style={styles.resetButton}>Réinitialiser</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.content}>
-          {/* Main Title */}
-          <Text style={styles.mainTitle}>Services</Text>
+          <Text style={styles.mainTitle}>Prestations</Text>
 
-          {/* Service Chips */}
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <View style={styles.chipsContainer}>
-              {SERVICE_CATEGORIES.map((service) => {
-                const isSelected = selectedServices.includes(service);
-                return (
-                  <TouchableOpacity
-                    key={service}
-                    style={[styles.chip, isSelected && styles.chipSelected]}
-                    onPress={() => toggleService(service)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-                      {service}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </ScrollView>
+          {isPending ? (
+            <ActivityIndicator style={styles.loader} />
+          ) : isError ? (
+            <Text style={styles.errorText}>Impossible de charger les catégories.</Text>
+          ) : (
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.chipsContainer}>
+                {categories.map((c: ServiceCategoryDto) => {
+                  const isSelected = selectedSlugs.includes(c.slug);
+                  return (
+                    <TouchableOpacity
+                      key={c.slug}
+                      style={[styles.chip, isSelected && styles.chipSelected]}
+                      onPress={() => toggleSlug(c.slug)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>{c.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          )}
         </View>
 
-        {/* Footer */}
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.applyButton} onPress={handleApply}>
+          <TouchableOpacity style={styles.applyButton} onPress={handleApply} accessibilityRole="button">
             <Text style={styles.applyButtonText}>Enregistrer</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   );
 });
@@ -122,6 +125,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     marginBottom: 24,
     marginTop: 8,
+  },
+  loader: {
+    marginTop: 24,
+  },
+  errorText: {
+    fontSize: 15,
+    color: '#666',
+    marginTop: 16,
   },
   chipsContainer: {
     flexDirection: 'row',

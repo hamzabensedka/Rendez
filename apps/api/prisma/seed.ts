@@ -6,6 +6,23 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
+  const serviceCategories = [
+    { slug: 'coiffure', label: 'Coiffure', sortOrder: 0 },
+    { slug: 'barbier', label: 'Barbier', sortOrder: 1 },
+    { slug: 'manucure', label: 'Manucure', sortOrder: 2 },
+    { slug: 'institut-beaute', label: 'Institut de beauté', sortOrder: 3 },
+    { slug: 'spa', label: 'Spa', sortOrder: 4 },
+    { slug: 'epilation', label: 'Épilation', sortOrder: 5 },
+    { slug: 'massage', label: 'Massage', sortOrder: 6 },
+  ];
+  for (const c of serviceCategories) {
+    await prisma.serviceCategory.upsert({
+      where: { slug: c.slug },
+      update: { label: c.label, sortOrder: c.sortOrder },
+      create: c,
+    });
+  }
+
   // Create admin user
   const adminPassword = await argon2.hash('admin123');
   const admin = await prisma.user.upsert({
@@ -54,12 +71,13 @@ async function main() {
     update: {
       description: 'A beautiful salon in the heart of Toulouse',
       phone: '+33512345678',
+      category: 'coiffure',
     },
     create: {
       name: 'Salon Lumière',
       slug: 'salon-lumiere',
       description: 'A beautiful salon in the heart of Toulouse',
-      category: 'Hair Salon',
+      category: 'coiffure',
       timezone: 'Europe/Paris',
       phone: '+33512345678',
       email: 'contact@salonlumiere.fr',
@@ -225,7 +243,7 @@ async function main() {
       name: 'Coiffure Élégance',
       slug: 'coiffure-elegance',
       description: 'Salon de coiffure moderne au cœur de Toulouse. Coupe, coloration et soins.',
-      category: 'Coiffure',
+      category: 'coiffure',
       city: 'Toulouse',
       address1: '45 Rue de la Pomme',
       postalCode: '31000',
@@ -240,7 +258,7 @@ async function main() {
       name: 'Le Salon du Marais',
       slug: 'salon-marais',
       description: 'Coiffure tendance à Toulouse. Expertise coupe femme et homme.',
-      category: 'Coiffure',
+      category: 'barbier',
       city: 'Toulouse',
       address1: '12 Rue du Capitole',
       postalCode: '31000',
@@ -255,7 +273,7 @@ async function main() {
       name: 'Boucles & Co',
       slug: 'boucles-co',
       description: 'Spécialiste des coupes et colorations. Ambiance conviviale.',
-      category: 'Coiffure',
+      category: 'spa',
       city: 'Toulouse',
       address1: '8 Rue des Filatiers',
       postalCode: '31000',
@@ -387,7 +405,7 @@ async function main() {
       name: 'Coiffure Capitole',
       slug: 'coiffure-capitole-toulouse',
       description: 'Salon de coiffure au pied du Capitole. Coupe, coloration et soins capillaires.',
-      category: 'Coiffure',
+      category: 'coiffure',
       city: 'Toulouse',
       address1: '15 Place du Capitole',
       postalCode: '31000',
@@ -402,7 +420,7 @@ async function main() {
       name: 'Salon Garonne',
       slug: 'salon-garonne-toulouse',
       description: 'Coiffure et barbier près des quais. Ambiance décontractée, expertise homme et femme.',
-      category: 'Coiffure',
+      category: 'barbier',
       city: 'Toulouse',
       address1: '42 Quai de la Daurade',
       postalCode: '31000',
@@ -417,7 +435,7 @@ async function main() {
       name: 'Boucles Roses',
       slug: 'boucles-roses-toulouse',
       description: 'Spécialiste coloration et mèches dans la ville rose. Conseils personnalisés.',
-      category: 'Coiffure',
+      category: 'coiffure',
       city: 'Toulouse',
       address1: '8 Rue du Taur',
       postalCode: '31000',
@@ -556,7 +574,7 @@ async function main() {
         slug: testSalonSlug,
         description:
           'Salon de test pour simuler une réservation complète. Ouvert du lundi au samedi, 9h-19h.',
-        category: 'Coiffure',
+        category: 'coiffure',
         timezone: 'Europe/Paris',
         phone: '+33561234567',
         email: 'contact@salontest-toulouse.fr',

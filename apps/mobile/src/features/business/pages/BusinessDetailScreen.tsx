@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -17,8 +17,8 @@ import { Text, Button } from '@planity/ui';
 import { colors, spacing, radius, shadows } from '@planity/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import api from '../../../shared/lib/api';
 import { ProfileButton } from '../../search/components/ProfileButton';
+import { useBusinessDetailQuery } from '../../../application/query/hooks';
 import { useFavorites } from '../../../application/providers';
 import { DEFAULT_SALON_IMAGES } from '../../search/constants';
 import { SalonReviews } from '../../search/components';
@@ -76,26 +76,9 @@ export default function BusinessDetailScreen() {
   const insets = useSafeAreaInsets();
 
   const { isFavorite, toggleFavorite } = useFavorites();
-  const [business, setBusiness] = useState<Business | null>(null);
-  const [loading, setLoading] = useState(true);
   const [expandedServiceId, setExpandedServiceId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      loadBusiness();
-    }
-  }, [id]);
-
-  async function loadBusiness() {
-    try {
-      const response = await api.get(`/businesses/${id}`);
-      setBusiness(response.data);
-    } catch {
-      setBusiness(null);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { data: business = null, isPending: loading } = useBusinessDetailQuery<Business>(id);
 
   const handleShare = async () => {
     if (!business) return;
@@ -114,8 +97,8 @@ export default function BusinessDetailScreen() {
   const minPrice = useMemo(() => {
     if (!business?.services) return null;
     let min = Infinity;
-    business.services.forEach((s) => {
-      s.serviceVariants.forEach((v) => {
+    business.services.forEach((s: Business['services'][number]) => {
+      s.serviceVariants.forEach((v: Business['services'][number]['serviceVariants'][number]) => {
         if (v.priceCents !== null && v.priceCents < min) {
           min = v.priceCents;
         }
@@ -147,7 +130,7 @@ export default function BusinessDetailScreen() {
             priceCents: variant.priceCents,
           };
           router.replace({
-            pathname: '/(tabs)/booking',
+            pathname: '/(main)/booking',
             params: {
               ...baseParams,
               serviceVariantId: variant.id,
@@ -160,7 +143,7 @@ export default function BusinessDetailScreen() {
         }
       }
       router.push({
-        pathname: '/(tabs)/booking',
+        pathname: '/(main)/booking',
         params: {
           ...baseParams,
           serviceVariantId: variant.id,
@@ -314,7 +297,7 @@ export default function BusinessDetailScreen() {
               </TouchableOpacity>
             </View>
 
-            {business.services.map((service) => {
+            {business.services.map((service: Business['services'][number]) => {
               const isExpanded = expandedServiceId === service.id;
               let iconName: keyof typeof Ionicons.glyphMap = 'cut-outline';
               const lowerName = service.name.toLowerCase();
@@ -337,7 +320,9 @@ export default function BusinessDetailScreen() {
                       <View style={{ marginLeft: 16 }}>
                         <Text style={styles.serviceName}>{service.name}</Text>
                         <Text style={styles.serviceDesc} numberOfLines={1}>
-                          {service.serviceVariants.map((v) => v.name).join(', ')}
+                          {service.serviceVariants
+                            .map((v: Business['services'][number]['serviceVariants'][number]) => v.name)
+                            .join(', ')}
                         </Text>
                       </View>
                     </View>
@@ -349,7 +334,8 @@ export default function BusinessDetailScreen() {
                   </TouchableOpacity>
                   {isExpanded && service.serviceVariants.length > 0 && (
                     <View style={styles.serviceVariants}>
-                      {service.serviceVariants.map((variant) => (
+                      {service.serviceVariants.map(
+                        (variant: Business['services'][number]['serviceVariants'][number]) => (
                         <TouchableOpacity
                           key={variant.id}
                           style={styles.serviceVariantRow}
@@ -370,7 +356,7 @@ export default function BusinessDetailScreen() {
                                   priceCents: variant.priceCents,
                                 };
                                 router.replace({
-                                  pathname: '/(tabs)/booking',
+                                  pathname: '/(main)/booking',
                                   params: {
                                     businessId: business.id,
                                     businessName: business.name ?? undefined,
@@ -384,7 +370,7 @@ export default function BusinessDetailScreen() {
                               }
                             }
                             router.push({
-                              pathname: '/(tabs)/booking',
+                              pathname: '/(main)/booking',
                               params: {
                                 businessId: business.id,
                                 serviceVariantId: variant.id,

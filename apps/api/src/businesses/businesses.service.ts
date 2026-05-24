@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { DateTime } from 'luxon';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { DEFAULT_PAGE, DEFAULT_LIMIT, MAX_LIMIT } from '@planity/shared';
@@ -15,7 +16,11 @@ export interface ViewportParams {
   west: number;
   zoom?: number;
   query?: string;
+  /** @deprecated prefer categories */
   category?: string;
+  /** Comma-separated category slugs */
+  categories?: string;
+  availDate?: string;
 }
 
 export interface ReviewListItem {
@@ -51,6 +56,34 @@ export interface PaginatedBusinesses {
   limit: number;
 }
 
+const DEFAULT_NEAR_RADIUS_KM = 20;
+
+export interface FindAllBusinessesFilters {
+  city?: string;
+  query?: string;
+  /** Comma-separated category slugs (OR match on business.category) */
+  categories?: string;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  /** ISO date YYYY-MM-DD — businesses with a rule that day (Europe/Paris weekday) */
+  availDate?: string;
+}
+
+function geoBoundingBox(lat: number, lng: number, radiusKm: number) {
+  const R = 6371;
+  const rad = Math.PI / 180;
+  const dLat = (radiusKm / R) * (180 / Math.PI);
+  const cosLat = Math.cos(lat * rad);
+  const dLng = cosLat > 1e-6 ? (radiusKm / (R * cosLat)) * (180 / Math.PI) : 180;
+  return {
+    latMin: lat - dLat,
+    latMax: lat + dLat,
+    lngMin: lng - dLng,
+    lngMax: lng + dLng,
+  };
+}
+
 @Injectable()
 export class BusinessesService {
   constructor(private prisma: PrismaService) {}
@@ -60,7 +93,7 @@ export class BusinessesService {
    * Uses PostGIS when available (geom column), otherwise falls back to lat/lng bbox.
    */
   async findInViewport(params: ViewportParams): Promise<{ data: BusinessListItem[] }> {
-    const { north, south, east, west, query, category } = params;
+    const { north, south, east, west, query, category, categories, availDate } = params;
     const where: Prisma.BusinessWhereInput = {
       status: 'active',
       deletedAt: null,
@@ -71,7 +104,13 @@ export class BusinessesService {
         },
       },
     };
-    if (category) {
+    const slugList = categories
+      ?.split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+    if (slugList?.length) {
+      where.category = { in: slugList, mode: 'insensitive' };
+    } else if (category) {
       where.category = { contains: category, mode: 'insensitive' };
     }
     if (query) {
@@ -80,6 +119,27 @@ export class BusinessesService {
         { description: { contains: query, mode: 'insensitive' } },
         { category: { contains: query, mode: 'insensitive' } },
       ];
+    }
+    if (availDate?.trim()) {
+      const dt = DateTime.fromISO(availDate.trim(), { zone: 'Europe/Paris' });
+      if (dt.isValid) {
+        const dayOfWeek = dt.weekday % 7;
+        where.AND = [
+          {
+            availabilityRules: {
+              some: { dayOfWeek },
+            },
+          },
+          {
+            services: {
+              some: {
+                isActive: true,
+                serviceVariants: { some: {} },
+              },
+            },
+          },
+        ];
+      }
     }
     const data = await this.prisma.business.findMany({
       where,
@@ -94,7 +154,8 @@ export class BusinessesService {
     city?: string,
     query?: string,
     page: number = DEFAULT_PAGE,
-    limit: number = DEFAULT_LIMIT
+    limit: number = DEFAULT_LIMIT,
+    extra?: FindAllBusinessesFilters
   ): Promise<PaginatedBusinesses> {
     const safePage = Math.max(1, Math.floor(page));
     const safeLimit = Math.min(
@@ -108,23 +169,81 @@ export class BusinessesService {
       deletedAt: null,
     };
 
-    if (city) {
-      where.locations = {
-        some: {
-          city: {
-            contains: city,
-            mode: 'insensitive',
-          },
-        },
-      };
+    const cityFilter = city?.trim();
+    let bbox: ReturnType<typeof geoBoundingBox> | undefined;
+    if (
+      extra?.lat != null &&
+      extra?.lng != null &&
+      !Number.isNaN(extra.lat) &&
+      !Number.isNaN(extra.lng)
+    ) {
+      const r = extra.radiusKm ?? DEFAULT_NEAR_RADIUS_KM;
+      const radiusKm = r > 0 && r < 500 ? r : DEFAULT_NEAR_RADIUS_KM;
+      bbox = geoBoundingBox(extra.lat, extra.lng, radiusKm);
     }
 
-    if (query) {
+    const locationConditions: Prisma.LocationWhereInput[] = [];
+    if (cityFilter) {
+      locationConditions.push({
+        city: { contains: cityFilter, mode: 'insensitive' },
+      });
+    }
+    if (bbox) {
+      locationConditions.push({
+        AND: [
+          { lat: { not: null } },
+          { lng: { not: null } },
+          { lat: { gte: bbox.latMin, lte: bbox.latMax } },
+          { lng: { gte: bbox.lngMin, lte: bbox.lngMax } },
+        ],
+      });
+    }
+    if (locationConditions.length === 1) {
+      where.locations = { some: locationConditions[0] };
+    } else if (locationConditions.length > 1) {
+      where.locations = { some: { AND: locationConditions } };
+    }
+
+    if (query?.trim()) {
+      const q = query.trim();
       where.OR = [
-        { name: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
-        { category: { contains: query, mode: 'insensitive' } },
+        { name: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+        { category: { contains: q, mode: 'insensitive' } },
       ];
+    }
+
+    const slugList = extra?.categories
+      ?.split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+    if (slugList?.length) {
+      where.category = { in: slugList, mode: 'insensitive' };
+    }
+
+    if (extra?.availDate?.trim()) {
+      const dt = DateTime.fromISO(extra.availDate.trim(), { zone: 'Europe/Paris' });
+      if (dt.isValid) {
+        const dayOfWeek = dt.weekday % 7;
+        const dateConditions: Prisma.BusinessWhereInput[] = [
+          {
+            availabilityRules: {
+              some: { dayOfWeek },
+            },
+          },
+          {
+            services: {
+              some: {
+                isActive: true,
+                serviceVariants: { some: {} },
+              },
+            },
+          },
+        ];
+        where.AND = Array.isArray(where.AND)
+          ? [...where.AND, ...dateConditions]
+          : dateConditions;
+      }
     }
 
     const [data, total] = await Promise.all([
@@ -207,9 +326,9 @@ export class BusinessesService {
   }
 
   async create(userId: string, dto: CreateBusinessDto) {
-    const slug = dto.slug || this.generateSlug(dto.name);
-
     return this.prisma.$transaction(async (tx) => {
+      const slug = await this.generateUniqueSlug(tx, dto.name, dto.slug);
+
       const business = await tx.business.create({
         data: {
           name: dto.name,
@@ -252,11 +371,70 @@ export class BusinessesService {
     });
   }
 
-  private generateSlug(name: string): string {
+  private slugify(name: string): string {
     return name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
+  }
+
+  private async generateUniqueSlug(
+    tx: Prisma.TransactionClient,
+    name: string,
+    explicitSlug?: string | null
+  ): Promise<string> {
+    let base = explicitSlug?.trim()
+      ? this.slugify(explicitSlug)
+      : this.slugify(name);
+    if (!base) base = 'business';
+    let slug = base;
+    let n = 0;
+    while (
+      await tx.business.findFirst({
+        where: { slug },
+        select: { id: true },
+      })
+    ) {
+      n += 1;
+      slug = `${base}-${n}`;
+    }
+    return slug;
+  }
+
+  /** Resolve active business id from UUID or slug (minimal query). */
+  private async resolveActiveBusinessId(idOrSlug: string): Promise<string> {
+    const byId = this.isUuid(idOrSlug)
+      ? { id: idOrSlug }
+      : { slug: idOrSlug };
+    const row = await this.prisma.business.findFirst({
+      where: {
+        ...byId,
+        status: 'active',
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    if (!row) {
+      throw new NotFoundException('Business not found');
+    }
+    return row.id;
+  }
+
+  async listServicesForBusiness(idOrSlug: string) {
+    const businessId = await this.resolveActiveBusinessId(idOrSlug);
+    return this.prisma.service.findMany({
+      where: { businessId, isActive: true },
+      include: {
+        serviceVariants: true,
+      },
+    });
+  }
+
+  async listStaffForBusiness(idOrSlug: string) {
+    const businessId = await this.resolveActiveBusinessId(idOrSlug);
+    return this.prisma.staff.findMany({
+      where: { businessId, isActive: true },
+    });
   }
 
   async getReviews(
@@ -264,13 +442,26 @@ export class BusinessesService {
     page: number = DEFAULT_PAGE,
     limit: number = Math.min(20, MAX_LIMIT)
   ): Promise<PaginatedReviews> {
-    const business = await this.findOne(businessIdOrSlug);
-    const businessId = business.id;
+    const byId = this.isUuid(businessIdOrSlug)
+      ? { id: businessIdOrSlug }
+      : { slug: businessIdOrSlug };
+    const summary = await this.prisma.business.findFirst({
+      where: {
+        ...byId,
+        status: 'active',
+        deletedAt: null,
+      },
+      select: { id: true, ratingAvg: true, ratingCount: true },
+    });
+    if (!summary) {
+      throw new NotFoundException('Business not found');
+    }
+    const businessId = summary.id;
     const safePage = Math.max(1, Math.floor(page));
     const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Math.floor(limit)));
     const skip = (safePage - 1) * safeLimit;
 
-    const [reviews, total, businessAgg] = await Promise.all([
+    const [reviews, total] = await Promise.all([
       this.prisma.review.findMany({
         where: { businessId, status: 'approved' },
         orderBy: { createdAt: 'desc' },
@@ -281,10 +472,6 @@ export class BusinessesService {
         },
       }),
       this.prisma.review.count({ where: { businessId, status: 'approved' } }),
-      this.prisma.business.findUnique({
-        where: { id: businessId },
-        select: { ratingAvg: true, ratingCount: true },
-      }),
     ]);
 
     const data: ReviewListItem[] = reviews.map((r) => ({
@@ -300,8 +487,8 @@ export class BusinessesService {
       total,
       page: safePage,
       limit: safeLimit,
-      ratingAvg: businessAgg?.ratingAvg ?? 0,
-      ratingCount: businessAgg?.ratingCount ?? 0,
+      ratingAvg: summary.ratingAvg ?? 0,
+      ratingCount: summary.ratingCount ?? 0,
     };
   }
 }
