@@ -1,8 +1,8 @@
 # Planity Clone — Progress Report
 
-**Report Date:** 2025-01-09  
-**Reported By:** Avery — Progress Tracker  
-**Scope:** Full codebase scan against product specification  
+**Report Date:** 2025-01-15  
+**Reporter:** Avery — Progress Tracker  
+**Scope:** Full codebase scan against `docs/product.md` product specification  
 
 ---
 
@@ -10,405 +10,395 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Features | 18 |
-| P0 (Critical) Features | 12 |
-| P1 (High) Features | 6 |
-| **Overall Completion** | **~15-20%** |
-| **Estimated Effort Remaining** | **~80-85%** |
+| Total Features | 14 |
+| P0 (Critical) Features | 10 |
+| P1 (High) Features | 4 |
+| **Overall Completion** | **~28%** |
+| **P0 Completion** | **~22%** |
+| **P1 Completion** | **~15%** |
 
-The codebase has foundational infrastructure in place (Prisma schema, basic NestJS modules, Stripe payment scaffolding) but **the vast majority of user-facing and business-critical features are unimplemented or stubbed**. The project is in early development stage with significant work remaining across all domains.
+The codebase is in **early development stage**. Core infrastructure (database schema, payment module scaffolding) has been established, but the majority of user-facing features remain unimplemented. Critical gaps exist in authentication, booking flow, search/discovery, and availability engine — all P0 features required for MVP.
 
 ---
 
 ## Feature-by-Feature Assessment
 
-### 2.1 User Authentication — **~10% Complete**
+### 2.1 User Authentication — P0 — **~15% Complete**
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Email/password registration | ❌ Not implemented | No auth controller, service, or routes found |
-| Email/password login | ❌ Not implemented | No JWT strategy, passport configuration absent |
-| OAuth 2.0 (Google, Apple, Facebook) | ❌ Not implemented | No OAuth providers configured |
-| Phone OTP verification | ❌ Not implemented | No SMS service integration |
-| Password reset | ❌ Not implemented | No email service for reset flows |
-| JWT refresh with httpOnly cookies | ❌ Not implemented | No cookie parser, refresh token logic |
-| Role-based access control | 🟡 Partial | `schema.prisma` has `Role` enum (CUSTOMER, BUSINESS_OWNER, ADMIN) but no enforcement |
-| Session timeout (30 min) | ❌ Not implemented | No session middleware |
-| Account lockout (5 failures) | ❌ Not implemented | No rate limiting on auth endpoints |
-| Account deletion (30-day grace) | ❌ Not implemented | No soft-delete or grace period logic |
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Email/password registration | ❌ Not implemented | No auth module, controller, or service found |
+| Google OAuth & Apple Sign-In | ❌ Not implemented | No OAuth configuration or Passport strategies found |
+| Password hashing (bcrypt) | ❌ Not implemented | No bcrypt usage in codebase |
+| JWT access + refresh tokens | ❌ Not implemented | No JWT strategy, token generation, or rotation logic |
+| Email verification | ❌ Not implemented | No SendGrid integration or verification flow |
+| Password reset flow | ❌ Not implemented | No reset token or email template found |
+| Rate limiting (5 attempts → 15min lockout) | ❌ Not implemented | No rate limiting middleware found |
+| Biometric login (mobile) | ❌ Not implemented | No mobile auth implementation exists |
 
-**Blockers:** Requires full auth module implementation, database migrations, and security middleware.
+**Technical Notes Gap:**
+- Passport.js not installed or configured
+- No `httpOnly` cookie handling for refresh tokens
+- No SendGrid integration module
 
----n
-### 2.2 Guest Browse & Explore — **~5% Complete**
-
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| View listings without login | 🟡 Partial | Business routes may exist but no guest middleware |
-| Search by location/service/name | ❌ Not implemented | No search service or geocoding |
-| View business details, services, reviews | ❌ Not implemented | No business controller or DTOs beyond payment |
-| Real-time availability (read-only) | ❌ Not implemented | No availability engine |
-| Sign-up prompt on book attempt | ❌ Not implemented | No booking flow exists |
-| Guest session (7-day localStorage) | ❌ Not implemented | No guest session management |
-| Guest-to-user conversion | ❌ Not implemented | No migration logic |
+**Risk:** 🔴 **BLOCKER** — Authentication is foundational; all booking and user-specific features depend on this.
 
 ---
 
-### 2.3 Business Search & Discovery — **~0% Complete**
+### 2.2 Guest Browse & Explore — P0 — **~10% Complete**
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Full-text search | ❌ Not implemented | No Elasticsearch, Meilisearch, or PostgreSQL full-text |
-| Autocomplete with typo tolerance | ❌ Not implemented | No search index or API |
-| Filters (category, price, rating, distance, availability) | ❌ Not implemented | No filter query builders |
-| Sort options | ❌ Not implemented | No sort parameters in any controller |
-| Recent searches | ❌ Not implemented | No search history table or localStorage usage |
-| Pagination (20/page) | ❌ Not implemented | No pagination DTOs or interceptors |
-| Empty state with suggestions | ❌ Not implemented | No UI components found |
-| Search analytics | ❌ Not implemented | No analytics logging |
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Guest access to search/discovery | ❌ Not implemented | No guest middleware or route guards |
+| Guest view of service listings | ❌ Not implemented | No public API endpoints for services |
+| Guest view of business photos/reviews | ❌ Not implemented | No business or review modules found |
+| Login prompt on booking attempt | ❌ Not implemented | No booking flow exists |
+| Guest session persistence (24h) | ❌ Not implemented | No localStorage/cookie session management |
+| Guest data merge on registration | ❌ Not implemented | No merge logic exists |
 
----
-
-### 2.4 Map-based Search — **~0% Complete**
-
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Interactive map (Google/Mapbox) | ❌ Not implemented | No map library dependencies found |
-| Marker clustering | ❌ Not implemented | — |
-| User geolocation | ❌ Not implemented | No geolocation API usage |
-| Custom markers by category | ❌ Not implemented | — |
-| Business card preview on click | ❌ Not implemented | — |
-| "Search this area" on pan/zoom | ❌ Not implemented | — |
-| Directions integration | ❌ Not implemented | — |
-| Default zoom fallback | ❌ Not implemented | — |
-| Map/list toggle | ❌ Not implemented | — |
+**Risk:** 🔴 **BLOCKER** — Guest browsing is primary conversion funnel; missing this eliminates user acquisition path.
 
 ---
 
-### 2.5 Business Detail View — **~0% Complete**
+### 2.3 Business Search & Discovery — P0 — **~5% Complete**
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Hero image gallery (10 images) | ❌ Not implemented | No image upload service (S3, Cloudinary) |
-| Business info display | ❌ Not implemented | No business DTOs or controller |
-| Address with copy/directions | ❌ Not implemented | — |
-| Operating hours with "Open Now" | ❌ Not implemented | No time utility functions |
-| Click-to-call | ❌ Not implemented | — |
-| Service menu with pricing | ❌ Not implemented | — |
-| Team/staff profiles | ❌ Not implemented | No staff module |
-| Social media links | ❌ Not implemented | — |
-| "Book Now" CTA | ❌ Not implemented | No booking module |
-| Share business | ❌ Not implemented | No share API or deep links |
-| Report inaccurate info | ❌ Not implemented | No reporting mechanism |
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Full-text search (name, service, description) | ❌ Not implemented | No search controller or service |
+| Filters (category, price, rating, distance, availability) | ❌ Not implemented | No filter DTOs or query builders |
+| Sort options | ❌ Not implemented | No sort parameters in any module |
+| <500ms response for top 20 | ❌ Not implemented | No performance optimization exists |
+| Cursor-based infinite scroll | ❌ Not implemented | No pagination utilities found |
+| Recent searches (local storage) | ❌ Not implemented | No client-side storage implementation |
+| Auto-suggest (300ms debounce) | ❌ Not implemented | No search endpoint or debounce logic |
 
----
+**Technical Notes Gap:**
+- `pg_trgm` extension not confirmed in schema
+- No Elasticsearch configuration
+- No Redis cache for search queries
 
-### 2.6 Service Categories — **~5% Complete**
-
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Predefined categories | 🟡 Partial | `schema.prisma` may have Category model; needs verification |
-| Subcategories | ❌ Not implemented | No hierarchical category structure |
-| Multi-category assignment | ❌ Not implemented | No join table or array fields |
-| Category icons/color coding | ❌ Not implemented | No design system implementation |
-| Category browsing from homepage | ❌ Not implemented | No homepage or routing |
-| Trending categories | ❌ Not implemented | No analytics aggregation |
-| Admin category management | ❌ Not implemented | No admin CRUD endpoints |
+**Risk:** 🔴 **BLOCKER** — Core discovery mechanism; without this, users cannot find businesses.
 
 ---
 
-### 2.7 Booking Flow — **~5% Complete**
+### 2.4 Map-based Search — P0 — **~0% Complete**
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| 7-step booking flow | ❌ Not implemented | No booking controller, service, or DTOs |
-| Service selection with add-ons | ❌ Not implemented | No service/add-on models |
-| Staff selection | ❌ Not implemented | No staff assignment logic |
-| Date/time slot selection | ❌ Not implemented | No availability engine |
-| Booking summary review | ❌ Not implemented | — |
-| Promo code application | ❌ Not implemented | No promo code module |
-| Payment method selection | 🟡 Partial | Payment DTOs exist but no booking integration |
-| Terms acceptance | ❌ Not implemented | No terms of service system |
-| Real-time slot updates | ❌ Not implemented | No WebSocket or SSE implementation |
-| Double-booking prevention | ❌ Not implemented | No optimistic locking or transaction isolation |
-| Confirmation screen with calendar invite | ❌ Not implemented | No ICS generation |
-| Booking reference (BK-2024-XXXXXX) | ❌ Not implemented | No reference generation logic |
-| Group bookings | ❌ Not implemented | No multi-service booking logic |
-| Guest checkout | ❌ Not implemented | No guest email capture flow |
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Interactive map (Google Maps/Mapbox) | ❌ Not implemented | No map library dependencies found |
+| Marker clustering | ❌ Not implemented | No clustering algorithm or library |
+| Business card preview on marker tap | ❌ Not implemented | No map component exists |
+| Dynamic search on map bounds change | ❌ Not implemented | No geospatial query endpoints |
+| Current location centering | ❌ Not implemented | No geolocation API usage |
+| Toggle map/list views | ❌ Not implemented | No UI components for this |
+| Hide out-of-bounds businesses | ❌ Not implemented | No viewport-based filtering |
 
----
+**Technical Notes Gap:**
+- PostGIS `geography` type not confirmed in Prisma schema
+- No GiST spatial indexes found
+- No server-side clustering implementation
 
-### 2.8 Appointment Management — **~0% Complete**
-
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Customer: view upcoming/past | ❌ Not implemented | No appointment controller |
-| Customer: reschedule | ❌ Not implemented | No reschedule policy engine |
-| Customer: cancel with reason | ❌ Not implemented | No cancellation flow |
-| Customer: refund processing | ❌ Not implemented | Refund DTO exists but no appointment linkage |
-| Customer: calendar export (ICS) | ❌ Not implemented | No ICS utility |
-| Customer: one-click rebook | ❌ Not implemented | — |
-| Customer: rate and review | ❌ Not implemented | No review module |
-| Business: calendar views (day/week/month) | ❌ Not implemented | No calendar component or API |
-| Business: color-coded statuses | ❌ Not implemented | No status enum usage in appointments |
-| Business: manual bookings | ❌ Not implemented | — |
-| Business: block time slots | ❌ Not implemented | No block-out logic |
-| Business: check-in customer | ❌ Not implemented | No check-in API |
-| Business: mark no-show | ❌ Not implemented | No no-show policy engine |
-| Business: export to CSV | ❌ Not implemented | No CSV generation utility |
+**Risk:** 🔴 **BLOCKER** — Map search is a key differentiator and primary discovery mode for local services.
 
 ---
 
-### 2.9 Favorites — **~0% Complete**
+### 2.5 Business Detail View — P0 — **~5% Complete**
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| One-tap favorite | ❌ Not implemented | No favorite entity in schema |
-| Favorites list with quick book | ❌ Not implemented | — |
-| Favorite count on profile | ❌ Not implemented | — |
-| Push notification for new availability | ❌ Not implemented | No FCM integration |
-| Cross-device sync | ❌ Not implemented | No favorites table |
-| Similar business suggestions | ❌ Not implemented | No recommendation engine |
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Display business info (name, logo, photos, etc.) | ❌ Not implemented | No business module found |
+| Operating hours with open/closed status | ❌ Not implemented | No hours schema or computation |
+| Service menu with pricing/duration | ❌ Not implemented | No service module found |
+| Staff profiles | ❌ Not implemented | No staff/employee module found |
+| Rating and review count | ❌ Not implemented | No review aggregation |
+| "Book Now" CTA | ❌ Not implemented | No booking module exists |
+| Share business functionality | ❌ Not implemented | No share utilities |
+| Report business functionality | ❌ Not implemented | No reporting mechanism |
+
+**Technical Notes Gap:**
+- No React Query usage found (no frontend components at all)
+- No image lazy loading implementation
+
+**Risk:** 🔴 **BLOCKER** — Business detail is the conversion page; without it, no bookings can occur.
 
 ---
 
-### 2.10 User Profile — **~5% Complete**
+### 2.6 Service Categories — P0 — **~10% Complete**
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Edit personal info | ❌ Not implemented | No user controller or DTOs beyond auth |
-| Manage payment methods | 🟡 Partial | `save-payment-method.dto.ts` exists but no profile integration |
-| Booking history with receipts | ❌ Not implemented | No receipt generation |
-| Notification preferences | ❌ Not implemented | No preference model |
-| Privacy settings | ❌ Not implemented | No privacy controls |
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Predefined 3-level category hierarchy | ⚠️ Partial | Prisma schema may support this; no seed data confirmed |
+| Icons, names, descriptions for categories | ❌ Not implemented | No category module or DTOs |
+| Business-category assignment | ❌ Not implemented | No junction table or relations confirmed |
+| Category pages with featured businesses | ❌ Not implemented | No page components or endpoints |
+| Admin CRUD for categories | ❌ Not implemented | No admin module or guards |
+
+**Technical Notes Gap:**
+- Adjacency list model not confirmed in schema
+- Redis category tree cache not implemented
+
+**Risk:** 🟡 **HIGH** — Important for discovery but can be simplified for MVP.
+
+---
+
+### 2.7 Booking Flow — P0 — **~5% Complete**
+
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Step 1: Service selection with add-ons | ❌ Not implemented | No booking module or DTOs |
+| Step 2: Staff selection | ❌ Not implemented | No staff availability integration |
+| Step 3: Date/time slot selection | ❌ Not implemented | No slot computation engine |
+| Step 4: Promo code application | ❌ Not implemented | No promotion/discount module |
+| Step 5: Payment or free confirmation | ⚠️ Partial | Payment module exists but not integrated to booking |
+| Step 6: Confirmation with .ics invite | ❌ Not implemented | No email/ICS generation |
+| Real-time availability updates | ❌ Not implemented | No SSE/WebSocket implementation |
+| 10-minute hold with Redis TTL | ❌ Not implemented | No slot locking mechanism |
+| Recurring bookings | ❌ Not implemented | No recurrence logic |
+| Guest checkout | ❌ Not implemented | No guest flow exists |
+
+**Technical Notes Gap:**
+- Redis `SET NX` with TTL not implemented for slot holds
+- Stripe Payment Intents exist but not wired to booking state machine
+- BullMQ not found for email queuing
+
+**Risk:** 🔴 **BLOCKER** — The booking flow IS the product; without it, there is no platform.
+
+---
+
+### 2.8 Appointment Management — P0 — **~5% Complete**
+
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Upcoming/past/cancelled tabs | ❌ Not implemented | No appointment module found |
+| Appointment detail view | ❌ Not implemented | No DTOs or endpoints |
+| Reschedule within policy window | ❌ Not implemented | No policy engine exists |
+| Cancel with reason and refund | ❌ Not implemented | No cancellation flow |
+| Push and email reminders | ❌ Not implemented | No notification service |
+| Calendar integration (Google/Apple/Outlook) | ❌ Not implemented | No calendar API integration |
+| No-show reporting | ❌ Not implemented | No reporting mechanism |
+
+**Technical Notes Gap:**
+- Soft delete pattern not confirmed
+- Cancellation policy configuration not implemented
+- No cron jobs or scheduling service found
+
+**Risk:** 🟡 **HIGH** — Critical for user retention but can be manual for initial MVP.
+
+---
+
+### 2.9 Favorites — P1 — **~0% Complete**
+
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Heart icon toggle | ❌ Not implemented | No UI components exist |
+| favorites list in profile | ❌ Not implemented | No profile or favorites module |
+| Cross-device sync | ❌ Not implemented | No authenticated favorites API |
+| New service/promotion notifications | ❌ Not implemented | No notification system |
+| Guest favorites with merge | ❌ Not implemented | No guest session handling |
+
+**Risk:** 🟢 **LOW** — Nice-to-have for MVP; can be deferred.
+
+---
+
+### 2.10 User Profile — P1 — **~5% Complete**
+
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Edit personal info | ❌ Not implemented | No user module or profile endpoints |
+| Manage payment methods | ⚠️ Partial | Payment module has `save-payment-method.dto.ts` |
+| Booking history with reorder | ❌ Not implemented | No history or reorder logic |
+| Notification preferences | ❌ Not implemented | No preference storage |
+| Privacy settings / data download / deletion | ❌ Not implemented | No GDPR/privacy implementation |
 | Referral code and credits | ❌ Not implemented | No referral system |
-| Loyalty program | ❌ Not implemented | No loyalty/points system |
-| Delete account with data export | ❌ Not implemented | No GDPR data export |
+
+**Risk:** 🟡 **MEDIUM** — Payment method management partially started; rest can be deferred.
 
 ---
 
-### 2.11 Availability & Slot Computation — **~0% Complete**
+### 2.11 Availability & Slot Computation — P0 — **~5% Complete**
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Slot computation engine | ❌ Not implemented | No availability service or algorithm |
-| Variable service durations | ❌ Not implemented | No duration flexibility in schema |
-| Concurrent bookings per staff | ❌ Not implemented | No staff scheduling logic |
-| Business closures/holidays | ❌ Not implemented | No holiday calendar |
-| Timezone awareness | ❌ Not implemented | No timezone handling (moment-timezone, date-fns-tz) |
-| Configurable slot granularity | ❌ Not implemented | No business configuration for slots |
-| 5-minute slot cache | ❌ Not implemented | No Redis or caching layer |
-| Fallback to next available day | ❌ Not implemented | No fallback logic |
-| API response < 200ms | ❌ Not measured | No performance benchmarks |
-| Daylight saving time handling | ❌ Not implemented | No DST transition logic |
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Configurable business hours with breaks | ❌ Not implemented | No hours/schedule schema confirmed |
+| Staff-specific schedules with overrides | ❌ Not implemented | No staff schedule module |
+| Service duration + buffer time | ❌ Not implemented | No service configuration |
+| Concurrent services support | ❌ Not implemented | No capacity management |
+| <200ms availability query | ❌ Not implemented | No optimization exists |
+| Timezone handling | ❌ Not implemented | No timezone library usage found |
+| Irregular schedules and one-off closures | ❌ Not implemented | No exception handling |
 
-**Critical Gap:** This is a core P0 feature with zero implementation. Blocks entire booking flow.
+**Technical Notes Gap:**
+- No Redis caching of daily slot matrices
+- No PostgreSQL temporal range types confirmed
+- This is the most complex P0 feature; requires significant engineering
+
+**Risk:** 🔴 **BLOCKER** — Core platform engine; without accurate availability, bookings will fail.
 
 ---
 
-### 2.12 Shared Types & Design System — **~10% Complete**
+### 2.12 Shared Types & Design System — P1 — **~10% Complete**
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Design tokens (colors, typography, spacing) | ❌ Not implemented | No design system package found |
 | Component library | ❌ Not implemented | No UI component files found |
-| Color palette (#FF6B6B, #4ECDC4) | ❌ Not implemented | No CSS variables, Tailwind config, or theme |
-| Typography (Inter, Playfair Display) | ❌ Not implemented | No font imports or CSS |
-| 4px spacing scale | ❌ Not implemented | No design tokens |
-| Responsive breakpoints | ❌ Not implemented | No media queries or responsive utilities |
+| Shared TypeScript types (monorepo) | ⚠️ Partial | DTOs exist in backend but no shared package |
+| WCAG 2.1 AA accessibility | ❌ Not implemented | No a11y testing or patterns |
 | Dark mode support | ❌ Not implemented | No theme switching logic |
-| WCAG 2.1 AA compliance | ❌ Not implemented | No accessibility testing or ARIA usage |
-| Shared TypeScript types (monorepo) | 🟡 Partial | Backend DTOs exist; no shared package confirmed |
-| Storybook documentation | ❌ Not implemented | No `.storybook` config or stories |
+| Responsive breakpoints | ❌ Not implemented | No CSS/styling framework confirmed |
+
+**Risk:** 🟡 **MEDIUM** — Can be built incrementally; not blocking MVP but affects velocity.
 
 ---
 
-### 2.13 Reviews & Ratings — **~0% Complete**
+### 2.13 Reviews & Ratings — P1 — **~0% Complete**
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Verified reviews only | ❌ Not implemented | No review verification logic |
-| 5-star with half-star precision | ❌ Not implemented | No rating component |
-| Review text with photos | ❌ Not implemented | No image upload in reviews |
-| Business owner response | ❌ Not implemented | No response entity |
-| Flag inappropriate reviews | ❌ Not implemented | No moderation queue |
-| Sort reviews | ❌ Not implemented | No sort parameters |
-| Rating breakdown by category | ❌ Not implemented | No category ratings schema |
-| Aggregate rating display | ❌ Not implemented | No aggregation queries |
-| Review reminder (24h post) | ❌ Not implemented | No notification queue for reviews |
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| 5-star rating with text review | ❌ Not implemented | No review module found |
+| Post-appointment review eligibility | ❌ Not implemented | No eligibility gate |
+| Business owner response | ❌ Not implemented | No response mechanism |
+| Flag for admin moderation | ❌ Not implemented | No moderation queue |
+| Review sorting | ❌ Not implemented | No review endpoints |
+| Review photos (5 max, 5MB) | ❌ Not implemented | No image upload for reviews |
+| Weighted aggregate rating | ❌ Not implemented | No rating computation |
 
----
-
-### 2.14 Payment Integration — **~25% Complete**
-
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Stripe integration | 🟡 Partial | `payment.service.ts`, `payment.controller.ts`, DTOs exist |
-| Card payment methods (Visa, MC, Amex) | 🟡 Partial | Stripe likely supports; needs verification |
-| Apple Pay, Google Pay | ❌ Not implemented | No payment method configuration found |
-| Saved payment methods | 🟡 Partial | `save-payment-method.dto.ts` exists |
-| Full payment or deposit | ❌ Not implemented | No deposit logic in DTOs |
-| Refund processing | 🟡 Partial | `refund-payment.dto.ts` exists |
-| Promo code/gift card | ❌ Not implemented | No promo code module |
-| Invoice generation | ❌ Not implemented | No invoice service |
-| Failed payment retry | ❌ Not implemented | No retry logic or queue |
-| Webhook handling | 🟡 Partial | Controller exists; webhook verification needs audit |
-| Multi-currency (EUR, USD, GBP) | ❌ Not implemented | No currency configuration |
-
-**Note:** Payment module is the most developed area but lacks integration with bookings, users, and business logic.
+**Risk:** 🟢 **LOW** — Social proof important but can be added post-MVP.
 
 ---
 
-### 2.15 Notifications — **~5% Complete**
+### 2.14 Payment Integration — P0 — **~35% Complete**
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Push notifications (FCM) | ❌ Not implemented | No Firebase configuration |
-| Email (SendGrid/Mailgun) | ❌ Not implemented | No email service provider setup |
-| SMS (Twilio) | ❌ Not implemented | No Twilio client or SMS service |
-| Notification types | ❌ Not implemented | No notification template system |
-| User preference controls | ❌ Not implemented | No preference model |
-| Notification history | ❌ Not implemented | No notification log table |
-| Deep links | ❌ Not implemented | No URL scheme or routing for deep links |
-| Batch promotional notifications | ❌ Not implemented | No batching logic |
-| Delivery tracking and retry | ❌ Not implemented | No delivery status tracking |
+| Acceptance Criteria | Status | Evidence / Notes |
+|---------------------|--------|------------------|
+| Stripe card payments (Visa, MC, Amex) | ⚠️ Partial | `payment.service.ts`, `payment.controller.ts` exist |
+| Apple Pay and Google Pay | ❌ Not implemented | No wallet payment configuration |
+| Save payment methods for future use | ⚠️ Partial | `save-payment-method.dto.ts` exists |
+| Full payment or deposit % at booking | ❌ Not implemented | No deposit logic in payment service |
+| Refund processing with policy | ⚠️ Partial | `refund-payment.dto.ts` exists |
+| Receipt email after payment | ❌ Not implemented | No email integration |
+| PCI compliance | ⚠️ Partial | Stripe handles PCI; no sensitive data storage confirmed |
 
----
+**Files Found:**
+- `backend/src/payment/payment.controller.ts`
+- `backend/src/payment/payment.service.ts`
+- `backend/src/payment/payment.module.ts`
+- `backend/src/payment/dto/confirm-payment.dto.ts`
+- `backend/src/payment/dto/create-payment-intent.dto.ts`
+- `backend/src/payment/dto/refund-payment.dto.ts`
+- `backend/src/payment/dto/save-payment-method.dto.ts`
 
-### 2.16 Provider/Business Owner Portal — **~0% Complete**
-
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Dashboard with KPIs | ❌ Not implemented | No analytics aggregation |
-| Business profile editor | ❌ Not implemented | No business CRUD beyond potential schema |
-| Service menu management | ❌ Not implemented | No service controller |
-| Staff management | ❌ Not implemented | No staff module |
-| Appointment calendar (drag-and-drop) | ❌ Not implemented | No calendar component |
-| Customer database | ❌ Not implemented | No customer relationship features |
-| Revenue reports | ❌ Not implemented | No reporting service |
-| Payout management | ❌ Not implemented | No Stripe Connect or payout logic |
-| Subscription plan management | ❌ Not implemented | No subscription model (Free/Basic/Pro) |
-| 99.9% uptime SLA | ❌ Not measured | No monitoring or SLA definitions |
+**Risk:** 🟡 **MEDIUM** — Good scaffolding started but not integrated with booking flow; Stripe keys and webhook handling not confirmed.
 
 ---
 
-### 2.17 Admin Dashboard — **~0% Complete**
+## Database Schema Assessment
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| User management | ❌ Not implemented | No admin user endpoints |
-| Business verification workflow | ❌ Not implemented | No verification status or workflow engine |
-| Content moderation | ❌ Not implemented | No moderation tools |
-| Financial overview | ❌ Not implemented | No financial dashboards |
-| Analytics (MAU, bookings, conversion, churn) | ❌ Not implemented | No analytics pipeline |
-| Promo code management | ❌ Not implemented | No promo code CRUD |
-| System health monitoring | ❌ Not implemented | No health checks or monitoring (Prometheus, etc.) |
-| Role-based admin permissions | ❌ Not implemented | No admin role hierarchy |
-| Audit log | ❌ Not implemented | No audit table or logging middleware |
-| Data export for compliance | ❌ Not implemented | No export utilities |
+**File:** `backend/src/prisma/schema.prisma`
 
----
+| Aspect | Status | Notes |
+|--------|--------|-------|
+| Schema definition | ⚠️ Partial | File exists but contents not fully inspectable from context |
+| User model with auth fields | ❓ Unknown | Cannot confirm without schema review |
+| Business model | ❓ Unknown | Cannot confirm |
+| Service/Category models | ❓ Unknown | Cannot confirm |
+| Booking/Appointment models | ❓ Unknown | Cannot confirm |
+| Review model | ❓ Unknown | Cannot confirm |
+| PostGIS extensions | ❓ Unknown | Critical for map search |
+| Temporal range types | ❓ Unknown | Critical for availability |
 
-### 2.18 Background Jobs (BullMQ) — **~5% Complete**
-
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| BullMQ queue setup | ❌ Not implemented | No BullMQ configuration or queue modules |
-| Job processors | ❌ Not implemented | No worker files |
-| Scheduled jobs | ❌ Not implemented | No cron job definitions |
-| Retry logic | ❌ Not implemented | No job retry configuration |
-| Queue monitoring | ❌ Not implemented | No Bull Board or UI |
+**Recommendation:** Full schema audit required. Schema is the foundation; gaps here will cascade to all features.
 
 ---
 
-## Database Schema Assessment (`schema.prisma`)
-
-Based on typical Prisma schema patterns for this domain, the following models are **expected but unverified**:
-
-| Model | Expected Status | Impact if Missing |
-|-------|-----------------|-------------------|
-| User | Likely exists with Role enum | Critical — blocks auth, bookings, reviews |
-| Business | Likely exists | Critical — core entity |
-| Service | Likely exists | Critical — booking flow |
-| Appointment | Likely exists | Critical — core functionality |
-| Staff | Unknown | High — blocks booking staff selection |
-| Category | Likely exists | High — browse and search |
-| Review | Unknown | High — social proof |
-| Payment | Partial (Stripe-focused) | High — incomplete without booking linkage |
-| Notification | Unknown | High — communication |
-| Favorite | Unknown | Medium — user experience |
-| PromoCode | Unknown | Medium — marketing |
-| Availability/Slot | Unknown | Critical — booking engine |
-
-**Recommendation:** Full schema audit required. Verify all required models, relations, and indexes exist.
-
----
-
-## Infrastructure & DevOps Assessment
+## Infrastructure & DevOps
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Backend framework (NestJS) | ✅ Present | Standard NestJS structure |
-| Database (PostgreSQL via Prisma) | 🟡 Partial | Schema exists; migration status unknown |
-| API documentation (Swagger/OpenAPI) | ❌ Unknown | No swagger setup confirmed |
-| Testing (unit/integration/E2E) | ❌ Not implemented | No test files found in sample |
-| CI/CD pipeline | ❌ Not implemented | No `.github/workflows` or similar |
-| Docker/containerization | ❌ Not implemented | No Dockerfile or compose files |
-| Environment configuration | 🟡 Partial | Standard NestJS config module likely |
-| Logging/monitoring | ❌ Not implemented | No observability stack |
-| Error tracking (Sentry) | ❌ Not implemented | No error tracking integration |
+| Monorepo structure | ⚠️ Partial | Backend NestJS structure visible; no frontend structure confirmed |
+| Docker configuration | ❓ Unknown | No Dockerfile or compose files in sample |
+| CI/CD pipeline | ❓ Unknown | No GitHub Actions or similar found |
+| Environment configuration | ❓ Unknown | No `.env` examples or config modules visible |
+| Redis connection | ❓ Unknown | Required for caching, sessions, slot locks |
+| PostgreSQL with extensions | ❓ Unknown | `pg_trgm`, PostGIS required |
+| SendGrid/email service | ❌ Not implemented | Required for auth, confirmations, receipts |
 
 ---
 
-## Risk Analysis
+## Critical Path to MVP
 
-| Risk | Severity | Likelihood | Mitigation |
-|------|----------|------------|------------|
-| Availability engine complexity | Critical | High | Prioritize algorithm design; consider existing libraries |
-| Real-time slot updates | Critical | High | Implement WebSocket/SSE early; test concurrency |
-| Payment-booking integration | Critical | High | Design transaction boundaries; use database transactions |
-| Multi-platform (iOS/Android) | High | Medium | Consider React Native/Flutter; web-first MVP acceptable |
-| Search performance | High | Medium | Plan Elasticsearch/Meilisearch migration path |
-| GDPR/data compliance | High | Medium | Implement data export, deletion, consent tracking |
-| Third-party API reliability | Medium | Medium | Build circuit breakers; queue fallback for notifications |
+The following must be completed in order for the platform to function:
+
+| Priority | Feature | Estimated Effort |
+|----------|---------|------------------|
+| 1 | Database Schema (complete audit & implementation) | 1-2 weeks |
+| 2 | User Authentication (2.1) | 2-3 weeks |
+| 3 | Business Search & Discovery (2.3) | 2-3 weeks |
+| 4 | Business Detail View (2.5) | 1-2 weeks |
+| 5 | Availability & Slot Computation (2.11) | 3-4 weeks |
+| 6 | Booking Flow (2.7) | 2-3 weeks |
+| 7 | Payment Integration completion (2.14) | 1-2 weeks |
+| 8 | Guest Browse (2.2) | 1 week |
+| 9 | Appointment Management (2.8) | 2 weeks |
+| 10 | Map-based Search (2.4) | 2-3 weeks |
+
+**Total Estimated MVP Effort:** 16-25 engineering weeks (assuming 2-3 person team)
+
+---
+
+## Risk Register
+
+| Risk | Impact | Likelihood | Mitigation |
+|------|--------|-----------|------------|
+| Authentication complexity (OAuth, biometric) | High | High | Start with email/password only; defer social auth |
+| Availability engine performance | High | Medium | Prototype with simple approach; optimize later |
+| PostGIS/Geospatial query performance | High | Medium | Add spatial indexes early; test with large datasets |
+| Stripe integration edge cases | Medium | Medium | Use Stripe test mode extensively; implement idempotency |
+| Mobile app not started | High | High | Prioritize responsive web; native app as v2 |
+| Team size vs. scope mismatch | High | High | Cut P1 features; focus on P0 only for MVP |
 
 ---
 
 ## Recommendations
 
-### Immediate (Sprint 0-1)
-1. **Complete database schema audit** — verify all required models and relations
-2. **Implement core auth module** — JWT, RBAC, password hashing, basic middleware
-3. **Set up CI/CD and testing infrastructure** — block all merges without tests
-4. **Establish API contract** — OpenAPI/Swagger documentation
+### Immediate Actions (This Sprint)
+1. **Audit and complete `schema.prisma`** — This blocks all feature development
+2. **Implement email/password authentication** — Minimum viable auth for testing
+3. **Create seed data for businesses, services, categories** — Unblocks frontend development
 
-### Short-term (Sprint 2-4)
-5. **Build availability engine** — this is the critical path for all booking features
-6. **Implement business CRUD and search** — unblock discovery features
-7. **Complete payment-booking integration** — ensure transactional integrity
-8. **Add basic notification queue** — BullMQ with email notifications minimum
+### Short Term (Next 4 Weeks)
+4. Build business search API with basic filters (no geospatial yet)
+5. Implement business detail API with operating hours
+6. Create basic booking flow with hardcoded availability (simulate slot engine)
 
-### Medium-term (Sprint 5-8)
-9. **Develop business owner portal** — calendar, staff management, reporting
-10. **Implement reviews and ratings** — verified post-appointment only
-11. **Add map-based search** — integrate Mapbox/Google Maps
-12. **Build admin dashboard** — user management, content moderation, analytics
+### Medium Term (Next 8 Weeks)
+7. Build availability and slot computation engine
+8. Integrate payment flow with booking state machine
+9. Add guest browsing and checkout
 
-### Long-term (Sprint 9+)
-13. **Mobile apps** — React Native or Flutter based on team expertise
-14. **Advanced features** — AI recommendations, dynamic pricing, loyalty program
-15. **Performance optimization** — caching, CDN, database query optimization
+### Deferred to Post-MVP
+- Map-based search (can use list view initially)
+- Reviews & ratings
+- Favorites
+- Referral system
+- Dark mode
+- Native mobile app
+- Biometric authentication
+- Recurring bookings
 
 ---
 
 ## Conclusion
 
-The Planity Clone project is in **early development with significant implementation gaps**. While the payment module shows promising scaffolding and the Prisma schema provides a foundation, **no feature is production-ready** and most P0 critical features are entirely unimplemented.
+The Planity Clone project has **established foundational payment infrastructure** but **lacks the majority of P0 critical features** required for an MVP. The current completion rate of ~28% is misleading because the implemented 28% consists of scaffolding and partial modules rather than complete, user-facing features.
 
-**Estimated timeline to MVP:** 6-9 months with a full team (2-3 backend, 2-3 frontend, 1 mobile, 1 QA, 1 DevOps), assuming aggressive prioritization of P0 features and deferral of mobile apps.
+**The platform is not yet ready for user testing, let alone production deployment.**
 
-**Next review recommended:** After completion of Sprint 2 (post-auth and availability engine).
+The most critical gap is the **absence of a complete database schema and the availability/slot computation engine**, which is the core differentiator and functional requirement of an appointment-booking platform. Without this, the booking flow cannot function.
+
+**Recommended focus:** Reduce scope to the absolute minimum P0 features, complete the schema, and build a functional end-to-end booking flow before adding any P1 features or polish.
 
 ---
 
-*Report generated by Avery — Progress Tracker*  
-*Methodology: Static codebase analysis against product specification v1.0*
+*Report compiled by Avery — Progress Tracker*  
+*Methodology: Static codebase analysis against product specification acceptance criteria*
