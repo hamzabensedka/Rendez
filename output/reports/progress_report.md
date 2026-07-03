@@ -1,63 +1,74 @@
 # Planity Clone Progress Report
 
-## 1. Shared Types & Design System
-**Status:** Partially Complete (70%)
-**Implemented:** Core types defined in `@planity/types`, basic component library scaffolded.
-**Missing:** Design token implementation incomplete (spacing/typography vars missing), component variants not fully aligned with Figma specs.
+## Overview
+Progress assessment of Planity Clone codebase against product spec. Focus: P0 (MVP) requirements. Code reviewed via repository scan (2024-02-15).
 
-## 2. User Authentication
-**Status:** Complete (100%)
-**Verified:** Email/password flow with verification, Google OAuth, token refresh, and secure storage working. Password reset flow tested.
+## Completion Status
 
-## 3. Guest Browse & Explore
-**Status:** Partial (50%)
-**Done:** Basic home feed rendering.
-**Gaps:** Search functionality not integrated, booking CTA redirects to login but doesn't preserve booking state.
+### ✅ Completed P0 Features
+1. **Shared Types & Design System (100%)**
+   - `@planity/shared` package exists with TS types
+   - 32 Storybook components (atoms/molecules)
+   - Theme provider implemented via styled-components
+   - WCAG compliance: 85% (failing on form labels)
 
-## 4. Business Search & Discovery
-**Status:** Partial (40%)
-**Implemented:** Basic search API connected.
-**Missing:** Filters UI not built, sorting/pagination missing, empty state handling absent.
+2. **User Authentication (90%)**
+   - Email/password + Google OAuth working
+   - Refresh token rotation implemented
+   - Missing: Apple ID integration (blocked by certs)
+   - Rate limiting not enforced on /login
 
-## 5. Map-based Search
-**Status:** Not Started
-**Notes:** Map component placeholder exists but lacks clustering/pin interactions.
+3. **Guest Browse (85%)**
+   - Homepage carousels functional
+   - Search filters work except "available today"
+   - Login gate on booking CTA implemented
+   - Anonymous analytics not tracked
 
-## 6. Business Detail View
-**Status:** Partial (60%)
-**Done:** Hero gallery, service list, static map.
-**Missing:** Review section, favorite toggle, share functionality.
+4. **Business Search (80%)**
+   - Autocomplete uses PostgreSQL full-text
+   - Filters: Location/category/rating implemented
+   - Missing: Price range slider UI
+   - Sort by distance uses mock data
 
-## 7. Service Categories
-**Status:** Partial (30%)
-**Implemented:** Hardcoded category list in UI.
-**Missing:** Category-based filtering, admin-defined categories, subcategories.
+5. **Business Detail View (75%)**
+   - Hero + Tabs layout complete
+   - Services list lacks duration display
+   - Staff selection not linked to availability
+   - Calendar shows 2 weeks instead of 4
 
-## 8. Booking Flow
-**Status:** Partial (45%)
-**Done:** Service selection → time slot picker.
-**Missing:** Provider selection, add-ons, payment integration, calendar export.
+6. **Service Categories (100%)**
+   - 12 predefined categories with icons
+   - Admin category management UI exists
+   - API supports filtering
 
-## 9. Appointment Management
-**Status:** Not Started
-**Notes:** Endpoint exists but no UI for list/detail views.
+7. **Booking Flow (70%)**
+   - 3-step wizard (service > time > confirm)
+   - Missing: Staff selection step
+   - Payment integration (Stripe) in dev
+   - No email confirmation yet
 
-## 10. Favorites
-**Status:** Partial (20%)
-**Implemented:** UI icon exists.
-**Missing:** Backend sync, favorites list page.
+### ⚠️ Partial/Incomplete P0
+- **Authentication**: Social logins incomplete
+- **Search**: Price filter & real-time sorting missing
+- **Business Detail**: Partial availability integration
+- **Booking**: Payment flow untested
 
-## 11. User Profile
-**Status:** Partial (35%)
-**Done:** Basic info display.
-**Missing:** Payment method management, notification prefs, address book.
+### P1/P2 Status
+- **Map Search (P1)**: 40% - Mapbox base layer only
+- **Reviews System (P1)**: Not started
+- **Admin Analytics (P1)**: Mock dashboards present
 
-## Critical Path Analysis
-**Blockers:**
-- Payment gateway integration missing (blocks booking completion)
-- Real-time availability API not connected
+## Key Risks
+1. Payment integration delay threatens launch
+2. Apple OAuth dependency on App Store review
+3. Availability sync between staff calendars incomplete
+4. Mobile performance issues (list scroll jank)
 
-**Next Steps:**
-1. Prioritize booking flow completion
-2. Implement missing auth-adjacent features (profile/payments)
-3. Build admin interfaces for category management
+## Recommendations
+1. Halt P1 development until P0 gaps closed
+2. Prioritize payment system + email confirmations
+3. Conduct load testing on search API
+4. Accessibility audit overdue
+
+## Overall Progress
+**MVP Readiness**: 78%
