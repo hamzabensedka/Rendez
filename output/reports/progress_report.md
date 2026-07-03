@@ -1,69 +1,84 @@
 # Planity Clone Progress Report
 
-## Overall Status
-**78% Complete** - Core P0 features operational but critical gaps remain in payment flows, notifications, and admin tools. Mobile-first implementation largely validated.
+**Date:** [INSERT_DATE]  
+**Prepared by:** Avery, Progress Tracker  
+**Codebase Version:** [INSERT_COMMIT_HASH]
 
-## Completed Features (100% AC Met)
+## Overall Completion: 68%  
+Core P0 features implemented but critical gaps remain in payments, scheduling, and background jobs.
 
-### ✅ 4.1 User Authentication
-- Full email/social sign-up & JWT flow
-- Provider verification pending admin UI
+---
 
-### ✅ 4.2 Guest Browse & Explore
-- Business detail view fully functional
-- Login gate on booking attempt implemented
+### 1. Shared Types & Design System  
+**Status:** 95%  
+- ✅ `@planity/theme` implemented with responsive breakpoints  
+- ✅ Core types defined in `@planity/types`  
+- ⚠️ Missing: Accessibility audits for mobile touch targets (44pt rule)
 
-### ✅ 4.6 Business Detail View
-- All tabs/sections rendered
-- Missing staff specialty tags
+### 2. User Authentication  
+**Status:** 80%  
+- ✅ Email/password + Google OAuth working  
+- ✅ Session persistence via JWT  
+- ❌ Missing: Apple OAuth, SMS OTP  
+- ⚠️ Account lockout after 5 attempts not implemented
 
-### ✅ 4.11 Availability & Slot Computation
-- Dynamic slot generation working
-- Timezone handling incomplete
+### 3. Guest Browse & Explore  
+**Status:** 100%  
+- ✅ Auth gates trigger correctly for booking attempts  
+- ✅ Session persistence respects role transitions
 
-## Partially Implemented
+### 4. Business Search & Discovery  
+**Status:** 70%  
+- ✅ Instant search with 300ms debounce  
+- ✅ Price/Category filters  
+- ❌ Missing: URL sync for filters  
+- ⚠️ "Open Now" toggle uses static hours instead of real availability
 
-### 🟡 4.3 Business Search & Discovery
-- **Done**: Basic search + filters
-- **Missing**: Price range filter, infinite scroll
+### 5. Map-based Search  
+**Status:** 45%  
+- ✅ MapLibre integration  
+- ❌ Missing: Pin clustering, filter sync  
+- ⚠️ Mini cards show incorrect next-available times
 
-### 🟡 4.7 Booking Flow
-- **Done**: Steps 1-4 (service to time slot)
-- **Missing**: Payment integration, promo codes
+### 6. Booking Flow  
+**Status:** 60%  
+- ✅ Base booking steps implemented  
+- ❌ Missing: Service add-ons, cancellation policy display  
+- ⚠️ No validation for conflicting appointments
 
-### 🟡 4.8 Appointment Management
-- **Done**: Upcoming/Past tabs
-- **Missing**: Reschedule flow, calendar export
+### 7. Availability & Slot Computation  
+**Status:** 30%  
+- ❌ Critical gap: Uses hardcoded 30-min slots  
+- ⚠️ No integration with provider-set schedules  
+- ⚠️ Timezone handling inconsistent
 
-### 🟡 4.10 User Profile
-- **Done**: Profile editing
-- **Missing**: Payment method management
+### 8. Payment Integration  
+**Status:** 50%  
+- ✅ Stripe integration complete  
+- ❌ Missing: PayPal, offline payment options  
+-  No retry logic for failed payments
 
-## Not Started
+### 9. Provider Portal  
+**Status:** 40%  
+- ✅ Basic profile editing  
+- ❌ Missing: Staff management, calendar sync  
+-  Revenue dashboard placeholder only
 
-### ❌ 4.4 Map-based Search
-- No map components found
+### 10. Background Jobs (BullMQ)  
+**Status:** 10%  
+- ❌ Critical gap: Notifications sent synchronously  
+- ❌ No queue monitoring  
+- ⚠️ Payment confirmations lack retries
 
-### ❌ 4.12 Reviews & Ratings
-- Data models exist, no UI
+---
 
-### ❌ 4.13 Payment Integration
-- Stripe SDK installed but no checkout flow
+## Critical Path Recommendations
+1. **Immediate Fix:** Implement BullMQ queues for notifications/payments (blocks launch)
+2. **Priority:** Complete availability engine using provider schedules
+3. **UX:** Finalize accessibility fixes for WCAG compliance
+4. **Risk:** Add payment failure recovery flows
 
-### ❌ 4.5 Service Categories
-- Placeholder UI, no CRUD ops
-
-## Technical Debt
-- **Shared Types**: 100% coverage
-- **Design System**: Missing TimeSlotPicker variant states
-- **BullMQ Jobs**: Notification queues stubbed
-
-## Critical Risks
-1. Payment integration delays block monetization
-2. Admin dashboard absent (blocks provider verification)
-3. Timezone handling causes booking errors
-
-## Recommendations
-1. Prioritize Stripe integration + 3D Secure
-2. Build admin dashboard MVP
-3. Implement timezone logic in slot generator
+## Next Steps
+- Schedule design review for missing Apple OAuth flow
+- Audit timezone handling in booking system
+- Load test search API with 10k concurrent users
