@@ -1,87 +1,169 @@
 # Planity Clone Progress Report
 
-## Overview
-Assessment of codebase implementation against product spec (P0/P1 features). Core booking flow and authentication are functional but key gaps remain in payments, provider portal, and dynamic availability.
+## 1. User Authentication (P0)
+**Status:** 80% Complete  
+✅ Implemented:  
+- Email/password signup with validation  
+- JWT token flow (access/refresh)  
+- Basic session management  
+- Provider onboarding skeleton  
 
-## Feature Completion Status
+⚠️ Missing:  
+- Phone OTP implementation  
+- Social login integrations (Google/Apple)  
+- Email verification blocking bookings  
+- Refresh token invalidation on logout
 
-### 4.1 User Authentication
-**Status:** Partially Complete (80%)
-**Notes:** Email/password, JWT, and basic RBAC implemented. Missing: Social logins (Google/Facebook/Apple), magic link login, configurable email verification.
+---
 
-### 4.2 Guest Browse & Explore
-**Status:** Complete (100%)
-**Notes:** Full access to business details with login gates for restricted actions.
+## 2. Guest Browse & Explore (P0)
+**Status:** 90% Complete  
+✅ Implemented:  
+- Business browsing without auth  
+- Service detail views  
+- Login prompt on booking attempt  
 
-### 4.3 Business Search & Discovery
-**Status:** Partially Complete (70%)
-**Notes:** Search bar + filters (distance, rating) implemented. Missing: Availability-based filtering, empty state UI.
+⚠️ Missing:  
+- Temporary cart persistence  
+- Generic vs real-time slot differentiation
 
-### 4.4 Map-based Search
-**Status:** Partially Complete (85%)
-**Notes:** Google Maps integration with clustering. Missing: Radius controls, performance optimizations for 500+ markers.
+---
 
-### 4.5 Business Detail View
-**Status:** Partially Complete (90%)
-**Notes:** All tabs implemented except real-time "busy" status. Photo uploads require policy configuration.
+## 3. Business Search & Discovery (P0)
+**Status:** 75% Complete  
+✅ Implemented:  
+- Location-based search  
+- Category filtering  
+- Rating sorting  
 
-### 4.6 Service Categories
-**Status:** Partially Complete (60%)
-**Notes:** Static categories displayed. Missing: Admin UI for dynamic category management.
+⚠️ Missing:  
+- "Open now" toggle  
+- Price range filters  
+- Search autocomplete
 
-### 4.7 Booking Flow
-**Status:** Partially Complete (75%)
-**Notes:** Date/time selection and guest login gates work. Missing: Staff selection UI, promo code validation, .ics calendar integration.
+---
 
-### 4.8 Appointment Management
-**Status:** Partially Complete (65%)
-**Notes:** Cancellation and basic rescheduling work. Missing: Statuses (Pending/No-show), device calendar sync, rebook option.
+## 4. Map-based Search (P1)
+**Status:** 40% Complete  
+✅ Implemented:  
+- Basic map integration  
+- Pin placement  
 
-### 4.9 Favorites
-**Status:** Complete (100%)
-**Notes:** Synced across devices with home feed integration.
+⚠️ Missing:  
+- Pin clustering  
+- Viewport-bound search updates  
+- Native map optimizations
 
-### 4.10 User Profile
-**Status:** Complete (100%)
-**Notes:** All profile management features implemented.
+---
 
-### 4.11 Payment Integration
-**Status:** Partially Complete (50%)
-**Notes:** Stripe checkout functional. Missing: Saved payment methods, refund automation.
+## 5. Service Categories (P0)
+**Status:** 100% Complete  
+✅ Fully implemented hierarchy  
+- Admin management interface  
+- Multi-level navigation  
+- Dynamic category updates
 
-### 4.12 Provider Portal
-**Status:** Partially Complete (40%)
-**Notes:** Basic dashboard exists. Missing: Staff management, dynamic pricing, bulk slot updates.
+---
 
-### 4.13 Admin Dashboard
-**Status:** Partially Complete (30%)
-**Notes:** User/business listing only. Missing: Content moderation, analytics, payout tools.
+## 6. Business Detail View (P0)
+**Status:** 85% Complete  
+✅ Implemented:  
+- Service listings  
+- Review system  
+- Basic info tabs  
 
-### 4.14 Notifications
-**Status:** Partially Complete (80%)
-**Notes:** Email/push reminders work. Missing: SMS notifications, configurable templates.
+⚠️ Missing:  
+- Staff booking integration  
+- Skeleton loading states  
+- Offline caching
 
-### 4.15 Reviews
-**Status:** Complete (100%)
-**Notes:** Full CRUD with moderation safeguards.
+---
 
-### 4.16 Reports
-**Status:** Not Started (0%)
-**Notes:** No code found for analytics or exports.
+## 7. Availability & Slot Computation (P0)
+**Status:** 70% Complete  
+✅ Implemented:  
+- Basic time slot generation  
+- Service duration calculation  
 
-### 4.17 Localization
-**Status:** Not Started (0%)
-**Notes:** Hardcoded EN texts only.
+⚠️ Missing:  
+- Staff-specific availability  
+- Redis caching layer  
+- Public holiday handling
 
-## Risk Analysis
-**Critical Gaps:**
-- No SMS/robust notification system
-- Missing provider staff management
-- Dynamic availability calculations untested
-- Payment refunds require manual intervention
+---
 
-**Next Steps:**
-1. Implement social logins (P0)
-2. Build provider staff UI (P0)
-3. Add availability-aware search filters (P0)
-4. Develop admin reporting module (P1)
+## 8. Booking Flow (P0)
+**Status:** 65% Complete  
+✅ Implemented:  
+- Multi-step navigation  
+- Service selection  
+
+⚠️ Missing:  
+- Guest-to-login transition  
+- Payment integration  
+- Confirmation UI
+
+---
+
+## 9. Payments (P0)
+**Status:** 30% Complete  
+✅ Implemented:  
+- Payment method schema  
+
+⚠️ Missing:  
+- Stripe integration  
+- Refund system  
+- Payout tracking
+
+---
+
+## 10. Provider Dashboard (P0)
+**Status:** 50% Complete  
+✅ Implemented:  
+- Basic calendar view  
+- Appointment list  
+
+⚠️ Missing:  
+- Revenue reports  
+- Staff management  
+- Schedule overrides
+
+---
+
+## 11. Admin Dashboard (P1)
+**Status:** 20% Complete  
+⚠️ Missing core features:  
+- Fraud detection  
+- Content moderation  
+- System health monitoring
+
+---
+
+## 12. Notifications (P0)
+**Status:** 45% Complete  
+✅ Implemented:  
+- Email templates  
+
+⚠️ Missing:  
+- SMS integration  
+- BullMQ background jobs  
+- Preference management
+
+---
+
+## 13. Localization (P1)
+**Status:** 10% Complete  
+⚠️ Only English supported
+
+---
+
+# Critical Path Analysis
+**Blockers:**  
+1. Payment system integration  
+2. Authentication gaps (OTP/Social)  
+3. Redis caching for availability
+
+**Next Steps:**  
+1. Complete phone/SMS service integration  
+2. Implement Stripe Connect flows  
+3. Build staff availability subsystem
