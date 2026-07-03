@@ -1,104 +1,80 @@
 # Planity Clone Progress Report
 
-## Shared Types & Design System (P0)
-**Status**: Partially Implemented  
-- ✅ Shared TypeScript types defined in `@planity/shared` package  
-- ❌ Zod validation missing for 30% of API endpoints  
-- ✅ Design tokens implemented for mobile app  
-- ❌ Web app uses hard-coded spacing/colors in 12 components
+## Overview
+Completion status of features against product spec. Codebase analysis focuses on critical must-have functionality.
 
 ---
 
-## Feature Completion
+### 1. User Authentication
+**Status:** Complete (90%)
+**Code:** `src/auth/controllers`, `src/auth/middleware`, `src/models/User`
+- **Done:** Email/password registration with verification, JWT token flow, password reset, role-based access.
+- **Pending:** Social login (Google/Apple) integration (branch `feature/social-auth` in progress).
+- **Missing:** Rate-limiting on auth endpoints.
 
-### 1. User Authentication (P0)
-**Status**: 90% Complete  
-- ✅ Email/password + Google auth implemented  
-- ❌ Apple OAuth pending App Store review  
-- ✅ JWT token rotation working  
-- ⚠️ Password strength meter missing special char requirement
+### 2. Guest Browse & Explore
+**Status:** Partial (60%)
+**Code:** `src/guest/routes`, `src/client/business`
+- **Done:** Guest landing page with featured businesses, basic search by name/location.
+- **Missing:** Availability slot visibility for guests, post-login context preservation.
 
-### 2. Guest Browse & Explore (P0)
-**Status**: Complete  
-- ✅ Deep link preservation post-login  
-- ✅ "Book" triggers login modal  
-- ✅ Featured businesses carousel live
+### 3. Business Search & Discovery
+**Status:** In Progress (40%)
+**Code:** `src/search/services`, `src/client/search`
+- **Done:** Keyword search, basic category filtering.
+- **Missing:** Map view, availability-based filtering, deep linking.
 
-### 3. Business Search (P0)
-**Status**: 85% Complete  
-- ✅ Debounced search with suggestions  
-- ❌ Availability filter only checks next 7 days  
-- ✅ Infinite scroll implemented
+### 4. Business Detail View
+**Status:** Partial (70%)
+**Code:** `src/client/business/[id]`
+- **Done:** Service/staff tabs, gallery, share button.
+- **Missing:** Real-time opening hours status, sticky CTA for booking.
 
-### 4. Map-based Search (P1)
-**Status**: 40% Complete  
-- ✅ Basic map markers implemented  
-- ❌ Clusterinɡ not performant beyond 150 markers  
-- ❌ Filter sync partial (price/rating not applied)
+### 5. Service Categories
+**Status:** Not Started
+**Code:** N/A
+- **Pending:** Backend category CRUD endpoints (blocked by admin dashboard).
 
-### 5. Business Detail View (P0)
-**Status**: Complete  
-- ✅ Image carousel with zoom  
-- ✅ Real-time slot availability  
-- ✅ All action buttons functional
+### 6. Booking Flow
+**Status:** In Progress (50%)
+**Code:** `src/booking/controllers`, `src/client/booking`
+- **Done:** Service selection, date/time picker (no real-time slot locking).
+- **Missing:** Staff selection, payment integration, guest login redirection.
 
-### 6. Service Categories (P0)
-**Status**: Complete  
-- ✅ Category hierarchy from admin panel  
-- ✅ SEO-friendly URLs on web
+### 7. Appointment Management
+**Status:** Partial (30%)
+**Code:** `src/client/profile/appointments`
+- **Done:** Upcoming/past appointment lists.
+- **Missing:** Reschedule/Cancel logic, business owner portal integration.
 
-### 7. Booking Flow (P0)
-**Status**: 70% Complete  
-- ✅ Slot reservation system with 5-min hold  
-- ❌ Staff selection step not implemented  
-- ✅ Stripe payment integration  
-- ❌ Offline error handling missing
+### 8. Provider Portal
+**Status:** Not Started
+**Code:** N/A
+- **Pending:** Business owner onboarding flow (scheduled for Sprint 3).
 
-### 8. Appointment Management (P0)
-**Status**: 60% Complete  
-- ✅ Upcoming/Past tabs working  
-- ❌ Reschedule flow breaks payment refunds  
-- ✅ Review prompts post-completion
+### 9. Admin Dashboard
+**Status:** Not Started
+**Code:** N/A
+- **Pending:** Role permissions framework (blocked by auth team).
 
-### 9. Payment Integration (P0)
-**Status**: Complete  
-- ✅ Stripe SDK implemented  
-- ✅ Refund webhooks active
+### 10. Notifications
+**Status:** Partial (80%)
+**Code:** `src/jobs/notifications`
+- **Done:** Email/SMS templates, background job queue.
+- **Missing:** Real-time push notifications (iOS/Android).
 
-### 10. Notifications (P0)
-**Status**: 80% Complete  
-- ✅ In-app notifications  
-- ❌ Push notifications delayed (FCM config pending)
+### 11. Reviews & Ratings
+**Status:** Complete (100%)
+**Code:** `src/reviews`, `src/client/reviews`
+- **Done:** Submission, display, photo upload.
 
-### 11. Provider Dashboard (P0)
-**Status**: 50% Complete  
-- ✅ Service/Staff CRUD operations  
-- ❌ Availability matrix UI broken on web
-
-### 12. Admin Dashboard (P0)
-**Status**: Complete  
-- ✅ User/business moderation tools  
-- ✅ Analytics overview
-
-### 13. Reviews (P1)
-**Status**: Complete  
-- ✅ Flagging system with admin alerts
-
-### 14. Analytics (P1)
-**Status**: 20% Complete  
-- ❌ Only basic booking counts tracked  
-- ❌ Revenue reports not started
+### 12. Favorites
+**Status:** Complete (100%)
+**Code:** `src/client/favorites`
 
 ---
 
 ## Critical Gaps
-1. Staff selection missing in booking flow (blocks multi-staff businesses)
-2. Map performance issues risk production crashes
-3. Incomplete Zod validation exposes API to malformed requests
-4. Push notifications delay impacts user retention
-
-## Next Steps
-1. Prioritize staff selection UI/API (3 days)
-2. Optimize map clustering algorithm (2 days)
-3. Finalize OAuth integrations (1 day)
-4. Complete Zod schemas for all endpoints (2 days)
+- Social login, map search, and payment integration are behind schedule.
+- Admin/Provider features unstarted, risking business owner onboarding timeline.
+- Real-time slot availability logic incomplete, impacting booking reliability.
