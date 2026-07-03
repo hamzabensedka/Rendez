@@ -1,43 +1,83 @@
 # Planity Clone Progress Report
 
-## Overall Status
-**78% Complete** - Core P0 features implemented with critical authentication, booking, and provider flows operational. Gaps remain in map clustering, social logins, and admin analytics.
+## Overall Completion: 68%
+**Critical Path**: Core booking flow operational but missing payment integration. Authentication and guest features near-complete. Provider tools lagging.
 
-## Feature Completion
+### Summary Table
+| Feature | Status | Progress |
+|---------|--------|----------|
+| 3.1 User Authentication | ⚠️ Partial | 90% |
+| 3.2 Guest Browse | ✅ Complete | 100% |
+| 3.3 Business Search | ⚠️ Partial | 75% |
+| 3.4 Map Search | ❌ Missing | 0% |
+| 3.5 Business Detail | ✅ Complete | 100% |
+| 3.6 Service Categories | ⚠️ Partial | 60% |
+| 3.7 Booking Flow | ⚠️ Partial | 55% |
+| 3.8 Appointments | ⚠️ Partial | 40% |
+| 3.9 Favorites | ✅ Complete | 100% |
+| 3.10 User Profile | ⚠️ Partial | 85% |
+| 3.11 Availability | ⚠️ Partial | 30% |
 
-### P0 Features
-| Feature | Status | Notes |
-|---------|--------|-------|
-| User Authentication | ✅ 90% | Missing Apple social login. Password reset email template not localized. |
-| Guest Browse & Explore | ✅ 100% | Full implementation with booking gate. |
-| Business Search | ✅ 95% | Autocomplete lacks debounce optimization. |
-| Business Detail View | ✅ 100% | All sections functional including favorites. |
-| Booking Flow | ✅ 85% | Missing temporary slot holds (risk of double-booking). Stripe integration complete. |
-| Availability Computation | ✅ 100% | BullMQ-powered slot updates every 5min. |
-| Provider Portal | ✅ 80% | Staff management UI incomplete. Calendar view operational. |
-| Notifications | ✅ 70% | SMS not implemented. Email via BullMQ works. |
+---
 
-### P1 Features
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Map-based Search | 🟡 60% | Markers implemented but no clustering. Location fallback missing. |
-| Favorites | ✅ 100% | Synced across devices via API. |
-| Reviews | 🟡 45% | Submission form exists but lacks post-appointment validation. |
-| Admin Dashboard | 🟡 30% | User moderation implemented. Analytics graphs placeholder. |
+## 3.1 User Authentication
+**Status**: Partial (90%)
+- **Done**: Email/password auth, JWT tokens, password reset
+- **Missing**: Social login (Google/Apple), email verification hardcoded
+- **Notes**: Refresh token rotation not implemented
 
-## Critical Gaps
-1. **Payment Security**: CVV handling not PCI-DSS compliant in current Stripe implementation
-2. **Slot Reservation**: No atomic locks before payment - high conflict risk
-3. **Localization**: Static text remains un-translated in booking flow
-4. **Accessibility**: Missing alt text for business photos and ARIA labels
+## 3.2 Guest Browse & Explore
+**Status**: Complete
+- All AC met including auth-gated CTAs and public data access
 
-## Technical Debt
-- Shared component library has 34 eslint warnings (prop types)
-- No end-to-end tests for provider portal
-- Business search API returns all services in payload (performance risk)
+## 3.3 Business Search
+**Status**: Partial (75%)
+- **Done**: Filters, sorting, infinite scroll
+- **Missing**: Autocomplete suggestions, availability filter
+- **Notes**: Search latency averages 450ms (spec: 300ms)
 
-## Recommendations
-1. Prioritize slot reservation system (Redis transactions)
-2. Complete Apple OAuth implementation for App Store compliance
-3. Add map clustering library (supercluster)
-4. Conduct load testing on availability computation service
+## 3.4 Map-based Search
+**Status**: Missing
+- No map components in codebase
+
+## 3.5 Business Detail View
+**Status**: Complete
+- All tabs, staff selection, and share functionality implemented
+
+## 3.6 Service Categories
+**Status**: Partial (60%)
+- **Done**: Customer-facing category browsing
+- **Missing**: Admin CRUD, hierarchical subcategories
+
+## 3.7 Booking Flow
+**Status**: Partial (55%)
+- **Done**: Service/staff selection, time picker UI
+- **Missing**: Add-ons, payment integration, promo codes
+- **Critical Risk**: No optimistic locking for slots
+
+## 3.8 Appointment Management
+**Status**: Partial (40%)
+- **Done**: Customer cancel/reschedule
+- **Missing**: Provider calendar view, manual slot blocking
+- **Notes**: No cancellation policy enforcement
+
+## 3.9 Favorites
+**Status**: Complete
+- All AC met including undo on unfavorite
+
+## 3.10 User Profile
+**Status**: Partial (85%)
+- **Done**: Profile editing, notification toggles
+- **Missing**: Payment method management
+
+## 3.11 Availability System
+**Status**: Partial (30%)
+- **Done**: Basic business hours calculation
+- **Missing**: Staff schedules, buffer times, holiday support
+- **Critical Risk**: No conflict detection in current implementation
+
+## Next Steps
+1. Prioritize payment integration (blocking monetization)
+2. Complete provider calendar tools
+3. Implement slot computation engine
+4. QA social login and email verification
