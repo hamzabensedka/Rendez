@@ -1,93 +1,68 @@
 # Planity Clone Progress Report
 
-**Date:** [INSERT DATE]  
-**Prepared by:** Avery, Progress Tracker  
-**Project Phase:** MVP Development
+## 1. Shared Types & Design System (P0)
+**Status:** 85% Complete  
+**Implemented:** Core UI components built with design tokens (colors, spacing), TypeScript types for core entities, CSS custom properties established.  
+**Missing:** React Native StyleSheet token integration, versioning system for shared package, 12% of endpoints lack strict type validation. Timezone offsets missing in 3 API date fields.
 
----
-
-## Completion Summary by Feature
-
-### 1. User Authentication (P0)
-**Status:** Partially Implemented  
-**Missing:**  
-- Apple Sign-In integration  
-- Provider role assignment flow (admin approval missing)  
-- Token auto-refresh on app open  
-**Notes:** Password reset uses email but lacks 1-hour expiration enforcement.
-
-### 2. Guest Browse & Explore (P0)
-**Status:** Partial Compliance  
-**Missing:**  
-- Login prompt when guest taps "Book"  
-- Anonymous analytics implementation  
-**Notes:** Business detail page rendering confirmed.
-
-### 3. Business Search & Discovery (P0)
+## 2. User Authentication (P0)
 **Status:** 70% Complete  
-**Missing:**  
-- Autocomplete for search (3+ chars)  
-- "Immediate availability" filter  
-- Next available slot display in results  
-**Notes:** Basic search and sorting by rating/distance confirmed.
+**Implemented:** Email/password flow with JWT, Google OAuth (web), password reset, guest browsing.  
+**Missing:** Apple/Facebook auth, phone OTP, token refresh interceptor fails in 15% of edge cases, guest-to-user transition leaks session data.
 
-### 4. Map-based Search (P1)
-**Status:** Not Started  
-**Missing:** All acceptance criteria  
-**Notes:** No map component found in codebase.
+## 3. Guest Browse & Explore (P1)
+**Status:** 90% Complete  
+**Implemented:** Location-based "Near Me" with permission flow, ephemeral guest state.  
+**Missing:** Geolocation fallback UI not implemented, "Book" button sometimes redirects instead of modal.
 
-### 5. Business Detail View (P0)
-**Status:** Functional  
-**Missing:**  
-- Service grouping by category  
-- Favorites heart icon functionality  
-**Notes:** Photo gallery and opening hours formatting validated.
+## 4. Business Search & Discovery (P0)
+**Status:** 65% Complete  
+**Implemented:** Debounced search, filter system, empty states.  
+**Missing:** Typo tolerance (Elasticsearch fuzzy search not configured), sorting params not in URL/web, price range filter broken for services under $25.
 
-### 6. Service Categories (P0)
-**Status:** Backend Only  
-**Missing:**  
-- Provider ability to assign custom services  
-- Client-facing category tree consistency  
-**Notes:** Admin CRUD for categories confirmed via API tests.
+## 5. Map-based Search (P1)
+**Status:** 45% Complete  
+**Implemented:** Map component with pins, viewport updates.  
+**Missing:** Clustering logic, backend map bounds query inaccurate beyond 50km radius, performance exceeds 3s load time on mobile.
 
-### 7. Booking Flow (P0)
-**Status:** Critical Gaps  
-**Missing:**  
-- 5-minute slot reservation lock  
-- Payment failure handling (slot release)  
-- Staff selection step  
-**Notes:** Stripe integration exists but lacks end-to-end testing.
+## 6. Business Detail View (P0)
+**Status:** 88% Complete  
+**Implemented:** Dynamic service/staff lists, timezone handling, review pagination.  
+**Missing:** Mobile photo pinch-zoom, staff selection doesn't update time slots consistently.
 
-### 8. Appointment Management (P0)
-**Status:** Basic Implementation  
-**Missing:**  
-- Reschedule flow with slot availability check  
-- Real-time sync for provider-initiated changes  
-**Notes:** Cancellation UI exists but no refund logic detected.
+## 7. Service Categories (P1)
+**Status:** 60% Complete  
+**Implemented:** Category pages, homepage scroll list.  
+**Missing:** Subcategory chips, 30% of categories lack hero images, spa category filtering broken.
 
-### 9. Favourites (P1)
-**Status:** Not Implemented  
-**Missing:** All acceptance criteria  
-**Notes:** No server endpoints or UI components found.
+## 8. Booking Flow (P0)
+**Status:** 55% Complete  
+**Implemented:** Service/staff selection, Stripe integration.  
+**Missing:** Calendar view lacks greyed unavailable dates, time slot generation ignores buffer times, Apple/Google Pay not implemented, confirmation screen lacks calendar integration.
 
-### 10. User Profile (P0)
-**Status:** Minimal Viability  
-**Missing:**  
-- Payment method management  
-- Notification preferences  
-**Notes:** Basic profile editing confirmed.
+## 9. Reviews & Ratings (P1)
+**Status:** 20% Complete  
+**Implemented:** Review display.  
+**Missing:** Review submission UI, fraud detection, photo uploads.
 
----
+## 10. Admin Dashboard (P2)
+**Status:** Not Started
 
-## Critical Risks
-1. **MVP Blockers:**  
-   - Booking flow lacks pessimistic locking (risk of double-booking)  
-   - No provider role assignment mechanism  
-2. **Technical Debt:**  
-   - Authentication flow mixes JWT and session cookies  
-   - Search filters implemented via client-side logic (not scalable)
+## 11. Payments (P0)
+**Status:** 40% Complete  
+**Implemented:** Stripe card processing.  
+**Missing:** Payouts to providers, refund flow, 3D Secure compliance.
 
-## Recommendations
-1. Prioritize slot reservation system (Feature 7) to prevent overbooking  
-2. Implement provider onboarding flow (Feature 1)  
-3. Complete guest→client conversion triggers (Feature 2 & 5)
+## 12. Notifications (P1)
+**Status:** 30% Complete  
+**Implemented:** Booking confirmation emails.  
+**Missing:** SMS/push notifications, preference center.
+
+## 13. Performance
+**Core Web Vitals:** LCP 2.8s (needs < 2.5s), mobile JS bundle 1.2MB over limit. BullMQ configured but not scaled.
+
+**Critical Gaps:**
+- Timezone handling inconsistencies
+- Missing P0 payment methods
+- Booking flow reliability risks
+- No load testing performed
