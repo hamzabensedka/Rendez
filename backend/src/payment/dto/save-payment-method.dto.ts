@@ -2,8 +2,8 @@ import { IsString } from 'class-validator';
 
 export class SavePaymentMethodDto {
   @IsString()
-  customerId: string;
+  paymentMethodId: string;
 
   @IsString()
-  paymentMethodId: string;
+  clientId: string;
 }
