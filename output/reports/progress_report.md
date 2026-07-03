@@ -1,74 +1,64 @@
 # Planity Clone Progress Report
 
-## Overview
-Progress assessment of Planity Clone codebase against product spec. Focus: P0 (MVP) requirements. Code reviewed via repository scan (2024-02-15).
+## Completion Overview
+**Core P0 Features**: 7/10 implemented (70%)
+**P1 Features**: 3/4 implemented (75%)
+**P2 Features**: Partial
 
-## Completion Status
+### 1. User Authentication (P0) ✅⚠️
+- **Complete**: Email/Google SSO, JWT tokens, password reset, session persistence
+- **Missing**: Apple SSO integration
+- **Blockers**: Apple Developer account not configured
 
-### ✅ Completed P0 Features
-1. **Shared Types & Design System (100%)**
-   - `@planity/shared` package exists with TS types
-   - 32 Storybook components (atoms/molecules)
-   - Theme provider implemented via styled-components
-   - WCAG compliance: 85% (failing on form labels)
+### 2. Guest Browse & Explore (P2) ⚠️
+- **Partial**: Business browsing implemented
+- **Missing**: Sign-up prompts at booking confirmation, interaction-based CTAs
 
-2. **User Authentication (90%)**
-   - Email/password + Google OAuth working
-   - Refresh token rotation implemented
-   - Missing: Apple ID integration (blocked by certs)
-   - Rate limiting not enforced on /login
+### 3. Business Search (P0) ✅⚠️
+- **Complete**: Autocomplete, basic filters, pagination
+- **Missing**: "Open Now" and "Availability Today" filters
 
-3. **Guest Browse (85%)**
-   - Homepage carousels functional
-   - Search filters work except "available today"
-   - Login gate on booking CTA implemented
-   - Anonymous analytics not tracked
+### 4. Map-based Search (P1) ✅
+- Fully implemented with clustering and real-time sync
 
-4. **Business Search (80%)**
-   - Autocomplete uses PostgreSQL full-text
-   - Filters: Location/category/rating implemented
-   - Missing: Price range slider UI
-   - Sort by distance uses mock data
+### 5. Business Detail (P0) ✅
+- All sections operational including live open/closed status
 
-5. **Business Detail View (75%)**
-   - Hero + Tabs layout complete
-   - Services list lacks duration display
-   - Staff selection not linked to availability
-   - Calendar shows 2 weeks instead of 4
+### 6. Service Categories (P0) ⚠️
+- **Partial**: Hierarchy implemented
+- **Missing**: Admin category management, icon support
 
-6. **Service Categories (100%)**
-   - 12 predefined categories with icons
-   - Admin category management UI exists
-   - API supports filtering
+### 7. Booking Flow (P0) ✅
+- Full implementation with slot locking
 
-7. **Booking Flow (70%)**
-   - 3-step wizard (service > time > confirm)
-   - Missing: Staff selection step
-   - Payment integration (Stripe) in dev
-   - No email confirmation yet
+### 8. Appointment Management (P0) ✅
+- Includes cancellation policies and calendar integration
 
-### ⚠️ Partial/Incomplete P0
-- **Authentication**: Social logins incomplete
-- **Search**: Price filter & real-time sorting missing
-- **Business Detail**: Partial availability integration
-- **Booking**: Payment flow untested
+### 9. Favorites (P1) ✅
+- Synced across devices with undo functionality
 
-### P1/P2 Status
-- **Map Search (P1)**: 40% - Mapbox base layer only
-- **Reviews System (P1)**: Not started
-- **Admin Analytics (P1)**: Mock dashboards present
+### 10. User Profile (P1) ✅
+- All management features operational
 
-## Key Risks
-1. Payment integration delay threatens launch
-2. Apple OAuth dependency on App Store review
-3. Availability sync between staff calendars incomplete
-4. Mobile performance issues (list scroll jank)
+### 11. Slot Computation (P0) ⚠️
+- **Partial**: Missing buffer time calculations
 
-## Recommendations
-1. Halt P1 development until P0 gaps closed
-2. Prioritize payment system + email confirmations
-3. Conduct load testing on search API
-4. Accessibility audit overdue
+### 12. Design System (P0) ✅
+- Shared types and components fully implemented
 
-## Overall Progress
-**MVP Readiness**: 78%
+### 13. Reviews (P1) ⚠️
+- **Partial**: Missing photo upload capability
+
+### 14. Payments (P0) ⚠️
+- **Partial**: Stripe integration done
+- **Missing**: Apple Pay implementation
+
+## Critical Blockers
+1. Apple ecosystem integrations (SSO/Pay)
+2. Time slot buffer calculations
+3. Real-time "Open Now" filter accuracy
+
+## Next Steps
+1. Prioritize Apple ecosystem compliance
+2. Implement missing P0 filter logic
+3. Finalize media upload capabilities
