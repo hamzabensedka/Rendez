@@ -1,86 +1,92 @@
 # Planity Clone Progress Report
 
-## 1. Shared Types & Design System (P0)
-✅ **Completed**  
-- Monorepo package with shared TS types implemented
-- Design tokens exported for React Native/Web
-- 85% UI components follow design system
-⚠️ **Missing**:  
-- Storybook docs for 15 components
-- Null checks incomplete in Appointment type
+## Core Feature Completion Status
 
-## 2. User Authentication (P0)
-✅ **Completed**  
-- Email/password + Google auth working
-- JWT token rotation implemented
-- Basic RBAC enforced
-⚠️ **Missing**:  
-- Apple social login
-- Admin approval flow for providers
-- Password reset email template
+### 3.1 User Authentication (P0)
+**Status**: Partially Complete  
+**Implemented**:
+- Email/password registration (customer)
+- JWT token flow
+- Basic session persistence  
+**Gaps**:
+- Provider registration lacks admin approval workflow
+- Apple social login missing
+- Email verification not enforced pre-booking
 
-## 3. Guest Browse & Explore (P1)
-✅ **Completed**  
-- Full business detail access
-- Login modal triggers on restricted actions
-⚠️ **Missing**:  
-- Guest session state reset after login
-- Search history persistence
+### 3.2 Guest Browse & Explore (P0)
+**Status**: Partially Complete  
+**Implemented**:
+- Business/service viewing  
+**Gaps**:
+- "Add to Favorites" doesn't trigger login modal
+- Home screen lacks featured businesses section
 
-## 4. Business Search (P0)
-✅ **Completed**  
-- Search API with geo-filtering
-- Price/rating filters
-⚠️ **Missing**:  
-- Autocomplete suggestions
-- "Open Now" toggle logic
+### 3.3 Business Search & Discovery (P0)
+**Status**: Partially Complete  
+**Implemented**:
+- Basic search with category filters
+- Geolocation support  
+**Gaps**:
+- No price range/distance filters
+- Missing autocomplete
+- Recent searches not saved
 
-## 5. Map-based Search (P1)
-🟡 **Partial**  
-- Map loads user location
-- Basic pin clustering
-⚠️ **Missing**:  
-- Bottom sheet preview cards
-- Pan/zoom reload threshold
+### 3.5 Business Detail View (P0)
+**Status**: Mostly Complete  
+**Implemented**:
+- Service listings
+- Review display
+- Basic booking CTA  
+**Gaps**:
+- Provider edit portal missing
+- Photo gallery lacks lightbox
 
-## 6. Business Detail (P0)
-✅ **Completed**  
-- Image carousel
-- Service/staff tabs
-⚠️ **Missing**:  
-- Staff booking deep links
-- Review photo uploads
+### 3.7 Booking Flow (P0)
+**Status**: High Risk  
+**Implemented**:
+- Basic time slot selection
+- Stripe integration  
+**Gaps**:
+- No concurrent slot holds
+- Missing staff selection logic
+- No add-on support
 
-## 7. Service Categories (P0)
-🟡 **Partial**  
-- Category hierarchy in DB
-- Home screen cards
-⚠️ **Missing**:  
-- Admin category management UI
-- Leaf category enforcement
+### 3.8 Appointment Management (P0)
+**Status**: Partial  
+**Implemented**:
+- Upcoming appointments list
+- Basic cancellation  
+**Gaps**:
+- No reschedule flow
+- Missing push reminders
+- No status tracking (No-show/Pending)
 
-## 8. Booking Flow (P0)
-✅ **Completed**  
-- Step-by-step wizard
-- Time slot generation
-⚠️ **Missing**:  
-- Extras selection
-- Guest-to-account linking
+## P1 Features
 
-## 9. Availability Engine (P0)
-🟡 **Partial**  
-- Basic slot computation
-- UTC time storage
-⚠️ **Missing**:  
-- Staff capacity limits
-- Buffer time calculations
+### 3.4 Map-based Search
+**Status**: Not Started  
+**Gaps**:
+- No clustering
+- Missing "Search this area"
+
+### 3.6 Service Categories
+**Status**: Partial  
+**Implemented**:
+- Top-level categories  
+**Gaps**:
+- No subcategory management
+
+### 3.9 Favorites
+**Status**: Complete  
+**Note**: Lacks undo on unfavorite
 
 ## Critical Gaps
-1. 3 P0 features incomplete (Auth, Categories, Availability)
-2. Mobile performance issues in map view
-3. Missing admin dashboard components
+1. Payment: Missing Apple/Google Pay
+2. Auth: No provider approval workflow
+3. Booking: No slot reservation system
+4. Notifications: Background jobs not implemented
 
 ## Next Steps
-1. Prioritize Apple auth + provider approval
-2. Implement slot buffer logic
-3. Complete Storybook documentation
+1. Prioritize slot concurrency (3.7)
+2. Implement provider approval flow
+3. Build notification subsystem
