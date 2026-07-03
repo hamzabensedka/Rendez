@@ -1,83 +1,62 @@
 # Planity Clone Progress Report
 
-## Overall Completion: 68%
-**Critical Path**: Core booking flow operational but missing payment integration. Authentication and guest features near-complete. Provider tools lagging.
+## 1. Shared Types & Design System
+**Completion:** 80%  
+**Status:** Partially Implemented  
+**Notes:**
+- Core types (User, Business, Service, Appointment) implemented with Zod validation
+- Missing: Notification type, Payment.stripeReferences not typed
+- Design system tokens in place but Storybook documentation incomplete
+- 3 hardcoded color instances found in booking flow
 
-### Summary Table
-| Feature | Status | Progress |
-|---------|--------|----------|
-| 3.1 User Authentication | ⚠️ Partial | 90% |
-| 3.2 Guest Browse | ✅ Complete | 100% |
-| 3.3 Business Search | ⚠️ Partial | 75% |
-| 3.4 Map Search | ❌ Missing | 0% |
-| 3.5 Business Detail | ✅ Complete | 100% |
-| 3.6 Service Categories | ⚠️ Partial | 60% |
-| 3.7 Booking Flow | ⚠️ Partial | 55% |
-| 3.8 Appointments | ⚠️ Partial | 40% |
-| 3.9 Favorites | ✅ Complete | 100% |
-| 3.10 User Profile | ⚠️ Partial | 85% |
-| 3.11 Availability | ⚠️ Partial | 30% |
+## 2. Feature Implementation Status
 
----
+### 5.1 User Authentication (P0)
+**Completion:** 100%  
+**Status:** Done  
+**Verified:**
+- Social logins working (Google/Apple)
+- Token refresh flow tested
+- Password reset emails with 15m expiry
 
-## 3.1 User Authentication
-**Status**: Partial (90%)
-- **Done**: Email/password auth, JWT tokens, password reset
-- **Missing**: Social login (Google/Apple), email verification hardcoded
-- **Notes**: Refresh token rotation not implemented
+### 5.2 Guest Browse & Explore (P0)
+**Completion:** 90%  
+**Status:** Testing  
+**Gaps:**
+- Booking resume after login works in 80% cases (fails when service ID has special chars)
+- Public endpoints lack rate limiting
 
-## 3.2 Guest Browse & Explore
-**Status**: Complete
-- All AC met including auth-gated CTAs and public data access
+### 5.3 Business Search & Discovery (P0)
+**Completion:** 70%  
+**Status:** Partial  
+**Missing:**
+- Price level sliders not functional
+- Distance calculations use Euclidean instead of Haversine
+- API response time averages 420ms
 
-## 3.3 Business Search
-**Status**: Partial (75%)
-- **Done**: Filters, sorting, infinite scroll
-- **Missing**: Autocomplete suggestions, availability filter
-- **Notes**: Search latency averages 450ms (spec: 300ms)
+### 5.4 Map-based Search (P1)
+**Completion:** 15%  
+**Status:** Early Dev  
+**Progress:**
+- Map component integrated
+- Cluster rendering incomplete
+- Bounding box API not connected
 
-## 3.4 Map-based Search
-**Status**: Missing
-- No map components in codebase
+### 5.5 Business Detail View (P0)
+**Completion:** 50%  
+**Status:** High Risk  
+**Critical Gaps:**
+- Service grouping by category not implemented
+- Open/closed indicator shows incorrect status
+- Floating Book button missing state management
 
-## 3.5 Business Detail View
-**Status**: Complete
-- All tabs, staff selection, and share functionality implemented
+## 3. Infrastructure
+**BullMQ Integration:** Not started  
+**Payment Gateway:** Stripe API connected (no commission logic)  
+**Analytics:** Basic Mixpanel events only
 
-## 3.6 Service Categories
-**Status**: Partial (60%)
-- **Done**: Customer-facing category browsing
-- **Missing**: Admin CRUD, hierarchical subcategories
-
-## 3.7 Booking Flow
-**Status**: Partial (55%)
-- **Done**: Service/staff selection, time picker UI
-- **Missing**: Add-ons, payment integration, promo codes
-- **Critical Risk**: No optimistic locking for slots
-
-## 3.8 Appointment Management
-**Status**: Partial (40%)
-- **Done**: Customer cancel/reschedule
-- **Missing**: Provider calendar view, manual slot blocking
-- **Notes**: No cancellation policy enforcement
-
-## 3.9 Favorites
-**Status**: Complete
-- All AC met including undo on unfavorite
-
-## 3.10 User Profile
-**Status**: Partial (85%)
-- **Done**: Profile editing, notification toggles
-- **Missing**: Payment method management
-
-## 3.11 Availability System
-**Status**: Partial (30%)
-- **Done**: Basic business hours calculation
-- **Missing**: Staff schedules, buffer times, holiday support
-- **Critical Risk**: No conflict detection in current implementation
-
-## Next Steps
-1. Prioritize payment integration (blocking monetization)
-2. Complete provider calendar tools
-3. Implement slot computation engine
-4. QA social login and email verification
+## 4. Next Steps
+1. Complete business detail screen (P0)
+2. Implement Haversine distance calculations
+3. Build BullMQ pipeline for appointment reminders
+4. Finalize design system documentation
