@@ -1,96 +1,93 @@
 # Planity Clone Progress Report
 
-## Overall Status
-**MVP Core (P0)**: 80% Complete  
-**P1 Features**: 40% Complete  
-**P2 Features**: 0% Started
+**Date:** [INSERT DATE]  
+**Prepared by:** Avery, Progress Tracker  
+**Project Phase:** MVP Development
 
 ---
 
-### 1. Shared Types & Design System (P0)
-**Status**: Complete  
-- All TypeScript interfaces (User, Business, Appointment) defined in `/src/types`
-- Storybook implemented with 28 component stories
-- Backend DTOs match frontend types
+## Completion Summary by Feature
 
-### 2. Authentication (P0)
-**Status**: Complete  
-- Email/password + Google OAuth implemented
-- JWT stored in secure HTTP-only cookies
-- Password reset flow tested  
-**Missing**: Apple login (blocked by App Store review)
+### 1. User Authentication (P0)
+**Status:** Partially Implemented  
+**Missing:**  
+- Apple Sign-In integration  
+- Provider role assignment flow (admin approval missing)  
+- Token auto-refresh on app open  
+**Notes:** Password reset uses email but lacks 1-hour expiration enforcement.
 
-### 3. Guest Browse (P0)
-**Status**: Complete  
-- Business details accessible without login
-- Booking CTA triggers auth modal
-- Session storage cleared after 24h
+### 2. Guest Browse & Explore (P0)
+**Status:** Partial Compliance  
+**Missing:**  
+- Login prompt when guest taps "Book"  
+- Anonymous analytics implementation  
+**Notes:** Business detail page rendering confirmed.
 
-### 4. Business Search (P0)
-**Status**: Partial  
-- ✅ Search with filters (category, rating)
-- ✅ Infinite scroll implemented
-- ❌ Autocomplete suggestions missing
-- ❌ Recent searches not persisted
+### 3. Business Search & Discovery (P0)
+**Status:** 70% Complete  
+**Missing:**  
+- Autocomplete for search (3+ chars)  
+- "Immediate availability" filter  
+- Next available slot display in results  
+**Notes:** Basic search and sorting by rating/distance confirmed.
 
-### 5. Map-based Search (P1)
-**Status**: Not Started  
-- Mapbox integration ticket backlogged
+### 4. Map-based Search (P1)
+**Status:** Not Started  
+**Missing:** All acceptance criteria  
+**Notes:** No map component found in codebase.
 
-### 6. Business Detail (P0)
-**Status**: Complete  
-- All tabs (Services/Reviews/About) functional
-- Service list shows dynamic pricing
-- Shared button uses native API
+### 5. Business Detail View (P0)
+**Status:** Functional  
+**Missing:**  
+- Service grouping by category  
+- Favorites heart icon functionality  
+**Notes:** Photo gallery and opening hours formatting validated.
 
-### 7. Service Categories (P0)
-**Status**: Partial  
-- Static category grid implemented
-- ❌ No subcategory support
-- Business admin UI missing (P2)
+### 6. Service Categories (P0)
+**Status:** Backend Only  
+**Missing:**  
+- Provider ability to assign custom services  
+- Client-facing category tree consistency  
+**Notes:** Admin CRUD for categories confirmed via API tests.
 
-### 8. Booking Flow (P0)
-**Status**: Complete*  
-- All 5 steps implemented
-- Real-time slot computation working
-- ❌ Payment integration pending (P1)
+### 7. Booking Flow (P0)
+**Status:** Critical Gaps  
+**Missing:**  
+- 5-minute slot reservation lock  
+- Payment failure handling (slot release)  
+- Staff selection step  
+**Notes:** Stripe integration exists but lacks end-to-end testing.
 
-### 9. Appointments (P0)
-**Status**: Partial  
-- ✅ Upcoming/Past tabs with actions
-- ✅ Reschedule flow functional
-- ❌ Cancellation policy not enforced
+### 8. Appointment Management (P0)
+**Status:** Basic Implementation  
+**Missing:**  
+- Reschedule flow with slot availability check  
+- Real-time sync for provider-initiated changes  
+**Notes:** Cancellation UI exists but no refund logic detected.
 
-### 10. Favorites (P1)
-**Status**: Complete  
-- Heart icons persist across sessions
-- Sync via Firebase listeners
+### 9. Favourites (P1)
+**Status:** Not Implemented  
+**Missing:** All acceptance criteria  
+**Notes:** No server endpoints or UI components found.
 
-### 11. User Profile (P0)
-**Status**: Complete  
-- All CRUD operations implemented
-- Sensitive actions require re-auth
-
-### 12. Availability Engine (P0)
-**Status**: Partial  
-- Slot computation working
-- ❌ Fails 500ms benchmark at 60 days
-- Timezone handling incomplete
-
-### 13. Reviews (P1)
-**Status**: Not Started  
-- Blocked by appointment completion tracking
+### 10. User Profile (P0)
+**Status:** Minimal Viability  
+**Missing:**  
+- Payment method management  
+- Notification preferences  
+**Notes:** Basic profile editing confirmed.
 
 ---
 
-## Critical Gaps
-1. Payment integration (Blocking launch)
-2. Apple login compliance
-3. Slot computation performance
-4. Cancellation policy enforcement
+## Critical Risks
+1. **MVP Blockers:**  
+   - Booking flow lacks pessimistic locking (risk of double-booking)  
+   - No provider role assignment mechanism  
+2. **Technical Debt:**  
+   - Authentication flow mixes JWT and session cookies  
+   - Search filters implemented via client-side logic (not scalable)
 
 ## Recommendations
-1. Prioritize Stripe integration (P1)
-2. Conduct load testing on availability API
-3. Implement autocomplete search (2 days effort)
-4. Start App Store review process for Apple login
+1. Prioritize slot reservation system (Feature 7) to prevent overbooking  
+2. Implement provider onboarding flow (Feature 1)  
+3. Complete guest→client conversion triggers (Feature 2 & 5)
