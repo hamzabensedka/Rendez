@@ -1,80 +1,96 @@
 # Planity Clone Progress Report
 
 ## Overall Status
-**75% Complete** - Core user flows implemented with gaps in provider/admin tooling, notifications, and edge case handling. Critical path (auth, booking, payments) functional but requires polish.
+**MVP Core (P0)**: 80% Complete  
+**P1 Features**: 40% Complete  
+**P2 Features**: 0% Started
 
-## Feature Completion
+---
 
-### ✅ 3.1 User Authentication (90%)
-- Implemented: Email/password, Google OAuth, JWT sessions, password reset flow.
-- Missing: Apple Sign-In (code stubs only), provider registration business detail capture.
+### 1. Shared Types & Design System (P0)
+**Status**: Complete  
+- All TypeScript interfaces (User, Business, Appointment) defined in `/src/types`
+- Storybook implemented with 28 component stories
+- Backend DTOs match frontend types
 
-### ✅ 3.2 Guest Browse & Explore (100%)
-- Full functionality verified: search, map, deep-linking to auth.
+### 2. Authentication (P0)
+**Status**: Complete  
+- Email/password + Google OAuth implemented
+- JWT stored in secure HTTP-only cookies
+- Password reset flow tested  
+**Missing**: Apple login (blocked by App Store review)
 
-### ✅ 3.3 Business Search & Discovery (80%)
-- Done: Search by name/keyword, filters (price, rating), sorting.
-- Missing: Availability filter, search history persistence.
+### 3. Guest Browse (P0)
+**Status**: Complete  
+- Business details accessible without login
+- Booking CTA triggers auth modal
+- Session storage cleared after 24h
 
-### 🟡 3.4 Map-based Search (70%)
-- Implemented: Pins, clustering, viewport search.
-- Missing: Radius slider, GPS centering button UI bugs.
+### 4. Business Search (P0)
+**Status**: Partial  
+- ✅ Search with filters (category, rating)
+- ✅ Infinite scroll implemented
+- ❌ Autocomplete suggestions missing
+- ❌ Recent searches not persisted
 
-### ✅ 3.5 Business Detail View (95%)
-- All elements present. Issue: Staff selection not linked to availability.
+### 5. Map-based Search (P1)
+**Status**: Not Started  
+- Mapbox integration ticket backlogged
 
-### 🟡 3.6 Service Categories (60%)
-- Basic category tagging works.
-- Missing: Admin UI for managing hierarchy, sub-categories.
+### 6. Business Detail (P0)
+**Status**: Complete  
+- All tabs (Services/Reviews/About) functional
+- Service list shows dynamic pricing
+- Shared button uses native API
 
-### ✅ 3.7 Booking Flow (85%)
-- Core flow works with real-time slots.
-- Issues: Optimistic locking not handling concurrency, promo codes unimplemented.
+### 7. Service Categories (P0)
+**Status**: Partial  
+- Static category grid implemented
+- ❌ No subcategory support
+- Business admin UI missing (P2)
 
-### 🟡 3.8 Appointment Management (75%)
-- Customers can cancel/reschedule.
-- Missing: Cancellation policy enforcement, provider-side modifications.
+### 8. Booking Flow (P0)
+**Status**: Complete*  
+- All 5 steps implemented
+- Real-time slot computation working
+- ❌ Payment integration pending (P1)
 
-### ✅ 3.9 Favorites (100%)
-- Full sync across devices verified.
+### 9. Appointments (P0)
+**Status**: Partial  
+- ✅ Upcoming/Past tabs with actions
+- ✅ Reschedule flow functional
+- ❌ Cancellation policy not enforced
 
-### ✅ 3.10 User Profile (90%)
-- Missing: Payment method deletion UI.
+### 10. Favorites (P1)
+**Status**: Complete  
+- Heart icons persist across sessions
+- Sync via Firebase listeners
 
-### 🟡 3.11 Reviews & Ratings (50%)
-- Customers can submit reviews.
-- Missing: Rating breakdown charts, provider responses.
+### 11. User Profile (P0)
+**Status**: Complete  
+- All CRUD operations implemented
+- Sensitive actions require re-auth
 
-### 🟡 3.12 Payment Integration (80%)
-- Stripe integration live.
-- Missing: Support for multiple payment methods per user.
+### 12. Availability Engine (P0)
+**Status**: Partial  
+- Slot computation working
+- ❌ Fails 500ms benchmark at 60 days
+- Timezone handling incomplete
 
-### 🟡 3.13 Notifications (30%)
-- Email triggers implemented.
-- Missing: Push notifications, in-app toast system.
+### 13. Reviews (P1)
+**Status**: Not Started  
+- Blocked by appointment completion tracking
 
-### 🔴 3.14 Provider Portal (40%)
-- Basic service management done.
-- Missing: Staff management, availability bulk editing, booking analytics.
-
-### 🟡 3.15 Admin Dashboard (55%)
-- User/business CRUD operational.
-- Missing: Review moderation, analytics dashboards.
-
-### ✅ 3.16 Background Jobs (100%)
-- BullMQ handles email queues and daily cleanup.
-
-### ✅ 3.17 Design System (85%)
-- 90% of components standardized. Missing: Date picker theming.
+---
 
 ## Critical Gaps
-1. Provider onboarding incomplete
-2. Missing key admin moderation tools
-3. Notification system partial
-4. Concurrency issues in booking flow
+1. Payment integration (Blocking launch)
+2. Apple login compliance
+3. Slot computation performance
+4. Cancellation policy enforcement
 
 ## Recommendations
-1. Prioritize provider portal completion to enable business testing
-2. Implement BullMQ pipeline for push notifications
-3. Address booking race condition
-4. Build admin moderation UI next sprint
+1. Prioritize Stripe integration (P1)
+2. Conduct load testing on availability API
+3. Implement autocomplete search (2 days effort)
+4. Start App Store review process for Apple login
