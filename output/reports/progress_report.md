@@ -1,68 +1,62 @@
 # Planity Clone Progress Report
 
-## Overview
-Core P0 functionality is partially implemented with critical gaps in payment integration, booking concurrency, and map features. Foundational elements (auth, design system) are established but require hardening.
+## Overall Completion Status
+**62% Complete** - Core authentication and booking flows implemented but critical gaps remain in payment integration, real-time availability, and provider portal features.
 
 ---
 
-### 1. Shared Types & Design System
-**Status:** 85% Complete  
-**Gaps:**
-- Missing accessibility audits (screen reader labels inconsistent).
-- Shared DTOs lack validation decorators in 30% of schemas.
-**Risk:** Type mismatches possible in appointment creation flow.
+### ✅ Completed Features (Fully or Mostly Implemented)
 
-### 2. User Authentication
-**Status:** 90% Complete  
-**Gaps:**
-- Apple Social Login not implemented (branch `feature/auth` WIP).
-- Refresh token rotation untested for provider role.
-**Risk:** OAuth2 callback URL misconfiguration in staging.
+1. **User Authentication (85%)**
+   - Implemented: Email/password & social sign-up/login, JWT sessions, basic provider registration
+   - Missing: Phone OTP, biometric unlock, provider document upload/admin approval
 
-### 3. Guest Browse & Explore
-**Status:** 100% Complete  
-**Notes:** Login gate implemented via route guards. Guest state purged on tab close.
+2. **Guest Browse & Explore (70%)**
+   - Implemented: Business search, detail pages, booking prompts
+   - Missing: Location-based availability checks, service menu visibility
 
-### 4. Business Search & Discovery
-**Status:** 70% Complete  
-**Gaps:**
-- Availability filter API returns 500 error when date=null.
-- Pagination broken for price-range searches.
-**Risk:** Search latency averages 420ms (exceeds 300ms target).
-
-### 5. Map-based Search
-**Status:** 45% Complete  
-**Gaps:**
-- Pin clustering unimplemented (PR #112 pending review).
-- Map bounds API integration missing debounce.
-**Critical:** Business preview cards show placeholder data vs live info.
-
-### 6. Service Categories
-**Status:** 60% Complete  
-**Gaps:**
-- Admin category CRUD UI incomplete (blocked by backend validation bug #205).
-- Subcategory browsing redirects to root path.
-
-### 7. Business Detail View
-**Status:** 95% Complete  
-**Gaps:**
-- "Get Directions" links use static coordinates vs user location.
-- Favorite toggle doesn't update global state without refresh.
-
-### 8. Booking Flow
-**Status:** 50% Complete  
-**Gaps:**
-- **Critical:** No payment integration (Stripe SDK missing).
-- Time slot selection allows double-booking (no concurrency locks).
-- Staff selection UI not wired to API.
-**Risk:** End-to-end flow untested beyond step 3.
+3. **Business Detail View (80%)**
+   - Implemented: Service listings, photo gallery, basic review display
+   - Missing: Review sorting/helpful marks, full About tab details
 
 ---
 
-## Recommendations
-1. **Priority:** Fix booking concurrency & payment (blockers for MVP).
-2. Conduct load testing on search APIs.
-3. Finalize Apple OAuth2 implementation.
-4. Audit design system accessibility before UAT.
+### ⚠️ Incomplete Priority Features (P0 Gaps)
 
-**Overall Completion:** 68% (P0 Features: 72%)
+1. **Booking Flow (65%)**
+   - Missing: Staff selection UI, payment integration, concurrent slot handling
+
+2. **Appointment Management (50%)**
+   - Missing: Provider calendar view, cancellation policies, push reminders
+
+3. **Service Categories (40%)**
+   - Missing: Subcategory pages, admin-managed ordering
+
+---
+
+### 🔄 Partial Implementations
+
+- **Map Search (P1)**: Basic pin display done; clustering and area search" missing
+- **Reviews System**: Display implemented; voting/sorting not done
+- **Admin Dashboard**: User management only; lacks business verification UI
+
+---
+
+### ❌ Not Started
+- Stripe/PayPal integration
+- Multi-service combo bookings
+- Localization system
+- COVID-19 measures display
+
+---
+
+## Critical Risks
+1. Payment integration delay blocks monetization
+2. Missing real-time slot computation causes double bookings
+3. Provider portal incomplete (blocks business onboarding)
+
+## Next Steps
+1. Prioritize payment gateway (2.7)
+2. Build slot conflict resolution (2.11)
+3. Complete provider calendar (2.8)
+4. Implement biometric auth (2.1)
