@@ -1,312 +1,288 @@
 # Planity Clone Product Specification
 
 ## 1. Introduction
-Planity Clone is a mobile-first platform that connects customers with beauty and wellness salons for seamless appointment booking. This document defines the complete set of features, user stories, acceptance criteria and priorities for the initial public release (v1.0). It serves as the single source of truth for the engineering, design and QA teams.
+Planity Clone is a multi-tenant marketplace platform connecting customers with local service businesses (salons, wellness, etc.) for appointment booking. The product encompasses consumer-facing mobile app (iOS/Android), a provider portal (web), and an admin dashboard (web). This document defines complete feature specifications, acceptance criteria, and priorities for all cross-functional modules.
 
-## 2. Product Vision & Goals
-- **Vision:** Become the go-to app for discovering and booking beauty appointments in under 60 seconds.
-- **Business Goals:** 15,000 monthly bookings within 6 months, 30% user retention, 4.5+ star app store rating.
-- **User Goals:** Easy discovery of nearby salons, transparent pricing, instant booking, reliable reminders and a seamless post-booking experience (reviews, rescheduling).
+### 1.1 User Roles
+- **Guest (unauthenticated)**: browse, search, view limited business details.
+- **Customer (authenticated)**: full booking, favorites, profile, reviews.
+- **Provider/Business Owner**: manage business listings, services, staff, schedules, and bookings via Provider Portal.
+- **Admin**: manage platform, users, businesses, analytics via Admin Dashboard.
 
-## 3. User Personas
-1. **End User (Customer):** Books services for themselves or family. Values convenience, trust and price clarity.
-2. **Provider (Salon Owner/Staff):** Manages calendar, services and staff. Needs simplicity and real-time updates.
-3. **Admin (Platform Operator):** Oversees marketplace health, resolves disputes, monitors KPIs.
-
-## 4. Feature Catalog & Acceptance Criteria
-Each feature includes a brief description, priority (P0 – must-have, P1 – high, P2 – nice-to-have), and detailed acceptance criteria.
+### 1.2 Priority Definitions
+- **P0**: Must-have for MVP launch; critical core flows.
+- **P1**: High value, should be included in initial release but not blocking.
+- **P2**: Nice-to-have; post-MVP or rapid iteration.
 
 ---
 
-### 4.1 User Authentication
-**Description:** Secure sign-up/login via email/password and social providers (Google, Apple). Role-based access: customer and provider.
-**Priority:** P0
+## 2. Features & Acceptance Criteria
 
-**Acceptance Criteria:**
-- AC1: Users can register with email, password (min 8 chars, 1 number, 1 uppercase), first name, last name, phone number.
-- AC2: Login with email/password, Google, Apple Sign-In. OAuth flow returns JWT token and user profile.
-- AC3: Password reset flow: request link, email sent, valid for 15 min, sets new password.
-- AC4: After registration, user selects role (Customer/Provider). Provider must enter business name to continue (later completes full profile).
-- AC5: Sessions expire after 30 days, refresh token rotation implemented.
-- AC6: Logout invalidates token on client, server-side blacklisting optional for v1.
-- AC7: Errors displayed inline (e.g., "email already in use", "weak password").
+### 2.1 User Authentication
+**Priority**: P0  
+**Description**: Allow users to register, log in, and manage their session securely. Support social login and magic link for seamless onboarding.
 
----
+**Acceptance Criteria**:
+1. Customer can sign up with email/password; system sends verification email.
+2. Customer can log in with email/password; returns JWT tokens with refresh flow.
+3. Customer can log in with Google, Apple, or Facebook (OAuth 2.0); account linking for same email.
+4. Magic link login: enter email → receive link → click to authenticate.
+5. Forgot password flow with email reset link, valid for 15 minutes.
+6. Session management: access token expiry 15min, refresh token 7 days; auto-refresh on app foreground.
+7. Logout clears tokens locally and invalidates server-side session.
+8. Error messages for invalid credentials, network failure, expired token.
+9. Provider and Admin login via separate portal with role-based access.
 
-### 4.2 Guest Browse & Explore
-**Description:** Unauthenticated users can explore salons, services, availability and prices. No booking allowed.
-**Priority:** P0
+### 2.2 Guest Browse & Explore
+**Priority**: P0  
+**Description**: Unauthenticated users can browse the app, discover businesses, and view limited details to encourage sign-up.
 
-**Acceptance Criteria:**
-- AC1: Home feed shows featured salons, popular services, categories.
-- AC2: Search and map views accessible without login.
-- AC3: Tapping any salon/service opens detail view. "Book" button prompts login/registration.
-- AC4: Guest can switch location manually or allow GPS (one-time prompt). Defaults to device locale.
-- AC5: All booking CTA buttons display a lock icon or "Sign in to book" label.
+**Acceptance Criteria**:
+1. Guest lands on home screen with featured businesses, categories, search bar.
+2. Guest can search for businesses by name, category, location (default to geo if enabled, else manual input).
+3. View business detail page with name, rating, address, services list (without booking button).
+4. Clicking "Book" or time slot triggers authentication flow (login/signup) with deep link back to booking.
+5. All publicly visible data respects business privacy settings.
+6. No access to favorites, booking history, or profile settings.
 
----
+### 2.3 Business Search & Discovery
+**Priority**: P0  
+**Description**: Enable customers to find businesses via text search with filters and sorting.
 
-### 4.3 Business Search & Discovery
-**Description:** Full-text search with filters, categories, and sort options. Results include salon cards with rating, distance, number of reviews.
-**Priority:** P0
+**Acceptance Criteria**:
+1. Search bar on home screen with autocomplete (business names, categories, locations).
+2. Results list with business cards: photo, name, rating, category, distance, availability badge.
+3. Filters: category, service type, price range, rating, availability (now/today/this week).
+4. Sorting: relevance, distance, rating, price (low/high).
+5. Search query persists in URL/state for sharing.
+6. Empty state with suggestions if no results.
+7. Infinite scroll pagination with loading skeletons.
+8. Recent searches saved locally.
 
-**Acceptance Criteria:**
-- AC1: Search bar at top of home. As user types, suggestions appear (salon names, services, categories). Debounce 300ms.
-- AC2: Filters: category (multi-select), distance (radius slider 1–50 km), price range, rating, availability "today", "this week".
-- AC3: Sort by relevance, rating (highest), distance (nearest), price (low-high/high-low).
-- AC4: Results are paginated (10 per page) with infinite scroll.
-- AC5: Empty state shows "No salons found. Try adjusting filters."
-- AC6: Recent searches saved locally (max 10).
+### 2.4 Map-based Search
+**Priority**: P1  
+**Description**: Discover businesses via interactive map with clustering.
 
----
+**Acceptance Criteria**:
+1. Map toggle on search results switches between list and map view.
+2. Map shows business pins with custom markers showing category icon and availability color.
+3. Tap pin shows mini card with business name, rating, next available slot, "View" CTA.
+4. Pin clustering at dense zoom levels; de-cluster smoothly.
+5. Map centers on user's current location (with permission) or search area.
+6. Redraw pins on map move/zoom (debounced 300ms).
+7. Offline fallback: show cached tiles/static map image.
 
-### 4.4 Map-based Search
-**Description:** Interactive map showing salon pins with clustering, tap to see preview, full-list switch.
-**Priority:** P1
+### 2.5 Business Detail View
+**Priority**: P0  
+**Description**: Comprehensive business profile with services, staff, reviews, and booking CTA.
 
-**Acceptance Criteria:**
-- AC1: Map renders on a dedicated tab or toggle. Centers on user location (with permission) or default city center.
-- AC2: Salon pins display star rating and price level. Clustering at far zoom levels.
-- AC3: Tapping a pin shows a mini-card: name, rating, thumbnail, distance, "View" button.
-- AC4: "List" button switches to list view while keeping same filters and location.
-- AC5: Map updates as user moves; search area redrawn (debounce 1s).
-- AC6: Performance: 200+ pins without significant lag.
+**Acceptance Criteria**:
+1. Header: cover image, name, category, rating, address, distance, favorite toggle.
+2. Services tab: list of service with name, duration, price; "Book" button per service.
+3. Staff tab (if enabled): employee cards with photo, specialties, next available slot; select staff before booking.
+4. Reviews tab: rating summary (5-star average), review list with photos, sort/filter. See 2.11.
+5. About section: description, business hours, amenities, photos gallery.
+6. Sticky "Check Availability" button scrolls to availability/calendar.
+7. Share business via deep link.
+8. Provider can set booking mode: instant booking or request confirmation (indicated on detail).
 
----
+### 2.6 Service Categories
+**Priority**: P1  
+**Description**: Hierarchical category taxonomy for services, used for discovery and provider catalog.
 
-### 4.5 Business Detail View
-**Description:** Comprehensive salon profile: gallery, services, staff (optional), reviews, location, hours, FAQ.
-**Priority:** P0
+**Acceptance Criteria**:
+1. Admin can manage categories (parent/child) via admin dashboard.
+2. Customers can explore categories from home screen (tiles with icons).
+3. Category page shows subcategories and top businesses.
+4. Search supports filtering by category and subcategory.
+5. Provider can associate services with leaf categories.
+6. Category tree supports up to 3 levels.
 
-**Acceptance Criteria:**
-- AC1: Hero image carousel (tap to full-screen). Swipe gestures.
-- AC2: Salon name, address (open in maps), phone (tap to call), rating average, total reviews.
-- AC3: Services tab: categorized list, each showing duration, price, "Book" button. Staff filter if multi-staff.
-- AC4: Reviews tab: summary (5-star bar chart) and paginated reviews. Each review shows rating, text, photos, date, user first name and last initial.
-- AC5: About section: description, amenities, COVID measures, cancellation policy.
-- AC6: "Favorite" heart icon (filled if saved).
-- AC7: Operating hours with current status ("Open now", "Closes soon").
-- AC8: Deep linking: direct link to salon detail from notifications or external sources.
+### 2.7 Availability & Slot Computation
+**Priority**: P0  
+**Description**: Core engine computing real-time bookable slots based on business hours, staff, service duration, buffers, and existing bookings.
 
----
+**Acceptance Criteria**:
+1. Each provider defines business hours (day-of-week, open/close, breaks).
+2. Staff assigned to services with their individual schedules override business hours.
+3. Service requires a fixed duration plus optional buffer before/after.
+4. Compute available slots for a given service, staff (optional), date range via dedicated API.
+5. Slots respect already booked appointments (including overlap, travel time if enabled).
+6. Parallel bookings: maximum concurrent bookings per staff/business (configurable).
+7. Slot generation algorithm returns 15-minute granularity; display continuous slots e.g. "9:00 AM, 9:15 AM, ..."
+8. Amenity constraints: room-based resources can be reserved (optional).
+9. Computed slots cached for 5 minutes; invalidated on new booking/cancellation.
+10. API: `GET /businesses/:id/slots?serviceId=X&staffId=Y&date=Z&timezone=...` returns list of start times with unavailability reasons.
 
-### 4.6 Service Categories
-**Description:** Browse by predefined service categories (Hair, Nails, Massage, etc.) with icons. Serves as top-level navigation.
-**Priority:** P0
+### 2.8 Booking Flow
+**Priority**: P0  
+**Description**: Seamless appointment booking from service selection to confirmation.
 
-**Acceptance Criteria:**
-- AC1: Category icons displayed horizontally scrollable on home screen.
-- AC2: Tap category opens a view with subcategories (e.g., Hair → Cut, Color, Styling) and popular salons offering those services.
-- AC3: Admin can add/edit categories and subcategories via Admin Dashboard. Changes reflect within 5 minutes (cache invalidation).
-- AC4: Each category has a representative image and SEO-friendly slug.
+**Acceptance Criteria**:
+1. User selects service, optionally staff, then date/time from available slots.
+2. Confirmation screen shows service, staff, date, time, duration, price, location, cancellation policy.
+3. Add-ons/extra services can be selected with adjusted total.
+4. Require authentication if not logged in; redirect back after login.
+5. Booking payload includes: businessId, serviceId, optional staffId, startTime (ISO), addons.
+6. Payment integration: if prepayment required, Stripe Payment Sheet appears (credit card, Apple Pay, Google Pay). See 2.12.
+7. On success, booking status is "confirmed" (if instant) or "pending" (if approval); appointment created.
+8. Post-booking screen: confirmation details, option to add to calendar, share.
+9. Idempotency key prevents duplicate submissions.
+10. Booking confirmation triggers notifications (email/push).
 
----
+### 2.9 Appointment Management
+**Priority**: P0  
+**Description**: Customers can view, modify, cancel upcoming appointments.
 
-### 4.7 Booking Flow
-**Description:** Step-by-step wizard: select service, choose professional (if applicable), pick date/time, confirm, pay/authorize. Seamless for returning users.
-**Priority:** P0
+**Acceptance Criteria**:
+1. "My Appointments" list: upcoming (confirmed/pending), past (completed, canceled, no-show).
+2. Each item: business name, service, date/time, status badge, staff, map link.
+3. Detail view: full appointment info, reschedule and cancel buttons (within policy window).
+4. Reschedule flow: open availability calendar for same service/business, select new slot, confirm; success updates appointment.
+5. Cancel: confirm dialog with cancellation policy note; if refundable, trigger refund.
+6. Cancellation policy: free cancellation up to X hours before; late cancellation fee shown.
+7. Appointment state updates propagate to provider calendar in real-time.
+8. Push notification 24h and 1h before appointment with deep link.
+9. Past appointments allow re-book with same parameters.
 
-**Acceptance Criteria:**
-- AC1: Start from salon detail (specific service) or "Book" button with service pre-selected.
-- AC2: Step 1 – Service: user can add multiple services to same booking (max 4 services per appointment) with quantity selector. Real-time total updates.
-- AC3: Step 2 – Staff (optional): display staff matching services. Each staff card shows photo, rating, next available slot.
-- AC4: Step 3 – Date/Time: interactive calendar highlighting days with availability. Time slots based on duration and buffer. Slots disabled if past.
-- AC5: Step 4 – Review: service summary, total, date, time, staff, salon, cancellation policy text (e.g., "Free cancellation up to 24h before"). User can add notes (max 250 chars).
-- AC6: Step 5 – Payment: integrated payment sheet (Stripe). Supports credit/debit, Apple Pay, Google Pay. Payment is captured upon booking (hold amount or full charge based on salon policy).
-- AC7: Booking confirmation screen: booking ID, QR code, add to calendar (iCal/Google), option to share.
-- AC8: Users can book as signed-in customer only. Guest is redirected to sign-up with deep link back to continue booking.
-- AC9: Concurrency handling: if two users try to book the same slot, first to pay wins; second sees "Sorry, this slot is no longer available" and offered alternatives.
+### 2.10 Favorites
+**Priority**: P1  
+**Description**: Save businesses to a favorites list for quick access.
 
----
+**Acceptance Criteria**:
+1. Heart icon on business cards/detail toggles favorite status (optimistic UI update).
+2. Favorites synced to server; visible in profile section.
+3. Favorites list sorted by recently added; search/filter within list.
+4. Favorite businesses indicated in search results.
+5. Offline: favoriting queues to sync when online.
 
-### 4.8 Appointment Management
-**Description:** Users view upcoming, past appointments, reschedule or cancel based on policy.
-**Priority:** P0
+### 2.11 User Profile & Settings
+**Priority**: P1  
+**Description**: Manage personal info, communication preferences, linked accounts.
 
-**Acceptance Criteria:**
-- AC1: "My Appointments" screen with tabs: Upcoming, Past.
-- AC2: Upcoming card shows: service, date/time, salon name, staff (if any), status (Confirmed, Pending, etc.), countdown.
-- AC3: Actions: Reschedule (opens available slots per policy), Cancel (with confirmation modal explaining refund if any), Contact salon (in-app chat v2 or call).
-- AC4: Cancellation policy enforced: if within free window, full refund; otherwise, partial/no refund displayed before final cancel.
-- AC5: Rescheduling re-runs availability and holds new slot for 10 min during payment adjustment (if cost difference).
-- AC6: Past appointments list with ability to rate/review (if not already done) and rebook same service with one tap.
-- AC7: Appointment detail page includes booking code, history log (created, confirmed, rescheduled, cancelled).
+**Acceptance Criteria**:
+1. Profile tab: avatar, name, email, phone, date of birth (optional).
+2. Edit profile with validation (email unique, phone format).
+3. Communication preferences: push notifications, email marketing, SMS reminders (opt-in).
+4. Manage connected accounts (Google, Apple) with possibility to unlink (password required as backup).
+5. App settings: language, theme (auto/light/dark), location permissions.
+6. Data export and account deletion (GDPR compliance).
 
----
+### 2.12 Payment Integration
+**Priority**: P0  
+**Description**: Secure payment collection for prepaid bookings or no-show fees via Stripe.
 
-### 4.9 Favorites
-**Description:** Save salons to a favorites list for quick access.
-**Priority:** P1
+**Acceptance Criteria**:
+1. Integrate Stripe Elements/PaymentSheet for checkout.
+2. Customer adds payment method (card, Apple Pay, Google Pay) during booking if prepayment required.
+3. Payment methods saved to Stripe Customer; charge later for fees.
+4. “Hold” amount capture only upon service completion or cancellation fee according to policy.
+5. Receipt generated and emailed after successful payment.
+6. Support multiple currencies based on business location.
+7. Admin dashboard shows transaction logs and refund capabilities.
+8. PCI DSS compliance: no raw card details touch our servers.
 
-**Acceptance Criteria:**
-- AC1: Heart icon on salon cards and detail view toggles favorite state.
-- AC2: Favorites screen accessible from profile tab; empty state "Add your favorite salons…".
-- AC3: Synced to backend; persists across devices.
-- AC4: Option to sort favorites by recently added, rating, distance.
+### 2.13 Reviews & Ratings
+**Priority**: P2 (P1 for customer trust, but can launch without)  
+**Description**: Allow customers to rate and review businesses after appointment completion.
 
----
+**Acceptance Criteria**:
+1. Post-appointment prompt (after 24h) via push notification to write a review.
+2. Review form: star rating (1-5), text (min 10 chars), optional photos (max 3).
+3. List reviews on business detail page with most relevant first, sort by date/rating.
+4. Provider can respond to reviews (single reply).
+5. Abuse reporting and moderation queue for admin.
+6. Average rating and total counts cached and updated asynchronously.
+7. Users can edit/delete their own reviews.
 
-### 4.10 User Profile
-**Description:** Manage personal info, payment methods, notification preferences, privacy settings.
-**Priority:** P0
+### 2.14 Notifications
+**Priority**: P0  
+**Description**: Multi-channel notifications for booking events, reminders, promotions.
 
-**Acceptance Criteria:**
-- AC1: Edit first name, last name, phone, email (email change requires verification).
-- AC2: Profile photo upload (max 5 MB, cropped circle).
-- AC3: Saved payment methods list (card brand, last4, exp. date). Option to add/delete. Default payment method selected.
-- AC4: Notification preferences toggles: push (booking reminders, promotions, salon messages) and email.
-- AC5: Section for linked accounts (Google, Apple). Show status and option to unlink with confirm password.
-- AC6: Account deletion option with 30-day grace period (soft delete). Warning about losing history.
-- AC7: App version, terms of service, privacy policy links.
+**Acceptance Criteria**:
+1. Push notifications (FCM/APNs) for: booking confirmation, reminders (24h, 1h), reschedule/cancellation, review request.
+2. In-app notification center with badge count and mark-as-read.
+3. Email notifications: booking confirmation with calendar .ics attachment, cancellations, payment receipts.
+4. SMS reminders for upcoming appointments (if phone provided and opted-in).
+5. Notification preferences toggle per channel in profile.
+6. Provider notifications: new booking, cancellation, review received (via portal and email).
+7. Background jobs using BullMQ: dispatch notification tasks with retry logic (see 2.16).
 
----
+### 2.15 Provider / Business Owner Portal
+**Priority**: P0 (basic), P1 (advanced features)  
+**Description**: Web portal for providers to manage their business, services, staff, schedules, and bookings.
 
-### 4.11 Availability & Slot Computation
-**Description:** Core engine that calculates bookable time windows based on staff schedules, service durations, breaks, existing bookings and salon-level buffers.
-**Priority:** P0 (system logic)
+**Acceptance Criteria (P0 - MVP)**:
+1. Provider registration: business info, address, category, contact.
+2. Dashboard: upcoming appointments list (today, week) with status management (confirm, start, complete, cancel).
+3. Calendar view (day/week) to see booked slots and walk-in creation.
+4. Service management: CRUD services with name, duration, price, category, buffer, color.
+5. Staff management: add/edit staff, assign services, set individual availability (overrides business hours).
+6. Business hours configuration: set open days, breaks, closures.
+7. Accept/reject booking requests (if mode requires approval).
+8. Booking detail: customer info, service, staff, notes, status actions.
+9. Responsive design works on tablet.
 
-**Acceptance Criteria:**
-- AC1: Providers define working hours per staff member (recurring weekly template with date overrides for holidays, vacations).
-- AC2: Services have duration (in 5-min increments) and optional break before/after (buffer) and clean-up time.
-- AC3: Engine considers existing appointments (including pending holds) to avoid double booking. Slot held for 10 minutes after user enters payment step (state=held).
-- AC4: Support parallel availability for multiple staff. If a service can be performed by multiple staff, slots reflect combined availability.
-- AC5: Calendar returns slots for a given date range, service ID, staff ID (optional). Slots are computed from opening time + service duration + buffer, stepping in 15-min blocks.
-- AC6: Caching strategy: pre-compute slots for next 7 days per staff, invalidate on booking/cancellation. Quick response <200ms.
-- AC7: Admin can manually block time slots (e.g., maintenance).
+**Acceptance Criteria (P1)**:
+1. Customer management: client list, history, notes, quick rebook.
+2. Reporting: revenue, appointment volume, popular services.
+3. Automated response to reviews.
+4. Custom cancellation policy per service.
+5. Inventory/room resource management for amenity-constrained slots.
 
----
+### 2.16 Admin Dashboard
+**Priority**: P1 (core) / P2 (advanced analytics)  
+**Description**: Super admin panel to oversee platform, manage businesses, moderate content, and view analytics.
 
-### 4.12 Shared Types & Design System
-**Description:** Unified TypeScript types shared across frontend/backend (monorepo) and a consistent UI component library.
-**Priority:** P0 (architecture)
+**Acceptance Criteria**:
+1. Dashboard overview: total users, providers, bookings, revenue (today/week/month).
+2. Business management: approve/reject new providers, suspend/delete, edit details.
+3. User management: list customers, disable accounts, view activity logs.
+4. Category management: create/edit/delete categories; reorder.
+5. Content moderation: approve/reject reviews, reported reviews.
+6. Transaction logs: payment history, refund processing.
+7. Notification broadcast: send push/email to segments (e.g., all customers, providers).
+8. Role-based access: admin, support, moderator with granular permissions.
 
-**Acceptance Criteria:**
-- AC1: Shared npm package `@planity/shared-types` contains interfaces for User, Salon, Service, Booking, Review, Notification, Payment, TimeSlot, etc., with strict typing.
-- AC2: Design system tokens: colors, typography, spacing, shadows defined in Figma and exported as JSON/CSS variables.
-- AC3: Reusable UI components: Button (variants: primary, secondary, danger, ghost), Input (with error states), Card, Modal, BottomSheet, StarRating, Badge, Skeleton loader.
-- AC4: Components handle loading, empty, error states as per design.
-- AC5: Accessibility: minimum contrast ratios, touch targets >= 44px, proper ARIA labels.
-- AC6: Dark mode considered but deferred to v2 (design ready, logic extendible).
+### 2.17 Background Jobs (BullMQ)
+**Priority**: P1  
+**Description**: Reliable job processing for time-sensitive, resource-intensive tasks.
 
----
+**Acceptance Criteria**:
+1. Notification dispatching: email, SMS, push each as separate queue with retry policies (exponential backoff, max 5 attempts).
+2. Slot cache invalidation: after booking/cancellation, enqueue job to invalidate availability caches for affected date range.
+3. Review moderation queue for auto-flagging abusive language.
+4. Periodic jobs: reminder generation (24h, 1h before appointment), cleanup expired tokens, aggregate analytics.
+5. Dashboard to monitor queue health, failed jobs, retry manually.
+6. Jobs idempotent: duplicate prevention via jobId (e.g., bookingId:notification:confirmation).
+7. Dead-letter queue for jobs exceeding retry limit with alerting.
 
-### 4.13 Reviews & Ratings
-**Description:** Customers rate and review completed appointments. Moderation queue for providers.
-**Priority:** P0
+### 2.18 Shared Types & Design System
+**Priority**: P0 (implicit)  
+**Description**: Unified TypeScript types and UI component library to ensure consistency across consumer app, provider portal, and admin.
 
-**Acceptance Criteria:**
-- AC1: After appointment is marked completed, user receives push notification/email encouraging review. Direct link to review form with booking context.
-- AC2: Review form: star rating (1-5), text (min 10 chars, max 1000), optional photo upload (max 3).
-- AC3: Reviews are displayed on salon profile with relative time and user’s first name, last initial.
-- AC4: Provider can view all reviews in Provider Portal. Can report a review (reason required). Reports go to admin moderation queue.
-- AC5: Admin can approve/reject flagged reviews, hide or remove.
-- AC6: Rating average calculated with rolling update. Sorted by recent by default, option to sort by most helpful (future).
-- AC7: Users can edit/delete their own review within 7 days.
-
----
-
-### 4.14 Payment Integration
-**Description:** Secure payment processing via Stripe. Supports pre-authorization, capture, refunds, and split payouts to providers (via Stripe Connect).
-**Priority:** P0
-
-**Acceptance Criteria:**
-- AC1: Customer can add cards via Stripe Elements; PCI compliance handled by Stripe.
-- AC2: Booking flow creates a PaymentIntent with amount, currency, customer ID. Capture method depends on salon setting (manual capture vs automatic upon completion). Default is manual: hold at booking, capture after service is marked complete.
-- AC3: For cancellations, refunds processed according to cancellation policy. Stripe refund object created; admin/ system can trigger partial/full refund.
-- AC4: Provider onboarding via Stripe Connect Express (country limit initially FR, BE). Provider Dashboard shows onboarding status.
-- AC5: Platform fee (configurable percentage) deducted at transfer time. Remaining amount goes to provider’s connected account.
-- AC6: All payment events logged (webhook processing idempotent).
-- AC7: Users see receipts in booking history; downloadable PDF.
-
----
-
-### 4.15 Notifications
-**Description:** Multi-channel notifications: push (Firebase/APNs), email, optional SMS. Transactional and promotional, with user control.
-**Priority:** P0
-
-**Acceptance Criteria:**
-- AC1: Transactional triggers: booking confirmation, reminder 24h/1h before, reschedule confirmation, cancellation, payment receipt, review request.
-- AC2: Promotional (opt-in): deals, new salon in area, re-engagement after 30 days inactive.
-- AC3: Push notifications use FCM/APNs with rich media (image for promotions).
-- AC4: Email via SendGrid with responsive templates; includes iCal attachment for bookings.
-- AC5: User preferences respected; immediate unsubscribe link in email footer.
-- AC6: Notification history screen in-app showing last 30 days.
-- AC7: Delivery status tracked; failed push logged and retried once.
-
----
-
-### 4.16 Provider / Business Owner Portal
-**Description:** Web-based dashboard for salon owners to manage their profile, services, staff, calendar, and view analytics.
-**Priority:** P0 (providers are core)
-
-**Acceptance Criteria:**
-- AC1: Secure login with same credentials; only Provider role has access.
-- AC2: Dashboard home: upcoming bookings (today/tomorrow), quick stats (total bookings, revenue, new clients past 7/30 days).
-- AC3: Calendar view (day/week/month) showing appointments with color-coded services, staff filter. Click appointment to see details, mark as completed, no-show, or cancel.
-- AC4: Service management: add/edit/delete services with name, category, duration, price, color, staff assignment (multi-select), description, image.
-- AC5: Staff management: add staff members (name, photo, role), set weekly working hours, assign services they perform. Temporary blocks (vacation, sick leave).
-- AC6: Booking management: manual booking on behalf of customer (walk-in), accept/reject booking requests if manual approval mode enabled.
-- AC7: Profile settings: business name, description, address (geocoded automatically), phone, photos gallery upload (drag-and-drop, min 5, max 20), cancellation policy template.
-- AC8: Financial reporting: earnings summary, upcoming payouts, transaction list with date, service, client, amount, fee. Export CSV.
-- AC9: Review management: list of reviews with ability to respond (public reply).
-- AC10: Notifications: real-time alerts for new booking, cancellation, low inventory (future). Sound toggle.
-- AC11: Sub-account roles: Owner (full), Manager (booking & calendar), Staff (view-only own calendar).
-
----
-
-### 4.17 Admin Dashboard
-**Description:** Super-admin panel for marketplace governance, user management, moderation, analytics, and configuration.
-**Priority:** P1
-
-**Acceptance Criteria:**
-- AC1: Role-based access: super admins, support agents.
-- AC2: Dashboard metrics: total users (customers/providers), bookings (daily, weekly, monthly), revenue, platform fees, active salons, churn.
-- AC3: User management: search by email/name, view detail, suspend/ban, reset password, view booking history.
-- AC4: Salon verification: review submitted salons, approve/reject with reason, set featured flag.
-- AC5: Moderation queue: reported reviews, flagged content. Ability to hide/delete review, notify reporter.
-- AC6: Dispute handling: cancellation/refund requests, manual refund tool with reason logging.
-- AC7: Configuration: platform fee percentage, cancellation policy defaults, supported categories, feature toggles (map search, social login).
-- AC8: Audit log: sensitive actions (admin actions, role changes) stored with timestamp and user.
-- AC9: Background job monitoring: view BullMQ dashboard with queue sizes, failed jobs, retry capability.
-- AC10: Customer support: impersonate user (with legal consent) to diagnose issues.
-
----
-
-### 4.18 Background Jobs (BullMQ)
-**Description:** Asynchronous task processing for time-consuming or scheduled operations using BullMQ with Redis. Ensures reliability and decoupling.
-**Priority:** P0 (infrastructure)
-
-**Acceptance Criteria:**
-- AC1: Job queues: `notifications`, `payments`, `scheduling`, `data-export`, `index-rebuild`.
-- AC2: Notification jobs: build payload, send via appropriate channel with retry (exponential backoff, max 3 attempts).
-- AC3: Payment jobs: capture payment after service completion automatically if salon policy auto-capture, process refunds, sync Stripe status.
-- AC4: Scheduling jobs: release expired held slots after 10 minutes, update booking statuses (e.g., auto-complete 24h after appointment time if not marked).
-- AC5: Cron-like job: generate daily/weekly reports for providers (email CSV).
-- AC6: All jobs are idempotent; failed jobs go to dead-letter queue and alert admin via Slack/email.
-- AC7: Job processing time monitored, dashboard accessible from admin.
+**Acceptance Criteria**:
+1. Shared types package includes: User, Business, Service, Staff, Appointment, Review, Booking, Notification, etc., with enum statuses.
+2. Design system tokens: colors, typography, spacing, shadows, breakpoints.
+3. Reusable components: Button, Input, Card, Badge, StarRating, AvailabilityCalendar, etc., implemented in React/React Native.
+4. Accessibility: components meet WCAG AA, with proper roles, labels, touch targets.
+5. Theming supports light/dark mode with CSS variables/TokenProvider.
+6. Storybook documentation for all components.
 
 ---
 
-## 5. Non-Functional Requirements
-- **Performance:** App cold start < 2s, API responses p95 < 300ms, slot calculation <200ms.
-- **Scalability:** Support 10k concurrent users, 100k bookings/day. Horizontal scaling with stateless containers.
-- **Security:** HTTPS everywhere, JWT with RS256, RBAC, input sanitization, rate limiting (100 req/min per IP for auth, 300 for general), Stripe PCI.
-- **Data Privacy:** GDPR compliant; data export, account deletion, consent records.
-- **Accessibility:** WCAG 2.1 AA for customer-facing screens (color contrast, focus management).
-- **Reliability:** 99.9% uptime target, automated backups, graceful degradation (e.g., map unavailable, show list).
+## 3. Non-Functional Requirements
+- Performance: booking flow completion under 3 seconds; availability API p95 < 200ms.
+- Reliability: 99.9% uptime for core booking services.
+- Security: HTTPS, input sanitization, rate limiting, OWASP top 10 mitigated.
+- Offline: graceful degradation; cached data for search results and appointments.
+- Localization: i18n ready with English (default) and French support at launch.
 
-## 6. Release Milestones
-- **Sprint 1-2:** Setup: Shared types, design system foundations, auth (customer), database schema.
-- **Sprint 3-4:** Provider onboarding, salon profile CRUD, service/ staff management.
-- **Sprint 5-6:** Search, map, booking flow, availability engine, payment integration.
-- **Sprint 7-8:** Notifications, reviews, favorites, appointment management, provider portal calendar.
-- **Sprint 9-10:** Admin dashboard, background jobs, hardening, performance tuning, internal testing.
-- **Sprint 11-12:** Beta testing, localization FR, playstore review, launch.
+## 4. Release Plan
+- MVP (P0): Auth, search/list, business detail, availability computation, booking flow, appointment management, payment (Stripe), basic provider portal, notifications, design system.
+- V1 (P1): Map search, favorites, profile, service categories, admin dashboard basic, provider portal advanced features.
+- V2 (P2): Reviews, provider reporting, advanced admin analytics, provider mobile app.
 
-## 7. Appendix: Glossary
-- **Slot:** A specific start time at which a service can be booked.
-- **Buffer:** Additional time before/after service to prepare/clean.
-- **Held Slot:** Temporarily reserved slot during payment processing.
-- **Connect:** Stripe Connect for marketplace payouts.
-- **Provider:** Salon owner or staff using the business portal.
-- **Customer:** End user booking beauty services.
+---
+
+**Document Version**: 1.0 | Last Updated: 2025-04-08
