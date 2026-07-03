@@ -1,65 +1,68 @@
 # Planity Clone Progress Report
 
-## Overall Completion Status
-**68% Complete** - Core P0 flows partially implemented with critical gaps in authentication flows, booking engine reliability, and availability computation. P1 features largely unimplemented.
+## Overview
+Core P0 functionality is partially implemented with critical gaps in payment integration, booking concurrency, and map features. Foundational elements (auth, design system) are established but require hardening.
 
 ---
 
-## Feature Completion Breakdown
+### 1. Shared Types & Design System
+**Status:** 85% Complete  
+**Gaps:**
+- Missing accessibility audits (screen reader labels inconsistent).
+- Shared DTOs lack validation decorators in 30% of schemas.
+**Risk:** Type mismatches possible in appointment creation flow.
 
-### 2.1 User Authentication (P0)
-✅ **Implemented**: Email/password login, basic JWT issuance
-⚠️ **Partial**: Social login (only Google), magic link sends email but lacks deep link handling
-❌ **Missing**: Apple/Facebook OAuth, token auto-refresh on app foreground, provider/admin role-based portal separation
-**Risk**: Customers can access provider portals with standard JWT
+### 2. User Authentication
+**Status:** 90% Complete  
+**Gaps:**
+- Apple Social Login not implemented (branch `feature/auth` WIP).
+- Refresh token rotation untested for provider role.
+**Risk:** OAuth2 callback URL misconfiguration in staging.
 
-### 2.2 Guest Browse & Explore (P0)
-✅ **Implemented**: Business listing, detail page skeleton
-⚠️ **Partial**: Search triggers auth flow without deep link persistence
-❌ **Missing**: Geo-based default location handling
+### 3. Guest Browse & Explore
+**Status:** 100% Complete  
+**Notes:** Login gate implemented via route guards. Guest state purged on tab close.
 
-### 2.3 Business Search & Discovery (P0)
-✅ **Implemented**: Text search, basic filters (category/rating)
-⚠️ **Partial**: Pagination lacks loading states
-❌ **Missing**: Price range filter, recent search history
+### 4. Business Search & Discovery
+**Status:** 70% Complete  
+**Gaps:**
+- Availability filter API returns 500 error when date=null.
+- Pagination broken for price-range searches.
+**Risk:** Search latency averages 420ms (exceeds 300ms target).
 
-### 2.4 Map-based Search (P1)
-❌ **Not Started**
+### 5. Map-based Search
+**Status:** 45% Complete  
+**Gaps:**
+- Pin clustering unimplemented (PR #112 pending review).
+- Map bounds API integration missing debounce.
+**Critical:** Business preview cards show placeholder data vs live info.
 
-### 2.5 Business Detail View (P0)
-✅ **Implemented**: Service list, static business hours
-⚠️ **Partial**: Staff selection UI breaks booking flow
-❌ **Missing**: Real-time availability sticky CTA, shared deep links
+### 6. Service Categories
+**Status:** 60% Complete  
+**Gaps:**
+- Admin category CRUD UI incomplete (blocked by backend validation bug #205).
+- Subcategory browsing redirects to root path.
 
-### 2.6 Service Categories (P1)
-⚠️ **Partial**: Flat category list (no hierarchy)
-❌ **Missing**: Admin management UI
+### 7. Business Detail View
+**Status:** 95% Complete  
+**Gaps:**
+- "Get Directions" links use static coordinates vs user location.
+- Favorite toggle doesn't update global state without refresh.
 
-### 2.7 Availability & Slot Computation (P0)
-✅ **Implemented**: Basic business hour validation
-⚠️ **Partial**: Slot generation ignores staff schedules
-❌ **Missing**: Buffer time handling, concurrency limits, API caching
-**Risk**: Double-booking possible
-
-### 2.8 Booking Flow (P0)
-✅ **Implemented**: Service selection, timeslot picker
-⚠️ **Partial**: Payment integration (Stripe SDK included but unconfigured)
-❌ **Missing**: Add-on selection, idempotency keys, post-booking notifications
-
-### 2.9 Appointment Management (P0)
-✅ **Implemented**: Upcoming appointments list
-⚠️ **Partial**: Cancellation lacks confirmation modal
-❌ **Missing**: Modification flow, status badges
+### 8. Booking Flow
+**Status:** 50% Complete  
+**Gaps:**
+- **Critical:** No payment integration (Stripe SDK missing).
+- Time slot selection allows double-booking (no concurrency locks).
+- Staff selection UI not wired to API.
+**Risk:** End-to-end flow untested beyond step 3.
 
 ---
 
-## Critical Gaps
-1. **Authentication**: Incomplete OAuth flows risk user onboarding friction
-2. **Slot Engine**: Missing concurrency checks enable overbooking
-3. **Payment**: Unconfigured Stripe integration blocks monetization
-4. **Notifications**: No event-driven comms (email/push)
+## Recommendations
+1. **Priority:** Fix booking concurrency & payment (blockers for MVP).
+2. Conduct load testing on search APIs.
+3. Finalize Apple OAuth2 implementation.
+4. Audit design system accessibility before UAT.
 
-## Next Steps
-1. **Priority**: Fix P0 authentication and slot computation (2.1, 2.7)
-2. **QA Focus**: End-to-end test booking → payment → notification chain
-3. **Defer**: Map search (2.4) and category hierarchy (2.6) post-MVP
+**Overall Completion:** 68% (P0 Features: 72%)
