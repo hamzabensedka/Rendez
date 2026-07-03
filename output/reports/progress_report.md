@@ -1,69 +1,87 @@
 # Planity Clone Progress Report
 
-## Core Implementation Status
+## Overview
+Assessment of codebase implementation against product spec (P0/P1 features). Core booking flow and authentication are functional but key gaps remain in payments, provider portal, and dynamic availability.
 
-### 1. Shared Types & Data Models (60% Complete)
-- ✅ **Implemented**: User (missing avatar), Business (missing isVerified/status), Service (full)
-- ❌ **Missing**: Appointment.staffId & notes, Review.photos
-- 🛠 **Partial**: Type validation for ServiceCategory enum
+## Feature Completion Status
 
-### 2. Design System (70% Complete)
-- ✅ **Implemented**: Color palette (missing secondary teal), Inter font, 4px grid
-- ❌ **Missing**: BottomSheet component, SkeletonLoader
-- ⚠️ **Issues**: Contrast ratio fails in 3 button states
+### 4.1 User Authentication
+**Status:** Partially Complete (80%)
+**Notes:** Email/password, JWT, and basic RBAC implemented. Missing: Social logins (Google/Facebook/Apple), magic link login, configurable email verification.
 
----
+### 4.2 Guest Browse & Explore
+**Status:** Complete (100%)
+**Notes:** Full access to business details with login gates for restricted actions.
 
-## Feature Completion
+### 4.3 Business Search & Discovery
+**Status:** Partially Complete (70%)
+**Notes:** Search bar + filters (distance, rating) implemented. Missing: Availability-based filtering, empty state UI.
 
-### 3.1 User Authentication (P0 - 50%)
-- ✅ Done: Email/password, social logins, JWT base
-- ❌ Missing: Phone OTP, refresh token rotation
-- ⚠️ Issues: 700ms auth API response (exceeds 500ms target)
+### 4.4 Map-based Search
+**Status:** Partially Complete (85%)
+**Notes:** Google Maps integration with clustering. Missing: Radius controls, performance optimizations for 500+ markers.
 
-### 3.2 Guest Browse (P1 - 60%)
-- ✅ Done: Business search, limited profile views
-- ❌ Missing: Guest state persistence
-- ⚠️ Issues: Registration modal lacks value proposition
+### 4.5 Business Detail View
+**Status:** Partially Complete (90%)
+**Notes:** All tabs implemented except real-time "busy" status. Photo uploads require policy configuration.
 
-### 3.3 Business Search (P0 - 70%)
-- ✅ Done: Elasticsearch, basic filters
-- ❌ Missing: Offline caching, combined filters
-- ⚠️ Issues: Autocomplete at 280ms (200ms target)
+### 4.6 Service Categories
+**Status:** Partially Complete (60%)
+**Notes:** Static categories displayed. Missing: Admin UI for dynamic category management.
 
-### 3.4 Map Search (P1 - 65%)
-- ✅ Done: Pin clustering, location detection
-- ❌ Missing: Directions integration
-- ⚠️ Issues: 2.8s map load time (2s target)
+### 4.7 Booking Flow
+**Status:** Partially Complete (75%)
+**Notes:** Date/time selection and guest login gates work. Missing: Staff selection UI, promo code validation, .ics calendar integration.
 
-### 3.5 Business Detail (P0 - 75%)
-- ✅ Done: Photo gallery, real-time status
-- ❌ Missing: Offline support
-- ⚠️ Issues: Service/time slot linkage broken
+### 4.8 Appointment Management
+**Status:** Partially Complete (65%)
+**Notes:** Cancellation and basic rescheduling work. Missing: Statuses (Pending/No-show), device calendar sync, rebook option.
 
-### 3.6 Service Categories (P1 - 50%)
-- ✅ Done: Top-level categories
-- ❌ Missing: Sub-categories
-- ⚠️ Issues: UI hierarchy inconsistencies
+### 4.9 Favorites
+**Status:** Complete (100%)
+**Notes:** Synced across devices with home feed integration.
 
-### 3.7 Appointment Booking (P0 - 60%)
-- ✅ Done: Time slot picker
-- ❌ Missing: Real-time sync
-- ⚠️ Issues: No conflict detection
+### 4.10 User Profile
+**Status:** Complete (100%)
+**Notes:** All profile management features implemented.
 
-### 3.8 Reviews (P1 - 60%)
-- ✅ Done: Star system, comment submission
-- ❌ Missing: Photo uploads
-- ⚠️ Issues: No spam filtering
+### 4.11 Payment Integration
+**Status:** Partially Complete (50%)
+**Notes:** Stripe checkout functional. Missing: Saved payment methods, refund automation.
 
----
+### 4.12 Provider Portal
+**Status:** Partially Complete (40%)
+**Notes:** Basic dashboard exists. Missing: Staff management, dynamic pricing, bulk slot updates.
 
-## Critical Gaps
-1. Authentication security gaps (OTP, token rotation)
-2. Missing real-time booking sync (P0 risk)
-3. Admin panel incomplete (no business verification)
+### 4.13 Admin Dashboard
+**Status:** Partially Complete (30%)
+**Notes:** User/business listing only. Missing: Content moderation, analytics, payout tools.
 
-## Next Steps
-1. Prioritize P0 authentication completion
-2. Implement Elasticsearch offline caching
-3. Build admin moderation tools
+### 4.14 Notifications
+**Status:** Partially Complete (80%)
+**Notes:** Email/push reminders work. Missing: SMS notifications, configurable templates.
+
+### 4.15 Reviews
+**Status:** Complete (100%)
+**Notes:** Full CRUD with moderation safeguards.
+
+### 4.16 Reports
+**Status:** Not Started (0%)
+**Notes:** No code found for analytics or exports.
+
+### 4.17 Localization
+**Status:** Not Started (0%)
+**Notes:** Hardcoded EN texts only.
+
+## Risk Analysis
+**Critical Gaps:**
+- No SMS/robust notification system
+- Missing provider staff management
+- Dynamic availability calculations untested
+- Payment refunds require manual intervention
+
+**Next Steps:**
+1. Implement social logins (P0)
+2. Build provider staff UI (P0)
+3. Add availability-aware search filters (P0)
+4. Develop admin reporting module (P1)
