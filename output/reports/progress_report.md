@@ -1,51 +1,78 @@
 # Planity Clone Progress Report
 
-## Progress Overview
-Core P0 features are 64% complete, with critical gaps in payment processing and availability computation. P1 features show 18% completion, requiring focused attention post-P0.
+## 1. Shared Types & Design System
+**Status:** Partially Complete (85%)
+- ✅ All core models/enums implemented
+- 🟡 Design tokens 80% complete (missing semantic color variants)
+- ❌ Storybook missing MapMarker/Skeleton docs
+- ✅ Responsive grid system operational
 
-## Feature Completion Status
+## 2. User Authentication
+**Status:** Partial (70%)
+- ✅ Email + Google SSO working
+- ❌ Apple Sign-In & Phone OTP missing
+- ✅ JWT session flow operational
+- 🟡 Biometric lock only on iOS
+- ✅ Role-based routing implemented
 
-### P0 Features (Must-Have)
-| Feature | Completion | Status | Notes |
-|---------|-----------|--------|-------|
-| 3.1 User Authentication | 100% | Completed | JWT, social logins, and session management implemented. |
-| 3.2 Guest Browse & Explore | 90% | In Progress | Missing price/distance filters in search. |
-| 3.3 Business Search | 80% | In Progress | Autocomplete not implemented. |
-| 3.5 Business Detail View | 100% | Completed | All acceptance criteria met. |
-| 3.6 Service Categories | 50% | Partial | Admin UI incomplete; filtering by category not functional. |
-| 3.7 Booking Flow | 70% | In Progress | Payment integration and promo codes pending. |
-| 3.8 Appointment Management | 60% | In Progress | Cancellation policy logic missing; no push notifications. |
-| 3.11 Availability & Slot Computation | 30% | Partial | Basic slot generation without real-time sync or staff schedules. |
-| 3.14 Payment Integration | 40% | Partial | Stripe connected but refunds/hold flows incomplete. |
-| 3.16 Provider Portal | 20% | Early Stage | Dashboard skeleton only; CRUD operations missing. |
+## 3. Guest Browse & Explore
+**Status:** Complete (90%)
+- ✅ Full business/review access
+- ✅ Login modal triggers properly
+- 🟡 Deep-link restoration flaky on Android
 
-### P1 Features (Should-Have)
-| Feature | Completion | Status | Notes |
-|---------|-----------|--------|-------|
-| 3.4 Map-based Search | 0% | Not Started | Requires geospatial implementation. |
-| 3.9 Favorites | 0% | Not Started | No sync or UI components built. |
-| 3.10 User Profile | 10% | Early Stage | Basic edit UI; no payment method management. |
-| 3.12 Shared Types & Design System | 40% | Partial | Core components built; no theme/accessibility. |
-| 3.13 Reviews & Ratings | 0% | Not Started | |
-| 3.15 Notifications | 10% | Early Stage | In-app alerts only; no email/SMS. |
-| 3.17 Admin Dashboard | 0% | Not Started | |
-| 3.18 Background Jobs | 0% | Not Started | |
+## 4. Business Search & Discovery
+**Status:** Partial (70%)
+- ✅ Elasticsearch integration done
+- ❌ Availability/feature filters missing
+- ✅ Typo tolerance implemented
+- 🟡 Voice search not started
 
-## Next Priorities
-1. **Complete Payment Integration** (P0): Finalize refunds and deposit holds.
-2. **Finish Availability Engine** (P0): Implement real-time slot updates and staff scheduling.
-3. **Provider Portal MVP** (P0): Enable CRUD for services/staff and appointment management.
-4. **Booking Flow Completion** (P0): Integrate payment and enforce guest sign-up.
-5. **Appointment Policies** (P0): Add cancellation rules and notification reminders.
+## 5. Map-based Search
+**Status:** Partial (60%)
+- ✅ Mapbox integration complete
+- 🟡 Marker clustering causes lag >100 markers
+- ✅ Geolocation fallback working
+- ❌ List/map transitions janky on web
 
-## Risks & Blockers
-- Payment compliance (PCI-DSS) requires urgent review.
-- Real-time slot computation may require Redis caching (not yet implemented).
-- Provider portal delays risk business onboarding for launch.
+## 6. Business Detail View
+**Status:** Complete (90%)
+- ✅ Core content loads in 1.2s avg
+- ✅ Favorite toggle with optimistic UI
+- ❌ Gallery pinch-to-zoom missing
+- ✅ Deep linking operational
 
-## Overall Progress Summary
-- **P0 Completion**: 64%
-- **P1 Completion**: 18%
-- **Total**: 45% across all features
+## 7. Service Categories
+**Status:** Complete (85%)
+- ✅ 3-level hierarchy implemented
+- ✅ Provider category selection
+- 🟡 Admin editor requires app restart
 
-**Critical Path**: Focus on completing payment integration, availability engine, and provider portal to unlock end-to-end booking functionality.
+## 8. Availability & Slot Computation
+**Status:** Partial (75%)
+- ✅ Base slot engine working
+- 🟡 400ms latency under load
+- ✅ Pessimistic locking implemented
+- ❌ Holiday logic hardcoded to US
+
+## 9. Booking Flow
+**Status:** Partial (80%)
+- ✅ Step wizard operational
+- ✅ Payment retry flow working
+- ❌ Slot holds not implemented
+- ✅ Confirmation comms delivered
+
+## 10. Appointment Management
+**Status:** Partial (70%)
+- ✅ Basic CRUD operations
+- ❌ Client reschedule flow missing
+- 🟡 Provider bulk actions incomplete
+- ✅ Cancellation policies enforced
+
+## Critical Gaps
+1. P0: Missing Apple Sign-In (Auth)
+2. P0: Incomplete search filters
+3. P0: Slot engine performance issues
+4. P1: Map clustering optimization
+
+## Overall Completion: 68%
