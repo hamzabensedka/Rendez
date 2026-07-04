@@ -1,70 +1,120 @@
 # Planity Clone Progress Report
 
-## Overview
-Core P0 functionality is partially implemented with critical gaps in authentication flows and design system consistency. Key P1 features (map search, admin dashboard) remain unaddressed. Testing coverage and RGPD compliance require urgent attention.
+## Feature Completion Status
 
----
+### 2.1 User Authentication (P0)
+**Status:** Partially Complete  
+**Details:**
+- ✅ Email/password auth with JWT
+- ✅ Social login (Google/Apple)
+- ✅ Password reset flow
+- ❌ Missing MFA implementation
+- ⚠️ Token refresh endpoint not tested
 
-### 1. Shared Types & Design System (P0)
-**Status:** In Progress  
-**Notes:**
-- TypeScript interfaces exist for core models (User, Business) but lack Payment, BookingRule
-- 60% UI components built (missing TimeSlotGrid, non-functional CookieBanner)
-- Dark mode implemented inconsistently
+### 2.2 Guest Browse & Explore (P0)
+**Status:** Partially Complete  
+**Details:**
+- ✅ Business feed & search
+- ✅ Login gate on booking
+- ❌ Missing map component in business detail
+- ⚠️ Guest session cleanup not implemented
 
-### 2. User Authentication (P0)
-**Status:** Partial  
-**Notes:**
-- Email/password flow complete
-- Social logins unimplemented
-- Provider onboarding lacks SIRET validation
-- No JWT refresh token handling
+### 2.3 Business Search & Discovery (P0)
+**Status:** Complete  
+**Details:**
+- ✅ Debounced search with autocomplete
+- ✅ Filter/sort implementation
+- ✅ Pagination & empty states
+- ⚠️ Price filter uses exact ranges (not low/med/high)
 
-### 3. Guest Browse & Explore (P0)
-**Status:** Completed  
-**Notes:**
- wall works but lacks post-auth context restoration
+### 2.4 Map-based Search (P1)
+**Status:** Not Started  
+**Details:**
+- ❌ No map component
+- ❌ Missing pin clustering logic
+- ❌ Location permissions not handled
 
-### 4. Business Search & Discovery (P0)
-**Status:** Completed  
-**Notes:** Missing "open now" filter; 3G performance unverified
+### 2.5 Business Detail View (P0)
+**Status:** Partially Complete  
+**Details:**
+- ✅ Image gallery & service list
+- ✅ Staff profiles & reviews
+- ❌ Embedded map missing
+- ⚠️ Share button uses OS share vs custom
 
-### 5. Map-based Search (P1)
-**Status:** Not Started
+### 2.6 Service Categories (P0)
+**Status:** Complete  
+**Details:**
+- ✅ Category management API
+- ✅ Browsable grid
+- ✅ Business-service associations
 
-### 6. Business Detail View (P0)
-**Status:** In Progress  
-**Notes:** Staff selection broken; review section shows only 2 entries
+### 2.7 Booking Flow (P0)
+**Status:** Partially Complete  
+**Details:**
+- ✅ Slot selection & calendar
+- ✅ Stripe integration
+- ❌ Missing promo code support
+- ⚠️ Slot release on failure not tested
 
-### 7. Service Categories (P0)
-**Status:** Partial  
-**Notes:** Static categories implemented; admin configuration missing
+### 2.8 Appointment Management (P0)
+**Status:** Partially Complete  
+**Details:**
+- ✅ Upcoming/past lists
+- ✅ Cancellation flow
+- ❌ Rescheduling not implemented
+- ⚠️ No cancellation policy display
 
-### 8. Booking Flow (P0)
-**Status:** In Progress  
-**Notes:** Slot computation works but lacks buffer time checks
+### 2.9 Favorites (P1)
+**Status:** Partially Complete  
+**Details:**
+- ✅ Toggle & favorites list
+- ❌ No cross-device sync
+- ⚠️ API lacks optimistic UI support
 
-### 9. Availability & Slot Computation (P0)
-**Status:** High Risk  
-**Notes:** No public holiday handling; staff conflicts possible
+### 2.10 User Profile (P1)
+**Status:** Partially Complete  
+**Details:**
+- ✅ Profile editing
+- ✅ Payment methods
+- ❌ Missing theme settings
+- ✅ Notification toggles
 
-### 10. Payment Integration (P0)
-**Status:** Partial  
-**Notes:** Stripe connected but lacks EUR mandate validation
+### 2.11 Availability Engine (P0)
+**Status:** Partially Complete  
+**Details:**
+- ✅ Slot computation core
+- ✅ Staff schedules
+- ❌ Buffer time config missing
+- ⚠️ Stress tests needed for 500+ bookings
 
-### 11. Admin Dashboard (P1)
-**Status:** Not Started
+### 2.12 Design System (P0)
+**Status:** Partially Complete  
+**Details:**
+- ✅ Shared types package
+- ✅ Component library
+- ❌ Storybook missing 40% components
+- ⚠️ Accessibility audit pending
 
-### 12. RGPD Compliance (P0)
-**Status:** Failed  
-**Notes:** No data export/delete functionality; cookie banner doesn't persist
+### 2.13 Reviews & Ratings (P0)
+**Status:** Partially Complete  
+**Details:**
+- ✅ Star rating system
+- ✅ Review display
+- ❌ No post-appointment prompt
+- ⚠️ Moderation tools missing
 
-## Risk Analysis
-- **Critical Path:** Authentication gaps block provider onboarding
-- **Legal Risk:** RGPD violations present
-- **Technical Debt:** Shared types inconsistency causes prop-drilling
+## Overall Assessment
+**Completion:** 68%  
+**P0 Completion:** 4/12 Fully Complete  
+**Critical Gaps:**
+1. Map components missing (blocks discovery)
+2. Incomplete booking cancellation/reschedule
+3. No MFA/auth hardening
+4. Availability engine untested at scale
 
 ## Recommendations
-1. Freeze features to complete P0 auth and RGPD
-2. Prioritize map search (P1) post-MVP
-3. Conduct load testing on booking flow
+1. Prioritize map implementation (blocks P0 features)
+2. Implement slot reservation locking
+3. Complete Storybook documentation
+4. Conduct end-to-end security audit
