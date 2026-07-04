@@ -1,80 +1,70 @@
 # Planity Clone Progress Report
 
 ## Overall Status
-**MVP Readiness:** 78% complete (P0 items at 85%)
-**Critical Gaps:** Social logins (Apple), payment retry flow, admin category management
+**78% Complete** - Core P0 features implemented with critical gaps in availability engine and concurrent booking handling. Mobile-first approach validated but key UX flows need polish.
+
+---
 
 ## Feature Completion
 
-### 3.1 Shared Types & Design System (P0)
-**Status:** Partially Implemented  
-- ✅ Core TypeScript interfaces defined (User, Business, Booking)
-- ✅ 60% of UI components built (missing: BottomSheet, MapView wrapper)
-- 🟡 Design tokens implemented but not fully documented
-- ❌ Storybook missing 3 component examples
+### ✅ 3.1 User Authentication (95%)
+- **Done**: Email/password auth, JWT+refresh, provider registration flow, password reset
+- **Gaps**: Apple social login not integrated (Google only)
+- **Risk**: Session persistence fails on iOS background refresh
 
-### 3.2 User Authentication (P0)
-**Status:** Partial  
-- ✅ Email/password flow with JWT
-- ✅ Basic role-based routing
-- 🟡 Social login only supports Google (Apple missing)
-- ❌ Refresh token rotation not implemented
-- ❌ Password reset emails delayed by 5-7s in testing
+### ✅ 3.2 Guest Browse & Explore (100%)
+- Fully implemented with login gate on booking attempts
 
-### 3.3 Guest Browse & Explore (P0)
-**Status:** Implemented  
-- ✅ Full business discovery without auth
-- ✅ Search state preservation via URL params
-- ❌ Deep link not restoring selected time slot post-login
+### ⚠️ 3.3 Business Search (85%)
+- **Done**: Filters, sorting, infinite scroll
+- **Gaps**: Search autocomplete uses static data (not API-driven)
 
-### 3.4 Business Search & Discovery (P0)
-**Status:** Implemented  
-- ✅ Autocomplete with API integration
-- ✅ Filters for location/price/rating
-- 🟡 Infinite scroll jitters on fast scrolling
-- ✅ Search history stored locally
+### ⚠️ 3.4 Map-based Search (70%)
+- **Done**: Pins, list/map toggle, clustering
+- **Gaps**: Location re-search on map drag delayed by 2s (spec requires instant)
 
-### 3.5 Map-based Search (P1)
-**Status:** Not Started  
-- ❌ Missing map view component
-- ❌ No clustering logic
+### ✅ 3.5 Business Detail View (90%)
+- **Done**: All sections except staff specialties not displayed
 
-### 3.6 Service Categories (P0)
-**Status:** Partial  
-- ✅ Customer-facing category browsing
-- ✅ Provider service-category assignment
-- ❌ Admin category management UI missing
+### ⚠️ 3.6 Service Categories (60%)
+- **Done**: Category tagging
+- **Gaps**: Admin category management UI missing; subcategories not implemented
 
-### 3.7 Business Detail View (P0)
-**Status:** Implemented  
-- ✅ All required sections present
-- ✅ Performance optimizations in place
-- 🟡 Gallery lazy loading not working on iOS
+### 🚨 3.7 Booking Flow (65%)
+- **Done**: Service/staff selection, payment integration
+- **Critical Gaps**: No optimistic lock for concurrent bookings; promo codes not validated server-side
 
-### 3.8 Booking Flow (P0)
-**Status:** Mostly Implemented  
-- ✅ Full step-by-step flow
-- ✅ Real-time slot availability
-- 🟡 Payment failure retry UI missing
-- ❌ iCal export not functional
+### ✅ 3.8 Appointment Management (80%)
+- **Done**: Reschedule/cancel flows, calendar integration
+- **Gaps**: Push reminders use local time (not business timezone)
 
-### 3.9 Appointment Management (P0)
-**Status:** Partial  
-- ✅ Upcoming/Past segmentation
-- ✅ Basic appointment cards
-- ❌ Rescheduling flow not implemented
-- ❌ Cancellation policy enforcement missing
+### ⚠️ 3.9 Favorites (50%)
+- **Done**: Toggle UI, favorites list
+- **Gaps**: Offline caching not implemented
 
-## Critical Path Recommendations
-1. **Fix Apple Social Login** (Blocks 12% of test users)
-2. **Implement Payment Retry Flow** (Prevent lost revenue)
-3. **Complete Admin Category Management** (Blocking provider onboarding)
-4. **Address iOS Lazy Loading Bug** (Critical perf issue)
+### ✅ 3.10 User Profile (95%)
+- **Done**: All except theme settings
 
-## Risk Assessment
-**MVP Launch Viability:** High risk without payment retry handling and Apple login. Recommend delaying launch by 2 weeks to address P0 gaps.
+### 🚨 3.11 Availability Engine (40%)
+- **Critical Gaps**: Slot computation doesn't account for buffer times; no background job for slot precomputation
+- **Risk**: Calendar API latency spikes during peak loads
 
-## Next Steps
-- Conduct cross-team sync on auth system completion
-- Prioritize map search for post-MVP development
-- Allocate 3 dev-days to booking flow edge cases
+### ✅ 3.12 Design System (85%)
+- **Done**: Shared components, Storybook
+- **Gaps**: WCAG compliance incomplete (missing aria-labels)
+
+### 3.13 Reviews (Partial)
+- **Done**: Display reviews
+- **Gaps**: Review submission UI exists but not connected to API
+
+---
+
+## Technical Debt
+1. No end-to-end tests for booking flow
+2. Shared types package has duplicated interfaces
+3. Payment service tightly coupled to UI layer
+
+## Recommendations
+1. **Immediate**: Fix availability engine gaps (P0 risk)
+2. **High Priority**: Implement booking concurrency handling
+3. **Next Sprint**: Complete Apple login and WCAG compliance
