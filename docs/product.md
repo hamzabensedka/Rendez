@@ -2,374 +2,397 @@
 
 ## 1. Overview
 
-Planity Clone is a mobile-first marketplace connecting customers with beauty, wellness, and service professionals for appointment booking. The platform serves three user segments: **Customers** (book appointments), **Providers/Business Owners** (manage schedules and services), and **Admin** (platform oversight).
+Planity Clone is a mobile-first platform connecting customers with local service businesses (salons, barbershops, spas, clinics) for appointment booking. The product serves three user segments: **Customers** (book appointments), **Providers** (manage business and availability), and **Admin** (platform oversight).
 
 ---
 
 ## 2. User Personas
 
-| Persona | Goals | Pain Points |
-|---------|-------|-------------|
-| **Customer** | Find, compare, and book services quickly | No visibility into real-time availability |
-| **Guest** | Browse without commitment | Forced registration too early |
-| **Provider** | Fill calendar, reduce no-shows | Managing bookings across channels |
-| **Admin** | Monitor platform health, resolve disputes | Fraud, payment issues, content quality |
+| Persona | Description | Primary Goals |
+|---------|-------------|---------------|
+| **Customer** | Urban professional, 25-45, values convenience | Find, compare, and book services quickly |
+| **Guest** | Unregistered user exploring the platform | Browse without commitment, convert to registered user |
+| **Provider** | Small business owner or manager | Manage schedule, reduce no-shows, grow clientele |
+| **Admin** | Platform operator | Monitor health, resolve disputes, ensure quality |
 
 ---
 
 ## 3. Feature Specifications
 
----
-
 ### 3.1 User Authentication
-**Priority:** P0
+
+**Priority:** P0 | **Owner:** Product-Engineering
 
 | Aspect | Specification |
 |--------|---------------|
-| **Registration** | Email/password, Google OAuth, Apple Sign-In |
-| **Login** | JWT access + refresh tokens; biometric prompt (Face ID/Touch ID) after first successful login |
-| **Password Recovery** | Secure token via email, 1-hour expiry |
-| **Session Management** | 30-day refresh token; revoke on logout; single-device option in settings |
-| **Role Selection** | Post-registration flow asks "Book services" or "Manage my business" — can switch later |
+| **Registration Methods** | Email/password, Google OAuth, Apple Sign-In |
+| pseudonym | Password min 8 chars, 1 uppercase, 1 number, 1 special character |
+| **Email Verification** | Required before booking; resend link expires in 24h |
+| **Login** | JWT access token (15min) + refresh token (7 days); biometric option on mobile |
+| **Password Reset** | Secure token via email, single-use, 1-hour expiry |
+| **Session Management** | Max 5 concurrent sessions; force logout from all devices option |
 
 **Acceptance Criteria:**
-- [ ] User can register with email, verify via 6-digit code
-- [ ] OAuth flows complete in <3 seconds after provider redirect
-- [ ] Biometric login appears after first password login, can be disabled
-- [ ] Token refresh is transparent to user; 401 triggers re-login
-- [ ] Rate limit: 5 login attempts per 15 minutes
+- AC1: User can register with email, verify via link, and log in within 30 seconds
+- AC2: OAuth flow completes in under 10 seconds with valid credentials
+- AC3: Expired/invalid tokens return 401 with clear error message, triggering re-auth
+- AC4: Biometric prompt appears after 3 successful password logins (mobile only)
+- AC5: "Remember me" extends session to 30在用户请求时30天; unchecked expires in 2 hours idle
 
 ---
 
 ### 3.2 Guest Browse & Explore
-**Priority:** P0
+
+**Priority:** P0 | **Owner:** Product-Growth
 
 | Aspect | Specification |
 |--------|---------------|
-| **Access** | No account required for browsing search, business profiles, reviews, and availability |
-| **Friction Points** | Prompt login only at: booking initiation, favoriting, or leaving review |
-| **Guest Data** | Store search filters in localStorage; merge to account upon registration |
+| **Access Level** | No account required for browsing search, listings, and basic business details |
+| **Restrictions** | Booking, favorites, and reviews require authentication |
+| **Conversion Triggers** | "Book Now" CTA prompts login; post-login redirect preserves intended action |
+| **Guest Data** | Location (IP-derived, editable), recent searches stored locally (7 days) |
 
 **Acceptance Criteria:**
-- [ ] Guest sees full search results and business detail pages
-- [ ] "Book" CTA triggers login modal with option to continue as guest (enter email + phone)
-- [ ] Guest checkout collects minimal info; auto-creates account post-booking
-- [ ] Guest session expires after 24 hours of inactivity
+- AC1: Guest sees full search results and business detail pages without login barrier
+- AC2: Attempting to book triggers auth modal with "Continue as Guest" disabled (booking requires account)
+- AC3: Post-authentication redirect returns user to original intent (search filters preserved)
+- AC4: Guest sees persistent banner: "Create account to book and save favorites"
 
 ---
 
 ### 3.3 Business Search & Discovery
-**Priority:** P0
+
+**Priority:** P0 | **Owner:** Product-Core
 
 | Aspect | Specification |
 |--------|---------------|
-| **Search Input** | Free text (business name, service, or generic term like "massage") |
-| **Filters** | Service category, price range, rating (4.0+), availability today, gender of professional, accessibility |
-| **Sort Options** | Relevance, distance, rating, price (low to high), availability soonest |
-| **Results Display** | Card list with: thumbnail, name, rating, starting price, next available slot, distance |
-| **Pagination** | Infinite scroll with 20 results per page |
+| **Search Inputs** | Free-text (business name, service), location (current/given), date range |
+| **Filters** | Service category, price range, rating (4.0+, 4.5+), availability (today, this week), amenities, language spoken |
+| **Sorting** | Relevance (default), distance, rating, price (low-high), availability (soonest) |
+| **Results Display** | Card list with: thumbnail, name, rating, distance, starting price, next available slot |
+| **Pagination** | Cursor-based, 20 results per page, infinite scroll on mobile |
+| **Search History** | Store last 10 searches per user; allow one-tap re-run |
 
 **Acceptance Criteria:**
-- [ ] Search returns results in <500ms for cached indexes, <2s for cold queries
-- [ ] Typo tolerance: "masage" returns "massage" results
-- [ ] Empty state suggests nearby alternatives and popular categories
-- [ ] Active filters persist across session, clearable with one tap
-- [ ] Deep link support: `/search?query=massage&location=paris&date=2024-01-15`
+- AC1: Search returns relevant results in under 500ms for 95th percentile queries
+- AC2: Typo tolerance handles 2-character Levenshtein distance (e.g., "haircut" → "haitcut")
+- AC3: Empty state suggests: nearby alternatives, popular categories, or "broaden filters" action
+- AC4: Tapping "Book" on result card pre-fills business in booking flow
 
 ---
 
 ### 3.4 Map-based Search
-**Priority:** P0
+
+**Priority:** P0 | **Owner:** Product-Core
 
 | Aspect | Specification |
 |--------|---------------|
-| **Map Provider** | Mapbox or Google Maps (configurable) |
-| **Markers** | Clustered at zoom <12; individual pins with price or rating color coding |
-| **Interaction** | Tap marker → bottom sheet preview; tap preview → full detail |
-| **Geolocation** | Request on first use; fallback to IP-based city center; manual search override |
-| **Radius** | Default 5km; adjustable 1-50km slider |
+| **Map Provider** | Mapbox (custom styling) or Google Maps (fallback) |
+| **Default View** | User's current location with 2km radius; cluster markers for density |
+| **Marker States** | Default (available today), busy (limited slots), closed (grayed), promoted (highlighted) |
+| **Interaction** | Pin tap → bottom sheet preview; "View" → full business detail |
+| **Boundaries** | Search adapts to visible map region; update results on pan/zoom end (debounced 300ms) |
+| **List/Map Toggle** | Persistent toggle; preserve scroll position when switching |
 
 **Acceptance Criteria:**
-- [ ] Map loads with user location dot within 3 seconds
-- [ ] Pan/zoom triggers debounced re-query (300ms)
-- [ ] "List view" toggle preserves current map bounds as filter
-- [ ] Offline: show cached businesses in last viewed area with stale indicator
-- [ ] Accessibility: screen reader announces "15 businesses visible on map"
+- AC1: Map initializes with user location within 3 seconds (with permission) or city center (denied)
+- AC2: 100+ markers cluster without performance degradation; de-cluster at zoom level 12
+- AC3: Bottom sheet swipes up to 60% screen; full detail on "View" tap
+- AC4: Map search and list search are synchronized; filter changes reflect on both
 
 ---
 
 ### 3.5 Business Detail View
-**Priority:** P0
+
+**Priority:** P0 | **Owner:** Product-Core
 
 | Aspect | Specification |
 |--------|---------------|
-| **Header** | Image carousel (max 10), business name, verified badge, overall rating, favorite CTA |
-| **Tabs** | Services, Reviews, About, Availability |
-| **Services Tab** | Grouped by category, collapsible; each shows duration, price, description, "Book" CTA |
-| **Reviews Tab** | Sortable (newest, highest, lowest); paginated; photo reviews highlighted |
-| **About Tab** | Address, hours, phone, website, amenities, staff profiles |
-| **Availability Tab** | Mini calendar with next 7 days; quick-slot selection |
+| **Header** | Hero image carousel (max 10), business name, verified badge, rating, review count |
+| **Info Section** | Address (with directions link), hours (today's status + full schedule), phone, website |
+| **Services** | Categorized list with: name, duration, description, price, "Book" CTA |
+| **Team** | Staff profiles with photo, name, specialty, rating; filter services by staff |
+| **Reviews** | Aggregate score, distribution histogram, 3 featured reviews, "See all" link |
+| **Footer** | Sticky "Book Appointment" button; disabled if no availability |
 
 **Acceptance Criteria:**
-- [ ] Page loads core info in <1.5s; images lazy-loaded
-- [ ] "Call" and "Get directions" require one tap each
-- [ ] Share button generates deep link with preview image
-- [ ] If business is closed, show next opening time prominently
-- [ ] Report business button for inappropriate content
+- AC1: Page loads in under 2 seconds on 3G; images lazy-loaded with blur placeholder
+- AC2: "Add to Calendar" pre-populates with business address and service details
+- AC3: Share button generates deep link with preview image for social platforms
+- AC4: Offline: cached business details viewable; "Book" triggers sync queue
 
 ---
 
 ### 3.6 Service Categories
-**Priority:** P0
+
+**Priority:** P0 | **Owner:** Product-Core
 
 | Aspect | Specification |
 |--------|---------------|
-| **Hierarchy** | Category → Subcategory → Service (e.g., Hair → Coloring → Balayage) |
-| **Category Examples** | Hair, Nails, Face & Skin, Massage, Fitness, Medical Aesthetics, Tattoos, Pet Services |
-| **Metadata per Service** | Name, description, duration (min-max), base price, variable pricing by staff seniority |
-| **Admin Control** | Categories managed via admin; providers can suggest new ones |
+| **Hierarchy** | 2-level: Category (e.g., Hair) → Subcategory (e.g., Cut, Color, Styling) |
+| **Default Categories** | Hair, Nails, Face & Skin, Massage & Spa, Fitness & Wellness, Medical Aesthetics, Pet Services |
+| **Provider Assignment** | Each business selects from master list; can suggest new categories (pending admin approval) |
+| **Discovery** | Category icons on home; trending categories algorithmically surfaced |
+| **SEO** | Category pages indexable with localized content |
 
 **Acceptance Criteria:**
-- [ ] Category icons are consistent, recognizable, and accessible
-- [ ] Provider can add custom service name within standard category
-- [ ] Service with variable duration (e.g., "consultation") shows range, confirms exact at booking
-- [ ] Inactive services hidden from browse but visible in historical bookings
+- AC1: Category icon grid renders in 2 rows on mobile, 4 on tablet
+- AC2: Selecting category filters search to that category with subcategory chips
+- AC3: Category with no local results shows "No [Category] nearby" with nearest option and "Notify me" for new openings
 
 ---
 
 ### 3.7 Booking Flow
-**Priority:** P0
 
-| Step | Action |
-|------|--------|
-| 1. Select Service | From business detail or quick rebook |
-| 2. Choose Provider | Any available staff, or "no preference" |
-| 3. Pick Date/Time | Calendar view with available slots; consecutive slot selection for multi-service |
-| 4. Add-ons | Upsell options (e.g., deep conditioning, premium products) |
-| 5. Confirm Details | Review, special requests text field, cancellation policy acknowledgment |
-| 6. Payment | See 3.14; option to pay in-store for supported businesses |
-| 7. Confirmation | Booking reference, calendar invite, directions CTA |
+**Priority:** P0 | **Owner:** Product-Core
+
+**Flow Steps:**
+1. **Select Service** (or bundle multiple services)
+2. **Select Provider/Staff** (optional "Any available")
+3. **Select Date** → **Select Time Slot** from computed availability
+4. **Review & Confirm** (service, time, price, cancellation policy)
+5. **Payment** (if required) or **Confirm**
+6. **Confirmation** with calendar invite, directions, add-to-wallet
+
+| Aspect | Specification |
+|--------|---------------|
+| **Slot Selection** | Morning/Afternoon/Evening grouping; first available highlighted |
+| **Waitlist** | Full day offers "Join waitlist" for cancellations |
+| **Guest Booking** | Require name, phone, email; create account prompt post-booking |
+| **Modification** | Reschedule (same business, any future slot) or Cancel with policy enforcement |
 
 **Acceptance Criteria:**
-- [ ] Slot holds for 10 minutes during checkout; release on timeout or abandonment
-- [ ] Concurrent booking race condition handled: first completion wins, second gets waitlist offer
-- [ ] Guest checkout collects: first name, last name, email, phone
-- [ ] Modify booking: change time up to 2 hours before, same service/provider
-- [ ] Cancel with full refund if >24h; 50% if 2-24h; 0% if <2h (configurable per business)
+- AC1: Complete booking in under 60 seconds for returning user with saved payment
+- AC2: Slot selection prevents double-booking via optimistic lock (hold for 5 minutes during checkout)
+- AC3: Cancellation policy displayed pre-booking; enforced automatically (e.g., 24h notice = full refund, <24h = 50%)
+- AC4: Booking confirmation arrives via push, email, and SMS within 10 seconds
+- AC5: Failed payment releases hold with graceful retry (3 attempts, user notified each)
 
 ---
 
 ### 3.8 Appointment Management
-**Priority:** P0
+
+**Priority:** P0 | **Owner:** Product-Core
 
 | Aspect | Specification |
 |--------|---------------|
-| **Customer View** | Upcoming (chronological), Past (grouped by month); color-coded by status |
-| **Statuses** | Confirmed, Pending, Checked-in, In-Progress, Completed, Cancelled, No-show |
-| **Actions per Appointment** | Reschedule (if allowed), Cancel, Rebook same service, Call business, Get directions, Add to calendar |
-| **Reminders** | Push + SMS at T-24h, T-2h; configurable by user |
+| **Customer Views** | Upcoming (chronological), Past, Cancelled; group by month |
+| **Actions** | Reschedule (wizard re-uses booking flow), Cancel, Rebook (repeat same service), Get Directions, Call |
+| **Status States** | Confirmed, Checked-in, In-Progress, Completed, Cancelled, No-Show, Rescheduled |
+| **Reminders** | 24h email, 2h SMS/push (configurable by user) |
+| **Receipts** | PDF invoice post-completion; accessible in app indefinitely |
 
 **Acceptance Criteria:**
-- [ ] Upcoming appointments surface on home screen widget
-- [ ] Swipe to quick-actions on mobile; dropdown on web
-- [ ] Past appointments show "Book again" with original service pre-selected
-- [ ] No-show marked by provider updates customer history (affects future bookings)
+- AC1: Upcoming appointments widget on home shows next 3; deep link to full list
+- AC2: Reschedule within policy window; outside window shows "Contact business" with tap-to-call
+- AC3: Cancelled appointment prompts reason collection (mandatory for platform, optional share with business)
+- AC4: Past appointments rateable for 7 days post-completion; prompt on 2nd app open after completion
 
 ---
 
 ### 3.9 Favorites
-**Priority:** P1
+
+**Priority:** P1 | **Owner:** Product-Growth
 
 | Aspect | Specification |
 |--------|---------------|
-| **Save** | Heart icon on business card and detail page |
-| **List View** | Grid of favorited businesses; sort by recently added, name, or next availability |
-| **Notifications** | Optional: notify when favorite has new availability or promotion |
+| **Actions** | Heart icon on business card/detail; toggle with haptic feedback |
+| **Organization** | Default list; user-created lists (e.g., "Hair in Paris", "Gift Ideas") |
+| **Notifications** | Optional: alert for new availability, promotions, or new reviews from favorited businesses |
+| **Privacy** | Lists private by default; shareable via link (future) |
 
 **Acceptance Criteria:**
-- [ ] Sync favorites across devices within 5 seconds
-- [ ] Offline: show cached favorites with sync on reconnect
-- [ ] Unfavorite with undo toast (5 seconds)
-- [ ] Share favorites list as curated collection
+- AC1: Favorite/unfavorite syncs immediately; offline action queues for sync
+- AC2: Favorites tab shows empty state with "Discover businesses" CTA when none saved
+- AC3: Favorited businesses surface in search results with heart indicator
 
 ---
 
 ### 3.10 User Profile
-**Priority:** P1
+
+**Priority:** P1 | **Owner:** Product-Core
 
 | Aspect | Specification |
 |--------|---------------|
-| **Sections** | Personal info, Payment methods, Notifications preferences, Booking history, Favorite businesses |
-| **Preferences** | Default reminder times, preferred communication channel, accessibility needs |
-| **Data Export** | GDPR-compliant data download; account deletion with 30-day grace period |
+| **Profile Data** | Photo, name, phone, email, birthday (for birthday offers), preferred language |
+| **Preferences** | Default booking reminders, notification channels, privacy settings |
+| **Payment Methods** | Multiple cards, default selection; PCI-compliant tokenization (Stripe) |
+| **Security** | Change password, 2FA option, active sessions list, delete account (GDPR/CCPA) |
+| **History** | Booking statistics, total spent, favorite categories |
 
 **Acceptance Criteria:**
-- [ ] Profile completion meter encourages adding photo, preferences
-- [ ] Change email requires re-verification; change phone requires SMS code
-- [ ] Account deletion shows impact (lost loyalty points, active bookings)
-- [ ] Marketing opt-in separate from transactional notifications
+- AC1: Profile completion percentage drives progressive disclosure of features (e.g., 80% for early access)
+- AC2: Account deletion initiates 30-day grace period with recovery option; permanent after
+- AC3: Data export (GDPR Article 20) generates downloadable archive within 24 hours
 
 ---
 
 ### 3.11 Availability & Slot Computation
-**Priority:** P0
+
+**Priority:** P0 | **Owner:** Product-Platform
 
 | Aspect | Specification |
 |--------|---------------|
-| **Business Hours** | Weekly recurring schedule + exception dates (holidays, vacation) |
-| **Staff Schedules** | Individual availability, breaks, time off |
-| **Slot Generation** | Service duration + buffer + staff availability + existing bookings + buffer between appointments |
-| **Buffer Types** | Pre-service prep, post-service cleanup, travel (for mobile services) |
-| **Complex Rules** | Double-booking prevention, room/resource constraints, service chaining (e.g., color then cut) |
+| **Business Hours** | Weekly recurring + exception dates (holidays, closures) |
+| **Staff Schedules** | Individual availability with break blocks, time-off requests |
+| **Slot Generation** | Dynamic based on: service duration, buffer time, staff availability, existing bookings, concurrent service limits |
+| **Buffer Rules** | Configurable pre/post buffer (e.g., 15min cleanup); travel time for mobile services |
+| **Real-time** | Slot availability recomputed on every search; hold expires in 5 minutes |
+| **Complex Services** | Multi-service sequences (e.g., color then cut) computed as single block |
 
 **Acceptance Criteria:**
-- [ ] Slots compute in <200ms for 30-day window
-- [ ] Real-time: booking by one user removes slot for others within 2 seconds
-- [ ] Waitlist: when no slots, user joins waitlist; auto-notify on cancellation
-- [ ] Bulk operations: provider can block recurring time, open extra hours
-- [ ] Audit log: all schedule changes tracked with before/after state
+- AC1: Slot query for single service returns in under 200ms for 30-day window
+- AC2: Concurrent booking attempts for same slot: first succeeds, second receives "Just booked" with next alternatives
+- AC3: Business can set "Accept walk-ins only" to disable online booking while remaining discoverable
+- AC4: Staff absence (sick day) automatically frees their slots and reassigns "Any" bookings if possible
 
 ---
 
 ### 3.12 Shared Types & Design System
-**Priority:** P0 (Infrastructure)
+
+**Priority:** P0 | **Owner:** Product-Design
 
 | Aspect | Specification |
 |--------|---------------|
-| **Design Tokens** | Colors, typography, spacing, shadows, border-radius — in ThemeProvider |
-| **Components** | Button, Input, Card, Modal, DatePicker, TimeSlot, Avatar, Badge, Skeleton, EmptyState |
-| **Typography** | Inter (body), Playfair Display (headings) — web-safe fallbacks |
-| **Accessibility** | WCAG 2.1 AA minimum; focus rings, aria-labels, reduced-motion support |
-| **Breakpoints** | Mobile <768px, Tablet 768-1024px, Desktop >1024px |
+| **Design Tokens** | Colors (primary #FF6B6B, secondary #4ECDC4, semantic states), typography (Inter family, 12 scales), spacing (4px base), radii, shadows |
+| **Components** | Buttons (5 variants), inputs (with validation states), cards, modals, bottom sheets, date/time pickers, skeleton loaders, empty states, error boundaries |
+| **Accessibility** | WCAG 2.1 AA minimum; screen reader labels, focus management, color contrast 4.5:1, reduced motion support |
+| **Platform Parity** | iOS/Android share 95% visual consistency; native patterns for navigation (iOS bottom tabs, Android top + drawer optional) |
+| **Theme** | Light default; dark mode follows system preference |
 
 **Acceptance Criteria:**
-- [ ] All components in Storybook with usage documentation
-- [ ] Dark mode supported via design tokens
-- [ ] Component props typed with TypeScript; no `any`
-- [ ] Color contrast ratios verified via automated testing
+- AC1: All components documented in Storybook with usage examples
+- AC2: New feature uses existing components; deviation requires design review
+- AC3: Accessibility audit passes automated checks (axe) and manual screen reader test
 
 ---
 
 ### 3.13 Reviews & Ratings
-**Priority:** P1
+
+**Priority:** P1 | **Owner:** Product-Growth
 
 | Aspect | Specification |
 |--------|---------------|
-| **Eligibility** | Only verified customers who completed appointment can review |
-| **Rating Dimensions** | Overall (1-5), optional: Service quality, Ambiance, Staff professionalism, Value |
-| **Content** | Text (min 20 chars), optional photos (max 5), staff attribution |
-| **Moderation** | Auto-approve; flag for review if contains profanity or reported by business |
-| **Response** | Business owner can reply publicly once per review |
+| **Eligibility** | Verified customers only (completed appointment); review window 7 days post-appointment |
+| **Rating Dimensions** | Overall (1-5 stars), optional: Service Quality, Staff, Ambiance, Value |
+| **Content** | Text (min 20, max 1000 chars), photos (max 5, 5MB each) |
+| **Moderation** | Auto-flag: profanity, spam patterns, competitor mentions; human review queue for disputes |
+| **Business Response** | Public reply capability; response rate and time displayed on profile |
+| **Review Sorting** | Most helpful (default), newest, highest/lowest rating |
 
 **Acceptance Criteria:**
-- [ ] Review prompt sent 2 hours post-appointment via push; email fallback at 24h
-- [ ] Anonymous option: display "Verified Customer" instead of name
-- [ ] Edit window: 48 hours to modify or delete own review
-- [ ] Aggregate rating recalculates within 5 minutes of new review
-- [ ] Reported reviews hidden pending admin review within 24 hours
+- AC1: Review form pre-fills business, service, staff from appointment
+- AC2: Anonymous option hides customer name but shows "Verified Visit"
+- AC3: Business receives email notification of new review; response within 72 hours highlighted
+- AC4: Review reported by 3+ users or business auto-hides pending investigation
 
 ---
 
 ### 3.14 Payment Integration
-**Priority:** P0
+
+**Priority:** P0 | **Owner:** Product-Platform
 
 | Aspect | Specification |
 |--------|---------------|
-| **Providers** | Stripe primary; Adyen for EU expansion |
-| **Methods** | Cards, Apple Pay, Google Pay, PayPal, Klarna (BNPL), iDEAL, SEPA |
-| **Flows** | Pay full at booking, deposit (e.g., 20%), pay in-store, or pay after service (invoice) |
-| **Escrow** | Platform holds funds until service completion; release on provider check-in or 24h post-appointment |
-| **Refunds** | Automated per cancellation policy; manual override by admin with audit trail |
+| **Processor** | Stripe (primary); Adyen (EU expansion) |
+| **Methods** | Cards (credit/debit), Apple Pay, Google Pay, PayPal (optional), Buy Now Pay Later (Klarna/Afterpay) |
+| **Flows** | Pay at booking (full), deposit (partial), pay at venue (card on file for no-show protection) |
+| **Pricing** | Transparent: service price + booking fee (displayed) + tax; business absorbs or passes fee |
+| **Refunds** | Automated per cancellation policy; manual refund tool for support |
+| **Payouts** | Business receives funds T+2; dashboard shows pending/settled amounts |
 
 **Acceptance Criteria:**
-- [ ] PCI compliance via tokenization; never store raw card data
-- [ ] 3D Secure for transactions >€30
-- [ ] Payment failure retry with saved method or new method
-- [ ] Receipt emailed with VAT breakdown; downloadable PDF in app
-- [ ] Provider payout: weekly to linked bank account; instant payout option (fee applies)
+- AC1: Payment sheet loads in under 3 seconds; 3D Secure handled inline
+- AC2: Failed payment: clear error, preserve slot for 2 minutes for retry
+- AC3: Receipt emailed with itemized breakdown; accessible in app
+- AC4: PCI compliance: no raw card data touches our servers (Stripe Elements)
 
 ---
 
 ### 3.15 Notifications
-**Priority:** P1
 
-| Channel | Use Cases |
-|---------|-----------|
-| **Push** | Booking confirmation, reminders, promotions, waitlist availability, review request |
-| **SMS** | Backup for critical: booking confirmation, day-of reminder, urgent changes |
-| **Email** | Receipts, account changes, marketing (opt-in), monthly summary |
-| **In-App** | Bell icon with unread count; categorized by type |
+**Priority:** P1 | **Owner:** Product-Engagement
+
+| Channel | Use Cases | User Control |
+|---------|-----------|--------------|
+| **Push** | Booking confirmation, reminders (24h, 2h), promotions, waitlist availability | Granular per-type toggles |
+| **Email** | Receipts, policy changes, marketing (opt-in), monthly summary | Frequency settings |
+| **SMS** | Urgent: same-day reminders, last-minute changes | On/Off only |
+| **In-App** | New features, account alerts, review prompts | Badge + inbox |
 
 **Acceptance Criteria:**
-- [ ] User controls per-channel, per-type preferences
-- [ ] Quiet hours: no push 22:00-08:00 local time unless emergency
-- [ ] Delivery tracking: log sent/delivered/opened; retry failed channels
-- [ ] Unsubscribe from marketing in one tap; transactional always allowed
+- AC1: Notification preference center accessible from profile and settings
+- AC2: Quiet hours respected (default 10pm-8am local time, customizable)
+- AC3: Deep links from notifications route to correct screen with context preserved
+- AC4: Failed push delivery falls back to SMS for critical (booking change) within 5 minutes
 
 ---
 
 ### 3.16 Provider / Business Owner Portal
-**Priority:** P0
 
-| Module | Features |
-|--------|----------|
-| **Dashboard** | Today's appointments, revenue this week, occupancy rate, new reviews |
-| **Calendar** | Day/week/month views; drag-to-reschedule; block time; color by service type |
-| **Services** | CRUD services, pricing tiers, duration, online booking toggle |
-| **Staff** | Add team members, set permissions, manage individual schedules |
-| **Bookings** | View all, filter by status, manual entry (walk-in/phone), check-in/out actions |
-| **Clients** | CRM: notes, visit history, preferences, no-show count |
-| **Settings** | Business hours, cancellation policy, payment methods accepted, integrations (Google Calendar, iCal) |
+**Priority:** P0 | **Owner:** Product-Platform
+
+| Module | Specification |
+|--------|---------------|
+| **Dashboard** | Today's appointments, weekly revenue, occupancy rate, new vs. returning customers |
+| **Calendar** | Day/week/month views; drag-drop reschedule; color-coded by status; block time off |
+| **Services** | CRUD services with: name, description, duration, price, buffer, online booking toggle |
+| **Staff** | Add staff, set permissions (view only, manage own, full admin), individual schedules |
+| **Customers** | CRM: view history, notes, contact; export for marketing (with consent) |
+| **Bookings** | Manual entry (walk-in, phone), modify/cancel with customer notification |
+| **Settings** | Business hours, holidays, cancellation policy, payment methods, integrations (Google Business, social) |
+| **Mobile App** | iOS/Android for on-the-go management; tablet-optimized for front desk |
 
 **Acceptance Criteria:**
-- [ ] Mobile-responsive web app; native app for iOS/Android with offline queue sync
-- [ ] Role-based access: Owner, Manager, Staff (restricted to own calendar)
-- [ ] Multi-location support: switch context, aggregate reporting
-- [ ] Export data: CSV for bookings, clients, financials
-- [ ] Onboarding wizard: 5-step setup to first bookable state
+- AC1: Provider onboarding: business verification in under 5 minutes (auto-approval for most; manual for regulated services)
+- AC2: Calendar syncs with Google/Outlook bi-directionally; conflict detection prevents double-booking
+- AC3: Revenue report exportable to CSV/PDF; filtered by date range
+- AC4: Staff can clock in/out; hours report for payroll integration
 
 ---
 
 ### 3.17 Admin Dashboard
-**Priority:** P1
 
-| Module | Features |
-|--------|----------|
-| **User Management** | Search, view, suspend, impersonate customers and providers |
-| **Business Verification** | KYC document review, site verification, badge assignment |
-| **Content Moderation** | Review queue for reported businesses, reviews, images |
-| **Financial Oversight** | Transaction search, refund processing, payout monitoring, dispute resolution |
-| **Analytics** | MAU, booking volume, GMV, churn, top categories, geographic heatmap |
-| **System Health** | Queue depth, error rates, third-party service status |
-| **Communications** | Broadcast push/email to segments; manage automated templates |
+**Priority:** P1 | **Owner:** Product-Platform
+
+| Module | Specification |
+|--------|---------------|
+| **Overview** | KPIs: MAU, bookings, GMV, churn, top categories, geographic heatmap |
+| **User Management** | Search/filter users, view activity, suspend/activate, impersonate (with audit log) |
+| **Business Management** | Onboarding queue, verification status, featured placement, commission settings |
+| **Content Moderation** | Review queue, reported content, automated flag review, action (hide, warn, ban) |
+| **Financial** | Transaction monitoring, refund approval, payout scheduling, fee structure management |
+| **Support** | Ticket system integration, escalation rules, canned responses |
+| **System Health** | API latency, error rates, job queue depth, third-party status |
 
 **Acceptance Criteria:**
-- [ ] Role-based access: Super Admin, Support Agent, Finance, Content Moderator
-- [ ] All actions logged with admin identity and timestamp
-- [ ] SLA alerts: respond to provider disputes within 4 hours
-- [ ] Data retention: auto-archive after 2 years, purge after 7 (GDPR)
+- AC1: Role-based access: Admin, Support (limited), Finance (read-only financials), Developer (system health)
+- AC2: All admin actions logged immutably; exportable for compliance
+- AC3: Critical alerts (payment failure spike, service outage) push to on-call via PagerDuty
 
 ---
 
 ### 3.18 Background Jobs (BullMQ)
-**Priority:** P0 (Infrastructure)
 
-| Queue | Jobs | Schedule/Trigger |
-|-------|------|------------------|
-| **notifications** | Send push, SMS, email | Event-driven or scheduled |
-| **reminders** | Appointment reminders | T-24h, T-2h cron |
-| **payments** | Process payout, retry failed charges, release escrow | Event-driven |
-| **search-index** | Reindex business/service on change | Event-driven |
-| **analytics** | Aggregate daily metrics, generate reports | Nightly cron |
-| **cleanup** | Expire holds, archive old data, purge soft-deleted | Hourly cron |
-| **exports** | Generate CSV/PDF for user/business download | On-demand, email on completion |
+**Priority:** P0 | **Owner:** Product-Platform
+
+| Job Type | Description | Schedule/Trigger |
+|----------|-------------|------------------|
+| **Slot Pre-computation** | Generate availability cache for popular businesses | Every 15 minutes + on schedule change |
+| **Reminder Dispatch** | Send push/SMS/email reminders | 24h, 2h before appointment |
+| **Notification Batch** | Aggregate and send digest emails | Daily at user-preferred time |
+| **Payment Reconciliation** | Match settlements, flag discrepancies | Daily at 6am UTC |
+| **Review Prompt** | Trigger post-appointment review request | 2 hours after appointment end |
+| **Data Cleanup** | Purge expired holds, anonymize old data, archive | Daily at 3am UTC |
+| **Search Index Update** | Sync business/service changes to Elasticsearch | Real-time via change streams |
+| **Report Generation** | Compile analytics for business/admin dashboards | Weekly (Mon 7am) or on-demand |
+| **Failed Job Handling** | Retry with exponential backoff (3x), then dead letter queue | Automatic |
 
 **Acceptance Criteria:**
-- [ ] Jobs retry with exponential backoff (max 5 attempts)
-- [ ] Dead letter queue for manual inspection after max retries
-- [ ] Job progress trackable via API for long-running exports
-- [ ] Priority: payment processing > notifications > analytics
-- [ ] Monitoring: alert if queue depth >1000 or job age >5 minutes
+- AC1: Job queue depth visible in admin; alert if >1000 queued for >10 minutes
+- AC2: Reminder job processes within 1 minute of scheduled time (99.9% SLA)
+- AC3: Failed jobs retry 3x with 5min, 15min, 1hour intervals; manual retry from dashboard
+- AC4: Job execution idempotent; duplicate runs produce no side effects
 
 ---
 
@@ -377,38 +400,44 @@ Planity Clone is a mobile-first marketplace connecting customers with beauty, we
 
 | Area | Requirement |
 |------|-------------|
-| **Performance** | App launch <2s; page transitions <300ms; API p95 <200ms |
-| **Reliability** | 99.9% uptime; graceful degradation when third parties fail |
-| **Security** | OWASP Top 10 mitigation; annual penetration test; SOC 2 Type II roadmap |
-| **Compliance** | GDPR, CCPA, PCI-DSS; data residency options (EU, US) |
-| **Localization** | i18n framework; launch in FR, EN, ES, DE; RTL for future |
-| **Accessibility** | WCAG 2.1 AA; screen reader tested; keyboard navigable |
+| **Performance** | App cold start < 3s; API p95 < 200ms; image load < 1s |
+| **Reliability** | 99.9% uptime; graceful degradation when third-party down |
+| **Security** | OWASP Top 10 mitigation; encryption at rest and in transit; annual penetration test |
+| **Scalability** | Support 10,000 concurrent bookings; auto-scale on load |
+| **Compliance** | GDPR, CCPA, PCI-DSS Level 1; SOC 2 Type II target Q2 |
+| **Localization** | FR, EN, ES, DE at launch; RTL support planned |
 
 ---
 
-## 5. Release Phases
+## 5. Analytics & Success Metrics
+
+| Metric | Target | Tracking |
+|--------|--------|----------|
+| Booking Conversion Rate | >15% | Search → Book funnel |
+| Guest-to-Registered Conversion | >30% | Post-booking account creation |
+| Provider Activation (first booking) | >70% within 14 days of signup | Onboarding funnel |
+| NPS (Customers) | >50 | Quarterly survey |
+| NPS (Providers) | >40 | Quarterly survey |
+| Monthly Churn | <5% | Cohort analysis |
+| Support Ticket Volume | <2% of transactions | Zendesk integration |
+
+---
+
+## 6. Release Phases
 
 | Phase | Features | Timeline |
 |-------|----------|----------|
-| **MVP** | Auth, Guest browse, Search, Business detail, Booking, Provider portal, Payments, Notifications | Month 1-3 |
-| **V1.1** | Map search, Favorites, Reviews, Appointment mgmt | Month 4 |
-| **V1.2** | Admin dashboard, Analytics, Background jobs optimization | Month 5 |
-| **V2.0** | Multi-location, Staff management, Advanced scheduling, Marketing tools | Month 6-8 |
+| **MVP** | Auth, Guest Browse, Search, Map, Business Detail, Booking Flow, Appointment Mgmt, Provider Portal (basic), Availability Engine, Payments | 8 weeks |
+| **v1.1** | Favorites, Reviews, Notifications, User Profile enhancements | +4 weeks |
+| **v1.2** | Admin Dashboard, Analytics, Background Jobs optimization, BullMQ migration | +4 weeks |
+| **v2.0** | Waitlist, Packages/Gift Cards, Memberships, Marketplace expansion | Q3 |
 
 ---
 
-## 6. Success Metrics
+## 7. Appendix
 
-| Metric | Target |
-|--------|--------|
-| Booking conversion rate | >15% of searchers |
-| Guest to registered conversion | >30% |
-| Provider calendar utilization | >70% for active accounts |
-| NPS (customers) | >50 |
-| NPS (providers) | >40 |
-| Support ticket rate | <2% of bookings |
-| App store rating | >4.5 stars |
+- **Glossary:** Slot = bookable time interval; Provider = business owner/staff; Hold = temporary reservation during checkout
+- **Dependencies:** Stripe, Mapbox/Google Maps, Twilio (SMS), SendGrid (email), Firebase (push)
+- **Risk Register:** Payment fraud (mitigation: Stripe Radar), no-show rate (mitigation: card holds), provider churn (mitigation: success team, reduced fees early)
 
----
-
-*Document version: 1.0 | Last updated: 2024 | Owner: Alex, Product Owner*
+*Document Version: 1.0 | Last Updated: 2024 | Owner: Alex, Product Owner*
