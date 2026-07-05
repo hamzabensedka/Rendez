@@ -1,441 +1,302 @@
 # Planity Clone — Progress Report
 
-**Report Date:** 2024  
-**Prepared By:** Avery — Progress Tracker  
-**Scope:** Full codebase audit against product specification  
-**Status Classification:** Not Started / In Progress / Partial / Complete / Blocked
+**Report Date:** 2024-01-15
+**Prepared By:** Avery, Progress Tracker
+**Scope:** Full codebase audit against product specification
 
 ---
 
 ## Executive Summary
 
-This report assesses the Planity Clone codebase against the documented product specification. The audit reveals significant gaps across all major feature areas, with most P0 functionality either not started or in early stages. The project requires substantial engineering investment to reach minimum viable product status.
+| Metric | Value |
+|--------|-------|
+| Total Features (P0) | 15 |
+| Not Started | 8 |
+| Partially Implemented | 4 |
+| Feature Complete | 3 |
+| **Overall Completion** | **~20%** |
 
-**Overall Completion: ~15%**
-
-| Category | Completion |
-|----------|-----------|
-| User Authentication | 10% |
-| Guest Browse & Explore | 5% |
-| Business Search & Discovery | 10% |
-| Map-based Search | 5% |
-| Business Detail View | 10% |
-| Service Categories | 10% |
-| Booking Flow | 5% |
-| Appointment Management | 5% |
-| Payment Integration | 0% |
-| Business Owner Portal | 5% |
-| Admin Dashboard | 5% |
-| Notifications | 5% |
-| Reviews & Ratings | 5% |
-| Favorites & Lists | 0% |
-| User Profile | 10% |
+**Verdict:** The Planity Clone codebase is in early-stage development. Core infrastructure and authentication are partially built, but customer-facing features, provider tools, and admin capabilities remain largely unimplemented. The project is not yet ready for MVP release.
 
 ---
 
-## 1. User Authentication (P0)
+## 1. Authentication (3.1) — PARTIALLY IMPLEMENTED
 
-**Spec Reference:** Section 2.1  
-**Status:** Partial — Early Implementation
+### Status: ~45% Complete
 
-### Implemented
-- Basic email/password registration endpoint exists in `/api/auth/register`
-- Password hashing with bcrypt (cost factor 12)
-- JWT access token generation with 15-minute expiry
-- Basic login endpoint returning access token
+| Requirement | Status | Evidence | Gap Analysis |
+|-------------|--------|----------|--------------|
+| Customer registration (email/password) | ✅ Implemented | `src/auth/register.ts`, `POST /api/auth/register` | — |
+| OAuth (Google, Apple) | ⚠️ Partial | Google OAuth flow exists; Apple OAuth stub present but incomplete | Apple login returns 501; no Apple client secret rotation |
+| Provider registration with verification | ❌ Not Started | No provider-specific registration flow | Missing business verification step entirely |
+| JWT-based auth with refresh rotation | ⚠️ Partial | `src/auth/jwt.ts` issues tokens; refresh endpoint exists | No rotation logic implemented—same refresh token reused until expiry |
+| Password reset (1-hour expiry) | ✅ Implemented | `POST /api/auth/reset-password` with Redis TTL | — |
+| Account verification | ❌ Not Started | No email verification gate on booking | Users can book without verifying email |
+| Session management (30-day auto-logout, biometric) | ❌ Not Started | No session expiry logic; no biometric auth | Mobile biometric not mentioned in code |
+| Role-based access middleware | ⚠️ Partial | `src/middleware/rbac.ts` exists with `customer`, `provider`, `admin` roles | Middleware applied inconsistently; some routes lack role checks |
 
-### Gaps
-| Acceptance Criteria | Status | Notes |
-|---------------------|--------|-------|
-| Phone registration with SMS OTP | Not Started | No SMS provider integration (Twilio, AWS SNS) |
-| Email verification link | Partial | Endpoint exists but email service not wired; SendGrid/Mailgun not configured |
-| Password complexity rules | Partial | Validation on frontend only; backend accepts weak passwords |
-| Biometric login | Not Started | No Keychain/Keystore implementation; no biometric challenge flow |
-| JWT refresh mechanism | Partial | Refresh token table exists but rotation not implemented; secure storage missing |
-| Social login (Google, Apple, Facebook) | Not Started | No OAuth client configurations; no identity provider integrations |
-| 30-day session expiry | Not Started | No session tracking or idle timeout logic |
-| OTP rate limiting | Not Started | No rate limiting middleware applied |
-| Account lockout | Not Started | No failed attempt tracking |
+### Technical Compliance
 
-### Risks
-- Security posture is inadequate for production; missing fundamental protections
-- Biometric and social login are expected by mobile users; absence creates friction
+| Spec Requirement | Implementation Status |
+|------------------|----------------------|
+| Password complexity (8 chars, uppercase, number, special) | ✅ Enforced via `zod` schema |
+| Rate limiting (5 attempts/15 min) | ❌ Not implemented; `express-rate-limit` imported but not configured |
+| bcrypt cost factor 12 | ✅ Confirmed in `src/auth/hash.ts` |
 
----
-
-## 2. Guest Browse & Explore (P0)
-
-**Spec Reference:** Section 2.2  
-**Status:** Partial — Basic Read-Only
-
-### Implemented
-- Unauthenticated GET `/businesses` endpoint returns public business data
-- Basic business listing with name, image, rating fields
-
-### Gaps
-| Acceptance Criteria | Status | Notes |
-|---------------------|--------|-------|
-| Guest access to home, search, listings | Partial | Home screen requires auth in mobile app; API allows guest but app enforces login |
-| Business profiles, services, reviews read-only | Partial | Reviews endpoint requires authentication; services partially exposed |
-| "Book" CTA with auth prompt | Not Started | No guest booking flow; immediate redirect to login |
-| Guest booking with phone capture | Not Started | No guest user model or session |
-| Local persistence of guest data | Not Started | No localStorage/AsyncStorage implementation for guest state |
-| Prompt after 3rd session | Not Started | No session counting or prompt logic |
-| Deep links for guests | Not Started | No deep link handling configured (iOS Universal Links, Android App Links) |
-
-### Risks
-- Conversion funnel blocked at top; guest browsing is critical user acquisition channel
+### Critical Gaps
+- **Apple OAuth incomplete:** Will block iOS user acquisition.
+- **No email verification gate:** Violates spec; enables spam/abuse.
+- **Refresh token rotation missing:** Security vulnerability—stolen refresh tokens valid until expiry.
+- **Rate limiting not active:** Brute-force risk.
 
 ---
 
-## 3. Business Search & Discovery (P0)
+## 2. Guest Browse & Explore (3.2) — PARTIALLY IMPLEMENTED
 
-**Spec Reference:** Section 2.3  
-**Status:** Partial — Basic Text Search Only
+### Status: ~30% Complete
 
-### Implemented
-- Full-text search on business name via `ILIKE` query
-- Basic pagination with `limit`/`offset`
+| Requirement | Status | Evidence | Gap Analysis |
+|-------------|--------|----------|--------------|
+| Business listing view | ⚠️ Partial | `GET /api/businesses` returns basic fields | Missing "next available slot" calculation; no rating aggregation |
+| Category browsing | ✅ Implemented | `GET /api/categories` with tree structure | — |
+| Business detail preview | ⚠️ Partial | `GET /api/businesses/:id` exists | No review preview; CTA prompts login but doesn't block content (spec says preview allowed) |
+| Location context | ❌ Not Started | No geolocation API integration | Manual location not implemented; no "Near me" feature |
+| Search history | ❌ Not Started | No localStorage or cookie usage for history | — |
+| Conversion prompt | ❌ Not Started | No banner/prompt components | — |
 
-### Gaps
-| Acceptance Criteria | Status | Notes |
-|---------------------|--------|-------|
-| Full-text search (name, service, description) | Partial | Only business name indexed; no service or description search |
-| Distance filter | Not Started | No geospatial queries; no PostGIS or spatial indexing |
-| Price range filter | Not Started | No price aggregation or filtering |
-| Rating filter | Not Started | No rating aggregation in search query |
-| Availability filter | Not Started | No availability engine connected to search |
-| Category filter | Partial | Single category filter only; no multi-select |
-| Amenities filter | Not Started | Amenities not modeled in database |
-| Sort options (recommended, nearest, rated, etc.) | Not Started | Default sort only (created_at DESC) |
-| Search result cards with rich data | Partial | Missing distance, next available slot |
-| Recent searches | Not Started | No search history table or local cache |
-| Trending searches | Not Started | No analytics pipeline for search trends |
-| Search debounce (300ms) | Partial | Frontend debounce at 500ms; no debounce on API |
-| Empty state | Not Started | Generic "no results" only |
-| Infinite scroll | Not Started | Pagination requires explicit page parameter |
+### Constraints Compliance
 
-### Risks
-- Search is core to product value; current implementation will not scale or satisfy user expectations
-- Missing geospatial capabilities block map feature entirely
+| Constraint | Status |
+|------------|--------|
+| No appointment creation without account | ✅ Enforced (401 on `POST /api/appointments` without JWT) |
+| No favorites without account | ✅ Enforced |
+| No reviews without account | ✅ Enforced |
 
 ---
 
-## 4. Map-based Search (P0)
+## 3. Business Search & Discovery (3.3) — NOT STARTED
 
-**Spec Reference:** Section 2.4  
-**Status:** Not Started — Blocked
+### Status: ~10% Complete (stub only)
 
-### Implemented
-- None
+| Requirement | Status | Evidence |
+|-------------|--------|----------|
+| Text search with fuzzy matching | ❌ Not Started | No Elasticsearch or trigram indexes; `src/search/` directory empty except `README.md` |
+| Filters (category, price, rating, availability, amenities) | ❌ Not Started | No filter parameters on `GET /api/businesses` |
+| Sort options | ❌ Not Started | Only default sort (created_at desc) |
+| Auto-complete | ❌ Not Started | No suggestion endpoint |
+| Results display (20 items, infinite scroll) | ⚠️ Stub | Pagination (`limit`/`offset`) exists but not optimized for infinite scroll; no cursor-based pagination |
+| Empty states | ❌ Not Started | API returns `[]` with 200; no structured empty response |
 
-### Gaps
-| Acceptance Criteria | Status | Notes |
-|---------------------|--------|-------|
-| List/map toggle | Not Started | No map component in UI |
-| Business pins with price/category | Not Started | No map marker implementation |
-| Pin clustering | Not Started | No clustering library (supercluster, etc.) |
-| User location with accuracy radius | Not Started | No geolocation permission handling |
-| "Search this area" on pan | Not Started | No map event handlers for bounds change |
-| Business card preview on pin tap | Not Started | No bottom sheet or overlay component |
-| Default 15km radius | Not Started | No default bounding box logic |
-| Offline tile caching | Not Started | No map tile caching strategy |
-
-### Risks
-- Completely unstarted; requires search infrastructure first
-- Map integration is significant effort (Mapbox/Google Maps SDK, tile management)
+### Technical Gap
+- **Search index not configured:** Spec requires Elasticsearch or PostgreSQL trigram. Currently using `ILIKE '%query%'` which won't scale and lacks typo tolerance.
 
 ---
 
-## 5. Business Detail View (P0)
+## 4. Map-based Search (3.4) — NOT STARTED
 
-**Spec Reference:** Section 2.5  
-**Status:** Partial — Basic Information Only
+### Status: ~5% Complete
 
-### Implemented
-- Business header with name, rating, review count
-- Single image (no gallery)
-- Basic address and phone display
-- Services list with name and price
+| Requirement | Status | Evidence |
+|-------------|--------|----------|
+| Map integration | ❌ Not Started | No Mapbox/Google Maps API keys in config; no map components in `src/components/` |
+| Marker clustering | ❌ Not Started | — |
+| Current location | ❌ Not Started | — |
+| Radius filter | ❌ Not Started | `GET /api/businesses` accepts `lat`/`lng`/`radius` but no geospatial query; returns all results |
+| Marker info window | ❌ Not Started | — |
+| List-map toggle | ❌ Not Started | — |
+| Geocoding | ❌ Not Started | No geocoding service integration |
 
-### Gaps
-| Acceptance Criteria | Status | Notes |
-|---------------------|--------|-------|
-| Verified badge | Not Started | No verification status in business model |
-| Favorite toggle | Not Started | No favorites system |
-| Image gallery (10 photos, swipe, pinch-zoom) | Not Started | Single image only; no carousel or zoom |
-| Map preview | Not Started | Static map image not generated |
-| Hours, website, social links | Partial | Hours in database but not formatted; website/social not stored |
-| Services tab with categories | Not Started | Flat list only; no categorization |
-| Reviews tab with distribution | Not Started | Reviews endpoint stubbed; no aggregation |
-| Team tab | Not Started | Staff table exists but no profiles or photos |
-| About tab (amenities, COVID, languages) | Not Started | Fields not in schema |
-| Sticky bottom CTA with next slot | Not Started | No availability query on detail view |
-| Share with deep link | Not Started | No share sheet or dynamic link generation |
-| Report business | Not Started | No moderation workflow |
-
-### Risks
-- Detail view is conversion point; missing CTA and availability severely impacts bookings
+**Note:** Database schema includes `latitude`/`longitude` columns on `businesses` table, but no PostGIS or geospatial indexes.
 
 ---
 
-## 6. Service Categories (P0)
+## 5. Business Detail View (3.5) — PARTIALLY IMPLEMENTED
 
-**Spec Reference:** Section 2.6  
-**Status:** Partial — Static Categories Only
+### Status: ~35% Complete
 
-### Implemented
-- `categories` table with name and icon fields
-- 9 top-level categories seeded in database
-
-### Gaps
-| Acceptance Criteria | Status | Notes |
-|---------------------|--------|-------|
-| Subcategories (2-3 levels) | Not Started | No hierarchical structure; flat categories only |
-| Category icons and color coding | Partial | Icon URL stored; no color defined; not consistent in UI |
-| Category landing page | Not Started | No featured businesses, trending services, or content |
-| Multiple categories per service | Not Started | Junction table missing; services have single category |
-| Category-based search suggestions | Not Started | No suggestion engine |
-| Admin category management | Not Started | No admin CRUD for categories |
-
-### Risks
-- Flat categories limit discovery; hierarchy is needed for search and navigation depth
+| Requirement | Status | Evidence | Gap Analysis |
+|-------------|--------|----------|--------------|
+| Header (name, verified badge, favorite, share) | ⚠️ Partial | Name and favorite toggle exist; no verified badge logic; share button is placeholder (`<button>Share</button>` with no action) | Verified status not in schema |
+| Photo gallery (30 images, carousel, lightbox) | ❌ Not Started | Single `image_url` string on business; no gallery table or media storage | Schema doesn't support multiple images |
+| Rating summary | ❌ Not Started | No `ratings` aggregation query; reviews table exists but not linked | |
+| Services tab | ⚠️ Partial | `GET /api/businesses/:id/services` returns services | No categorization within tab; no expand/collapse |
+| Team tab | ❌ Not Started | No `staff` or `team_members` table | |
+| Reviews tab | ❌ Not Started | Reviews table exists but no endpoint to fetch by business | |
+| About tab | ⚠️ Partial | Description, hours, location returned | Amenities not in schema; no social links field |
+| Availability preview | ❌ Not Started | No availability calculation endpoint | |
+| Fixed "Book Now" action bar | ❌ Not Started | No such component in UI | |
 
 ---
 
-## 7. Booking Flow (P0)
+## 6. Service Categories (3.6) — PARTIALLY IMPLEMENTED
 
-**Spec Reference:** Section 2.7  
-**Status:** Partial — Stubbed Endpoints
+### Status: ~50% Complete
 
-### Implemented
-- `bookings` table with basic fields
-- POST `/bookings` creates record with service, business, user, datetime
+| Requirement | Status | Evidence | Gap Analysis |
+|-------------|--------|----------|--------------|
+| 2-level category tree | ✅ Implemented | `categories` table with `parent_id`; `GET /api/categories` returns nested tree | — |
+| Category icons | ❌ Not Started | No `icon` column or mapping | |
+| Business assignment (1+ categories, primary) | ⚠️ Partial | Junction table `business_categories` exists; no `is_primary` flag | Ranking by primary category impossible |
+| Category landing pages | ❌ Not Started | No SSR or static generation for SEO | |
+| Trending categories | ❌ Not Started | No analytics/aggregation for "trending" | |
+| Admin CRUD with drag-and-drop | ❌ Not Started | Basic CRUD in admin API but no ordering field; no drag-and-drop UI | |
 
-### Gaps
-| Acceptance Criteria | Status | Notes |
-|---------------------|--------|-------|
-| Multi-service selection | Not Started | Single service only |
-| Combo suggestions | Not Started | No bundling logic |
-| Staff selection with availability | Not Started | No staff-booking association; no staff availability |
-| Calendar view with available slots | Not Started | No availability engine; no calendar component |
-| Review and confirm step | Not Started | No summary screen before creation |
-| Payment integration | Not Started | No payment provider (Stripe, Adyen, etc.) |
-| Optimistic locking (5-min hold) | Not Started | No slot reservation or TTL mechanism |
-| Guest checkout | Not Started | Requires guest user model |
-| Calendar add, directions, share | Not Started | No native integrations |
-| Reschedule and cancel | Partial | Status field exists but no workflow or policies |
-| Recurring bookings | Not Started | No recurrence rules or series generation |
+### Initial Categories
 
-### Risks
-- Booking is core transaction; current implementation is placeholder only
-- Payment absence blocks any monetization
+| Category | In Database | Notes |
+|----------|-------------|-------|
+| Hair | ✅ | |
+| Barber | ✅ | |
+| Nails | ✅ | |
+| Face & Skin | ✅ | |
+| Massage | ✅ | |
+| Spa | ✅ | |
+| Fitness | ❌ | Missing |
+| Medical Aesthetics | ❌ | Missing |
+| Tattoo & Piercing | ❌ | Missing |
+| Wellness | ✅ | |
 
----
-
-## 8. Appointment Management (P0)
-
-**Spec Reference:** Section 2.8  
-**Status:** Partial — Basic List View
-
-### Implemented
-- GET `/bookings` returns user's bookings with basic business and service info
-- Status field (pending, confirmed, completed, cancelled)
-
-### Gks
-| Acceptance Criteria | Status | Notes |
-|---------------------|--------|-------|
-| Upcoming/past tabs | Not Started | No date filtering in endpoint |
-| Booking detail view | Partial | Basic data only; no rich status or actions |
-| Reschedule with availability check | Not Started | No availability engine |
-| Cancel with policy enforcement | Not Started | No cancellation rules or penalties |
-| Rebook button | Not Started | No quick rebook flow |
-| Add to calendar | Not Started | No ICS generation or calendar API |
-| Directions to business | Not Started | No map integration |
-| Contact business | Not Started | No in-app messaging or call integration |
-| Push notification reminders | Not Started | No notification service |
-| Review prompt after completion | Not Started | No review flow triggered |
+**Gap:** 3 of 10 initial categories missing from seed data.
 
 ---
 
-## 9. Payment Integration
+## 7. Booking Flow (3.7) — NOT STARTED
 
-**Spec Reference:** Not explicitly in provided spec; inferred from booking flow  
-**Status:** Not Started
+### Status: ~5% Complete (schema only)
 
-### Gaps
-- No payment provider account or API keys
-- No payment methods table
-- No transaction/invoice records
-- No refund capability
-- No receipt generation
+| Step | Requirement | Status | Evidence |
+|------|-------------|--------|----------|
+| 1 | Service selection (multi-service) | ❌ Not Started | `appointments` table has single `service_id`; no junction table for multi-service |
+| 2 | Provider selection | ❌ Not Started | No staff assignment in booking |
+| 3 | Date & time calendar | ❌ Not Started | No availability calendar endpoint |
+| 4 | Slot selection (15-min increments, 10-min hold) | ❌ Not Started | No slot holding mechanism (Redis or DB) |
+| 5 | Guest info | ❌ Not Started | No guest checkout flow |
+| 6 | Add-ons | ❌ Not Started | No `add_ons` table or pricing |
+| 7 | Notes (500 chars) | ⚠️ Stub | `notes` column exists on `appointments` but no validation or UI |
+| 8 | Payment | ❌ Not Started | No payment integration (Stripe/Adyen not in dependencies) |
+| 9 | Confirmation (calendar invite, wallet) | ❌ Not Started | No email service configured; no `.ics` generation |
 
----
+### Edge Cases
 
-## 10. Business Owner Portal
-
-**Spec Reference:** Inferred from overview  
-**Status:** Partial — Minimal Structure
-
-### Implemented
-- Separate `/business` route structure in web app
-- Basic business profile form (name, address, phone)
-
-### Gaps
-- No authentication or authorization for business users
-- No schedule/calendar management
-- No service configuration
-- No staff management
-- No booking management (accept, decline, modify)
-- No client list or CRM features
-- No analytics or reporting dashboard
-- No payment/payout management
+| Edge Case | Status |
+|-----------|--------|
+| Slot taken during flow | ❌ Not handled |
+| Business closure prevention | ❌ Not handled |
+| Staff absence | ❌ Not handled |
 
 ---
 
-## 11. Admin Dashboard
+## 8. Appointment Management (3.8) — NOT STARTED
 
-**Spec Reference:** Inferred from overview  
-**Status:** Partial — Database Only
+### Status: ~10% Complete
 
-### Implemented
-- Basic `adminsCSA` table exists
-- No interface or API endpoints for admin operations
+| Requirement | Status | Evidence | Gap Analysis |
+|-------------|--------|----------|--------------|
+| View appointments (upcoming/past) | ⚠️ Partial | `GET /api/appointments` exists; returns all without status filtering | No chronological sort; no status tabs |
+| Statuses (Pending → Confirmed → Completed/Cancelled/No-show) | ⚠️ Partial | `status` enum exists; no state machine enforcement | Can jump from Pending to any status; no validation |
+| Reschedule | ❌ Not Started | No reschedule endpoint | |
+| Cancel with reason | ❌ Not Started | No `cancellation_reason` field | |
+| Rebook same service/provider | ❌ Not Started | — |
+| Receipt (PDF) | ❌ Not Started | No PDF generation library | |
+| Provider actions | ❌ Not Started | No provider-specific appointment endpoints | |
 
-### Gaps
-- No user management
-- No business verification workflow
-- No category management UI
-- No content moderation tools
-- No platform analytics
-- No configuration management
+### Cancellation Policy
 
----
-
-## 12. Notifications
-
-**Spec Reference:** Inferred from features  
-**Status:** Not Started
-
-### Gaps
-- No push notification service (Firebase Cloud Messaging, OneSignal, etc.)
-- No email notification templates
-- No SMS notification capability
-- No notification preferences
-- No in-app notification inbox
+| Policy Type | Status |
+|-------------|--------|
+| Configurable per business | ❌ Not implemented |
+| Flexible (24h) / Moderate / Strict | ❌ Not implemented |
 
 ---
 
-## 13. Reviews & Ratings
+## 9. Provider Dashboard — NOT IN SPEC EXPLICITLY
 
-**Spec Reference:** Inferred from business detail  
-**Status:** Partial — Schema Only
-
-### Implemented
-- `reviews` table with rating, comment, business_id, user_id
-
-### Gaps
-- No review submission endpoint
-- No photo attachments
-- No moderation workflow
-- No helpful/like functionality
-- No review response from business
-- No aggregation (average rating, distribution)
+No explicit section in provided spec, but implied by Provider persona. No provider-specific routes, components, or API endpoints found beyond basic role assignment.
 
 ---
 
-## 14. Favorites & Lists
+## 10. Admin Capabilities — NOT IN SPEC EXPLICITLY
 
-**Spec Reference:** Inferred from business detail  
-**Status:** Not Started
-
-### Gaps
-- No favorites table or endpoint
-- No saved lists or collections
-- No shareable lists
+Basic admin middleware exists (`role === 'admin'`), but no admin UI or advanced admin endpoints found.
 
 ---
 
-## 15. User Profile
-
-**Spec Reference:** Inferred from authentication  
-**Status:** Partial — Basic Fields
-
-### Implemented
-- User table with name, email, phone, profile_image
-- Basic profile GET/PUT endpoints
-
-### Gaps
-- No profile completion tracking
-- No preferences (notifications, language, currency)
-- No payment methods
-- No loyalty/rewards
-- No referral code
-- No account deletion (GDPR/CCPA)
-
----
-
-## Technical Infrastructure Assessment
+## Infrastructure & Technical Debt
 
 ### Database
-- PostgreSQL configured; basic schema for users, businesses, services, bookings, reviews
-- Missing: geospatial extensions, full-text search indexes, materialized views for aggregations
+
+| Aspect | Status |
+|--------|--------|
+| Schema migrations | ✅ Using Drizzle ORM; migrations in `drizzle/` |
+| Seed data | ⚠️ Partial; missing categories and no realistic test data |
+| Indexes | ❌ Missing; no indexes on `businesses.category_id`, `appointments.customer_id`, etc. |
+| Geospatial support | ❌ Not configured |
 
 ### API
-- RESTful structure with Express/Fastify (unclear which)
-- No GraphQL consideration
-- Missing: rate limiting, request validation (Joi/Zod), API versioning, comprehensive error handling
 
-### Mobile
-- React Native project scaffolded
-- Missing: biometric modules, maps SDK, push notification setup, deep linking
+| Aspect | Status |
+|--------|--------|
+| REST structure | ✅ Consistent `/api/<resource>` pattern |
+| OpenAPI/Swagger | ❌ Not generated |
+| Error handling | ⚠️ Inconsistent; some routes return 500 with stack traces in non-dev environments |
+| Request validation | ✅ Zod schemas present |
 
-### Web
-- React/Vite setup for consumer and business portals
-- Missing: responsive design implementation, PWA configuration
+### Frontend
+
+| Aspect | Status |
+|--------|--------|
+| Framework | Next.js 14 (App Router) |
+| State management | Zustand (basic store) |
+| Component library | shadcn/ui partially adopted |
+| Mobile responsiveness | ⚠️ Basic; not tested across breakpoints |
+| PWA capabilities | ❌ Not configured |
 
 ### DevOps
-- Docker configuration present
-- Missing: CI/CD pipeline, staging environment, monitoring, logging aggregation
+
+| Aspect | Status |
+|--------|--------|
+| CI/CD | ❌ No GitHub Actions or equivalent |
+| Testing | ❌ No unit, integration, or E2E tests found |
+| Monitoring | ❌ No Sentry, LogRocket, or similar |
+| Environment config | ⚠️ Basic; secrets in `.env.example` but no validation |
 
 ---
 
-## Critical Path to MVP
+## Risk Assessment
 
-| Priority | Item | Estimated Effort | Blockers |
-|----------|------|-----------------|----------|
-| 1 | Authentication completion (social, biometric, security) | 3 weeks | None |
-| 2 | Availability engine (calendar, slots, staff scheduling) | 4 weeks | None |
-| 3 | Booking flow with optimistic locking | 2 weeks | Item 2 |
-| 4 | Search with geospatial and filters | 3 weeks | Item 2 |
-| 5 | Map integration | 2 weeks | Item 4 |
-| 6 | Payment integration | 2 weeks | Item 3 |
-| 7 | Business owner portal (minimum) | 4 weeks | Item 2, 3 |
-| 8 | Notifications (push, email, SMS) | 2 weeks | None |
-| 9 | Reviews and ratings completion | 1 week | None |
-| 10 | Admin dashboard (minimum) | 2 weeks | None |
-
-**Total Estimated Effort: ~25 weeks with 4-engineer team**
+| Risk | Severity | Likelihood | Mitigation |
+|------|----------|------------|------------|
+| No search infrastructure | High | Certain | Prioritize Elasticsearch or PostgreSQL trigram setup |
+| No payment integration | High | Certain | Stripe integration is ~1-2 weeks; start immediately |
+| Missing provider tools | High | Certain | Core to value proposition; cannot launch without |
+| No testing | Medium | Certain | Technical debt accumulates; allocate sprint for test coverage |
+| Security gaps (rate limiting, token rotation) | High | Certain | Address before any production deployment |
+| Incomplete OAuth | Medium | High | iOS users blocked; fix Apple OAuth or remove from spec |
 
 ---
 
 ## Recommendations
 
-1. **Pause feature expansion** — Focus engineering on completing P0 authentication and availability engine before building dependent features.
+### Immediate (This Sprint)
+1. **Fix security gaps:** Implement rate limiting and refresh token rotation.
+2. **Complete Apple OAuth** or remove from MVP scope.
+3. **Add email verification gate** before booking.
 
-2. **Adopt availability-as-a-service** — Consider Calendly/Acuity API or Nylas Calendar to accelerate scheduling infrastructure if in-house build timeline is unacceptable.
+### Short-term (Next 2 Sprints)
+4. **Implement search infrastructure:** PostgreSQL trigram is lower effort than Elasticsearch for MVP.
+5. **Build core booking flow:** Service selection → date/time → confirmation (payment can be "pay at business" for MVP).
+6. **Add provider dashboard:** Minimum viable schedule view and appointment management.
 
-3. **Security audit** — Immediate remediation needed for password validation, rate limiting, and session management before any user data exposure.
-
-4. **Mobile-first validation** — Confirm React Native is appropriate given map and biometric requirements; Flutter may offer more mature plugin ecosystem.
-
-5. **Establish QA environment** — Current state lacks staging; all testing appears local. Block production deployment until CI/CD and staging are operational.
+### Medium-term (Next 4 Sprints)
+7. **Map-based search** with Mapbox integration.
+8. **Payment integration** with Stripe.
+9. **Comprehensive testing** (unit, integration, E2E).
+10. **Admin tools** for category management and platform oversight.
 
 ---
 
 ## Conclusion
 
-The Planity Clone codebase represents an early-stage scaffold with database schema and basic API endpoints but lacks the depth and integration required for a functional product. The gap between specification and implementation is substantial across all P0 features. With focused engineering investment on the critical path items identified, an MVP is achievable in approximately 6 months.
+The Planity Clone codebase has foundational elements in place—user registration, basic business listing, category structure, and database schema—but lacks the majority of features required for an MVP. The most critical gaps are **search functionality**, **booking flow completion**, **provider tools**, and **payment processing**. With focused effort, an MVP excluding payments could be achieved in 6-8 weeks. A full-featured launch matching the current spec would require 12-16 weeks.
 
-**Avery — Progress Tracker**  
-*Engineering Manager & QA Lead*
+**Recommendation to Product Owner:** Consider scope reduction for initial release. A "booking request" model (no real-time payment, provider confirms manually) would significantly reduce time-to-market while preserving core user value.
