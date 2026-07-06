@@ -2,47 +2,48 @@
 
 ## 1. Overview
 
-Build a cross-platform mobile application (iOS/Android) and web dashboard that connects consumers with local service businesses (beauty, wellness, fitness, medical) for appointment booking. The platform serves three user types: **Consumers**, **Business Owners (Providers)**, and **Platform Admins**.
+Build a cross-platform mobile application (iOS/Android) and responsive web app that connects consumers with local beauty, wellness, and health service providers, enabling discovery, booking, and appointment management.
 
 ---
 
-## 2. Target Users
+## 2. User Personas
 
-| User Type | Description |
-|-----------|-------------|
-| Consumer | Discovers, books, and manages appointments |
-| Business Owner | Manages business profile, services, availability, and appointments |
-| Admin | Oversees platform health, disputes, and business onboarding |
+| Persona | Description | Primary Needs |
+|---------|-------------|---------------|
+| **Consumer** | Books appointments for personal services | Discover, compare, book, manage appointments |
+| **Provider/Business Owner** | Manages salon, clinic, or freelance practice | Calendar management, client handling, business visibility |
+| **Admin** | Platform operator | User management, content moderation, analytics |
 
 ---
 
 ## 3. Feature Specifications
 
 ### 3.1 User Authentication
-**Priority:** P0 | **Owner:** Consumer, Business Owner, Admin
+**Priority:** P0 | **Owner:** Consumer, Provider, Admin
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| AUTH-1 | Email/password registration | User can register with email, password (min 8 chars, 1 uppercase, 1 number); email verification required |
-| AUTH-2 | Social login (Google, Apple, Facebook) | OAuth 2.0 flow; account linking if email matches existing account |
-| AUTH-3 | Phone number verification | SMS OTP via Twilio; required before first booking |
-| AUTH-4 | JWT token management | Access token (15 min expiry), refresh token (7 days); secure storage in Keychain/Keystore |
-| AUTH-5 | Password reset | Secure token link sent via email; expires in 1 hour |
-| AUTH-6 | Biometric login (Face ID/Touch ID) | Optional opt-in; falls back to password |
-| AUTH-7 | Role-based access control | Token contains role claim; middleware enforces route protection |
-| AUTH-8 | Session management | Users can view and revoke active sessions from profile |
+| AUTH-01 | Email/password registration | User can register with email, password, first/last name, phone number; validate email format, password ≥8 chars with uppercase, number, special char; send verification email |
+| AUTH-02 | Email verification | User must verify email before booking; resend option available; token expires in 24h |
+| AUTH-03 | Login | JWT-based session; access token (15min), refresh token (7 days); rate limit: 5 attempts/minute |
+| AUTH-04 | Password reset | "Forgot password" flow with secure token via email; token expires in 1h |
+| AUTH-05 | Social login | Google and Apple Sign-In; merge accounts if email matches existing verified account |
+| AUTH-06 | Phone verification (optional) | SMS OTP for additional security; required for providers |
+| AUTH-07 | Role-based access | Consumer, Provider, Admin roles with distinct permissions; middleware enforces route protection |
+| AUTH-08 | Session management | View active sessions, revoke from any device; biometric login option on mobile |
+| AUTH-09 | Account deletion | GDPR-compliant full deletion; 30-day grace period with recovery option |
 
 ---
 
 ### 3.2 Guest Browse & Explore
-**Priority:** P0 | **Owner:** Consumer (unauthenticated)
+**Priority:** P0 | **Owner:** Consumer
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| GUEST-1 | Browse without account | Home screen, search, and business listings accessible without login |
-| GUEST-2 | View business details | Full business profile, services, and reviews visible |
-| GUEST-3 | Prompt on booking attempt | Login/signup modal appears when guest attempts to book; post-auth redirect to booking flow |
-| GUEST-4 | Guest-to-user conversion | Preserve guest session state (selected service, time) through registration |
+| GUEST-01 | Browse without account | View businesses, services, prices, ratings without login; prompt to register at booking initiation |
+| GUEST-02 | Location-based defaults | Detect location via IP/ GPS with fallback to manual city selection; store in session |
+| GUEST-03 | Limited favorites | Prompt login to save favorites; show count of items requiring login |
+| GUEST-04 | Conversion prompts | Strategic CTA placement: after 3 business views, at booking attempt, on favorite action |
 
 ---
 
@@ -51,12 +52,14 @@ Build a cross-platform mobile application (iOS/Android) and web dashboard that c
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| SEARCH-1 | Text search | Search by business name, service name, or keyword; debounced input (300ms); results in <500ms |
-| SEARCH-2 | Autocomplete suggestions | Max 8 suggestions; includes recent searches (stored locally, max 10) |
-| SEARCH-3 | Filter by: category, price range, rating, availability | Multi-select filters; "Available today" toggle |
-| SEARCH-4 | Sort options | Relevance (default), distance, rating, price (low-high), availability |
-| SEARCH-5 | Recent & trending searches | Displayed on empty state; trending updated daily via background job |
-| SEARCH-6 | Search history | Persisted for 30 days; user can clear individual or all history |
+| SEARCH-01 | Text search | Search by business name, service name, or keyword; autocomplete with debounce (300ms); typo tolerance (fuzzy matching) |
+| SEARCH-02 | Filter system | Category, price range, rating (≥ stars), availability (today, this week), distance radius, amenities (parking, WiFi, accessibility) |
+| SEARCH-03 | Sort options | Relevance (default), distance, rating (highest first), price (lowest first), most reviewed |
+| SEARCH-04 | Search history | Store last 20 searches per user; allow clear individual or all history |
+| SEARCH-05 | Trending searches | Show popular searches in area; update daily via background job |
+| SEARCH-06 | Result cards | Display: cover image, business name, rating (avg + count), starting price, distance, next available slot, "Book" CTA |
+| SEARCH-07 | Pagination | Infinite scroll, 20 results per page; skeleton loading states |
+| SEARCH-08 | Empty states | Contextual messaging with suggestions to adjust filters |
 
 ---
 
@@ -65,12 +68,12 @@ Build a cross-platform mobile application (iOS/Android) and web dashboard that c
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| MAP-1 | Interactive map view | Google Maps/Mapbox integration; default zoom to user location or city center |
-| MAP-2 | Business markers | Cluster markers at zoom < 12; individual pins at zoom >= 12; color-coded by category |
-| MAP-3 | Marker detail card | Tap marker shows bottom sheet with business name, rating, next available slot, and "Book" CTA |
-| MAP-4 | List/map toggle | Persistent user preference; smooth transition between views |
-| MAP-5 | Geolocation permission | Request on first use; graceful degradation to manual location input if denied |
-| MAP-6 | Radius filter | Slider: 1km to 50km; updates results in real-time |
+| MAP-01 | Interactive map | Toggle between list and map views; default to list on mobile, split on tablet/desktop |
+| MAP-02 | Clustering | Cluster markers at zoom levels; expand on tap; max 50 markers rendered |
+| MAP-03 | Business pins | Color-coded by category; show price range on pin; tap opens bottom sheet with summary |
+| MAP-04 | Current location | Center on user location with accuracy indicator; handle permission denial gracefully |
+| MAP-05 | Boundary search | Update results on map pan/zoom with debounce (500ms); show "Search this area" button after movement |
+| MAP-06 | Directions | Deep-link to native maps app (Google/Apple Maps) with pre-filled destination |
 
 ---
 
@@ -79,13 +82,15 @@ Build a cross-platform mobile application (iOS/Android) and web dashboard that c
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| BIZ-1 | Header: name, photos, rating, favorite toggle | Hero image carousel (max 10); pinch-to-zoom; video support |
-| BIZ-2 | Info section | Address, phone, hours, website, social links; tap to call/open maps |
-| BIZ-3 | Service menu | Grouped by category; each shows name, duration, description, price; expandable |
-| BIZ-4 | Team/staff listing | Staff photos, names, specialties; tap to filter services by staff |
-| BIZ-5 | Reviews summary | Average rating, total count, rating distribution histogram |
-| BIZ-6 | Availability preview | "Next available: Today at 2:30 PM" or date of next opening |
-| BIZ-7 | Share business | Native share sheet with deep link; QR code generation |
+| BIZ-01 | Header gallery | Up to 10 images/videos; swipeable carousel; pinch-to-zoom; lazy loading |
+| BIZ-02 | Core info | Business name, verified badge, category, rating, review count, address with copy option, hours (today's + full weekly) |
+| BIZ-03 | Service menu | Grouped by category; expandable items show: description, duration, price, practitioner if applicable |
+| BIZ-04 | Team section | Practitioner photos, names, specialties, average rating; filter services by practitioner |
+| BIZ-05 | Availability quick view | Next 3 available slots per service; "See full calendar" link |
+| BIZ-06 | Action buttons | Call (mask number, track), Message (in-app chat), Share (deep link), Save to favorites |
+| BIZ-07 | Business story | Free-text description, founding date, languages spoken, payment methods accepted |
+| BIZ-08 | Policies | Cancellation policy (flexible/moderate/strict), late arrival policy, COVID protocols |
+| BIZ-09 | Similar businesses | "You may also like" carousel based on category and location |
 
 ---
 
@@ -94,10 +99,11 @@ Build a cross-platform mobile application (iOS/Android) and web dashboard that c
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| CAT-1 | Hierarchical categories | 3-level depth: e.g., Beauty > Hair > Haircut; admin-managed via dashboard |
-| CAT-2 | Category icons & colors | Consistent iconography; dark/light mode variants |
-| CAT-3 | Popular services highlight | Algorithm: bookings + views; updated weekly |
-| CAT-4 | Category landing pages | SEO-optimized web routes; featured businesses, trending services |
+| CAT-01 | Hierarchical categories | 3-level hierarchy: Domain (Beauty) → Category (Hair) → Subcategory (Haircut, Coloring, Styling) |
+| CAT-02 | Category icons | Consistent iconography per category; support dark/light mode |
+| CAT-03 | Category landing pages | SEO-optimized pages with featured businesses, trending services, price guides |
+| CAT-04 | Dynamic categories | Admin can add/edit/disable categories; changes reflect in 5 minutes via cache invalidation |
+| CAT-05 | Category suggestions | ML-based category suggestions based on business description during onboarding |
 
 ---
 
@@ -106,30 +112,32 @@ Build a cross-platform mobile application (iOS/Android) and web dashboard that c
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| BOOK-1 | Service selection | Single or multiple services; validate staff can perform all selected |
-| BOOK-2 | Staff selection | "Any available" or specific staff; show staff calendar if specific |
-| BOOK-3 | Date & time selection | Calendar view (7 days forward default, up to 60 days); time slots in 15-min increments |
-| BOOK-4 | Slot availability | Real-time query against availability engine; show "filling fast" if < 3 slots |
-| BOOK-5 | Guest booking option | Allow booking for another person; collect name and phone |
-| BOOK-6 | Special requests | Free text, max 500 chars; visible to business in appointment details |
-| BOOK-7 | Booking confirmation | Summary screen with all details; 10-min hold on slot during payment |
-| BOOK-8 | Cancellation policy display | Show business policy before confirmation; full, partial, or no refund rules |
+| BOOK-01 | Service selection | Select one or multiple services; validate no conflicting services; show total duration and price |
+| BOOK-02 | Practitioner selection | "Any available" or specific practitioner; show practitioner-specific pricing if different |
+| BOOK-03 | Date/time selection | Calendar view with available dates highlighted; time slots in 15-min increments; timezone handling |
+| BOOK-04 | Slot persistence | Hold selected slot for 10 minutes; release if payment not initiated; show countdown timer |
+| BOOK-05 | Guest checkout | Allow booking without account; collect: name, email, phone; auto-create account post-booking |
+| BOOK-06 | Add-ons and notes | Upsell add-on services; special requests field (500 char limit); allergy/intolerance notes |
+| BOOK-07 | Booking summary | Review all details before confirmation; editable inline; total cost breakdown with taxes |
+| BOOK-08 | Confirmation | Immediate on-screen confirmation; email + push notification; add to calendar option (ICS) |
+| BOOK-09 | Booking restrictions | Prevent double-booking; enforce cancellation policy; block booking within X hours of appointment based on business rules |
 
 ---
 
 ### 3.8 Appointment Management
-**Priority:** P0 | **Owner:** Consumer, Business Owner
+**Priority:** P0 | **Owner:** Consumer, Provider
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| APPT-1 | Consumer: View appointments | List view (upcoming/past); detail view with all booking info; add to calendar |
-| APPT-2 | Consumer: Reschedule | Available up to business policy cutoff; new slot must be validated; single tap to reschedule |
-| APPT-3 | Consumer: Cancel | Policy-enforced; refund calculation displayed; confirmation required |
-| APPT-4 | Consumer: Rebook | One-tap rebook same service/staff; pre-filled flow |
-| APPT-5 | Business: Calendar view | Day/week/month views; color-coded by status; drag-and-drop rescheduling |
-| APPT-6 | Business: Appointment actions | Confirm, decline, mark no-show, mark complete; notes field for each |
-| APPT-7 | Business: Block time | Manual busy time creation; recurring block patterns |
-| APPT-8 | Sync to external calendars | Google/Outlook two-way sync for business owners |
+| APT-01 | Consumer dashboard | Upcoming/past tabs; sort by date; show: business, service, date/time, status, actions |
+| APT-02 | Status states | Pending, Confirmed, Checked-in, In-progress, Completed, Cancelled, No-show, Rescheduled |
+| APT-03 | Reschedule | Consumer can reschedule per business policy; within 24h may require approval; notify provider immediately |
+| APT-04 | Cancel | Apply cancellation policy; auto-refund if within free cancellation window; charge if applicable |
+| APT-05 | Rebook | One-tap rebook same service with same provider; pre-fill preferences |
+| APT-06 | Provider calendar | Day/week/month views; drag-and-drop reschedule; color-coded by status |
+| APT-07 | Check-in | QR code or manual check-in; timestamp recorded; trigger post-appointment review request |
+| APT-08 | Block time | Provider can block personal time; mark reason (break, vacation, training) |
+| APT-09 | Waitlist | Option to join waitlist for full slots; auto-notify and auto-book if slot opens (with consent) |
 
 ---
 
@@ -138,52 +146,58 @@ Build a cross-platform mobile application (iOS/Android) and web dashboard that c
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| FAV-1 | Toggle favorite | Heart icon on business card and detail; haptic feedback; optimistic UI |
-| FAV-2 | Favorites list | Grid/list view; quick book from list; sort by recently favorited or name |
-| FAV-3 | Favorite notifications | Opt-in: "New availability at [Business]" or "[Business] has a promotion" |
-| FAV-4 | Cross-device sync | Favorites tied to account; real-time sync |
+| FAV-01 | Save businesses | Heart toggle on business card and detail; immediate feedback; sync across devices |
+| FAV-02 | Save services | Save specific services for quick rebooking; show price changes since save |
+| FAV-03 | Favorites list | Grid/list view; sort by recently saved, name, or next availability; quick book from list |
+| FAV-04 | Availability alerts | Opt-in to get notified when favorite business has new availability in next 7 days |
+| FAV-05 | Suggestions | "Because you liked X" recommendations based on favorites |
 
 ---
 
 ### 3.10 User Profile
-**Priority:** P1 | **Owner:** Consumer
+**Priority:** P1 | **Owner:** Consumer, Provider
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| PROF-1 | Profile fields | Full name, phone, email, photo (optional), birthday (optional for promotions) |
-| PROF-2 | Payment methods | Stripe customer; add, remove, set default card; PCI compliance |
-| PROF-3 | Notification preferences | Push, email, SMS toggles per type: bookings, promotions, reminders |
-| PROF-4 | Privacy settings | Profile visibility (public/private); data download request (GDPR) |
-| PROF-5 | Appointment history | Complete history with receipts; filter by date range, business, status |
+| PROF-01 | Personal info | Editable: name, email, phone, photo, date of birth, gender (optional for personalization) |
+| PROF-02 | Preferences | Default notification settings, preferred language, accessibility needs |
+| PROF-03 | Payment methods | Save multiple cards via PCI-compliant tokenization (Stripe); default payment method |
+| PROF-04 | Addresses | Multiple saved addresses; default for search; home/work labels |
+| PROF-05 | Appointment history | Complete history with receipts; download invoice PDF; filter by date range |
+| PROF-06 | Loyalty status | Points balance, tier status, progress to next tier, expiration dates |
+| PROF-07 | Privacy settings | Control data sharing, marketing opt-outs, download data export (GDPR) |
 
 ---
 
 ### 3.11 Availability & Slot Computation
-**Priority:** P0 | **Owner:** Platform (Backend)
+**Priority:** P0 | **Owner:** Platform, Provider
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| SLOT-1 | Business hours definition | Weekly recurring schedule + exceptions (holidays, vacation) |
-| SLOT-2 | Service duration mapping | Each service has base duration; staff may override |
-| SLOT-3 | Buffer time | Configurable between appointments (0, 5, 10, 15, 30 min) |
-| SLOT-4 | Concurrent bookings | Staff-based: one appointment at a time; Room-based: multiple if rooms available |
-| SLOT-5 | Real-time slot computation | Query in <200ms; account for existing bookings, blocks, and business hours |
-| SLOT-6 | Slot caching | Redis cache with 5-min TTL; invalidation on booking mutation |
-| SLOT-7 | Timezone handling | All times stored in UTC; displayed in business timezone or user preference |
+| SLOT-01 | Business hours | Set weekly recurring hours; exception dates (holidays, closures); timezone per business |
+| SLOT-02 | Service duration | Define base duration; buffer time between appointments (configurable) |
+| SLOT-03 | Practitioner schedules | Individual schedules that may differ from business hours; vacation blocking |
+| SLOT-04 | Real-time computation | Generate available slots considering: business hours, existing bookings, practitioner availability, service duration, buffer time, concurrent booking limits |
+| SLOT-05 | Slot caching | Cache computed slots for 30 seconds; invalidate on booking/cancellation |
+| SLOT-06 | Complex rules | Support: split shifts, lunch breaks, variable service durations, package deals (multiple services sequenced) |
+| SLOT-07 | Overbooking control | Configurable overbooking limit (e.g., 110% capacity); visual warning to provider |
+| SLOT-08 | Slot API | Sub-200ms response for slot query; support date range queries up to 90 days |
 
 ---
 
 ### 3.12 Shared Types & Design System
-**Priority:** P0 | **Owner:** Design/Engineering
+**Priority:** P0 | **Owner:** Platform
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| DS-1 | Design tokens | Colors, typography, spacing, shadows as platform-agnostic tokens |
-| DS-2 | Component library | Buttons, inputs, cards, modals, calendars, skeleton loaders; Storybook documentation |
-| DS-3 | Shared TypeScript types | Monorepo shared package; auto-generated from API schema (OpenAPI/Zod) |
-| DS-4 | Accessibility | WCAG 2.1 AA minimum; screen reader support; minimum touch target 44x44dp |
-| DS-5 | Theming | Light/dark mode; brand color injection for business owner customization |
-| DS-6 | Responsive breakpoints | Mobile first: 320px, 768px, 1024px, 1440px |
+| DS-01 | Component library | Reusable components: buttons, inputs, cards, modals, toasts, skeletons, empty states |
+| DS-02 | Typography | 6-level scale; responsive; WCAG AA contrast minimum; system fonts with fallbacks |
+| DS-03 | Color system | Primary, secondary, semantic (success/warning/error/info), neutrals; dark mode support |
+| DS-04 | Spacing | 4px base grid; consistent spacing tokens (xs: 4, sm: 8, md: 16, lg: 24, xl: 32, 2xl: 48) |
+| DS-05 | Shared types | TypeScript definitions for: User, Business, Service, Appointment, Slot, Review, Payment; strict null checks |
+| DS-06 | Form validation | Zod schemas shared frontend/backend; real-time validation with debounce |
+| DS-07 | Accessibility | WCAG 2.1 AA compliance; screen reader support; focus management; reduced motion respect |
+| DS-08 | Animations | Consistent timing (200ms standard, 300ms complex); ease curves defined; performance-optimized |
 
 ---
 
@@ -192,89 +206,100 @@ Build a cross-platform mobile application (iOS/Android) and web dashboard that c
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| REV-1 | Post-booking review | Eligible 24 hours after appointment; reminder notification; max one per appointment |
-| REV-2 | Rating dimensions | Overall (1-5 stars), plus optional: service quality, staff, ambiance, value |
-| REV-3 | Review content | Text (max 1000 chars), photos (max 5); profanity filter |
-| REV-4 | Business response | Owner can reply publicly; notification to reviewer |
-| REV-5 | Review moderation | Auto-flag for profanity; admin queue for dispute resolution |
-| REV-6 | Review helpfulness | Users can mark helpful; sort by helpful or recent |
+| REV-01 | Eligibility | Only verified customers who completed appointment can review; 14-day window post-appointment |
+| REV-02 | Rating dimensions | Overall (1-5 stars), plus optional: service quality, staff, ambiance, value for money |
+| REV-03 | Review content | Text (10-2000 chars), photos (up to 5); AI moderation for inappropriate content |
+| REV-04 | Provider response | Public reply to any review; notification to reviewer; mark as resolved option |
+| REV-05 | Review display | Sort by: most relevant, newest, highest/lowest rating; filter by rating, with photos, verified only |
+| REV-06 | Review helpfulness | Mark as helpful; sort by helpfulness; report inappropriate reviews |
+| REV-07 | Review analytics | Provider dashboard: average rating trend, sentiment analysis, common themes |
+| REV-08 | Dispute handling | Flag mechanism for reviews; admin review queue; temporary hide during dispute |
 
 ---
 
 ### 3.14 Payment Integration
-**Priority:** P0 | **Owner:** Consumer, Business Owner
+**Priority:** P0 | **Owner:** Consumer, Provider
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| PAY-1 | Payment methods | Credit/debit cards (Stripe), Apple Pay, Google Pay; save for future use |
-| PAY-2 | Pricing models | Fixed price, variable (consultation), deposit required, or free |
-| PAY-3 | Hold and capture | Authorization at booking; capture on service completion or business policy |
-| PAY-4 | Refunds | Automated per policy; manual override by admin; partial refund calculation |
-| PAY-5 | Receipts | Auto-generated PDF; emailed and in-app; includes tax breakdown if applicable |
-| PAY-6 | Payouts to businesses | Stripe Connect; weekly auto-payout; dashboard with pending/balance |
-| PAY-7 | Platform fee | Configurable percentage per transaction; transparent to consumer at checkout |
+| PAY-01 | Payment methods | Credit/debit cards (Stripe), Apple Pay, Google Pay, PayPal; save for future use |
+| PAY-02 | Pricing models | Full payment, deposit (fixed or %), pay-at-venue; configurable per business/service |
+| PAY-03 | Split payments | Support gift cards, promo codes, loyalty points combination |
+| PAY-04 | Refunds | Automated per cancellation policy; manual refund option for providers; refund timeline communication |
+| PAY-05 | Payouts | Provider payouts to connected Stripe account; weekly auto-payout or manual request; payout dashboard |
+| PAY-06 | Receipts | Itemized email receipt; in-app receipt history; download PDF |
+| PAY-07 | Failed payment | Retry logic (3 attempts); notify user; hold slot for 15 min during retry |
+| PAY-08 | Tax handling | Configurable tax rates per jurisdiction; display inclusive/exclusive as per locale |
+| PAY-09 | PCI compliance | Never store raw card data; use Stripe Elements; annual compliance audit |
 
 ---
 
 ### 3.15 Notifications
-**Priority:** P1 | **Owner:** All users
+**Priority:** P1 | **Owner:** Consumer, Provider
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| NOTIF-1 | Push notifications | Firebase Cloud Messaging; rich notifications with images and actions |
-| NOTIF-2 | Notification types | Booking confirmed, reminder (24h, 1h), modified, cancelled, promotional, review request |
-| NOTIF-3 | Email notifications | SendGrid/Mailgun; HTML templates; fallback to text |
-| NOTIF-4 | SMS notifications | Twilio; for critical: booking confirmations and reminders; opt-in for promos |
-| NOTIF-5 | In-app notification center | Persistent bell icon; unread badge; mark all read; 90-day retention |
-| NOTIF-6 | Quiet hours | Respect user timezone; batch non-urgent notifications |
-| NOTIF-7 | Delivery tracking | Log all notification attempts; retry failed push via SMS fallback for critical |
+| NOT-01 | Channels | Push (mobile), email, SMS; user preference per channel per notification type |
+| NOT-02 | Notification types | Booking confirmation, reminder (24h, 1h before), cancellation, reschedule, promotion, review request, waitlist availability |
+| NOT-03 | Preferences | Granular opt-in/opt-out per type; respect quiet hours (configurable, default 22:00-08:00) |
+| NOT-04 | Delivery reliability | At-least-once delivery; deduplication; delivery tracking; retry with exponential backoff |
+| NOT-05 | Rich push | Deep link to relevant screen; action buttons (confirm, reschedule, cancel from notification) |
+| NOT-06 | Inbox | In-app notification center; unread badge; mark as read; archive |
+| NOT-07 | Provider alerts | New booking, cancellation, low inventory, review posted, payout completed |
 
 ---
 
 ### 3.16 Provider / Business Owner Portal
-**Priority:** P0 | **Owner:** Business Owner
+**Priority:** P0 | **Owner:** Provider
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| PORT-1 | Business profile management | Edit all fields, upload photos, set hours, manage services and pricing |
-| PORT-2 | Staff management | Add staff, set permissions, assign services, manage individual schedules |
-| PORT-3 | Appointment dashboard | Daily/weekly view; accept/decline pending bookings; bulk actions |
-| PORT-4 | Availability management | Set recurring schedule, add exceptions, define service-staff mappings |
-| PORT-5 | Client management | View client history, notes, contact info; export to CSV |
-| PORT-6 | Analytics dashboard | Bookings, revenue, cancellation rate, average booking value, peak hours; date range filter |
-| PORT-7 | Promotions | Create discount codes: percentage or fixed amount, usage limits, expiration |
-| PORT-8 | Multi-location support | Switch between locations; consolidated reporting option |
+| POR-01 | Onboarding wizard | Step-by-step: business info, location, services, team, hours, photos, bank account for payouts |
+| POR-02 | Dashboard overview | Today's appointments, revenue this week, new reviews, occupancy rate, quick actions |
+| POR-03 | Calendar management | Full CRUD on appointments; bulk operations; print view; staff schedule view |
+| POR-04 | Service management | CRUD services; set pricing variants (by practitioner, time); pause services without deletion |
+| POR-05 | Team management | Add staff members, set permissions (view only, manage own, manage all), assign services |
+| POR-06 | Client database | View client history, notes (private), contact info; export with consent; marketing opt-in status |
+| POR-07 | Analytics | Revenue trends, booking conversion, no-show rate, popular services, peak hours; date range filter; CSV export |
+| POR-08 | Settings | Business hours, cancellation policy, booking lead time, auto-confirm rules, notification preferences |
+| POR-09 | Multi-location | Switch between locations; consolidated reporting available; location-specific permissions |
+| POR-10 | Mobile app | Core calendar and client management on mobile; iOS and Android parity |
 
 ---
 
 ### 3.17 Admin Dashboard
-**Priority:** P1 | **Owner:** Platform Admin
+**Priority:** P1 | **Owner:** Admin
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| ADMIN-1 | Business onboarding | Review applications, approve/reject with reason, track onboarding funnel |
-| ADMIN-2 | User management | Search, view, suspend/activate accounts; audit log of all admin actions |
-| ADMIN-3 | Content moderation | Review flagged reviews, businesses, photos; bulk actions |
-| ADMIN-4 | Financial overview | Gross volume, platform fees, refunds, payouts pending; daily/weekly/monthly |
-| ADMIN-5 | Dispute resolution | View escalated issues, communicate with parties, issue refunds, override policies |
-| ADMIN-6 | System health | Monitor job queues, error rates, API latency; alert thresholds |
-| ADMIN-7 | Feature flags | Enable/disable features per business, region, or globally; percentage rollouts |
+| ADM-01 | User management | Search, filter, suspend/activate users; view activity log; impersonate for support (with audit trail) |
+| ADM-02 | Business verification | Review submitted businesses; approve/reject with reason; verify documents; track verification status |
+| ADM-03 | Content moderation | Review queue for flagged reviews, business descriptions, images; bulk actions; appeal handling |
+| ADM-04 | Financial oversight | Transaction monitoring, dispute resolution, refund approval for edge cases, payout tracking |
+| ADM-05 | Analytics platform | MAU, booking volume, GMV, conversion funnel, churn rate, top categories/geographies; real-time and historical |
+| ADM-06 | System health | Monitor background jobs, API latency, error rates; alert thresholds; incident response links |
+| ADM-07 | Promotions | Create and manage promo codes, referral programs, featured business placements |
+| ADM-08 | Audit logging | Immutable log of all admin actions; filterable by admin, action type, date, affected entity |
 
 ---
 
 ### 3.18 Background Jobs (BullMQ)
-**Priority:** P0 | **Owner:** Platform (Backend)
+**Priority:** P0 | **Owner:** Platform
 
 | ID | Requirement | Acceptance Criteria |
 |----|-------------|-------------------|
-| JOB-1 | Job queue architecture | BullMQ with Redis; separate queues by priority and type |
-| JOB-2 | Scheduled jobs | Daily: trending recalculation, stale cart cleanup, payout preparation |
-| JOB-3 | Notification jobs | Queue push/email/SMS; retry with exponential backoff; max 5 attempts |
-| JOB-4 | Search index updates | Reindex on business/service mutation; batch updates every 5 min |
-| JOB-5 | Image processing | Resize uploads to 5 variants; WebP conversion; background upload to S3/CloudFront |
-| JOB-6 | Reporting jobs | Weekly business summary email; monthly analytics aggregation |
-| JOB-7 | Job monitoring | Bull Board or equivalent UI; failed job inspection and manual retry |
-| JOB-8 | Dead letter queue | After max retries; alert admin; manual reprocessing interface |
+| JOB-01 | Job types | Scheduled (cron), delayed, repeatable, and on-demand jobs with clear categorization |
+| JOB-02 | Reminder system | Cron at 09:00 local time: send 24h reminders for next-day appointments; handle timezone correctly |
+| JOB-03 | Slot cache warming | Pre-compute popular business slots every 5 minutes; invalidate on relevant changes |
+| JOB-04 | Notification queue | Reliable delivery with retry (max 5 attempts, exponential backoff); dead letter queue for failures |
+| JOB-05 | Payout processing | Weekly cron to calculate and initiate provider payouts; handle currency, tax withholding |
+| JOB6 | Review solicitation | Delayed job 2 hours post-appointment; skip if already reviewed or cancelled |
+| JOB-07 | Data exports | Async generation of large reports; notify on completion with download link (24h expiry) |
+| JOB-08 | Analytics aggregation | Nightly jobs to compute denormalized metrics: trending searches, popular businesses, category performance |
+| JOB-09 | Image processing | On upload: generate thumbnails (multiple sizes), compress, scan for inappropriate content |
+| JOB-10 | Monitoring | BullMQ Dashboard access; job success/failure metrics; alert on queue depth > threshold |
+| JOB-11 | Job idempotency | All jobs implement idempotency keys; safe to retry without side effects |
+| JOB-12 | Graceful shutdown | On deploy/restart: finish active jobs, don't accept new ones, then exit |
 
 ---
 
@@ -282,12 +307,12 @@ Build a cross-platform mobile application (iOS/Android) and web dashboard that c
 
 | Area | Requirement |
 |------|-------------|
-| Performance | App cold start < 2s; API p95 < 200ms; image load < 1s on 3G |
-| Scalability | Horizontal scaling via containerization; handle 10x traffic spike |
-| Security | OWASP Top 10 mitigation; annual penetration testing; SOC 2 roadmap |
-| Compliance | GDPR (EU), CCPA (CA), PCI-DSS (payments) |
-| Localization | i18n framework; initial: EN, FR, ES, DE; RTL support planned |
-| Offline | View cached appointments and favorites; queue actions for sync |
+| **Performance** | App launch < 3s; API response p95 < 200ms; image load < 1s |
+| **Reliability** | 99.9% uptime; graceful degradation; circuit breakers for external services |
+| **Security** | OWASP Top 10 mitigation; encryption in transit (TLS 1.3) and at rest (AES-256); annual penetration testing |
+| **Scalability** | Horizontal scaling; stateless services; CDN for static assets |
+| **Compliance** | GDPR, CCPA, PCI-DSS; data residency options; right to erasure |
+| **Localization** | i18n framework; initial languages: EN, FR, DE, ES, IT; RTL support planned |
 
 ---
 
@@ -295,23 +320,26 @@ Build a cross-platform mobile application (iOS/Android) and web dashboard that c
 
 | Metric | Target |
 |--------|--------|
-| Monthly Active Users (MAU) | 100K by month 12 |
-| Booking conversion rate | > 15% from search to confirmed booking |
-| App store rating | > 4.5 stars |
-| Business NPS | > 50 |
-| Customer support tickets | < 2% of transactions |
+| Monthly Active Users (MAU) | Growth 15% MoM |
+| Booking Conversion Rate | > 8% of app opens |
+| Search-to-Book Latency | < 2 minutes average |
+| Provider Activation | > 70% complete onboarding |
+| NPS Score | > 50 |
+| App Store Rating | > 4.5 stars |
+| Customer Support Tickets | < 2% of transactions |
 
 ---
 
-## 6. Release Phases
+## 6. Prioritization Summary
 
-| Phase | Features | Timeline |
-|-------|----------|----------|
-| MVP | Auth, Guest Browse, Search, Map, Business Detail, Booking, Appointments, Provider Portal, Payments, Slots | Month 1-3 |
-| v1.1 | Favorites, Reviews, Notifications, Profile enhancements | Month 4 |
-| v1.2 | Admin Dashboard, Analytics, Promotions, Multi-location | Month 5 |
-| v1.3 | Social features, Loyalty program, AI recommendations | Month 6 |
+| Priority | Features |
+|----------|----------|
+| **P0 (Must Have)** | User Authentication, Guest Browse, Business Search, Map Search, Business Detail, Booking Flow, Appointment Management, Availability/Slots, Payment, Provider Portal, Background Jobs, Shared Types |
+| **P1 (Should Have)** | Favorites, User Profile, Reviews, Notifications, Admin Dashboard |
+| **P2 (Could Have)** | Loyalty Program, In-app Chat, Group Bookings, Subscription Packages |
 
 ---
 
-*Document version: 1.0 | Last updated: 2024 | Owner: Product Team*
+*Document Version: 1.0*
+*Last Updated: 2024*
+*Author: Alex, Product Owner*
