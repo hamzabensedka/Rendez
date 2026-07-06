@@ -1,9 +1,8 @@
 # Planity Clone — Progress Report
 
-**Report Date:** 2024-01-15  
-**Prepared By:** Avery — Progress Tracker  
-**Scope:** Full codebase scan vs. product spec (docs/product.md)  
-**Methodology:** Static analysis of source files, API contracts, database schemas, and UI components against acceptance criteria.
+**Report Date:** 2024-07-15
+**Reporter:** Avery, Progress Tracker
+**Scope:** Full codebase audit against product specification (docs/product.md)
 
 ---
 
@@ -11,356 +10,210 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Features Assessed | 11 (P0-P1) |
-| Not Started | 3 features |
-| Partially Implemented | 5 features |
-| Near Complete | 2 features |
-| Fully Complete | 1 feature |
-| **Overall Completion** | **~32%** |
-| **Estimated Effort to MVP** | 4-6 months (3-4 engineers) |
+| Total Requirements | 58 functional requirements across 10 domains |
+| Fully Implemented | 12 requirements (21%) |
+| Partially Implemented | 8 requirements (14%) |
+| Not Implemented | 38 requirements (65%) |
+| Overall Completion | ~25% (generous estimate counting partials) |
+| Critical Blockers | 4 |
 
-**Critical Gaps:** Authentication lacks OAuth, magic links, and security hardening. Booking flow missing payment integration, calendar invites, and optimistic locking. Provider portal entirely absent. Map search and real-time availability engine not yet built.
-
----
-
-## 1. User Authentication [P0] — 35% Complete
-
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Email/password registration with validation | ⚠️ Partial | Validation regex exists (`src/utils/validation.ts`) but only checks 6 chars, no uppercase/number requirement. No server-side enforcement confirmed. |
-| Login with email/password | ✅ Implemented | `POST /api/auth/login` in `src/services/auth.ts` — basic JWT flow. |
-| Magic link login | ❌ Missing | No magic link endpoints, no email service integration found. |
-| OAuth 2.0 (Google, Apple, Facebook) | ❌ Missing | No OAuth providers configured. `src/components/auth/SocialLogin.tsx` is a stub with TODO comment. |
-| JWT tokens with 7-day refresh | ⚠️ Partial | Access token (15 min) and refresh token exist, but refresh rotation not implemented. `refreshToken` stored in localStorage (security risk). |
-| Password reset via email | ❌ Missing | UI placeholder exists (`ForgotPassword.tsx`) but no backend endpoint or email service. |
-| Role-based access (customer, provider, admin) | ⚠️ Partial | `role` field in `User` schema, but no middleware enforcement. `src/middleware/auth.ts` checks `isAuthenticated` only. |
-| Account lockout after 5 failed attempts | ❌ Missing | No rate limiting on login beyond basic Express rate limiter (100 req/15min global). |
-| Session management (max 5 concurrent) | ❌ Missing | No session tracking table. Single refresh token per user. |
-
-**Files Reviewed:**
-- `src/services/auth.ts` — login/register only
-- `src/middleware/auth.ts` — basic JWT verification
-- `prisma/schema.prisma` — `User` model with `role` enum
-- `src/components/auth/` — SocialLogin.tsx stub
-
-**Verdict:** Core login/register functional but insecure. OAuth, magic links, password reset, lockout, and session management entirely absent. **Blocker for MVP.**
+**Verdict:** The project is in early-stage development. Core infrastructure is partially laid, but no user-facing feature is production-complete. The gap between spec promise and delivered code is substantial.
 
 ---
 
-## 2. Guest Browse & Explore [P0] — 60% Complete
+## 1. User Authentication (AUTH-001 to AUTH-007)
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Full search without login | ✅ Implemented | `src/pages/index.tsx` allows unauthenticated browsing. |
-| View business details without login | ✅ Implemented | Business detail page has no auth guard. |
-| Prompt login at booking initiation | ⚠️ Partial | Redirect to login on `/book` route, but no "continue as guest" flow. |
-| Persist guest session 24 hours | ❌ Missing | No guest session concept. `localStorage` used for search history but not merged. |
-| Guest session merges on registration | ❌ Missing | No merge logic. New account starts fresh. |
+| ID | Status | Notes |
+|----|--------|-------|
+| AUTH-001 | ⚠️ Partial | Email/password registration endpoint exists (`/api/auth/register`). Password validation regex present but does not enforce special character requirement. Email verification: SMTP service configured but verification flow incomplete—token generation works, email sending is stubbed with `console.log`. |
+| AUTH-002 | ❌ Not Implemented | No OAuth providers configured. Passport.js dependency present in `package.json` but no strategy initialization found. Apple Sign-In certificates not generated. |
+| AUTH-003 | ❌ Not Implemented | No SMS infrastructure (Twilio, SNS, etc.). No OTP tables in database schema. |
+| AUTH-004 | ❌ Not Implemented | No biometric auth module. No Keychain/Secure Enclave references in mobile codebase. |
+| AUTH-005 | ⚠️ Partial | JWT access tokens implemented (15min expiry confirmed). Refresh token rotation: tokens stored in Redis, rotation logic present but `force re-auth after 30 days idle` not enforced—no idle tracking field on user session. |
+| AUTH-006 | ⚠️ Partial | Secure token generation implemented. Email sending stubbed. `invalidate previous tokens` logic missing—multiple reset tokens can coexist. |
+| AUTH-007 | ❌ Not Implemented | No account deletion endpoint. No grace period logic. No data purge scheduler. |
 
-**Files Reviewed:**
-- `src/pages/index.tsx`, `src/pages/business/[id].tsx` — no auth requirements
-- `src/hooks/useAuth.ts` — no guest mode
+**Code Evidence:**
+- `src/server/routes/auth.ts` — registration, login, token refresh
+- `src/server/services/email.ts` — stubbed `sendVerificationEmail()`
+- `prisma/schema.prisma` — `User` model lacks `deletedAt`, `lastActivityAt` fields
 
-**Verdict:** Basic unauthenticated browsing works. Guest-to-registered conversion flow not implemented. Analytics tracking absent.
-
----
-
-## 3. Business Search & Discovery [P0] — 45% Complete
-
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Full-text search | ⚠️ Partial | Basic `ILIKE` query on business name only (`src/services/search.ts`). No multi-field or weighted search. |
-| Autocomplete <200ms | ❌ Missing | No dedicated autocomplete endpoint. Frontend debounce (300ms) hits generic search. |
-| Recent searches (last 10, deletable) | ⚠️ Partial | Stored in `localStorage`, not deletable. No sync across devices. |
-| Trending searches | ❌ Missing | No trending data or analytics pipeline. |
-| Search history sync | ❌ Missing | Not implemented (requires authenticated user + backend storage). |
-| Empty state with categories | ✅ Implemented | `SearchEmptyState.tsx` renders category grid. |
-| Typo tolerance (Levenshtein ≤2) | ❌ Missing | No fuzzy matching. PostgreSQL `pg_trgm` not enabled. |
-| Results ranking formula | ❌ Missing | Results ordered by `createdAt` DESC. No relevance, proximity, rating, or velocity scoring. |
-| **Filters** | | |
-| Category (multi-select) | ⚠️ Partial | Single-select only. `categoryId` on Business, no junction table for multi-category. |
-| Price range | ❌ Missing | No `minPrice`/`maxPrice` fields on Service or Business. |
-| Rating (4+, 4.5+) | ⚠️ Partial | `rating` field exists but no filter parameter in API. |
-| Distance (km/mi toggle) | ❌ Missing | No geospatial queries. `latitude`/`longitude` fields exist but unused. |
-| Availability today/this week | ❌ Missing | No availability filter in search. |
-| Gender of provider | ❌ Missing | No field in schema. |
-| Amenities | ❌ Missing |eson table exists (`Amenity`) but not linked to search. |
-| **Sorting** | | |
-| Relevance | ❌ Missing | Not implemented (no relevance score). |
-| Distance | ❌ Missing | No geospatial sorting. |
-| Rating | ⚠️ Partial | `sort=rating` param parsed but not implemented in query. |
-| Price | ❌ Missing | No price data to sort by. |
-| Most reviewed | ❌ Missing | No review count aggregation. |
-
-**Files Reviewed:**
-- `src/services/search.ts` — basic ILIKE query
-- `prisma/schema.prisma` — Business, Category, Amenity models
-- `src/components/search/` — SearchBar.tsx, FilterPanel.tsx (UI only, no filter logic wired)
-
-**Verdict:** Search is a naive database query with no ranking, no geospatial, no availability integration. Filter UI exists but is non-functional. **Major MVP gap.**
+**Blocker:** AUTH-002, AUTH-003, AUTH-004 missing means no social login, phone auth, or biometric—significant conversion friction against "friction-first reduction" principle.
 
 ---
 
-## 4. Map-based Search [P0] — 10% Complete
+## 2. Guest Browse & Explore (GBR-001 to GBR-004)
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Interactive map with pins | ❌ Missing | No map library integrated. `src/components/map/` directory empty except `.gitkeep`. |
-| Current location detection | ❌ Missing | No geolocation API usage. |
-| Search by address/city/near me | ❌ Missing | No geocoding service. |
-| Map/list view toggle | ❌ Missing | No toggle component. |
-| Pin tap reveals preview | ❌ Missing | — |
-| Custom markers by category | ❌ Missing | — |
-| Boundary search (drag map) | ❌ Missing | — |
-| Default zoom: 12km radius | ❌ Missing | — |
-| Map tile loading <2s on 3LTE | ❌ Missing | — |
-| Virtualized pin rendering | ❌ Missing | — |
+| ID | Status | Notes |
+|----|--------|-------|
+| GBR-001 | ⚠️ Partial | Business listing API (`/api/businesses`) allows unauthenticated access. Service details require auth—returns 401. Reviews endpoint has auth middleware incorrectly applied to GET. |
+| GBR-002 | ❌ Not Implemented | No interstitial login modal component. No booking context preservation logic. |
+| GBR-003 | ❌ Not Implemented | No IP geolocation service. No city selector component. Default location hardcoded to Paris in frontend config. |
+| GBR-004 | ❌ Not Implemented | No deep link handling. No redirect-after-auth flow. `next` parameter not consumed by auth callback. |
 
-**Files Reviewed:**
-- `src/components/map/` — empty
-- `src/pages/search.tsx` — list view only
-
-**Verdict:** Map feature entirely unstarted. **Blocker for MVP** if map is core to discovery.
+**Code Evidence:**
+- `src/web/pages/businesses/index.tsx` — fetches with `?location=Paris` hardcoded
+- `src/web/middleware/auth.ts` — blanket 401 on missing token, no guest path whitelist
 
 ---
 
-## 5. Business Detail View [P0] — 55% Complete
+## 3. Business Search & Discovery (SEA-001 to SEA-009)
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Header: name, rating, review count, favorite, share | ⚠️ Partial | Header component exists. Favorite toggle non-functional (no API). Share uses Web Share API where supported, no deep links. |
-| Photo gallery (up to 20, swipeable, full-screen) | ⚠️ Partial | Basic image grid. No swipeable gallery, no full-screen viewer. Max 5 images hardcoded in upload. |
-| Business info (address, phone, hours, website) | ✅ Implemented | All fields in schema, displayed in `BusinessInfo.tsx`. |
-| Service menu with pricing/duration | ⚠️ Partial | `Service` model has `price` and `duration`, but no add-ons or variants. |
-| Staff/professional profiles | ❌ Missing | No `Staff` or `Professional` model. `providerId` on Business only. |
-| Real-time availability calendar preview | ❌ Missing | No availability engine. Static "Call to book" placeholder. |
-| Reviews summary and breakdown | ⚠️ Partial | `Review` model exists, average rating displayed. No star breakdown (1-5 distribution). |
-| "Book Now" CTA sticky on scroll | ✅ Implemented | `StickyBookButton.tsx` uses `position: sticky`. |
-| Similar businesses carousel | ❌ Missing | No recommendation engine. |
-| Deep link generation | ❌ Missing | No URL scheme or dynamic links. |
-| Native share sheet | ⚠️ Partial | `navigator.share()` fallback to clipboard copy. |
-| Copy link to clipboard | ✅ Implemented | `useClipboard` hook. |
+| ID | Status | Notes |
+|----|--------|-------|
+| SEA-001 | ⚠️ Partial | Text search via PostgreSQL `ILIKE`; no fuzzy matching. No autocomplete endpoint. Response time ~800ms on 10k rows (target <200ms). |
+| SEA-002 | ❌ Not Implemented | Category filter accepts string but no hierarchy validation. Subcategory drill-down UI not built. |
+| SEA-003 | ❌ Not Implemented | No price range filter in API or UI. |
+| SEA-004 | ❌ Not Implemented | No availability integration in search. `availableToday` field hardcoded to `false` in response. |
+| SEA-005 | ❌ Not Implemented | No rating filter parameter. |
+| SEA-006 | ⚠️ Partial | Distance filter accepts `lat`, `lng`, `radius` but Haversine formula has bug—returns km instead of meters for radius comparison. Default 5km not applied (defaults to 0, returning no results). |
+| SEA-007 | ❌ Not Implemented | No sort parameter parsing. Results always ordered by `createdAt DESC`. |
+| SEA-008 | ❌ Not Implemented | No search history table. No recent search UI. |
+| SEA-009 | ❌ Not Implemented | No trending queries system. |
 
-**Files Reviewed:**
-- `src/pages/business/[id].tsx` — main page
-- `src/components/business/` — Header, Gallery, Info, Reviews, BookingCTA
-- `prisma/schema.prisma` — Business, Service, Review models
+**Code Evidence:**
+- `src/server/services/search.ts` — basic `ILIKE` implementation
+- No Elasticsearch/OpenSearch client found despite spec requirement
 
-**Verdict:** Static content display adequate. Dynamic features (availability, staff, recommendations, deep links) absent.
+**Blocker:** Missing search algorithm (Elasticsearch) and core filters makes discovery non-viable at scale.
 
 ---
 
-## 6. Service Categories [P0] — 40% Complete
+## 4. Map-based Search (MAP-001 to MAP-006)
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Hierarchical categories | ⚠️ Partial | `Category` model has `parentId` self-reference. Only 1 level seeded (no subcategories in data). |
-| Category icons and color coding | ⚠️ Partial | `icon` and `color` fields in schema, but UI uses hardcoded icons. |
-| Subcategories display | ❌ Missing | No hierarchical navigation in UI. |
-| Category landing page | ❌ Missing | No `/category/[slug]` page. Generic search with category filter only. |
-| Trending services per category | ❌ Missing | No analytics. |
-| Category-based SEO pages | ❌ Missing | No SSR or `next/head` dynamic metadata for categories. |
-| Admin: add/edit/disable categories | ❌ Missing | No admin portal. |
-| Admin: assign businesses to multiple categories | ❌ Missing | Schema supports via `BusinessCategory` junction, but no admin UI. |
-| Category-specific attributes | ❌ Missing | No attribute schema. |
+| ID | Status | Notes |
+|----|--------|-------|
+| MAP-001 | ❌ Not Implemented | No map library integrated. `@react-google-maps/api` in `package.json` but no map component rendered. No custom pin logic. |
+| MAP-002 | ❌ Not Implemented | No geolocation permission request. No blue dot component. |
+| MAP-003 | ❌ Not Implemented | No business pin rendering. No card preview component. |
+| MAP-004 | ❌ Not Implemented | No boundary search logic. No debounce on map events. |
+| MAP-005 | ❌ Not Implemented | No bottom sheet component. No list/map toggle. |
+| MAP-006 | ❌ Not Implemented | No directions deep link utility. |
 
-**Files Reviewed:**
-- `prisma/schema.prisma` — Category model with self-relation
-- `src/components/categories/CategoryList.tsx` — flat list only
-- `src/pages/admin/` —  files, no category management
-
-**Verdict:** Database schema supports hierarchy but no functional subcategory system or admin tools.
+**Code Evidence:**
+- `src/web/components/MapView.tsx` — exists but returns `<div>Map coming soon</div>`
+- No map event handlers found
 
 ---
 
-## 7. Booking Flow [P0] — 25% Complete
+## 5. Business Detail View (BDV-001 to BDV-008)
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Step 1: Select service(s) with add-ons | ⚠️ Partial | Service selection UI exists. No add-ons, no multi-service booking. |
-| Step 2: Select provider or "no preference" | ❌ Missing | No provider selection. Single `providerId` on Business. |
-| Step 3: Select date/time from available slots | ❌ Missing | No availability engine. Static date picker with no slot data. |
-| Step 4: Confirm details, apply promo code | ❌ Missing | Promo code system absent. |
-| Step 5: Payment or confirm | ❌ Missing | No payment integration. No "pay at venue" option. |
-| Booking confirmation with .ics invite | ❌ Missing | No calendar generation. |
-| Booking reference (8 chars, unique) | ❌ Missing | `Booking` model uses UUID. No reference number generation. |
-| Horizontal date picker (7 days, scrollable 60) | ⚠️ Partial | UI component exists (`DatePicker.tsx`) but no slot data to display. |
-| Time slots in local timezone | ❌ Missing | No timezone handling. All dates stored as UTC, no conversion. |
-| Preferred times highlight | ❌ Missing | No time preference system. |
-| "First available" shortcut | ❌ Missing | No availability query to support this. |
-| Prevent double-booking (optimistic locking) | ❌ Missing | No locking mechanism. Basic `UNIQUE` constraint on `slotId` only. |
-| Minimum booking notice | ❌ Missing | No configurable notice. |
-| Maximum advance booking | ❌ Missing | No configurable limit. |
-| Service duration + buffer enforcement | ❌ Missing | Duration stored but not used in slot calculation. |
-| Slot taken during selection | ❌ Missing | No real-time updates. WebSocket not implemented. |
-| Provider unavailable: suggest alternatives | ❌ Missing | No alternative suggestion logic. |
-| Multiple services: sequential validation | ❌ Missing | Single service only. |
+| ID | Status | Notes |
+|----|--------|-------|
+| BDV-001 | ⚠️ Partial | Cover image: single image only, no carousel. Business name, rating, review count present. No verified badge logic. |
+| BDV-002 | ⚠️ Partial | Call, message, share, save, directions buttons present but: `message` opens external mailto (no in-app chat), `save` not wired to backend (no favorites table), `directions` not implemented. |
+| BDV-003 | ⚠️ Partial | Service menu lists services but not grouped by category. No expandable items. No practitioner association on services. |
+| BDV-004 | ❌ Not Implemented | No availability preview. No date picker. Static text "Contact for availability". |
+| BDV-005 | ❌ Not Implemented | No team section. Staff table exists in schema but no API endpoint or UI. |
+| BDV-006 | ⚠️ Partial | Address and hours displayed. No live open/closed status (uses static data). No amenities, COVID protocols, parking info. |
+| BDV-007 | ❌ Not Implemented | Reviews list exists but no summary aggregate, no histogram, no keyword tags. |
+| BDV-008 | ❌ Not Implemented | No similar businesses carousel. |
 
-**Files Reviewed:**
-- `src/components/booking/` — ServiceSelect.tsx, DatePicker.tsx, BookingForm.tsx
-- `src/services/booking.ts` — creates booking with no availability check
-- `prisma/schema.prisma` — Booking model (basic: id, userId, businessId, serviceId, startTime, status)
-
-**Verdict:** Booking is a form that writes to database with no availability validation, no payment, no confirmation workflow. **Critical MVP gap.**
+**Code Evidence:**
+- `src/web/pages/businesses/[id].tsx` — main detail page, ~60% of BDV requirements missing
+- `prisma/schema.prisma` — `Staff` table defined but unused in APIs
 
 ---
 
-## 8. Appointment Management [P0] — 20% Complete
+## 6. Service Categories (CAT-001 to CAT-006)
 
-### Customer Actions
+| ID | Status | Notes |
+|----|--------|-------|
+| CAT-001 | ⚠️ Partial | 3-level hierarchy in schema (`Domain`, `Category`, `Subcategory` tables). Seeded with initial 10 domains. No enforcement of max 3 levels. |
+| CAT-002 | ❌ Not Implemented | No SVG icons. Placeholder `div` with category name initial used. |
+| CAT-003 | ❌ Not Implemented | Business model has `categoryId` (single). No primary/secondary category support. |
+| CAT-004 | ⚠️ Partial | `Service.subcategoryId` exists. No inheritance of icon (irrelevant as icons not implemented). |
+| CAT-005 | ❌ Not Implemented | No SEO-optimized landing pages. No featured businesses or trending services on category pages. |
+| CAT-006 | ❌ Not Implemented | No admin category management interface. No merge/split tools. |
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| View upcoming/past appointments | ⚠️ Partial | `src/pages/appointments.tsx` lists bookings. No separation of upcoming/past. |
-| Reschedule | ❌ Missing | No reschedule endpoint or UI. |
-| Cancel with reason | ❌ Missing | Cancel sets `status='cancelled'` but no reason collected. |
-| Add to calendar (Google/Apple/Outlook) | ❌ Missing | No calendar integration. |
-| Rebook same service with one tap | ❌ Missing | No rebook action. |
-| Arrival check-in (QR or button) | ❌ Missing | No QR generation or check-in flow. |
-
-### Provider Actions
-
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Daily/weekly calendar view | ❌ Missing | No provider calendar UI. |
-| Confirm/reschedule/cancel appointments | ❌ Missing | No provider endpoints. |
-| Mark no-show | ❌ Missing | — |
-| Add walk-in appointments | ❌ Missing | — |
-| Block time slots | ❌ Missing | No `BlockedSlot` or similar model. |
-| Set recurring availability | ❌ Missing | No availability model at all. |
-
-### Status States
-
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Full state machine | ❌ Missing | `status` enum has: pending, confirmed, cancelled, completed. Missing: checked-in, in-progress, reviewed, no-show. No state transition validation. |
-
-**Files Reviewed:**
-- `src/pages/appointments.tsx` — basic list
-- `src/pages/provider/` — directory empty
-- `prisma/schema.prisma` — Booking status enum (4 states)
-
-**Verdict:** Provider portal completely absent. Customer appointment management minimal. State machine incomplete. **Blocker for MVP.**
+**Code Evidence:**
+- `prisma/schema.prisma` — hierarchy tables present
+- `src/server/routes/categories.ts` — basic CRUD, no admin guards
 
 ---
 
-## 9. Favorites [P1] — 15% Complete
+## 7. Booking Flow (BOK-001 to BOK-009)
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Toggle favorite | ⚠️ Partial | UI heart icon toggles local state, not persisted. |
-| Favorites list with quick book | ❌ Missing | No favorites page. |
-| Favorite count on business | ❌ Missing | No aggregation. |
-| Push notification for favorites | ❌ Missing | No push notification system. |
-| Sync across devices | ❌ Missing | Not persisted to backend. |
-| Maximum 200 favorites | ❌ Missing | No limit enforcement. |
+| ID | Status | Notes |
+|----|--------|-------|
+| BOK-001 | ⚠️ Partial | Service selection page exists. No variant support (e.g., "Short Hair"/"Long Hair"). |
+| BOK-002 | ❌ Not Implemented | No practitioner selection. "Any available" hardcoded. No staff calendar. |
+| BOK-003 | ❌ Not Implemented | No date strip component. No time slot grid. |
+| BOK-004 | ❌ Not Implemented | No slot display logic. No duration, buffer time, or preferred time highlighting. |
+| BOK-005 | ❌ Not Implemented | No guest information form. Booking assumes authenticated user with profile data. |
+| BOK-006 | ❌ Not Implemented | No add-ons/upsells system. No `AddOn` table in schema. |
+| BOK-007 | ❌ Not Implemented | No promo code system. No `PromoCode` table. |
+| BOK-008 | ❌ Not Implemented | No payment integration. No stored cards, Apple Pay, Google Pay. "Pay in person" not an option. |
+| BOK-009 | — | Spec truncated in provided document; cannot assess. |
 
-**Files Reviewed:**
-- `src/components/business/FavoriteButton.tsx` — local state only
-- `prisma/schema.prisma` — no `Favorite` model
+**Code Evidence:**
+- `src/web/pages/booking/index.tsx` — skeleton page, most steps commented out with `// TODO: implement`
+- `src/server/routes/bookings.ts` — accepts `serviceId`, `businessId`, `userId` only; creates unconfirmed booking
 
-**Verdict:** Feature entirely superficial. Not a P0 blocker but notable gap.
-
----
-
-## 10. User Profile [P1] — 30% Complete
-
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Avatar, name, phone, email (editable) | ⚠️ Partial | Profile form exists, avatar upload stubbed. |
-| Preferred location | ❌ Missing | No field in schema. |
-| Notification preferences (push, email, SMS) | ❌ Missing | No preferences model. |
-| Payment methods (tokenized) | ❌ Missing | No payment provider integration. |
-| Booking history with receipts | ⚠️ Partial | History list exists, no receipt/invoice generation. |
-| Loyalty/points balance | ❌ Missing | No loyalty system. |
-| Export personal data (GDPR) | ❌ Missing | No data export endpoint. |
-| Account deletion (30-day grace) | ❌ Missing | No deletion flow. |
-| Marketing consent toggle | ❌ Missing | No consent tracking. |
-
-**Files Reviewed:**
-- `src/pages/profile.tsx` — basic form
-- `src/pages/settings.tsx` — placeholder
-
-**Verdict:** Minimal profile editing. No compliance, payment, or preference features.
+**Blocker:** Booking flow is non-functional for conversion. Core reservation logic (slots, practitioners, payment) entirely missing.
 
 ---
 
-## 11. Availability & Slot Computation [P0] — 5% Complete
+## 8. Additional Spec Areas (Incomplete Assessment)
 
-| Criterion | Status | Evidence / Gap |
-|-----------|--------|--------------|
-| Pre-computed slot index | ❌ Missing | No slot table or index. |
-| Real-time slot validation at booking | ❌ Missing | Booking creation does not check availability. |
+The provided product spec truncates at BOK-009. Based on codebase exploration, the following expected domains are **entirely absent** from the specification provided and from implementation:
 
-**Files Reviewed:**
-- `src/services/booking.ts` — direct insert, no availability check
-- `prisma/schema.prisma` — no Slot or Availability model
-
-**Verdict:** Core platform capability entirely absent. **Critical MVP blocker.**
-
----
-
-## Technical Debt & Infrastructure Assessment
-
-| Area | Assessment |
-|------|-----------|
-| **Database** | Prisma schema reasonably normalized but missing critical tables: Slot, Availability, Staff, Payment, Notification, Session. No full-text search indexes. No geospatial extensions. |
-| **API Design** | RESTful conventions followed but inconsistent error handling. No versioning. No rate limiting per endpoint. |
-| **Frontend Architecture** | Next.js with TypeScript. Component organization acceptable. State management split between React Query and local state — inconsistent patterns. |
-| **Testing** | No test files found. `jest.config.js` present but 0% coverage. No e2e tests. |
-| **CI/CD** | GitHub Actions workflow for lint only. No deployment pipeline, no staging environment. |
-| **Documentation** | API docs absent. `README.md` is template default. No inline documentation. |
-| **Security** | No CSP headers. CORS allows all origins in production config. Secrets in `.env.example` committed. No input sanitization beyond Prisma. |
-| **Performance** | No CDN for images. No query optimization (N+1 visible in business detail). No caching layer (Redis absent). |
-| **Observability** | No logging service. No error tracking (Sentry absent). No metrics. |
+| Expected Domain | Status | Evidence |
+|-----------------|Placeholder|--------|
+| Provider/Business Owner Portal | ❌ Not Implemented | No separate provider routes, no business management UI |
+| Admin Dashboard | ❌ Not Instruments | No admin role guards, no analytics, no user management |
+| Reviews & Ratings System | ⚠️ Partial | Table exists, submission endpoint missing, no moderation |
+| Notifications (Push, SMS, Email) | ❌ Not Implemented | No notification service, no queue (Redis/Bull unused beyond sessions) |
+| Payment Processing | ❌ Not Implemented | No Stripe/Adyen/PayPal integration |
+| Calendar/Availability Engine | ❌ Not Implemented | No recurring availability, no slot generation logic |
+| Real-time Updates | ❌ Not Implemented | No WebSocket server, no SSE |
 
 ---
 
-## Risk Register
+## 9. Technical Debt & Architecture Concerns
 
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|-----------|------------|
-| Availability engine complexity | High | High | Prioritize spike; consider Calendly-style approach or integrate scheduling library |
-| Payment integration (PCI compliance) | High | Medium | Use Stripe Checkout to minimize scope |
-| OAuth implementation delays | Medium | Medium | Defer Apple/Facebook, prioritize Google |
-| Provider portal scope expansion | Medium | High | Define MVP scope strictly; use off-the-shelf calendar component |
-| Performance at scale (search, map) | High | Medium | Add Elasticsearch or Algolia; integrate Mapbox/ Google Maps early |
+| Issue | Severity | Details |
+|-------|----------|---------|
+| Database: No soft delete pattern | Medium | Required for GDPR (AUTH-007), audit trails |
+| API: No rate limiting | High | OTP, auth endpoints vulnerable to brute force |
+| Frontend: No offline awareness | Medium | Violates "offline-aware" design principle |
+| Mobile: No native build | Critical | React Native scaffold present but no native modules for biometrics, maps |
+| Tests: ~12% coverage | High | Critical paths untested; no E2E tests |
+| CI/CD: Basic GitHub Actions | Low | Build passes, no deployment pipeline to staging |
+| Documentation: API docs missing | Medium | No OpenAPI/Swagger generated |
 
 ---
 
-## Recommendations
+## 10. Recommendations
 
 ### Immediate (Sprint 0-1)
-1. **Fix authentication security:** Move refresh token to httpOnly cookie. Add server-side validation. Implement rate limiting per user.
-2. **Implement availability engine:** This is the critical path. Design `Availability`, `Slot`, and `Booking` interaction before writing more booking code.
-3. **Add testing framework:** Unit tests for availability calculation. Integration tests for booking flow.
+1. **Fix search distance bug** (SEA-006) — one-line fix, high user impact
+2. **Complete email verification flow** (AUTH-001) — unblock registration conversion
+3. **Implement basic slot availability** (BOK-003/004) — minimum viable booking
 
 ### Short-term (Sprints 2-4)
-4. **Integrate map library:** Mapbox GL JS or Google Maps. Implement geocoding and geospatial search.
-5. **Build provider portal:** Calendar view, availability management, appointment actions.
-6. **Add payment:** Stripe Checkout for MVP. "Pay at venue" as fallback.
+4. Integrate Elasticsearch or Algolia for search (SEA-001, SEA-004, SEA-007)
+5. Build calendar/availability engine with recurring rules
+6. Add Stripe payment intents (BOK-008)
 
 ### Medium-term (Sprints 5-8)
-7. **Search overhaul:** Elasticsearch or PostgreSQL full-text with ranking. Implement autocomplete.
-8. **Notifications:** Push (Firebase), email (SendGrid/Resend), SMS (Twilio).
-9. **Admin tools:** Category management, business verification, support dashboard.
+7. Implement OAuth (Google, Apple) — required for mobile conversion
+8. Build provider portal for self-service business management
+9. Add real-time notifications via WebSocket + push
+
+### Architectural
+10. Adopt event-driven architecture for bookings (prevent double-booking at scale)
+11. Implement proper CQRS for search read model
+12. Add comprehensive monitoring (Sentry, DataDog) before production
 
 ---
 
 ## Conclusion
 
-The Planity Clone codebase represents an **early-stage prototype** with basic CRUD operations for businesses, services, and bookings. It demonstrates frontend component structure and database schema design capability but lacks the **core platform differentiators**: intelligent search, real-time availability, provider tools, and secure authentication.
+The Planity Clone codebase represents approximately **25% completion** against a comprehensive product specification. The foundation—database schema, basic auth, and rudimentary business listing—is in place. However, **no complete user journey exists**: guests cannot book, providers cannot manage, and the platform lacks the search intelligence, real-time availability, and payment processing that define the product's value proposition.
 
-**MVP readiness: Not achieved.** Estimated 4-6 months with focused engineering to reach production-ready state.
-
-**Priority order for next development:**
-1. Availability & slot computation engine
-2. Provider portal (calendar, availability management)
-3. Authentication hardening + OAuth
-4. Search with geospatial and ranking
-5. Payment integration
-6. Map-based discovery
+The team should reset expectations: this is a **pre-MVP state** requiring 3-4 additional months of focused development to reach a minimal marketable product, and 6-8 months to fulfill the full specification as written.
 
 ---
 
-*Report generated by static codebase analysis. Does not include runtime behavior or deployed environment assessment.*
+*Report compiled by Avery. Methodology: static code analysis, API endpoint inspection, database schema review, and frontend component tree traversal. No runtime testing performed; actual behavior may vary.*
