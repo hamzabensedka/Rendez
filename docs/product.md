@@ -1,11 +1,10 @@
-# Planity Clone - Product Specification
+# Planity Clone — Product Specification
 
 ## 1. Overview
 
-Planity Clone is a marketplace platform connecting customers with beauty, wellness, and service providers for online booking. The platform serves three user segments: customers seeking appointments, business owners managing their operations, and administrators overseeing the platform.
+Planity Clone is a multi-platform application connecting customers with local service businesses (beauty, wellness, health). The platform enables discovery, booking, and management of appointments while providing business owners with tools to manage their operations.
 
-**Target Platforms:** iOS, Android, Web (responsive)
-**Monetization:** Commission on bookings, subscription tiers for businesses
+**Target Users:** Customers seeking appointments, business owners managing services, administrators overseeing the platform.
 
 ---
 
@@ -13,407 +12,438 @@ Planity Clone is a marketplace platform connecting customers with beauty, wellne
 
 ### 2.1 User Authentication
 
-**Priority:** P0 - Critical
+**Priority:** P0 (Critical)
 
-**Description:** Secure identity verification and session management for all user types.
+**Description:** Secure identity management for all user types (customers, business owners, admins).
 
-**User Stories:**
-- As a customer, I want to create an account so I can book appointments and manage my history.
-- As a business owner, I want to register my business so I can manage my services and availability.
-- As any user, I want to log in securely so my data is protected.
+**Requirements:**
+- Email/password registration with validation
+- Login with email/password
+- Password reset via email
+- JWT-based session management with refresh tokens
+- Role-based access control (customer, business_owner, admin)
+- Social login (Google, Apple) — P1
+- Account verification email — P1
 
 **Acceptance Criteria:**
-- [ ] Email/password registration with validation (format, uniqueness, min 8 chars with uppercase, number, special char)
-- [ ] Login returns JWT access token (15 min expiry) and refresh token (7 days)
-- [ ] OAuth 2.0 integration: Google, Apple, Facebook
-- [ ] Password reset via secure email link (expires in 1 hour)
-- [ ] Email verification required before booking
-- [ ] Role-based access: `customer`, `business_owner`, anytime `admin`
-- [ ] Rate limiting: 5 failed attempts triggers 30-minute lockout
-- [ ] Biometric login support on mobile (Face ID, fingerprint)
-- [ ] Session management: list active sessions, revoke any device
-
-**Technical Notes:**
-- Use bcrypt for password hashing (cost factor 12)
-- Store refresh tokens hashed in database for revocation
-- Implement CSRF protection for cookie-based sessions
+- [ ] User can register with valid email, password, first name, last name
+- [ ] Password minimum: 8 characters, 1 uppercase, 1 number, 1 special character
+- [ ] System rejects duplicate email registration
+- [ ] User receives verification email upon registration
+- [ ] User can log in with valid credentials and receives access + refresh tokens
+- [ ] Token refresh occurs automatically before expiry
+- [ ] User can request password reset and complete via secure link
+- [ ] Unauthenticated users receive 401 on protected endpoints
+- [ ] Role middleware restricts endpoint access appropriately
 
 ---
 
 ### 2.2 Guest Browse & Explore
 
-**Priority:** P0 - Critical
+**Priority:** P0 (Critical)
 
-**Description:** Allow unauthenticated users to discover businesses and services before committing to registration.
+**Description:** Allow unauthenticated users to browse businesses and services without creating an account.
 
-**User Stories:**
-- As a visitor, I want to browse businesses without creating an account so I can evaluate the platform.
-- As a visitor, I want to see service prices so I can compare options.
+**Requirements:**
+- Browse businesses without login
+- View business details and services
+- View available time slots (without booking)
+- Prompt to authenticate when attempting to book
+- Session-persisted guest preferences (local storage)
 
 **Acceptance Criteria:**
-- [ ] Full search and browse functionality accessible without login
-- [ ] Business detail pages viewable by guests
-- [ ] Service listings and pricing visible
-- [ ] Reviews and ratings readable
-- [ ] "Book" CTA prompts login/signup (modal, not redirect)
-- [ ] Guest session persists for 24 hours (localStorage for location prefs)
-- [ ] Upon registration, merge guest browsing history to new account
-
-**Business Rules:**
-- Booking action is the only gated functionality
-- No limit on browse depth or duration
+- [ ] Guest can access search and browse without authentication
+- [ ] Guest sees "Sign in to book" CTA on business pages
+- [ ] Guest can view business profiles, services, and pricing
+- [ ] Guest sees available slots but cannot proceed past booking initiation
+- [ ] Upon login, guest preferences (selected business/service) are preserved
+- [ ] Guest browsing data optionally linked to account upon registration
 
 ---
 
 ### 2.3 Business Search & Discovery
 
-**Priority:** P0 - Critical
+**Priority:** P0 (Critical)
 
-**Description:** Intelligent search with filtering to help customers find relevant providers.
+**Description:** Comprehensive search and filtering to help users find relevant businesses.
 
-**User Stories:**
-- As a customer, I want to search by business name, service, or treatment so I can find what I need.
-- As a customer, I want to filter results so I can narrow options efficiently.
+**Requirements:**
+- Full-text search across business name, description, services
+- Filter by: category, location (city/zip), price range, rating, availability
+- Sort by: relevance, rating, distance, price (low/high)
+- Pagination (20 results default)
+- Recent searches and trending businesses
+- Auto-complete search suggestions
 
 **Acceptance Criteria:**
-- [ ] Full-text search across: business name, service names, treatment names, tags
-- [ ] Autocomplete suggestions after 2 characters, with debounce 300ms
-- [ ] Filters: distance (1-50km), price range, rating (4.0+), availability (today, this week), category, amenities
-- [ ] Sort options: relevance (default), distance, rating, price (low-high), most reviewed
-- [ ] Search history stored (last 10 searches), clearable
-- [ ] Saved searches with optional push notification for new matching businesses
-- [ ] Results pagination: 20 items per page, cursor-based for performance
-- [ ] Empty state with suggested alternatives (nearby categories, popular searches)
-- [ ] "Near me" uses GPS with fallback to selected city/zip
-
-**Performance:**
-- Search response < 200ms for first page
-- Autocomplete < 100ms
+- [ ] Search returns results matching name, description, or service names
+- [ ] Filters combine with AND logic; empty result set handled gracefully
+- [ ] Distance calculation accurate within 500m using Haversine formula
+- [ ] Results display within 2 seconds for 95th percentile queries
+- [ ] Pagination supports cursor-based for performance
+- [ ] Empty state provides guidance to refine search
+- [ ] Recent searches persist across sessions for authenticated users
 
 ---
 
 ### 2.4 Map-based Search
 
-**Priority:** P0 - Critical
+**Priority:** P1 (High)
 
-**Description:** Visual geographic exploration of available businesses.
+**Description:** Visual exploration of businesses on an interactive map.
 
-**User Stories:**
-- As a customer, I want to see businesses on a map so I can choose by location convenience.
+**Requirements:**
+- Interactive map with business markers
+- Cluster markers for dense areas
+- Map bounds trigger result update
+- User geolocation with permission handling
+- Directions integration (external maps app)
+- Toggle between list and map views
 
 **Acceptance Criteria:**
-- [ ] Interactive map (Google Maps or Mapbox) with business markers
-- [ ] Clustering for dense areas (zoom-dependent, max 50 markers unclustered)
-- [ ] Marker color coding: open (green), closing soon (orange), closed (gray), fully booked (red)
-- [ ] Tap marker shows business card preview: name, rating, price range, next available slot
-- [ ] "List view" toggle for accessibility
-- [ ] Current location button with permission handling
-- [ ] Map bounds update triggers new search (debounced 500ms)
-- [ ] Deep link to native maps for directions
-- [ ] Offline: cache last viewed map tiles (512MB limit)
+- [ ] Map initializes centered on user location or default city
+- [ ] Business markers display on map; clicking shows preview card
+- [ ] Map pan/zoom fetches businesses in visible bounds
+- [ ] Clustering groups markers when zoomed out
+- [ ] User can trigger current location; denied gracefully with fallback
+- [ ] "Get directions" opens native maps with business address
+- [ ] Map maintains state when switching between list and map views
 
 ---
 
 ### 2.5 Business Detail View
 
-**Priority:** P0 - Critical
+**Priority:** P0 (Critical)
 
-**Description:** Comprehensive information page for a single business.
+**Description:** Comprehensive business profile showcasing services, availability, and social proof.
 
-**User Stories:**
-- As a customer, I want to see all business details so I can make an informed booking decision.
+**Requirements:**
+- Business info: name, description, photos, address, contact, hours
+- Service menu with pricing and duration
+- Team/staff profiles
+- Reviews summary and detail
+- Real-time availability preview
+- Share business profile
 
 **Acceptance Criteria:**
-- [ ] Header: business name, verified badge, favorite toggle, share button
-- [ ] Photo gallery: up to 30 images, swipeable, full-screen viewer, pinch zoom
-- [ ] Key info: address (with map thumbnail), phone, website, hours (today + full week), COVID policies
-- [ ] Service menu: categorized, with prices, durations, descriptions
-- [ ] Staff profiles: photo, name, bio, specialties, average rating
-- [ ] Reviews section: aggregate rating (1 decimal), distribution bar chart, sortable (recent, highest, lowest), photos in reviews
-- [ ] "Book Now" sticky CTA, scroll-aware
-- [ ] Similar businesses carousel (same category, nearby)
-- [ ] Report business button (inappropriate content, closed, etc.)
-
-**Performance:**
-- Initial paint < 1.5s
-- Lazy load images below fold
+- [ ] Business detail loads with all core information within 1.5s
+- [ ] Photo gallery supports swipe/carousel with pinch-to-zoom
+- [ ] Services display name, description, duration, price
+- [ ] Operating hours show current day status (open/closed)
+- [ ] Staff list links to individual staff profiles and availability
+- [ ] Average rating and review count prominently displayed
+- [ ] Deep link support for sharing business profile URL
 
 ---
 
 ### 2.6 Service Categories
 
-**Priority:** P0 - Critical
+**Priority:** P0 (Critical)
 
-**Description:** Hierarchical classification for service discovery and business organization.
+**Description:** Hierarchical categorization of services for discovery and organization.
+
+**Requirements:**
+- Predefined category taxonomy (Hair, Nails, Spa, Massage, etc.)
+- Subcategories for granular classification
+- Business can map services to multiple categories
+- Category icons and descriptions
+- Category-based browsing and filtering
 
 **Acceptance Criteria:**
-- [ ] Predefined category tree: Beauty > Hair > Haircut, Coloring, Styling; Wellness > Massage, Spa, etc.
-- [ ] Maximum 4 levels deep
-- [ ] Business can select up to 5 primary categories
-- [ ] Each service assigned to one category leaf node
-- [ ] Category icons and cover images for browse UI
-- [ ] Trending categories section (algorithm: booking volume last 30 days)
-- [ ] Category SEO pages with structured data
-- [ ] Admin ability to add/edit/disable categories (soft delete)
+- [ ] Category list displays with icons and business counts
+- [ ] Subcategories expand/collapse or navigate to dedicated view
+- [ ] Business services correctly associated with categories
+- [ ] Category pages SEO-friendly with proper URL structure
+- [ ] Uncategorized services appear in "Other" with admin flag
 
 ---
 
 ### 2.7 Booking Flow
 
-**Priority:** P0 - Critical
+**Priority:** P0 (Critical)
 
-**Description:** Core conversion funnel for appointment scheduling.
+**Description:** End-to-end appointment reservation from selection to confirmation.
 
-**User Stories:**
-- As a customer, I want to book an appointment in minimal steps so I can secure my preferred time.
+**Requirements:**
+- Select service → select staff (optional) → select date/time → confirm details → payment (if required) → confirmation
+- Real-time slot availability
+- Guest checkout option (with account creation prompt)
+- Booking notes/special requests
+- Cancellation policy acknowledgment
+- Booking confirmation with calendar invite
 
 **Acceptance Criteria:**
-- [ ] Step 1 - Select service(s): single or multiple, shows total duration and price
-- [ ] Step 2 - Select staff (optional "no preference"), shows staff availability
-- [ ] Step 3 - Select date and time: calendar view with available slots highlighted
-- [ ] Step 4 - Add-ons/notes: special requests, allergies, first visit checkbox
-- [ ] Step 5 - Review and confirm: all details, cancellation policy, total with breakdown
-- [ ] Payment step (if required by business): see Payment Integration
-- [ ] Confirmation screen with: booking reference, calendar invite (.ics), add to Google/Apple calendar, share
-- [ ] Guest checkout option (email + phone), account creation prompt post-booking
-- [ ] Abandoned booking recovery: email reminder after 1 hour if not completed
-- [ ] Modify booking before confirmation (back navigation preserves state)
-
-**Business Rules:**
-- Booking window: minimum 2 hours before appointment (configurable by business)
-- Maximum future booking: 3 months
-- Hold slot for 10 minutes during checkout (distributed lock)
+- [ ] User selects service; only relevant staff and slots shown
+- [ ] Calendar view shows available dates; unavailable dates disabled
+- [ ] Time slots update based on staff and service duration
+- [ ] Double-booking prevented via optimistic locking
+- [ ] Booking holds slot for 10 minutes during payment
+- [ ] Confirmation displays: business, service, staff, datetime, location, reference code
+- [ ] Calendar invite (.ics) sent via email
+- [ ] SMS confirmation option — P1
 
 ---
 
 ### 2.8 Appointment Management
 
-**Priority:** P0 - Critical
+**Priority:** P0 (Critical)
 
-**Description:** Post-booking lifecycle for customers and business owners.
+**Description:** Users and providers can view, modify, and cancel appointments.
 
-**Customer Acceptance Criteria:**
-- [ ] Upcoming appointments list, sortable by date
-- [ ] Appointment detail: QR code for check-in, directions, contact business, cancel/reschedule
-- [ ] Reschedule: search new slots, no penalty if >24h before, otherwise business policy applies
-- [ ] Cancel with reason selection (required), refund status if paid
-- [ ] Past appointments: rebook same service, review prompt (after 24h)
-- [ ] Add to personal calendar (Google, Apple, Outlook)
+**Requirements:**
+- Customer: view upcoming/past appointments, reschedule, cancel
+- Business: view all bookings, check-in, mark no-show, add notes
+- Cancellation with policy enforcement (e.g., 24h notice)
+- Reschedule within constraints
+- Appointment status lifecycle: pending → confirmed → checked-in → completed → cancelled/no-show
 
-**Business Owner Acceptance Criteria:**
-- [ ] Daily/weekly calendar view (agenda, day, week, month)
-- [ ] Appointment statuses: pending, confirmed, checked-in, in-progress, completed, no-show, cancelled
-- [ ] Status transitions with timestamps and actor
-- [ ] Check-in via QR scan or manual confirmation
-- [ ] Block time (break, meeting) with reason
-- [ ] Override: book outside normal hours, double-book (warn)
-- [ ] Print daily schedule
+**Acceptance Criteria:**
+- [ ] Customer sees chronological list with status indicators
+- [ ] Cancel action shows refund/payment policy and requires confirmation
+- [ ] Reschedule presents new slot selection; original slot released
+- [ ] Business dashboard shows daily schedule view
+- [ ] Status updates trigger notifications (see 2.15)
+- [ ] Past appointments accessible for 2 years; then archived
 
 ---
 
 ### 2.9 Favorites
 
-**Priority:** P1 - High
+**Priority:** P1 (High)
 
-**Description:** Personal saved list for quick access to preferred businesses.
+**Description:** Users save preferred businesses for quick access.
+
+**Requirements:**
+- Toggle favorite from business card or detail
+- Favorites list with quick booking
+- Favorite count visible to business
+- Sync across devices for authenticated users
 
 **Acceptance Criteria:**
-- [ ] Toggle favorite from business card, detail page, or post-appointment
-- [ ] Favorites list: sortable (recently added, alphabetical, nearest), searchable
-- [ ] Quick rebook from favorite (jumps to booking flow with pre-selected business)
-- [ ] Push notification: "Your favorite [Business] has new availability this week"
-- [ ] Sync across devices (if logged in)
-- [ ] Maximum 200 favorites (soft limit, warn at 180)
-- [ ] Share favorite list (read-only link)
+- [ ] Heart icon toggles favorite with haptic/visual feedback
+- [ ] Favorites persist in database for authenticated users
+- [ ] Guest favorites stored locally; prompt to login to sync
+- [ ] Favorites page shows empty state with discovery CTA
+- [ ] Favorite businesses surface in personalized recommendations
 
 ---
 
 ### 2.10 User Profile
 
-**Priority:** P1 - High
+**Priority:** P1 (High)
 
-**Description:** Customer identity and preference management.
+**Description:** Customer account management and preferences.
+
+**Requirements:**
+- Personal info: name, phone, email, photo
+- Notification preferences (email, push, SMS)
+- Payment methods management
+- Appointment history
+- Privacy settings and data export
+- Account deletion (GDPR)
 
 **Acceptance Criteria:**
-- [ ] Profile photo (camera/gallery, crop to circle, max 5MB)
-- [ ] Display name, email, phone, birthday (optional, for birthday offers)
-- [ ] Notification preferences: push, email, SMS (granular per type)
-- [ ] Privacy: profile visibility (public, friends only, private)
-- [ ] Linked accounts (social logins)
-- [ ] Delete account: GDPR-compliant, 30-day grace period, data export GDPR export
-- [ ] Booking history: searchable, filterable by date, business, service
-- [ ] Loyalty points if applicable
-- [ ] Preferred language and currency
+- [ ] Profile displays current information with edit capability
+- [ ] Photo upload with crop and size validation (max 5MB)
+- [ ] Notification preferences granular by type (bookings, promotions, reminders)
+- [ ] Payment methods: add, delete, set default (PCI-compliant via Stripe)
+- [ ] Data export produces downloadable file within 24 hours
+- [ ] Account deletion confirms identity, anonymizes data, completes in 30 days
 
 ---
 
 ### 2.11 Availability & Slot Computation
 
-**Priority:** P0 - Critical
+**Priority:** P0 (Critical)
 
-**Description:** Real-time calculation of bookable time slots.
+**Description:** Core engine calculating real-time available appointment slots.
+
+**Requirements:**
+- Business defines: operating hours, break times, holidays
+- Staff-specific schedules and time off
+- Service duration and buffer time between appointments
+- Concurrent booking limits (rooms, chairs)
+- Slot generation based on above constraints
+- Cache with invalidation on schedule changes
 
 **Acceptance Criteria:**
-- [ ] Business defines: operating hours per day, slot duration (or variable by service), buffer between appointments
-- [ ] Staff-specific schedules override business default
-- [ ] Blackout dates (holidays, vacation)
-- [ ] Recurring unavailability (e.g., every Wednesday afternoon)
-- [ ] Slot computation accounts for: existing bookings, staff breaks, service duration, travel time (mobile services)
-- [ ] Real-time availability API: < 100ms response
-- [ ] Cache invalidation on booking change (event-driven)
-- [ ] Overbooking protection: pessimistic locking at database level
-- [ ] Timezone handling: store in UTC, display in business timezone
-- [ ] Edge cases: DST transitions, leap year
-
-**Algorithm:**
-- Generate candidate slots from business hours
-- Subtract blocked times
-- Subtract existing confirmed appointments
-- Apply buffer rules
-- Return remaining slots grouped by staff
+- [ ] Slots generated only within business operating hours
+- [ ] Staff time-off blocks slots for that staff
+- [ ] Service duration + buffer accounted between consecutive bookings
+- [ ] Resource constraints (e.g., room availability) enforced
+- [ ] Slot computation completes in <200ms for 30-day window
+- [ ] Cache invalidated on any schedule/booking change
+- [ ] Edge cases handled: midnight crossing, DST changes, leap year
 
 ---
 
 ### 2.12 Shared Types & Design System
 
-**Priority:** P1 - High
+**Priority:** P0 (Critical)
 
-**Description:** Consistent UI/UX foundation across all platforms.
+**Description:** Consistent UI/UX foundation across platforms.
+
+**Requirements:**
+- Component library (React Native / React)
+- Typography, color palette, spacing scale
+- Form elements, buttons, cards, modals
+- Loading states and skeleton screens
+- Error states and empty states
+- Accessibility: WCAG 2.1 AA minimum
 
 **Acceptance Criteria:**
-- [ ] Component library: buttons, inputs, cards, modals, toasts, skeletons, empty states
-- [ ] Color system: primary (#FF6B6B), secondary, semantic (success, warning, error, info), dark mode support
-- [ ] Typography: Inter for body, Playfair Display for headings, 8px base grid
-- [ ] Spacing scale: 4, 8, 12, 16, 24, 32, 48, 64px
-- [ ] Animation specs: 200ms ease-in-out standard, 300ms for page transitions
-- [ ] Accessibility: WCAG 2.1 AA minimum, focus indicators, screen reader labels, minimum 44px touch targets
-- [ ] Shared TypeScript types: published as `@planity-clone/types` package
-- [ ] Design tokens in JSON for cross-platform consumption
-- [ ] Storybook for web component documentation
+- [ ] All UI components documented in Storybook
+- [ ] Color contrast ratios meet WCAG AA standards
+- [ ] Touch targets minimum 44x44dp (mobile)
+- [ ] Screen reader labels on all interactive elements
+- [ ] Consistent loading skeletons for async content
+- [ ] Error boundaries catch and log runtime errors gracefully
+- [ ] Dark mode support — P2
 
 ---
 
 ### 2.13 Reviews & Ratings
 
-**Priority:** P1 - High
+**Priority:** P1 (High)
 
-**Description:** Social proof and quality feedback system.
+**Description:** Customer feedback system for businesses and services.
+
+**Requirements:**
+- Post-review after completed appointment
+- 1-5 star rating with optional text review
+- Business owner response
+- Review helpfulness voting
+- Moderation flagging
+- Review summary statistics
 
 **Acceptance Criteria:**
-- [ ] Eligible to review: completed appointment, within 30 days, one review per appointment
-- [ ] Rating: 1-5 stars, required
-- [ ] Review text: 10-2000 characters, optional
-- [ ] Photo upload: up to 5 images, moderation required
-- [ ] Business owner response: within 30 days of review, editable once
-- [ ] Review helpfulness voting (thumbs up/down)
-- [ ] Report review for: inappropriate content, fake, conflict of interest
-- [ ] Moderation queue: auto-approve if no flags, human review for reports
-- [ ] Aggregate: average, total count, distribution, recent trend
-- [ ] Sort: most relevant, newest, highest/lowest rating
-- [ ] Filter: with photos, verified visits only, responded by business
+- [ ] Review invitation sent 24 hours after appointment completion
+- [ ] Only verified customers (completed appointment) can review
+- [ ] One review per appointment; editable for 30 days
+- [ ] Business owner can respond once; response editable
+- [ ] Inappropriate reviews flagged for admin review
+- [ ] Rating distribution displayed as histogram
+- [ ] Reviews sortable by: newest, highest, lowest, most helpful
 
 ---
 
 ### 2.14 Payment Integration
 
-**Priority:** P0 - Critical
+**Priority:** P1 (High)
 
-**Description:** Secure transaction processing for bookings.
+**Description:** Secure processing of payments for appointments.
+
+**Requirements:**
+- Stripe integration for card payments
+- Support for: card payments, Apple Pay, Google Pay
+- Deposit vs. full payment options (business-configurable)
+- No-show fees with pre-authorization
+- Refund processing with policy enforcement
+- Invoice and receipt generation
 
 **Acceptance Criteria:**
-- [ ] Payment methods: credit/debit (Stripe), Apple Pay, Google Pay, PayPal
-- [ ] Payment timing options: full upfront, deposit (configurable %), pay at venue
-- [ ] No-show protection: hold on card, charge if no-show (business policy)
-- [ ] Refund processing: automatic (if >24h cancel), manual approval, partial refunds
-- [ ] Receipt: email + in-app, with business VAT info
-- [ ] Invoice generation for B2B
-- [ ] Payment failure handling: retry x3, notify customer and business, auto-cancel if unresolved in 24h
-- [ ] PCI compliance: never store raw card data (Stripe tokens)
-- [ ] Currency: display in customer preference, settle in business currency (Stripe conversion)
-- [ ] Payout schedule to business: weekly, configurable
+- [ ] PCI compliance via Stripe Elements; no card data touches servers
+- [ ] Payment intent created at booking; captured per business rules
+- [ ] Failed payment provides clear error and retry option
+- [ ] Refunds processed through dashboard; customer notified
+- [ ] Receipts emailed with business branding
+- [ ] Webhook handling for payment status updates
+- [ ] Payout scheduling to business bank accounts — P2
 
 ---
 
 ### 2.15 Notifications
 
-**Priority:** P1 - High
+**Priority:** P1 (High)
 
-**Description:** Multi-channel communication for booking lifecycle and engagement.
+**Description:** Multi-channel communication for booking lifecycle and marketing.
+
+**Requirements:**
+- Channels: push (mobile), email, SMS
+- Triggered by: booking confirmation, reminder (24h, 1h), modification, cancellation, promotion
+- User preference management per channel
+- Template management with variable substitution
+- Delivery tracking and retry logic
 
 **Acceptance Criteria:**
-- [ ] Channels: push (FCM/APNs), email (SendGrid), SMS (Twilio), in-app inbox
-- [ ] Triggered notifications:
-  - Booking confirmed (immediate)
-  - Reminder: 24h before, 2h before
-  - Change/cancellation by business
-  - Request to review (24h after appointment)
-  - Promotional (opt-in): favorite business new availability, price drop
-- [ ] Preference management: granular opt-in/out per channel and category
-- [ ] Quiet hours: respect local timezone, default 10pm-8am
-- [ ] Inbox: persistent notification history, mark read/unread, 90-day retention
-- [ ] Deep links: notification taps navigate to relevant screen
-- [ ] Delivery tracking: retry failed pushes, fallback to SMS for critical
+- [ ] Booking confirmation delivers within 5 seconds via preferred channel
+- [ ] Reminder notifications respect user timezone
+- [ ] Unsubscribe honored immediately for marketing communications
+- [ ] Transactional notifications (booking-related) cannot be disabled
+- [ ] Failed push falls back to SMS for critical notifications
+- [ ] Notification history viewable in app
 
 ---
 
 ### 2.16 Provider / Business Owner Portal
 
-**Priority:** P0 - Critical
+**Priority:** P0 (Critical)
 
-**Description:** Dedicated interface for business management.
+**Description:** Dedicated interface for business owners to manage their presence and operations.
+
+**Requirements:**
+- Dashboard: upcoming appointments, revenue summary, quick actions
+- Schedule management: set hours, breaks, time off
+- Service catalog: CRUD services with pricing, duration, description
+- Staff management: add staff, set schedules, assign services
+- Booking management: view, modify, cancel customer appointments
+- Customer database with visit history
+- Settings: business info, photos, policies, payment settings
 
 **Acceptance Criteria:**
-- [ ] Dashboard: today's appointments, revenue this week, new reviews, quick actions
-- [ ] Business profile editor: all fields from detail view, photos, services, staff
-- [ ] Service management: CRUD, pricing, duration, staff assignment, online booking toggle
-- [ ] Staff management: profiles, schedules, permissions (view only, manage bookings, admin)
-- [ ] Calendar: see Appointment Management (business owner)
-- [ ] Client list: searchable, notes, visit history, marketing tags
-- [ ] Analytics: bookings, revenue, no-shows, popular services, peak hours (export to CSV)
-- [ ] Settings: booking policies, cancellation rules, payment methods, integrations
-- [ ] Mobile-responsive web (dedicated app v2)
+- [ ] Dashboard loads key metrics within 2 seconds
+- [ ] Schedule changes reflect immediately in customer-facing availability
+- [ ] Service creation enforces required fields and validates pricing
+- [ ] Staff can have individual login with role-based permissions
+- [ ] Booking modifications notify affected customers automatically
+- [ ] Export reports: appointments, revenue, customers (CSV/PDF)
 
 ---
 
 ### 2.17 Admin Dashboard
 
-**Priority:** P1 - High
+**Priority:** P1 (High)
 
-**Description:** Platform oversight and operations.
+**Description:** Platform administration and oversight.
+
+**Requirements:**
+- User management: search, view, suspend, impersonate
+- Business onboarding and verification
+- Content moderation: reviews, reported content
+- Platform analytics: MAU, bookings, revenue, churn
+- Configuration: categories, fees, feature flags
+- Support ticket routing
 
 **Acceptance Criteria:**
-- [ ] User management: search, view, suspend, impersonate (audit log)
-- [ ] Business onboarding: verification workflow, document review, approve/reject with reason
-- [ ] Content moderation: reported reviews, businesses, images; approve/reject/escalate
-- [ ] Financial: transaction monitoring, dispute handling, payout management
-- [ ] Analytics: MAU, booking volume, GMV, churn, top categories, geographic heatmap
-- [ ] System health: API latency, error rates, queue depth
-- [ ] Role-based access: super_admin, support, finance, moderator
-- [ ] Audit log: all admin actions, immutable, searchable 2 years
+- [ ] Admin actions audited with immutable log
+- [ ] Business approval workflow: submitted → under review → approved/rejected
+- [ ] Flagged content reviewed within 24 hours per SLA
+- [ ] Analytics dashboards refresh every 15 minutes
+- [ ] Role-based admin access (super_admin, support, finance)
+- [ ] Bulk operations with confirmation and undo window
 
 ---
 
 ### 2.18 Background Jobs (BullMQ)
 
-**Priority:** P1 - High
+**Priority:** P1 (High)
 
-**Description:** Asynchronous task processing for reliability and performance.
+**Description:** Asynchronous job processing for reliability and performance.
+
+**Requirements:**
+- Job queues: notifications, payments, reports, data exports, search indexing
+- Retry with exponential backoff
+- Dead letter queue for failed jobs
+- Job monitoring and manual retry
+- Scheduled/recurring jobs
 
 **Acceptance Criteria:**
-- [ ] Job types and queues:
-  - `notifications`: all outbound communications
-  - `payments`: charge processing, payouts, reconciliation
-  - `search-index`: update Elasticsearch on data changes
-  - `reports`: scheduled analytics generation
-  - `cleanup`: GDPR data purging, log rotation
-  - `imports`: bulk data operations
-- [ ] Retry policy: exponential backoff, max 5 attempts, dead letter queue
-- [ ] Job idempotency: deduplication by unique job ID
-- [ ] Monitoring: queue depth, processing rate, failed jobs, alerting threshold
-- [ ] Priority levels: critical (payment failure), high (booking confirmation), normal, low (reports)
-- [ ] Scheduled jobs: cron syntax, timezone-aware
-- [ ] Job progress tracking for long-running operations
-- [ ] Graceful shutdown: finish current jobs, no new pickups
+- [ ] Notification jobs process within 30 seconds of trigger
+- [ ] Failed jobs retry 3 times with 5min, 25min, 125min delays
+- [ ] Dead letter queue accessible for admin review
+- [ ] Job completion/failure metrics visible in monitoring
+- [ ] Recurring jobs: daily reports, nightly data cleanup
+- [ ] Queue depth alerts trigger at >1000 pending jobs
 
 ---
 
@@ -421,38 +451,29 @@ Planity Clone is a marketplace platform connecting customers with beauty, wellne
 
 | Aspect | Requirement |
 |--------|-------------|
-| Performance | P95 API response < 300ms; page load < 2s |
-| Availability | 99.9% uptime; < 4h planned maintenance/month |
-| Security | OWASP Top 10 mitigation; annual penetration test |
-| Scalability | Support 10k concurrent users; 1M bookings/month |
-| Compliance | GDPR, CCPA, PCI-DSS Level 1 |
-| Localization | EN, FR, DE, ES launch; RTL for future |
-
----
+| Performance | API p95 < 500ms; page load < 2s |
+| Availability | 99.9% uptime SLA |
+| Security | OWASP Top 10 mitigated; annual penetration test |
+| Scalability | Support 10,000 concurrent bookings |
+| Compliance | GDPR, PCI-DSS (via Stripe), CCPA |
 
 ## 4. Success Metrics
 
-| Metric | Target |
-|--------|--------|
-| Booking conversion rate | > 15% (search to confirmed) |
-| App install to first booking | < 7 days |
-| Business NPS | > 50 |
-| Customer NPS | > 60 |
-| Monthly churn (businesses) | < 5% |
-| Support ticket volume | < 2% of bookings |
-
----
+- Monthly Active Users (MAU)
+- Booking conversion rate (browse → book)
+- Business retention rate
+- Customer NPS
+- Average booking value
+- Platform gross merchandise value (GMV)
 
 ## 5. Release Phases
 
 | Phase | Features | Timeline |
 |-------|----------|----------|
-| MVP | Auth, Guest Browse, Search, Business Detail, Booking, Appointments, Payments | Month 1-2 |
-| V1 | Map, Favorites, Profile, Reviews, Notifications, Business Portal | Month 3-4 |
-| V2 | Admin Dashboard, Analytics, Background Jobs optimization, i18n expansion | Month 5-6 |
+| MVP | 2.1, 2.2, 2.3, 2.5, 2.6, 2.7, 2.8, 2.11, 2.12, 2.16 | Month 1-2 |
+| V1.1 | 2.4, 2.9, 2.10, 2.13, 2.15, 2.18 | Month 3 |
+| V1.2 | 2.14, 2.17, Social Login, Dark Mode | Month 4 |
 
 ---
-
 *Document Version: 1.0*
 *Last Updated: 2024*
-*Owner: Alex, Product Owner*
