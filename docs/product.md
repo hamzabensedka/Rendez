@@ -1,166 +1,109 @@
 # Planity Clone — Product Specification
 
-**Owner:** Alex (Product Owner)
-**Goal:** Define complete feature specs and acceptance criteria for a Planity-style beauty & wellness booking marketplace (mobile-first web app + provider portal + admin).
+## 1. Overview
+Planity Clone is a mobile-first platform connecting clients with local beauty & wellness businesses (salons, barbers, spas). It supports guest browsing, authenticated booking, provider management, and admin oversight.
 
-## Priorities
-- **P0 (MVP):** User Auth, Guest Browse, Search & Discovery, Map Search, Business Detail, Categories, Booking Flow, Availability & Slots, Appointment Mgmt, Shared Types/Design, Notifications (basic), Provider Portal (core).
-- **P1:** Favorites, Reviews & Ratings, Payment Integration, User Profile, Admin Dashboard, Background Jobs.
-- **P2:** Advanced notifications, analytics, promotions.
+## 2. Personas
+- Client: books appointments, browses, leaves reviews.
+- Guest: explores without account.
+- Business Owner: manages slots, services, staff.
+- Admin: platform-wide control.
 
----
+## 3. Feature Specs
 
-## 1. User Authentication
-**Spec:** Email/phone signup, login, logout, password reset. JWT-based sessions. OAuth (Google/Apple) optional.
-**AC:**
-- User can register with email + password (min 8 chars).
-- Verification email/SMS sent; account active after confirm.
-- Login returns token; protected routes require token.
-- Password reset via email link works.
-- OAuth login creates/links account.
-**Priority:** P0
+### 3.1 User Authentication
+- Signup/login via email, phone OTP, Google/Apple.
+- JWT refresh, logout, password reset.
+- AC: User can register in <2 min; invalid creds show error; session persists.
+- Priority: P0
 
-## 2. Guest Browse & Explore
-**Spec:** Non-logged users can view categories, businesses, and details.
-**AC:**
-- Guest sees home with featured businesses and categories.
-- Guest can open business detail but booking prompts login.
-- No personal data stored for guest.
-**Priority:** P0
+### 3.2 Guest Browse & Explore
+- Home with featured businesses, categories.
+- No account required to view.
+- AC: Guest sees home; prompted to login only at booking.
+- Priority: P0
 
-## 3. Business Search & Discovery
-**Spec:** Text search by name, service, location. Filters: category, price, rating, distance.
-**AC:**
-- Search returns relevant businesses in <1s.
-- Filters combine correctly.
-- Empty state shown when no results.
-**Priority:** P0
+### 3.3 Business Search & Discovery
+- Text search by name, service, location.
+- Filters: rating, price, distance.
+- AC: Results <500ms; empty state handled.
+- Priority: P0
 
-## 4. Map-based Search
-**Spec:** Show businesses as pins on map; move map updates results.
-**AC:**
-- Map renders with user location (with permission).
-- Pins clickable to preview business.
-- Radius filter reflects map bounds.
-**Priority:** P0
+### 3.4 Map-based Search
+- Google Maps view with pins.
+- Tap pin -> preview card.
+- AC: Map loads; pins accurate; radius filter works.
+- Priority: P1
 
-## 5. Business Detail View
-**Spec:** Photos, services, staff, hours, location, reviews summary, book button.
-**AC:**
-- All data loads correctly.
-- Services list with prices/durations.
-- “Book” starts flow or login if guest.
-**Priority:** P0
+### 3.5 Business Detail View
+- Cover, info, services, staff, reviews.
+- AC: All sections render; CTA to book.
+- Priority: P0
 
-## 6. Service Categories
-**Spec:** Tree of categories (Hair, Nails, Spa…) with icons.
-**AC:**
-- Categories seeded and editable by admin.
-- Selecting category filters discovery.
-**Priority:** P0
+### 3.6 Service Categories
+- Tree: Beauty > Nails > Manicure.
+- AC: Categories editable by admin; used in search.
+- Priority: P1
 
-## 7. Booking Flow
-**Spec:** Select service → staff (opt) → date → slot → confirm → pay (if P1) → success.
-**AC:**
-- Only available slots shown.
-- Double-booking prevented.
-- Confirmation screen + notification sent.
-**Priority:** P0
+### 3.7 Booking Flow
+- Select service, staff, slot, pay.
+- AC: Multi-step with validation; confirmation sent.
+- Priority: P0
 
-## 8. Appointment Management
-**Spec:** User views upcoming/past, reschedule, cancel (policy-based).
-**AC:**
-- List accurate from DB.
-- Cancel updates availability.
-- Reschedule re-checks slots.
-**Priority:** P0
+### 3.8 Appointment Management
+- List upcoming/past; cancel/reschedule.
+- AC: Client sees status; owner notified.
+- Priority: P0
 
-## 9. Favorites
-**Spec:** Save businesses to favorites list.
-**AC:**
-- Heart toggle on detail.
-- Favorites list in profile.
-- Sync across devices.
-**Priority:** P1
+### 3.9 Favorites
+- Save businesses/services.
+- AC: Sync across devices; quick access.
+- Priority: P2
 
-## 10. User Profile
-**Spec:** Name, contact, addresses, payment methods, preferences.
-**AC:**
-- Editable fields persist.
-- Address used in search default.
-**Priority:** P1
+### 3.10 User Profile
+- Edit name, prefs, payment methods.
+- AC: Changes persist; GDPR delete.
+- Priority: P1
 
-## 11. Availability & Slot Computation
-**Spec:** Provider sets hours + breaks + service duration; system computes free slots.
-**AC:**
-- Slots exclude booked + breaks.
-- Timezone correct.
-- Concurrent requests safe.
-**Priority:** P0
+### 3.11 Availability & Slot Computation
+- Rules per staff/service; buffer times.
+- AC: No double-booking; slots computed real-time.
+- Priority: P0
 
-## 12. Shared Types & Design System
-**Spec:** TS types, UI kit (colors, buttons, inputs) in repo.
-**AC:**
-- Components reused across app.
-- Types imported by frontend/backend.
-**Priority:** P0
+### 3.12 Shared Types & Design System
+- TS types, UI kit (colors, components).
+- AC: Used across apps; documented.
+- Priority: P0
 
-## 13. Reviews & Ratings
-**Spec:** Post-visit review (1–5 stars + text). Display averages.
-**AC:**
-- Only verified visits reviewable.
-- Average updates on new review.
-- Abuse report available.
-**Priority:** P1
+### 3.13 Reviews & Ratings
+- 1-5 stars + text; moderation.
+- AC: Only booked users review; avg shown.
+- Priority: P1
 
-## 14. Payment Integration
-**Spec:** Stripe for cards; deposit/full; refund on cancel.
-**AC:**
-- Payment success before confirmation.
-- Webhook updates appointment status.
-- Refund via admin/policy.
-**Priority:** P1
+### 3.14 Payment Integration
+- Stripe: cards, wallets; partial deposit.
+- AC: PCI compliant; retries; receipts.
+- Priority: P0
 
-## 15. Notifications
-**Spec:** Email/push/SMS for booking, reminder, cancel.
-**AC:**
-- Triggered by events.
-- User can opt out.
-- Retry on fail.
-**Priority:** P0 (basic), P1 (advanced)
+### 3.15 Notifications
+- Push/email/SMS for booking, reminders.
+- AC: Opt-in; delivered <1 min.
+- Priority: P1
 
-## 16. Provider / Business Owner Portal
-**Spec:** Manage profile, services, staff, hours, appointments, payouts.
-**AC:**
-- Owner logs in to own business only.
-- Changes reflect in app immediately.
-- Dashboard shows day/week bookings.
-**Priority:** P0 (core), P1 (payouts)
+### 3.16 Provider / Business Owner Portal
+- Manage profile, services, staff, slots, appts.
+- AC: Isolated data; analytics view.
+- Priority: P0
 
-## 17. Admin Dashboard
-**Spec:** Manage users, businesses, categories, reviews, support.
-**AC:**
-- Admin role restricted.
-- Can suspend business/user.
-- View platform metrics.
-**Priority:** P1
+### 3.17 Admin Dashboard
+- Users, businesses, categories, reports.
+- AC: Role-based; audit log.
+- Priority: P1
 
-## 18. Background Jobs (BullMQ)
-**Spec:** Queue for reminders, emails, slot cache, webhooks.
-**AC:**
-- Jobs retry with backoff.
-- Failed jobs logged.
-- No duplicate notifications.
-**Priority:** P1
+### 3.18 Background Jobs (BullMQ)
+- Reminders, slot cleanup, emails.
+- AC: Retry on fail; monitored.
+- Priority: P1
 
----
-
-## Success Metrics
-- 80% booking completion rate.
-- <2% double-booking incidents.
-- Provider NPS > 30.
-
-## Assumptions
-- Mobile-first responsive web.
-- Initial market: one city.
-- Stripe as sole PSP at launch.
+## 4. Priorities Summary
+P0: Auth, Browse, Search, Detail, Booking, Appt, Slots, Types, Payment, Provider. P1: Map, Categories, Profile, Reviews, Notifs, Admin, Jobs. P2: Favorites.
