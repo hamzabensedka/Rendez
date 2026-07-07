@@ -2,160 +2,132 @@
 
 **Owner:** Alex (Product Owner)
 **Goal:** Define complete feature specs and acceptance criteria for a Planity-style beauty & wellness booking marketplace (mobile-first web app + provider portal + admin).
-
-## Priorities
-- **P0 (MVP):** User Auth, Guest Browse, Search & Discovery, Map Search, Business Detail, Categories, Booking Flow, Availability & Slots, Appointment Mgmt, Shared Types/Design, Notifications (basic), Provider Portal (core).
-- **P1:** Favorites, Reviews & Ratings, Payment Integration, User Profile, Admin Dashboard, Background Jobs.
-- **P2:** Advanced notifications, analytics, promotions.
+**Priority legend:** P0 (must-have MVP), P1 (launch soon after), P2 (later).
 
 ---
 
-## 1. User Authentication
-**Spec:** Email/phone signup, login, social (Google/Apple), password reset, JWT sessions.
+## 1. Shared Types & Design System (P0)
+Unified types and UI kit used across app, portal, admin.
+- Types: User, Business, Service, Slot, Booking, Review, Payment, Notification.
+- Design system: colors, typography, buttons, cards, bottom nav, spacing.
 **AC:**
-- User can register with email + password; receives verification email.
-- Login returns token; protected routes require token.
-- Password reset email works.
-- Social login creates account or links existing.
-**Priority:** P0
+- Single source of TS types in `/shared`.
+- Storybook shows >=20 components matching Figma.
+- Mobile responsive at 320–428px.
 
-## 2. Guest Browse & Explore
-**Spec:** Non-logged users can browse categories, businesses, and view details.
+## 2. User Authentication (P0)
+Email/phone + OAuth (Google/Apple). JWT refresh.
 **AC:**
-- Guest sees home with featured businesses and categories.
-- Guest can open business detail but booking prompts login.
-**Priority:** P0
+- Signup/login/logout works; email verification sent.
+- Wrong password shows limit + lockout after 5 tries.
+- Token auto-refresh; protected routes guarded.
 
-## 3. Business Search & Discovery
-**Spec:** Text search by name, service, location; filters by category, price, rating.
+## 3. Guest Browse & Explore (P0)
+Non-logged users can explore homepage and businesses.
 **AC:**
-- Search returns relevant businesses in <1s.
-- Filters combine correctly.
+- Guest sees featured businesses, categories, city selector.
+- Booking prompts login with return redirect.
+
+## 4. Business Search & Discovery (P0)
+Text search, filters (category, price, rating, distance).
+**AC:**
+- Search returns <500ms for 10k businesses.
+- Filters combine with URL state.
 - Empty state shown when no results.
-**Priority:** P0
 
-## 4. Map-based Search
-**Spec:** Show businesses on map with clustering; tap pin → preview card.
+## 5. Map-based Search (P1)
+Leaflet/Mapbox view with pins and radius filter.
 **AC:**
-- Map loads with user location (permission handled).
-- Pins reflect current filters.
-- Tap pin opens detail or preview sheet.
-**Priority:** P0
+- Pins cluster; tap opens preview card.
+- Moving map updates results (debounced).
 
-## 5. Business Detail View
-**Spec:** Photos, services, staff, hours, reviews summary, book button.
+## 6. Business Detail View (P0)
+Hero, services, staff, hours, reviews, book button.
 **AC:**
-- Displays all active services with prices/durations.
 - Shows next available slot.
-- Reviews tab loads ratings.
-**Priority:** P0
+- Gallery lazy loads.
+- Share via link.
 
-## 6. Service Categories
-**Spec:** Tree of categories (Hair, Nails, Spa…) with icons.
+## 7. Service Categories (P0)
+Tree: Hair > Cut > Men's Cut.
 **AC:**
-- Categories seeded and editable by admin.
-- Selecting category filters discovery.
-**Priority:** P0
+- Categories seed-loaded; businesses tag services.
+- Category page lists businesses.
 
-## 7. Booking Flow
-**Spec:** Select service → staff (optional) → date/time → confirm → pay.
+## 8. Booking Flow (P0)
+Select service → staff → slot → confirm → pay.
 **AC:**
-- Only available slots selectable.
-- Confirmation screen + notification sent.
-- Double-booking prevented.
-**Priority:** P0
+- Slot locked 10 min pending payment.
+- Confirmation email/SMS sent.
+- Editable before confirm.
 
-## 8. Appointment Management
-**Spec:** List upcoming/past; cancel/reschedule; reminders.
+## 9. Availability & Slot Computation (P0)
+Engine from business hours, staff, duration, breaks.
 **AC:**
-- User can cancel with policy respected.
-- Reschedule reuses slot logic.
-- Status updates reflected in provider portal.
-**Priority:** P0
+- No overlap; respects holidays.
+- Computes 30 days ahead in <200ms.
 
-## 9. Favorites
-**Spec:** Save businesses/services; view in profile.
+## 10. Appointment Management (P0)
+List, reschedule, cancel, no-show.
 **AC:**
-- Heart toggle works on detail.
-- Favorites list loads saved items.
-**Priority:** P1
+- User sees upcoming/past.
+- Cancel frees slot; policy enforced.
 
-## 10. User Profile
-**Spec:** Edit name, phone, addresses, payment methods.
+## 11. Favorites (P1)
+Save businesses/services.
 **AC:**
-- Changes persist.
-- Address used in booking default.
-**Priority:** P1
+- Sync across devices.
+- Favorites list filterable.
 
-## 11. Availability & Slot Computation
-**Spec:** Provider sets hours, breaks, service durations; system computes free slots.
+## 12. User Profile (P0)
+Name, phone, addresses, payment methods.
 **AC:**
-- Slots exclude booked + breaks.
-- Timezone correct.
-- Concurrent requests safe.
-**Priority:** P0
+- Edit saves; phone verified.
+- GDPR delete available.
 
-## 12. Shared Types & Design System
-**Spec:** TS types, UI kit (buttons, cards, colors) shared across apps.
+## 13. Reviews & Ratings (P1)
+Post-visit review, photos, helpful votes.
 **AC:**
-- Single source of types imported by web/portal.
-- Components match Figma.
-**Priority:** P0
+- Only verified bookings review.
+- Avg rating shown; abuse report.
 
-## 13. Reviews & Ratings
-**Spec:** Post-visit review (1–5 stars + text); display aggregates.
+## 14. Payment Integration (P0)
+Stripe + wallet; partial deposit.
 **AC:**
-- Only verified visits reviewable.
-- Average rating updates.
-- Abuse report available.
-**Priority:** P1
+- PCI compliant; retries; refund flow.
+- Invoice in profile.
 
-## 14. Payment Integration
-**Spec:** Stripe for cards; hold or charge; refund on cancel.
+## 15. Notifications (P0)
+Email, SMS, push (reminders, marketing opt-out).
 **AC:**
-- Test card succeeds.
-- Failed payment blocks booking.
-- Refund triggers notification.
-**Priority:** P1
+- 24h/2h reminders sent.
+- Unsubscribe respected.
 
-## 15. Notifications
-**Spec:** Email + push (web) for confirm, remind, cancel.
+## 16. Provider / Business Owner Portal (P1)
+Manage profile, services, staff, slots, bookings.
 **AC:**
-- Triggered by events via Background Jobs.
-- User can opt out.
-**Priority:** P0/P1
+- Calendar drag-reschedule.
+- Payout view.
 
-## 16. Provider / Business Owner Portal
-**Spec:** Manage profile, services, staff, availability, appointments, payouts.
+## 17. Admin Dashboard (P1)
+Moderate businesses, users, categories, metrics.
 **AC:**
-- Owner logs in to own business only.
-- Edits reflect on client app.
-- Dashboard shows day bookings.
-**Priority:** P0
+- Suspend user; export CSV.
+- Dashboard KPIs daily.
 
-## 17. Admin Dashboard
-**Spec:** Manage users, businesses, categories, moderate reviews.
+## 18. Background Jobs (BullMQ) (P0)
+Queues: reminders, slot cache, emails, sync.
 **AC:**
-- Admin can suspend business.
-- Category CRUD works.
-- Impersonate disabled in prod.
-**Priority:** P1
-
-## 18. Background Jobs (BullMQ)
-**Spec:** Queue for reminders, emails, slot cleanup, analytics.
-**AC:**
-- Job retries on fail.
-- No duplicate reminders.
-- Monitorable in Redis.
-**Priority:** P1
+- Retry 3x; dead-letter logged.
+- Monitor via Redis UI.
 
 ---
 
-## Success Metrics
-- 500+ bookings/month by month 3.
-- <2% double-booking rate.
-- 4.5+ avg review.
+## Priority Summary
+- P0: 1,2,3,4,6,7,8,9,10,12,14,15,18
+- P1: 5,11,13,16,17
+- P2: none at start
 
 ## Open Questions
-- Native apps later?
-- Multi-location businesses?
+- City launch scope? (start Paris + Lyon)
+- Deposit default %? (recommend 20%)
