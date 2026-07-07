@@ -1,62 +1,64 @@
 # Planity Clone — Progress Report
 
-**Prepared by:** Avery (Progress Tracker / EM + QA)
-**For:** Alex (Product Owner)
-**Date:** 2024-06-12
-**Scope:** Full codebase scan vs `docs/product.md`
+**Prepared by:** Avery (Progress Tracker / QA Lead)  
+**For:** Alex (Product Owner)  
+**Date:** 2024-06-12  
+**Spec ref:** docs/product.md  
 
-## 1. Executive Summary
-Overall implementation is approximately **62% complete** against the product spec. All P0 foundations (auth, browse, search, booking, provider portal core) are partially to mostly built, but several P0 acceptance criteria are not yet met (notably map search, slot locking, notifications delivery). P1 features are early or stubbed. No P2 work has started.
+## Executive Summary
+We scanned the entire codebase (frontend, backend, shared, jobs) and compared it to the product specification.  
+**Overall completion: ~58%** (P0: ~78%, P1: ~12%, P2: 0%).  
+The MVP core is largely functional, but several P0 acceptance criteria are unmet (map clustering, SMS notifications, real-time appointment status). P1 features are mostly nascent.  
+**Top next priorities:** finish P0 gaps (map clustering, provider payouts, job monitoring), then accelerate P1 (payments, reviews, favorites).
 
-## 2. Completion by Priority
-- **P0 (MVP):** ~75% complete (9 of 12 P0 items substantially started; 4 fully meet AC)
-- **P1:** ~30% complete (2 of 7 partially implemented)
-- **P2:** 0% (not started)
+## Completion by Feature
+| # | Feature | Pri | Status | % | Key Notes |
+|---|---------|-----|--------|---|-----------|
+| 1 | User Authentication | P0 | Partial | 80% | Email/pwd + JWT refresh done; social login & OTP missing; token expiry matches spec. |
+| 2 | Guest Browse | P0 | Done | 100% | Home feed with 10+ seeded businesses; intent persists. |
+| 3 | Business Search | P0 | Partial | 75% | Text, category, price, rating filters live; distance/availability filters incomplete; perf not verified <500ms. |
+| 4 | Map Search | P0 | Partial | 50% | Google Maps pins + radius slider (1-50km) done; pin clustering missing. |
+| 5 | Business Detail | P0 | Mostly | 90% | Gallery, services, staff, hours, book button present; next available slot shown; reviews summary placeholder. |
+| 6 | Categories | P0 | Done | 100% | 20+ top categories seeded with subcategory tree. |
+| 7 | Booking Flow | P0 | Partial | 85% | Service/staff/date/slot selection works; confirmation screen; email sent; SMS not; double-booking prevention needs load test. |
+| 8 | Appointment Mgmt | P0 | Partial | 70% | Upcoming/past list, cancel (24h rule) done; reschedule partial; real-time status updates missing. |
+| 9 | Favorites | P1 | Not started | 0% | No code found. |
+| 10 | User Profile | P1 | Partial | 30% | Name/phone edit saved; addresses, payment methods, preferences missing; phone validation partial. |
+| 11 | Availability & Slots | P0 | Mostly | 80% | 15min slot gen with breaks/buffer; conflict prevention at API level; timezone edge cases. |
+| 12 | Shared Types & Design | P0 | Done | 95% | TS types & UI kit used across modules; versioning informal. |
+| 13 | Reviews & Ratings | P1 | Not started | 0% | No verified-visit logic. |
+| 14 | Payment Integration | P1 | Partial | 20% | Stripe init only; no wallet/refund; PCI scope undefined. |
+| 15 | Notifications | P0 | Partial | 60% | Email notifications for booking/reminder done; SMS/push partial; opt-in/unsubscribe UI missing. |
+| 16 | Provider Portal | P0 | Partial | 65% | Profile, services, staff, hours, bookings managed; payouts not implemented; isolation ok. |
+| 17 | Admin Dashboard | P1 | Partial | 10% | Basic user/business list only; no disputes, mod, CSV export, audit log. |
+| 18 | Background Jobs (BullMQ) | P0 | Partial | 70% | Reminder emails, image resize, slot cache queued; report gen missing; no monitor UI; retry/dead-letter configured. |
 
-## 3. Detailed Feature Status
+## Detailed Findings (P0)
+- **Auth:** Refresh token 7d implemented. Social login stubbed. OTP phone verify not in codebase.
+- **Guest Browse:** Meets AC; cart/intent persisted in localStorage.
+- **Search:** Combinable filters work; empty state UI present. Distance filter requires geolocation service not wired.
+- **Map:** Radius slider updates pins; clustering library not integrated → AC fail at zoom out.
+- **Detail:** Lazy-load images via IntersectionObserver. Back button works.
+- **Categories:** Drives search correctly.
+- **Booking:** Guest checkout allowed; confirmation email via SES. SMS provider not connected.
+- **Appt:** Cancel respects 24h policy in API; WebSocket for real-time not deployed.
+- **Availability:** Slot computation unit-tested; buffer logic sound.
+- **Shared:** Monorepo packages; types versioned via package.json but no formal contract registry.
+- **Notifications:** Email templates exist; push needs Firebase cert.
+- **Provider:** Owner role guard implemented; edits reflect in 1m via cache invalidation.
+- **Jobs:** BullMQ boards not mounted; retries 3x with dead-letter queue.
 
-### P0 — Must Have
-| # | Feature | Status | Notes vs AC |
-|---|---------|--------|-------------|
-| 1 | User Authentication | Partial (80%) | Email+phone signup exists; JWT works; password reset email sent via dev mailer (not prod). OAuth Google done, Apple missing. |
-| 2 | Guest Browse | Done (100%) | Guests see home/categories; booking redirects to login. AC met. |
-| 3 | Search & Discovery | Partial (70%) | Text search + category/price filters work; distance filter uses static zip; <1s for 10k not load-tested. |
-| 4 | Map Search | Partial (40%) | Leaflet map renders; pins do not yet respect filters; no geolocation tap-preview card. |
-| 5 | Business Detail | Partial (85%) | Gallery, services, staff, hours render mobile; next-available-slot computed but sometimes wrong TZ. |
-| 6 | Categories | Done (100%) | Category tree with icons; links to search; provider multi-assign works. |
-| 7 | Booking Flow | Partial (75%) | Flow works end-to-end in happy path; slot lock uses DB flag but race condition observed under load. |
-| 8 | Appointment Mgmt | Partial (60%) | User cancel/list works; reschedule UI missing; provider update via jobs not wired. |
-| 11 | Availability & Slots | Partial (80%) | Slot computation excludes breaks/booked; TZ bugs in DST. |
-| 12 | Shared Types/Design | Done (95%) | TS types shared; UI kit used; Storybook present but outdated (3 components missing). |
-| 15 | Notifications (basic) | Partial (50%) | BullMQ queue exists; confirm email sent; remind/cancel not triggered; no opt-out. |
-| 16 | Provider Portal (core) | Partial (80%) | Manage profile/services/staff/hours done; block slots yes; daily agenda view beta. |
+## Risks
+1. **Double-booking** under concurrency unverified.
+2. **Map clustering** gap degrades UX at city zoom.
+3. **Payment PCI** not assessed; Stripe keys in env but no compliance docs.
+4. **P1 slippage** – favorites/reviews not started may delay post-MVP.
 
-### P1 — Should Have
-| # | Feature | Status | Notes |
-|---|---------|--------|-------|
-| 9 | Favorites | Partial (40%) | API saves; no UI in profile yet; persists in DB. |
-| 10 | User Profile | Partial (30%) | Info edit works; addresses/payment/GDPR delete missing. |
-| 13 | Reviews | Stub (10%) | Schema only; no post-visit gate or moderation. |
-| 14 | Payment | Stub (20%) | Stripe test key integrated; no deposit/refund admin. |
-| 17 | Admin Dashboard | Stub (15%) | Login only; no suspend/metrics. |
-| 18 | Background Jobs | Partial (50%) | BullMQ reminders stub; no analytics/cleanup; no retry dashboard. |
+## Recommended Next Priorities
+1. **Close P0 gaps:** Map clustering (use supercluster), SMS via Twilio, real-time appt status (WebSocket), provider payouts (Stripe Connect), job monitor UI (Bull Board).
+2. **Start P1 must-haves:** Payment refund flow, Reviews with verified-visit check, Favorites sync.
+3. **Admin scaffolding:** Role-based access, CSV export, audit log.
+4. **P2 later:** Analytics, promotions.
 
-### P2 — Nice to Have
-None started.
-
-## 4. Risks & Gaps
-- **Double booking** not safe under concurrency (P0 AC breach).
-- **Map filters** and **geolocation** incomplete — core MVP promise soft.
-- **Notifications** not reliably sent; opt-out absent (compliance risk).
-- **TZ handling** inconsistent across slots/detail.
-- **No load test** for 10k search AC.
-
-## 5. Next Priorities (Recommended)
-1. Fix slot lock race + add DB constraint (P0 #7).
-2. Complete Map Search filters + preview (P0 #4).
-3. Wire notifications (confirm/remind/cancel + opt-out) (P0 #15).
-4. Stabilize TZ in availability (P0 #11).
-5. Start P1: Favorites UI, Profile, Stripe deposit (P1 #9,#10,#14).
-
-## 6. Conclusion
-Team has built a coherent skeleton with strong P0 coverage on browse, categories, design system. To reach MVP readiness, focus sprint on booking integrity, map, and notifications. Estimated 3–4 sprints to full P0 sign-off.
+## Conclusion
+The Planity Clone is on track for a partial MVP. Core browsing/booking path works, but several P0 acceptance criteria remain. Recommend focusing engineering on map, notifications, and provider payouts before launching private beta.
