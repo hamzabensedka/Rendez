@@ -1,133 +1,84 @@
 # Planity Clone — Product Specification
 
 **Owner:** Alex (Product Owner)
-**Goal:** Define complete feature specs and acceptance criteria for a Planity-style beauty & wellness booking marketplace (mobile-first web app + provider portal + admin).
-**Priority legend:** P0 (must-have MVP), P1 (launch soon after), P2 (later).
+**Goal:** Define complete feature specs and acceptance criteria for a Planity-style beauty & wellness booking marketplace (client apps + provider portal + admin + jobs).
 
----
+## Priorities
+- P0 (MVP): User Authentication, Guest Browse, Business Search, Map Search, Business Detail, Categories, Booking Flow, Appointment Mgmt, Availability/Slots, Shared Types/Design, Notifications (basic), Provider Portal (core).
+- P1: Favorites, Reviews & Ratings, Payment Integration, User Profile, Admin Dashboard, Background Jobs.
+- P2: Advanced notifications, provider analytics, admin moderation tools.
 
-## 1. Shared Types & Design System (P0)
-Unified types and UI kit used across app, portal, admin.
-- Types: User, Business, Service, Slot, Booking, Review, Payment, Notification.
-- Design system: colors, typography, buttons, cards, bottom nav, spacing.
-**AC:**
-- Single source of TS types in `/shared`.
-- Storybook shows >=20 components matching Figma.
-- Mobile responsive at 320–428px.
+## 1. User Authentication (P0)
+- Features: email/password signup/login, social login (Google/Apple), OTP phone verify, password reset, JWT refresh.
+- AC: User can register in <2 min; invalid email rejected; token persists session; logout clears secure storage.
 
-## 2. User Authentication (P0)
-Email/phone + OAuth (Google/Apple). JWT refresh.
-**AC:**
-- Signup/login/logout works; email verification sent.
-- Wrong password shows limit + lockout after 5 tries.
-- Token auto-refresh; protected routes guarded.
+## 2. Guest Browse & Explore (P0)
+- Features: home feed of featured businesses, trending categories, no account required.
+- AC: Guest sees 10+ businesses; tapping opens detail; prompted to login only at booking.
 
-## 3. Guest Browse & Explore (P0)
-Non-logged users can explore homepage and businesses.
-**AC:**
-- Guest sees featured businesses, categories, city selector.
-- Booking prompts login with return redirect.
+## 3. Business Search & Discovery (P0)
+- Features: text search, filter by category, price, rating, distance.
+- AC: Query returns relevant results <1s; empty state shown when no match.
 
-## 4. Business Search & Discovery (P0)
-Text search, filters (category, price, rating, distance).
-**AC:**
-- Search returns <500ms for 10k businesses.
-- Filters combine with URL state.
-- Empty state shown when no results.
+## 4. Map-based Search (P0)
+- Features: Google Maps view, pins for businesses, radius slider.
+- AC: Map loads with user location; pins reflect filters; tap pin opens preview.
 
-## 5. Map-based Search (P1)
-Leaflet/Mapbox view with pins and radius filter.
-**AC:**
-- Pins cluster; tap opens preview card.
-- Moving map updates results (debounced).
+## 5. Business Detail View (P0)
+- Features: gallery, services list, staff, hours, reviews summary, book button.
+- AC: All sections render; services show price/duration; CTA initiates booking.
 
-## 6. Business Detail View (P0)
-Hero, services, staff, hours, reviews, book button.
-**AC:**
-- Shows next available slot.
-- Gallery lazy loads.
-- Share via link.
+## 6. Service Categories (P0)
+- Features: tree of categories (Hair, Nails, Spa…), sub-categories.
+- AC: Categories seeded; navigation updates listing; counts shown.
 
-## 7. Service Categories (P0)
-Tree: Hair > Cut > Men's Cut.
-**AC:**
-- Categories seed-loaded; businesses tag services.
-- Category page lists businesses.
+## 7. Booking Flow (P0)
+- Features: select service, staff, date, slot, confirm, guest→login if needed.
+- AC: No double booking; confirmation screen + notification sent; slot locked.
 
-## 8. Booking Flow (P0)
-Select service → staff → slot → confirm → pay.
-**AC:**
-- Slot locked 10 min pending payment.
-- Confirmation email/SMS sent.
-- Editable before confirm.
+## 8. Appointment Management (P0)
+- Features: list upcoming/past, reschedule, cancel (policy), reminders.
+- AC: User sees status; cancel respects rules; provider updated.
 
-## 9. Availability & Slot Computation (P0)
-Engine from business hours, staff, duration, breaks.
-**AC:**
-- No overlap; respects holidays.
-- Computes 30 days ahead in <200ms.
+## 9. Favorites (P1)
+- Features: save business/service, view list, remove.
+- AC: Persists across sessions; heart toggles state.
 
-## 10. Appointment Management (P0)
-List, reschedule, cancel, no-show.
-**AC:**
-- User sees upcoming/past.
-- Cancel frees slot; policy enforced.
+## 10. User Profile (P1)
+- Features: edit name, photo, addresses, payment methods, preferences.
+- AC: Changes save; validation on fields.
 
-## 11. Favorites (P1)
-Save businesses/services.
-**AC:**
-- Sync across devices.
-- Favorites list filterable.
+## 11. Availability & Slot Computation (P0)
+- Features: provider hours, service duration, breaks, buffer, existing appts.
+- AC: Slots computed correctly; no overlap; timezone safe.
 
-## 12. User Profile (P0)
-Name, phone, addresses, payment methods.
-**AC:**
-- Edit saves; phone verified.
-- GDPR delete available.
+## 12. Shared Types & Design System (P0)
+- Features: TS types, UI kit (colors, buttons, inputs), API contracts.
+- AC: Used by all modules; documented in Storybook.
 
 ## 13. Reviews & Ratings (P1)
-Post-visit review, photos, helpful votes.
-**AC:**
-- Only verified bookings review.
-- Avg rating shown; abuse report.
+- Features: post-visit review, star + text, helpful votes, owner reply.
+- AC: Only verified visits; avg rating updates; abuse flag.
 
-## 14. Payment Integration (P0)
-Stripe + wallet; partial deposit.
-**AC:**
-- PCI compliant; retries; refund flow.
-- Invoice in profile.
+## 14. Payment Integration (P1)
+- Features: Stripe/Card, wallet, partial deposit, refund.
+- AC: Charge succeeds; failure handled; receipt emailed.
 
-## 15. Notifications (P0)
-Email, SMS, push (reminders, marketing opt-out).
-**AC:**
-- 24h/2h reminders sent.
-- Unsubscribe respected.
+## 15. Notifications (P0/P1)
+- Features: push (FCM), email, SMS for booking, reminder, cancel.
+- AC: Sent within 1 min; user can opt out; templates centralized.
 
-## 16. Provider / Business Owner Portal (P1)
-Manage profile, services, staff, slots, bookings.
-**AC:**
-- Calendar drag-reschedule.
-- Payout view.
+## 16. Provider / Business Owner Portal (P0/P1)
+- Features: dashboard, manage services, staff, hours, bookings, payouts.
+- AC: Owner edits live; sees new bookings; can block slots.
 
 ## 17. Admin Dashboard (P1)
-Moderate businesses, users, categories, metrics.
-**AC:**
-- Suspend user; export CSV.
-- Dashboard KPIs daily.
+- Features: users, businesses, categories, reports, moderation.
+- AC: Admin can suspend business; view metrics; export CSV.
 
-## 18. Background Jobs (BullMQ) (P0)
-Queues: reminders, slot cache, emails, sync.
-**AC:**
-- Retry 3x; dead-letter logged.
-- Monitor via Redis UI.
+## 18. Background Jobs (BullMQ) (P1)
+- Features: reminder sender, slot cleanup, report gen, webhook retries.
+- AC: Jobs queued; retries on fail; dashboard monitors.
 
 ---
-
-## Priority Summary
-- P0: 1,2,3,4,6,7,8,9,10,12,14,15,18
-- P1: 5,11,13,16,17
-- P2: none at start
-
-## Open Questions
-- City launch scope? (start Paris + Lyon)
-- Deposit default %? (recommend 20%)
+**Notes:** Mobile-first; GDPR/PII compliant; API-first with shared types.
