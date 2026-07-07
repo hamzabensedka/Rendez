@@ -1,4 +1,115 @@
-{
-  "content": "# Planity Clone — System Architecture\n\n**Author:** Jordan (Architect)\n**Stack:** Expo, React Native, TypeScript, Expo Router, TanStack React Query, React Native Reanimated, NestJS, Prisma, PostgreSQL, PostGIS, Redis, Nx, pnpm, Docker Compose, GitHub Actions, Supabase, EAS Build, Jest\n\n## 1. High-Level Overview\nPlanity Clone is a mobile-first salon/beauty booking platform. The system is split into:\n- **Mobile Client** (Expo + React Native): customer-facing app.\n- **Backend API** (NestJS + Prisma): business logic, auth, booking, payments.\n- **Data Layer** (PostgreSQL + PostGIS, Redis): persistence, geo queries, caching.\n- **Async Workers** (BullMQ via Redis): notifications, slot warming.\n- **Supporting** (Supabase for auth/mail, EAS Build, GitHub Actions, Docker Compose).\n\nMonorepo managed by **Nx** with **pnpm** workspaces.\n\n## 2. Monorepo Layout (Nx + pnpm)\n```\nplanity-clone/\n├── apps/\n│   ├── mobile/            # Expo React Native app\n│   ├── api/               # NestJS backend\n│   ├── worker/            # BullMQ worker service\n│   └── admin-web/         # (future) admin dashboard web\n├── libs/\n│   ├── shared-types/      # TS types shared client<->server\n│   ├── ui/                # RN design system components\n│   ├── config/            # eslint, tsconfig, jest presets\n│   └── utils/             # common helpers\n├── tools/\n│   ├── docker/            # Dockerfiles, docker-compose.yml\n│   └── scripts/           # seed, migrate\n├── infra/\n│   ├── supabase/          # supabase config\n│   └── eas/               # eas.json\n├── .github/\n│   └── workflows/         # CI/CD\n├── package.json\n├── pnpm-workspace.yaml\n├── nx.json\n└── README.md\n```\n\n## 3. Mobile App (apps/mobile)\n```\napps/mobile/\n├── app/                   # Expo Router screens\n│   ├── (auth)/\n│   │   ├── login.tsx\n│   │   ├── register.tsx\n│   │   └── otp.tsx\n│   ├── (tabs)/\n│   │   ├── home.tsx\n│   │   ├── search.tsx\n│   │   ├── map.tsx\n│   │   ├── favorites.tsx\n│   │   └── profile.tsx\n│   ├── business/[id].tsx\n│   ├── booking/\n│   │   ├── service.tsx\n│   │   ├── staff.tsx\n│   │   ├── datetime.tsx\n│   │   └── confirm.tsx\n│   ├── appointments/\n│   │   ├── upcoming.tsx\n│   │   └── past.tsx\n│   └── _layout.tsx\n├── src/\n│   ├── api/               # React Query hooks\n│   ├── components/        # feature components\n│   ├── animations/        # Reanimated utils\n│   ├── store/             # local state (guest cart)\n│   └── lib/               # supabase client, query client\n├── assets/\n├── eas.json\n└── package.json\n```\n**Boundaries:** Only talks to API via HTTPS; uses TanStack Query for server state; Reanimated for transitions; guest intent stored in AsyncStorage until login.\n\n## 4. Backend API (apps/api)\n```\napps/api/\n├── src/\n│   ├── main.ts\n│   ├── app.module.ts\n│   ├── auth/              # JWT, OTP, social, rbac\n│   ├── users/\n│   ├── businesses/\n│   ├── categories/\n│   ├── services/\n│   ├── staff/\n│   ├── availability/      # slot computation\n│   ├── bookings/\n│   ├── payments/          # Stripe\n│   ├── reviews/\n│   ├── notifications/     # enqueue jobs\n│   ├── favorites/\n│   ├── admin/\n│   ├── geo/               # PostGIS queries\n│   ├── prisma/            # PrismaService\n│   └── common/            # guards, decorators, dto\n├── test/\n├── Dockerfile\n└── package.json\n```\n**Service Boundaries:**\n- Auth: issues JWT, OTP via Supabase.\n- Availability: pure logic merging hours/bookings -> slots; cached in Redis.\n- Bookings: orchestrates availability + payments.\n- Payments: Stripe, webhooks.\n- Notifications: pushes to BullMQ.\n\n## 5. Worker (apps/worker)\n```\napps/worker/\n├── src/\n│   ├── main.ts\n│   ├── notification.job.ts\n│   ├── slot-warm.job.ts\n│   └── reminder.cron.ts\n├── Dockerfile\n└── package.json\n```\nConsumes Redis queues; sends email/SMS/push; pre-computes slots.\n\n## 6. Shared Types (libs/shared-types)\n```\nlibs/shared-types/\n├── src/\n│   ├── user.ts\n│   ├── business.ts\n│   ├── booking.ts\n│   ├── geo.ts\n│   └── index.ts\n```\nImported by mobile and api; single source of truth.\n\n## 7. Data Model (Prisma + PostGIS)\n- User (role: customer/provider/admin)\n- Business (location: PostGIS geometry)\n- Category / Service\n- Staff / Shift\n- Booking / Appointment\n- Review\n- Favorite\n- Payment\nRedis: slot cache, session blacklist, queues.\n\n## 8. Cross-Cutting\n- **CI:** GitHub Actions runs Nx affected, Jest, EAS Build on PR.\n- **Deploy:** Docker Compose for local; EAS for mobile; Supabase cloud.\n- **Testing:** Jest in all apps/libs.\n\n## 9. Priority Mapping\nP0: Auth, Search, Detail, Categories, Booking, Appointments, Availability, Payments, Provider Portal.\nP1: Guest, Map, Profile, Reviews, Notifications, Admin, Background Jobs, Shared Types.\nP2: Favorites.\n\n## 10. Summary\nClean Nx monorepo with Expo mobile, NestJS API, BullMQ workers, PostGIS/Redis data layer, and strict shared types ensures scalable, maintainable Planity Clone.",
-  "summary": "Nx monorepo architecture for Planity Clone with Expo mobile, NestJS API, BullMQ workers, and PostGIS/Redis, using shared types and clear service boundaries."
-}
+# Planity Clone — System Architecture
+
+## 1. Overview
+Planity Clone is a mobile-first marketplace for beauty & wellness booking. This document defines the system architecture, monorepo layout, service boundaries, and deployment pipeline. The design follows clean architecture, strict separation of concerns, and scalability.
+
+## 2. Technology Stack
+- Mobile: Expo, React Native, TypeScript, Expo Router, TanStack React Query, React Native Reanimated.
+- Backend: NestJS, Prisma, PostgreSQL + PostGIS, Redis (cache + BullMQ), Supabase (Auth, Storage, Realtime).
+- Tooling: Nx, pnpm, Docker Compose, GitHub Actions, EAS Build, Jest.
+
+## 3. Monorepo Layout (Nx + pnpm)
+We use a single Nx workspace managed by pnpm.
+
+apps/
+  mobile/                # Expo React Native app (client, provider, admin roles)
+    app/                 # Expo Router screens
+      (guest)/           # Guest browse, explore, business detail
+      (auth)/            # Login, signup, OTP
+      (tabs)/            # Authenticated tabs: Home, Search, Bookings, Profile
+      provider/          # Provider portal screens
+      admin/             # Admin dashboard screens (role-gated)
+    assets/
+    eas.json
+  api/                   # NestJS application
+    src/
+      modules/
+      main.ts
+      prisma/
+    test/
+  admin/                 # Optional Expo Web admin (or same mobile role)
+libs/
+  shared-types/          # TypeScript interfaces, enums, DTOs (versioned)
+  ui-kit/                # Design system: Button, Card, Colors, Typography
+  api-client/            # React Query hooks, fetch wrapper, auth context
+  config/                # Env schemas, constants
+  utils/                 # Date, geo, formatting
+packages/
+  eslint-config/         # Shared lint rules
+  tsconfig/              # Base tsconfig
+
+## 4. Backend Architecture (NestJS)
+The API is a modular monolith. Each domain is a NestJS module with clear boundaries.
+
+### 4.1 Modules
+- AuthModule: integrates Supabase Auth (email, phone OTP, OAuth) and issues JWT refresh tokens. Handles password reset, logout (token blacklist in Redis).
+- UserModule: profile, addresses, favorites.
+- BusinessModule: CRUD for businesses, galleries (Supabase Storage), staff.
+- ServiceModule: categories tree, service offerings.
+- SearchModule: text search + Geo queries via PostGIS; uses Redis cache for popular results.
+- BookingModule: orchestrates availability, payment, confirmation; prevents double booking via DB constraints + transactional locks.
+- AvailabilityModule: computes slots from hours, breaks, booked; DST-safe using UTC.
+- PaymentModule: Stripe integration (cards, Apple/Google Pay, 3DS, refunds).
+- NotificationModule: push (FCM via Supabase), email, SMS; opt-out.
+- ReviewModule: verified reviews, ratings, owner replies, flags.
+- AdminModule: user/business management, disputes, audit log, role guard.
+- JobsModule: BullMQ queues for reminders, slot cleanup, reports.
+
+### 4.2 Data Layer
+- Prisma ORM with PostgreSQL + PostGIS extension (geometry columns for business location).
+- Migrations via Prisma + Supabase CLI.
+- Redis for: token blacklist, search cache, BullMQ job queue.
+
+### 4.3 Realtime
+- Supabase Realtime used for provider portal live booking updates and analytics.
+
+## 5. Frontend Architecture (Expo Mobile)
+- Expo Router provides file-based navigation.
+- TanStack React Query manages server state, caching, and mutations; backed by api-client lib.
+- React Native Reanimated powers map pin animations, sheet transitions, and micro-interactions.
+- UI Kit from libs/ui-kit ensures consistent design.
+- Feature-based screen grouping under app/ routes; shared hooks in libs/api-client.
+
+## 6. Service Boundaries
+| Service | Responsibility | Depends On |
+|---------|----------------|------------|
+| Mobile App | UI, navigation, local state | API, Supabase Auth |
+| API (NestJS) | Business logic, validation | DB, Redis, Supabase, Stripe |
+| Auth (Supabase) | Identity, OTP, OAuth | Postgres |
+| Postgres+PostGIS | Persistent storage, geo | - |
+| Redis | Cache, queues, blacklist | - |
+| BullMQ | Background jobs | Redis, API |
+| Stripe | Payments | API |
+| FCM/Email/SMS | Notifications | API |
+
+Boundaries: Mobile never touches DB directly. All writes go through NestJS. Provider portal uses same API with role-scoped tokens. Admin uses same API with elevated role.
+
+## 7. Key Flows
+- Guest Browse: Mobile -> SearchModule (cached) -> PostGIS query.
+- Booking: Mobile -> BookingModule -> Availability check (Redis lock) -> PaymentModule (Stripe) -> NotificationModule -> Booking saved.
+- Provider Update: Provider App -> BusinessModule -> Supabase Realtime broadcast.
+
+## 8. CI/CD & Infra
+- GitHub Actions: on push, run pnpm install, Nx affected lint/test (Jest), build API Docker image, run EAS Build for mobile.
+- Docker Compose: local dev with postgres (postgis), redis, api, supabase emulators.
+- EAS Build: produce iOS/Android binaries; uses eas.json.
+- Supabase: cloud project for Auth, Storage, Realtime, DB.
+
+## 9. Testing
+- Jest for unit tests (services, utils) and integration (NestJS e2e with test DB).
+- Shared types ensure contract testing between mobile and API.
+- UI components tested with React Native Testing Library (Jest).
+
+## 10. Security & Compliance
+- RBAC via NestJS guards (Client, Owner, Admin).
+- JWT short-lived access + refresh in Redis.
+- Rate limiting on Auth and Search.
+- PII encrypted at rest; Stripe handles card data (PCI).
+
+## 11. Scalability
+- Stateless API horizontally scalable.
+- Redis cluster for cache/queue.
+- PostGIS spatial index for fast map queries.
+- CDN for Supabase storage images.
+
+This architecture satisfies all P0/P1 features and provides clear extension points for P2.
