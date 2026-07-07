@@ -1,104 +1,90 @@
-# Planity Clone - Progress Report
+# Planity Clone — Progress Report
 
-**Prepared by:** Avery (Engineering Manager / QA Lead)
-**Role:** Progress Tracker
-**Audience:** Product Owner
+**Author:** Avery (Progress Tracker / QA Lead)  
+**Goal:** Compare codebase against product spec and report completion status.  
+**Spec Source:** docs/product.md (provided excerpt)  
 
-## Executive Summary
-This report evaluates the implementation status of the Planity Clone project against the product specification (`docs/product.md`).
+## 1. Methodology & Honesty Note
+As instructed, I attempted to scan the entire Planity Clone codebase. However, no source files, repository structure, or code excerpts were provided in the working context. To maintain reporting integrity, this document treats the project as a greenfield effort (0% implemented) until code is supplied for verification. All acceptance criteria below are marked **Unverified / Not Implemented** based on absence of evidence.
 
-**Verification Note:** The task required scanning the entire Planity Clone codebase. However, no source code, file tree, or repository artifacts were provided in the analysis context. As a QA lead committed to precision, this report reflects a **baseline/greenfield status** (0% verified implementation) and provides the tracking framework for upcoming sprints. If a codebase exists, it must be supplied for an accurate audit.
+## 2. Overall Completion
+- **Total Completion Estimate:** 0%  
+- **P0 Completion:** 0% (0 of 11 P0 sections assessed as implemented)  
+- **P1 Completion:** 0% (0 of 4 P1 sections assessed)  
+- **P2 Completion:** N/A (none specified in excerpt)  
 
-**Overall Completion:** 0% (0 of 18 feature areas verified)
+## 3. Shared Types & Design System (P0)
+- AC1: `@planity/types` exports core domain types — **Not Found**  
+- AC2: Storybook with >=10 components — **Not Found**  
+- AC3: Mobile-first guidelines documented — **Not Found**  
 
-## Completion by Priority
-- **P0 (MVP):** 0% (12 features pending)
-- **P1:** 0% (6 features pending)
+## 4. User Authentication (P0)
+- AC1: Email/password registration + confirmation — **Not Verified**  
+- AC2: JWT session + refresh — **Not Verified**  
+- AC3: Password reset email — **Not Verified**  
+- AC4: Social login — **Not Verified**  
 
-## Detailed Feature Status
+## 5. Guest Browse & Explore (P0)
+- AC1: Home screen curated lists — **Not Verified**  
+- AC2: Guest business detail + login prompt — **Not Verified**  
+- AC3: No private data exposure — **Not Verified**  
 
-### 1. User Authentication (P0)
-- **Status:** Not Implemented / Unverified
-- **Findings:** No codebase provided to verify email, OTP, social login, or JWT criteria.
+## 6. Business Search & Discovery (P0)
+- AC1: Debounced text search — **Not Verified**  
+- AC2: Filters in URL — **Not Verified**  
+- AC3: Empty state — **Not Verified**  
 
-### 2. Guest Browse & Explore (P0)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Home feed, business detail gating, and local storage persistence not verified.
+## 7. Map-based Search (P1)
+- AC1: Map markers — **Not Verified**  
+- AC2: Pin preview card — **Not Verified**  
+- AC3: 'Search this area' button — **Not Verified**  
 
-### 3. Business Search & Discovery (P0)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Debounced search, filters, and recent searches missing or unverified.
+## 8. Business Detail View (P0)
+- AC1: Public fields displayed — **Not Verified**  
+- AC2: Services grouped by category — **Not Verified**  
+- AC3: Book CTA — **Not Verified**  
 
-### 4. Map-based Search (P1)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Map pins, geolocation, and list/map toggle not present in provided context.
+## 9. Service Categories (P0)
+- AC1: Category tree seeded/editable — **Not Verified**  
+- AC2: Category listing — **Not Verified**  
 
-### 5. Business Detail View (P0)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Cover image, services list, staff, and reviews UI not verified.
+## 10. Booking Flow (P0)
+- AC1: Available slots only — **Not Verified**  
+- AC2: Cancel before payment — **Not Verified**  
+- AC3: Success creates appointment — **Not Verified**  
+- AC4: Guest redirect at confirmation — **Not Verified**  
 
-### 6. Service Categories (P0)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Hierarchical taxonomy seeding and assignment logic not verified.
+## 11. Appointment Management (P0)
+- AC1: List sorted by date — **Not Verified**  
+- AC2: Cancel window respect — **Not Verified**  
+- AC3: Reschedule re-entry — **Not Verified**  
 
-### 7. Booking Flow (P0)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Multi-step flow, conflict detection, and pending payment state not verified.
+## 12. Favorites (P1)
+- AC1: Heart toggle — **Not Verified**  
+- AC2: Favorites list — **Not Verified**  
+- AC3: Cross-device persistence — **Not Verified**  
 
-### 8. Appointment Management (P0)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Upcoming/past lists, cancellation policy, and reschedule flow not verified.
+## 13. User Profile (P0)
+- AC1: Edit personal info — **Not Verified**  
+- AC2: Saved cards view — **Not Verified**  
+- AC3: GDPR delete — **Not Verified**  
 
-### 9. Favorites (P1)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Toggle, favorites list, and cross-device merge logic unverified.
+## 14. Availability & Slot Computation (P0)
+- AC1: 15/30-min slots w/ buffer — **Not Verified**  
+- AC2: Staff schedules — **Not Verified**  
+- AC3: Timezone aware — **Not Verified**  
+- AC4: Concurrent lock — **Not Verified**  
 
-### 10. User Profile (P0)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Personal info editing, payment methods, and GDPR deletion unverified.
+## 15. Reviews & Ratings (P1) — Spec Truncated
+- Spec cut off; cannot assess ACs. Status **Unknown**.
 
-### 11. Availability & Slot Computation (P0)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Backend slot logic respecting hours, breaks, and timezones not verified.
+## 4. Next Priorities (Recommended Sequence)
+1. **P0 Foundation:** Initialize monorepo, build `@planity/types`, set up Storybook and design system docs (Section 3).  
+2. **P0 Auth:** Implement email/password, JWT, reset, social (Section 4).  
+3. **P0 Core Domain:** Categories, Guest Browse, Search, Business Detail (Sections 5,6,8,9).  
+4. **P0 Critical Engines:** Availability engine & Booking flow (Sections 14,10).  
+5. **P0 User Data:** Profile, Appointment Management (Sections 13,11).  
+6. **P1 Enhancements:** Map search, Favorites, Reviews (Sections 7,12,15).  
 
-### 12. Shared Types & Design System (P0)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Monorepo types, component library, and theme tokens are foundational and currently absent from context.
-
-### 13. Reviews & Ratings (P1)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Post-appointment gating, star ratings, and average recalculation unverified.
-
-### 14. Payment Integration (P0)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Stripe Elements, capture logic, and refunds not verified.
-
-### 15. Notifications (P1)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Push/email/SMS triggers and opt-out preferences unverified.
-
-### 16. Provider / Business Owner Portal (P0)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Dashboard CRUD for services, staff, and analytics not verified.
-
-### 17. Admin Dashboard (P1)
-- **Status:** Not Implemented / Unverified
-- **Findings:** User/business management and platform metrics unverified.
-
-### 18. Background Jobs (BullMQ) (P1)
-- **Status:** Not Implemented / Unverified
-- **Findings:** Queue processing, retries, and Bull Board monitoring unverified.
-
-## Risks & Blockers
-- **Blocker:** No codebase provided; actual progress cannot be validated.
-- **Risk:** Delayed start on Shared Types (Feature 12) will block all client/app work.
-
-## Next Priorities (Recommended)
-1. Bootstrap monorepo and implement **Feature 12 (Shared Types & Design System)**.
-2. Implement **Feature 1 (User Authentication)** with JWT and email verification.
-3. Scaffold **Feature 6 (Categories)** and **Feature 5 (Business Detail)** for guest browse.
-4. Build **Feature 11 (Availability)** and **Feature 7 (Booking Flow)** core logic.
-5. Develop **Feature 16 (Provider Portal)** to enable business onboarding.
-
-## Conclusion
-The project is at a baseline pending codebase provision. Immediate engineering focus should target P0 foundational modules to enable iterative delivery.
+## 5. Conclusion
+Until the codebase is made available for scanning, the honest completion status is **0%**. The product owner should prioritize scaffolding and P0 deliverables as listed.
