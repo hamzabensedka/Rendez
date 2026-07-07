@@ -1,117 +1,145 @@
-# Planity Clone — Progress Report
+# Planity Clone - Progress Report
 
-**Prepared by:** Avery (Progress Tracker / EM + QA Lead)
-**For:** Alex (Product Owner)
-**Date:** 2024-06-12
-**Scope:** Full codebase scan vs `docs/product.md`
+## Executive Summary
+- **Overall Completion:** 0% (no codebase artifacts accessible for verification)
+- **Spec Sections Assessed:** 18
+- **P0 Items:** 12
+- **P1 Items:** 6
+- **Verified Implementations:** 0
 
-## 1. Executive Summary
+## Methodology
+As Progress Tracker, I attempted to scan the entire Planity Clone codebase as instructed. No source files, directories, or repository contents were available in the assessment environment. Therefore, this report evaluates the spec against an observable empty repository. All acceptance criteria are marked **Not Implemented**.
 
-Overall launch readiness (P0 only): **68% complete**. All P0 modules have scaffolding, but 4 of 12 P0 items are partially implemented with failing ACs. P1 work has not started except minor stubs. No P2 defined. Recommendation: block launch until P0 gaps in booking, payments, notifications, and admin audit are closed.
+## Detailed Status by Feature
 
-## 2. Completion by Priority
+### 1. User Authentication (P0)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
+- AC5: Not Implemented
 
-- P0 (must-have): 68% (8/12 fully done, 4 partial)
-- P1 (soon after): 8% (stubs only)
-- P2: N/A
+### 2. Guest Browse & Explore (P0)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
 
-## 3. Module-by-Module Status
+### 3. Business Search & Discovery (P0)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
 
-### 1. User Authentication (P0) — ✅ Complete
-- Email/phone signup, login, logout: implemented (`/auth`)
-- OAuth Google/Apple: done (Expo + Web)
-- Password reset: email flow works
-- JWT + refresh: secure store, persists restart
-- AC: <2min register (met), invalid creds error (met), session persist (met)
+### 4. Map-based Search (P1)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
 
-### 2. Guest Browse & Explore (P0) — ✅ Complete
-- Home, businesses, categories public
-- Login prompt only at booking CTA
-- AC: curated lists (met), no private data (met via RLS)
+### 5. Business Detail View (P0)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
 
-### 3. Business Search & Discovery (P0) — ✅ Complete
-- Text search name/service/location (Postgres FTS)
-- Filters category/price/rating/distance
-- AC: <1s (met avg 400ms), empty state (met)
+### 6. Service Categories (P0)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
 
-### 4. Map-based Search (P1) — ❌ Not Started
-- No Google Maps view, no clusters
-- Only route file stub
+### 7. Booking Flow (P0)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
+- AC5: Not Implemented
 
-### 5. Business Detail View (P0) — ✅ Complete
-- Photos, services, staff, hours, reviews UI
-- Book CTA navigates to flow
-- AC: data accurate (met), button works (met)
+### 8. Appointment Management (P0)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
 
-### 6. Service Categories (P0) — ✅ Complete
-- Tree Hair/Nails/Spa, leaf filter
-- Admin editable (via admin API)
-- AC: editable (met), filter by leaf (met)
+### 9. Favorites (P1)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
 
-### 7. Booking Flow (P0) — ⚠️ Partial
-- Service/staff/slot select UI done
-- Multi-service cart done
-- Payment not wired (see #14)
-- AC: no double booking — RACE CONDITION in slot lock (fail); confirmation sent (email stub only, no SMS)
+### 10. User Profile (P0)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
 
-### 8. Appointment Management (P0) — ✅ Complete
-- Upcoming/past list
-- Reschedule/cancel policy engine
-- AC: provider calendar sync (met), user notified (email only)
+### 11. Availability & Slot Computation (P0)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
 
-### 9. Favorites (P1) — ❌ Not Started
+### 12. Shared Types & Design System (P0)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
 
-### 10. User Profile (P0) — ✅ Complete
-- Name/contact/address/payment methods
-- Editable, GDPR delete endpoint
-- AC: met
+### 13. Reviews & Ratings (P1)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
 
-### 11. Availability & Slot Computation (P0) — ✅ Complete
-- Hours + duration - busy, 15min steps
-- TZ correct (Intl)
-- AC: real-time (met), TZ (met)
+### 14. Payment Integration (P0)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
 
-### 12. Shared Types & Design System (P0) — ✅ Complete
-- TS types, RN + Web UI kit
-- Brand colors, docs in `/design`
-- AC: reused (met), docs (met)
+### 15. Notifications (P1)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
 
-### 13. Reviews & Ratings (P1) — ❌ Not Started
+### 16. Provider / Business Owner Portal (P0)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
+- AC5: Not Implemented
 
-### 14. Payment Integration (P0) — ⚠️ Partial
-- Stripe init, Apple Pay button
-- No deposit/full logic; refund flow missing
-- AC: PCI (Stripe handles, ok), refund (fail)
+### 17. Admin Dashboard (P1)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
 
-### 15. Notifications (P0) — ⚠️ Partial
-- Expo push done; email via SES; SMS none
-- Opt-in controls UI done
-- AC: delivered <5min (push met, email delay 10m, SMS fail)
+### 18. Background Jobs (BullMQ) (P1)
+- AC1: Not Implemented
+- AC2: Not Implemented
+- AC3: Not Implemented
+- AC4: Not Implemented
 
-### 16. Provider Portal (P1) — ❌ Not Started
+## Completion Percentage
+Overall: **0%**
+- P0 Features: 0% (12 sections not started)
+- P1 Features: 0% (6 sections not started)
 
-### 17. Admin Dashboard (P0) — ⚠️ Partial
-- Users/biz/categories/flags UI
-- Analytics basic
-- AC: role-based (met), audit log (MISSING)
+## Next Priorities
+Based on spec prioritization, the team should focus on P0 foundational items first:
+1. **Section 12: Shared Types & Design System** - establish monorepo package, UI library, tokens.
+2. **Section 1: User Authentication** - email/password, OTP, social, JWT.
+3. **Section 2 & 3: Guest Browse & Search** - core discovery.
+4. **Section 5 & 6: Business Detail & Categories** - taxonomy and detail views.
+5. **Section 11 & 7: Availability Engine & Booking Flow** - core transaction.
+6. **Section 14: Payment Integration** - Stripe hold/capture.
+7. **Section 8 & 10: Appointments & Profile** - user management.
+8. **Section 16: Provider Portal** - business dashboard.
 
-### 18. Background Jobs BullMQ (P1) — ❌ Not Started
+After P0 MVP, proceed to P1 enhancements (Map, Favorites, Reviews, Notifications, Admin, Background Jobs).
 
-## 4. Risks
+## Risks & Notes
+- No codebase was available to scan; this report assumes greenfield. If code exists, re-run scan with repository access.
+- Spec mentions P2 future items not enumerated as sections; ignored for now.
 
-1. Booking race condition can oversell slots (P0 breach)
-2. No audit log exposes compliance risk
-3. SMS not integrated -> reminder AC fails
-4. Refund flow absent -> chargebacks uncontrolled
-
-## 5. Next Priorities (Pre-Launch)
-
-1. Fix booking lock (Redis atomic) — P0
-2. Stripe refund + deposit logic — P0
-3. SMS via Twilio + job trigger — P0
-4. Admin audit log — P0
-5. Then start P1: Map, Favorites, Reviews, Provider, BullMQ
-
-## 6. Conclusion
-
-Codebase is structurally sound and design system is solid, but 4 P0 items must be finished to honor spec ACs. Current trajectory: 2–3 sprints to full P0.
+-- 
+Report generated by Avery, Progress Tracker.
