@@ -1,171 +1,187 @@
 # Planity Clone – Product Specification
 
-## 1. Introduction
-Planity Clone is a mobile-first platform connecting clients with beauty & wellness businesses (salons, barbers, spas) for discovery, booking, and management. This document defines features, acceptance criteria, and priorities.
+## 1. Overview
+Planity Clone is a mobile-first platform connecting clients with beauty and wellness businesses (salons, barbers, spas). It allows browsing, booking, and managing appointments, with provider and admin portals.
 
-## 2. Global Priorities
-- P0: Core booking path (Auth, Search, Detail, Slots, Booking, Payments, Notifications)
-- P1: Engagement (Favorites, Reviews, Profile, Map, Guest browse)
-- P2: Provider portal, Admin, Background jobs, Design system governance
+## 2. User Roles
+- Guest: browse without account
+- Customer: registered user
+- Provider: business owner or staff
+- Admin: platform operator
 
 ## 3. Feature Specifications
 
 ### 3.1 User Authentication
-**Description:** Secure signup/login via email, phone OTP, Google/Apple.
+**Priority:** Must
+**Description:** Secure signup and login via email, phone, social (Google/Apple).
 **Acceptance Criteria:**
-- User can register with email+password; email verification required.
-- User can login with OTP sent to phone.
+- User can register with email and password; email verification required.
+- User can login with phone OTP.
 - Social login returns valid JWT.
-- Passwords hashed (bcrypt).
+- Passwords hashed with bcrypt.
 - Session persists via refresh token.
-**Priority:** P0
+- Logout invalidates tokens.
 
-### 3.2 Guest Browse & Explore
-**Description:** Non-logged users can view businesses, categories, and deals.
-**AC:**
-- Guest can open home, list businesses, view detail (read-only).
-- Prompt to login appears when attempting to book.
-**Priority:** P1
+### 3.2 Guest Browse and Explore
+**Priority:** Must
+**Description:** Non-authenticated users can explore homepage, featured businesses, categories.
+**Acceptance Criteria:**
+- Guest sees curated lists (popular, nearby, new).
+- No access to booking; prompted to login when attempting.
+- Guest session tracked via anonymous ID for later conversion.
 
-### 3.3 Business Search & Discovery
-**Description:** Text search, filter by category, price, rating, distance.
-**AC:**
-- Search returns relevant businesses by name/services.
-- Filters apply correctly and combine.
+### 3.3 Business Search and Discovery
+**Priority:** Must
+**Description:** Text search with filters (category, price, rating, distance).
+**Acceptance Criteria:**
+- Search returns businesses matching query, debounced 300ms.
+- Filters apply correctly; result count updates.
 - Empty state shown when no results.
-**Priority:** P0
+- Sorting by relevance, distance, rating.
 
 ### 3.4 Map-based Search
-**Description:** Display businesses on map with clustering; tap pin opens preview.
-**AC:**
+**Priority:** Should
+**Description:** Interactive map showing business pins; pan and zoom updates results.
+**Acceptance Criteria:**
 - Map shows pins within viewport.
-- User can drag map to reload results (debounced).
-- Pin click shows bottom sheet with business summary.
-**Priority:** P1
+- Clicking pin opens preview card.
+- `Search this area` button refreshes list.
+- Uses GPS permission gracefully.
 
 ### 3.5 Business Detail View
+**Priority:** Must
 **Description:** Full profile: photos, services, staff, hours, reviews.
-**AC:**
-- Shows cover image, list of services with prices/durations.
-- Displays next available slot.
-- Shows aggregate rating and recent reviews.
-**Priority:** P0
+**Acceptance Criteria:**
+- Displays cover image, logo, description.
+- Lists services with prices and durations.
+- Shows next available slot.
+- Reviews tab with rating breakdown.
+- `Book` CTA visible.
 
 ### 3.6 Service Categories
-**Description:** Taxonomy of services (Hair, Nails, Massage, etc.).
-**AC:**
-- Categories seeded and manageable via admin.
-- Each business maps to categories.
-- Category landing page lists businesses.
-**Priority:** P1
+**Priority:** Must
+**Description:** Taxonomy of categories (Hair, Nails, Spa) with subcategories.
+**Acceptance Criteria:**
+- Categories seed data loaded.
+- Each business assigned to at least one category.
+- Category page lists businesses and services.
+- Icons defined in design system.
 
 ### 3.7 Booking Flow
-**Description:** Select service, staff, date, slot, confirm.
-**AC:**
-- User can select multiple services in one cart.
-- Slot computation respects availability.
-- Confirmation screen with summary and cancel policy.
-- Booking creates appointment and triggers notification.
-**Priority:** P0
+**Priority:** Must
+**Description:** Multi-step: select service -> staff -> date/time -> confirm -> pay.
+**Acceptance Criteria:**
+- Only available slots shown (computed).
+- User can select preferences (no preference staff).
+- Summary shows price, time, duration.
+- On confirm, appointment created with pending status.
+- Supports reschedule or cancel pre-booking.
 
 ### 3.8 Appointment Management
-**Description:** User views upcoming/past appointments, reschedules/cancels.
-**AC:**
-- List sorted by date.
-- Cancel allowed per business rules (e.g., 24h).
-- Reschedule opens slot picker.
-**Priority:** P0
+**Priority:** Must
+**Description:** Customer views upcoming and past appointments; cancel or reschedule.
+**Acceptance Criteria:**
+- List grouped by upcoming and past.
+- Cancel triggers refund policy check.
+- Reschedule opens same booking flow with pre-filled data.
+- Provider receives update via notification.
 
 ### 3.9 Favorites
-**Description:** Save businesses/services to favorites.
-**AC:**
-- Heart toggle on detail and list.
-- Favorites tab lists saved items.
-- Sync across devices.
-**Priority:** P1
+**Priority:** Should
+**Description:** Save businesses or services to favorites.
+**Acceptance Criteria:**
+- Heart icon toggles state.
+- Favorites list accessible from profile.
+- Synced across devices.
 
 ### 3.10 User Profile
-**Description:** Manage personal info, payment methods, addresses.
-**AC:**
+**Priority:** Must
+**Description:** Manage personal info, addresses, payment methods, notification settings.
+**Acceptance Criteria:**
 - Edit name, phone, avatar.
+- Add or remove address.
 - View booking history.
-- Delete account with confirmation.
-**Priority:** P1
+- Consent toggles for marketing.
 
-### 3.11 Availability & Slot Computation
-**Description:** Algorithm computing free slots from business hours, staff shifts, existing bookings, service duration.
-**AC:**
-- Generates slots in 15-min increments.
-- Excludes breaks and booked times.
-- Handles multiple staff and parallel capacity.
-- Timezone aware.
-**Priority:** P0
+### 3.11 Availability and Slot Computation
+**Priority:** Must
+**Description:** Backend logic computing slots from business hours, service duration, staff shifts, existing bookings.
+**Acceptance Criteria:**
+- Generates 15-minute granularity slots.
+- Excludes breaks, off-days, holidays.
+- Handles multiple staff concurrency.
+- Timezone aware per business.
 
-### 3.12 Shared Types & Design System
-**Description:** Common TS types, UI components, color palette, spacing.
-**AC:**
-- Monorepo package with Button, Card, Input, etc.
-- Theme tokens defined.
-- Used by mobile (React Native) and web.
-**Priority:** P2
+### 3.12 Shared Types and Design System
+**Priority:** Must
+**Description:** Common TypeScript types, UI components (buttons, cards, inputs) for web and mobile.
+**Acceptance Criteria:**
+- Package @planity/shared with types (User, Business, Appointment).
+- Storybook for components.
+- Themes: light and dark, brand colors.
+- Accessibility (WCAG AA) compliance.
 
-### 3.13 Reviews & Ratings
-**Description:** Clients rate after appointment; display on business.
-**AC:**
-- 1-5 star with comment, attached to completed booking.
-- Business can reply.
-- Average rating recalculated.
-- Fraud prevention: only booked users can review.
-**Priority:** P1
+### 3.13 Reviews and Ratings
+**Priority:** Should
+**Description:** Customers leave star rating and text after completed appointment.
+**Acceptance Criteria:**
+- Only verified appointments can review.
+- Average rating computed and displayed.
+- Moderation queue in admin for inappropriate content.
+- Helpful votes.
 
 ### 3.14 Payment Integration
-**Description:** Stripe/PayPal for cards, wallets; deposits or full prepay.
-**AC:**
+**Priority:** Must
+**Description:** Stripe, Apple Pay, Google Pay for deposits or full prepayment.
+**Acceptance Criteria:**
 - Secure PCI-compliant checkout.
-- Handles refund/cancel logic.
+- Handles partial refund on cancellation.
 - Invoice emailed.
-- Failed payment blocks booking confirmation.
-**Priority:** P0
+- Failed payment means booking not confirmed.
 
 ### 3.15 Notifications
-**Description:** Push (FCM/APNs), email, SMS for booking confirm, remind, cancel.
-**AC:**
-- Opt-in preferences respected.
-- Template system for messages.
-- Delivery status logged.
-**Priority:** P0
+**Priority:** Must
+**Description:** Push (Firebase), email, SMS for booking confirm, remind, cancel.
+**Acceptance Criteria:**
+- Opt-in push permission.
+- Templated messages with deep links.
+- Reminder 24h before appointment.
+- User can mute types.
 
 ### 3.16 Provider / Business Owner Portal
-**Description:** Web dashboard for businesses to manage profile, services, staff, availability, bookings.
-**AC:**
-- Owner can edit business info, add services, set hours.
-- View calendar of appointments.
-- Accept/decline bookings (if manual).
+**Priority:** Must
+**Description:** Web dashboard for businesses to manage profile, services, staff, slots, bookings.
+**Acceptance Criteria:**
+- CRUD business info, photos.
+- Add or edit services, durations, prices.
+- Set working hours and staff schedules.
+- View calendar, accept or decline bookings.
 - Payout reports.
-**Priority:** P2
 
 ### 3.17 Admin Dashboard
-**Description:** Super-admin manages categories, users, businesses, content.
-**AC:**
-- CRUD for categories, flags inappropriate reviews.
-- Impersonate business owner.
-- View platform metrics.
-**Priority:** P2
+**Priority:** Should
+**Description:** Super admin manages users, businesses, categories, moderation.
+**Acceptance Criteria:**
+- Approve or reject business onboarding.
+- Disable accounts.
+- View analytics (bookings, revenue).
+- Manage categories and featured.
 
 ### 3.18 Background Jobs (BullMQ)
-**Description:** Async workers for notifications, slot cache, reminders, analytics.
-**AC:**
-- Queue for sending reminders 24h before appointment.
-- Retry with exponential backoff.
+**Priority:** Must
+**Description:** Queue-based processing for notifications, slot cleanup, reminders, analytics.
+**Acceptance Criteria:**
+- BullMQ workers on Redis.
+- Job types: sendNotification, expirePendingBookings, dailyDigest.
+- Retry with backoff.
 - Dead-letter queue monitored.
-- Dashboard for job status.
-**Priority:** P2
 
-## 4. Success Metrics
-- Booking conversion > 30%
-- Weekly active bookers
-- Provider retention
+## 4. Prioritization Summary
+Must-have: Auth, Guest, Search, Detail, Categories, Booking, Appointment Mgmt, Profile, Availability, Shared Types, Payment, Notifications, Provider Portal, Background Jobs.
+Should-have: Map Search, Favorites, Reviews, Admin.
+Could-have: loyalty program (future).
 
-## 5. Open Questions
-- Which payment provider per region?
-- Localization needs?
+## 5. Success Metrics
+- Conversion rate guest to booked user greater than 20%.
+- Booking completion under 3 minutes.
+- Crash-free sessions greater than 99%.
