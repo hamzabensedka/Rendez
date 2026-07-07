@@ -1,113 +1,84 @@
 # Planity Clone — Product Specification
 
-## 1. Overview
-Planity Clone is a mobile-first platform connecting clients with local beauty & wellness businesses (salons, barbers, spas). It supports guest browsing, authenticated booking, provider management, and admin oversight. Built with React Native (client), Node/Express (API), BullMQ (jobs), and Postgres/Redis.
+**Owner:** Alex (Product Owner)
+**Goal:** Define complete feature specs and acceptance criteria for a Planity-style beauty & wellness booking marketplace (client apps + provider portal + admin + jobs).
 
-## 2. Personas
-- Client: books appointments, browses guest mode.
-- Business Owner: manages slots, services, profile.
-- Admin: platform oversight.
+## Priorities
+- P0 (MVP): User Auth, Guest Browse, Search & Discovery, Map Search, Business Detail, Categories, Booking Flow, Appt Management, Availability/Slots, Shared Types/Design, Notifications (basic), Provider Portal (core).
+- P1: Favorites, Reviews & Ratings, Payment Integration, User Profile, Admin Dashboard, Background Jobs.
+- P2: Advanced notifications, provider analytics, admin moderation tools.
 
-## 3. Feature Specs
+## 1. User Authentication (P0)
+- Features: email/phone signup, login, social login (Google/Apple), password reset, JWT/session, role (client/provider/admin).
+- AC: User can register in <2 min; email verification sent; wrong password shows error; token persists across reload; roles restrict routes.
 
-### 3.1 User Authentication
-- Signup/login via email+password, Google, Apple.
-- JWT refresh tokens, secure storage.
-- Password reset flow.
-- AC: User can register in <30s; invalid email blocked; token persists session; reset email sent.
-- Priority: P0
+## 2. Guest Browse & Explore (P0)
+- Features: home feed of featured businesses, no login required, CTAs to login on booking.
+- AC: Guest sees 10+ businesses; tapping book prompts auth; no client data stored.
 
-### 3.2 Guest Browse & Explore
-- No login required to view home, businesses, categories.
-- Prompt login only at booking.
-- AC: Guest sees curated list; deep links work; login modal appears on booking tap.
-- Priority: P0
+## 3. Business Search & Discovery (P0)
+- Features: text search, filter by category, price, rating, distance, availability.
+- AC: Search returns relevant results <1s; empty state shown when none; filters combine.
 
-### 3.3 Business Search & Discovery
-- Text search by name, service, city.
-- Filters: price, rating, distance, availability.
-- AC: Returns relevant results <500ms; empty state shown; filters combine.
-- Priority: P0
+## 4. Map-based Search (P0)
+- Features: Google Maps view, pins for businesses, tap pin -> preview, radius slider.
+- AC: Map loads <3s; pins accurate within 50m; radius updates list.
 
-### 3.4 Map-based Search
-- Show businesses as pins on map.
-- Tap pin -> preview card.
-- AC: Map loads with geolocation; pins cluster; card opens detail.
-- Priority: P1
+## 5. Business Detail View (P0)
+- Features: gallery, services, staff, hours, location, reviews summary, book button.
+- AC: All sections render; book redirects to flow; phone/map links work.
 
-### 3.5 Business Detail View
-- Hero image, info, services, reviews, slots.
-- AC: All sections render; CTA books; share works.
-- Priority: P0
+## 6. Service Categories (P0)
+- Features: tree of categories (Hair, Nails, Spa...), sub-services.
+- AC: Categories seed-loaded; selecting filters businesses.
 
-### 3.6 Service Categories
-- Tree: Beauty > Hair > Cut.
-- AC: Categories seed; business assigns; browse filters.
-- Priority: P1
+## 7. Booking Flow (P0)
+- Features: select service, staff, date, slot, client info, confirm.
+- AC: No double booking; confirmation screen + notification; slot locked.
 
-### 3.7 Booking Flow
-- Select service, staff, slot, pay.
-- AC: Multi-step guarded; confirmation email; calendar sync.
-- Priority: P0
+## 8. Appointment Management (P0)
+- Features: list upcoming/past, reschedule, cancel, reminders.
+- AC: Client sees status; cancel updates availability; provider notified.
 
-### 3.8 Appointment Management
-- List upcoming/past; cancel/reschedule.
-- AC: Client sees status; owner notified; cancel policy enforced.
-- Priority: P0
+## 9. Favorites (P1)
+- Features: save business/service, view list.
+- AC: Persists per user; remove works; guest blocked.
 
-### 3.9 Favorites
-- Save businesses/services.
-- AC: Toggle works offline; syncs; list view.
-- Priority: P2
+## 10. User Profile (P1)
+- Features: name, phone, addresses, payment methods, preferences.
+- AC: Edits save; validation on phone; GDPR delete available.
 
-### 3.10 User Profile
-- Edit name, phone, addresses, payment.
-- AC: Save validates; GDPR delete.
-- Priority: P1
+## 11. Availability & Slot Computation (P0)
+- Features: provider hours, service duration, breaks, buffer; generate slots.
+- AC: Slots exclude booked; respect timezone; recompute on change.
 
-### 3.11 Availability & Slot Computation
-- Owner sets hours, breaks, overrides.
-- Engine computes free slots per service duration.
-- AC: No double-book; respects buffer; timezone correct.
-- Priority: P0
+## 12. Shared Types & Design System (P0)
+- Features: TS types, UI kit (buttons, cards), color/type tokens.
+- AC: Used across apps; documented; lint passes.
 
-### 3.12 Shared Types & Design System
-- TS types, theme, components.
-- AC: Used across apps; docs; lint passes.
-- Priority: P1
+## 13. Reviews & Ratings (P1)
+- Features: post-visit review, star + text, helpful votes.
+- AC: Only visited users; avg updates; abuse report.
 
-### 3.13 Reviews & Ratings
-- Post-visit review 1–5 + text.
-- AC: Only visited; avg updates; flagging.
-- Priority: P1
+## 14. Payment Integration (P1)
+- Features: Stripe/PCI, save card, charge on book, refund.
+- AC: Success/fail handled; receipt sent; provider payout queued.
 
-### 3.14 Payment Integration
-- Stripe: cards, saved, partial deposits.
-- AC: 3DS handled; webhooks update; refunds.
-- Priority: P0
+## 15. Notifications (P0/P1)
+- Features: push/email/SMS for book, cancel, reminder.
+- AC: Sent via job; user opts out; delivery logged.
 
-### 3.15 Notifications
-- Push (Expo), email, SMS reminders.
-- AC: Opt-in; sent 24h before; open deep link.
-- Priority: P1
+## 16. Provider / Business Owner Portal (P0/P1)
+- Features: manage profile, services, staff, hours, bookings, payouts.
+- AC: Provider sees only own data; edits reflect in app; dashboard stats.
 
-### 3.16 Provider / Business Owner Portal
-- Manage profile, services, staff, slots, bookings, payouts.
-- AC: CRUD works; live availability; export.
-- Priority: P0
+## 17. Admin Dashboard (P1)
+- Features: users, businesses, categories, disputes, metrics.
+- AC: Admin-only; suspend business; view KPIs.
 
-### 3.17 Admin Dashboard
-- Users, businesses, disputes, metrics.
-- AC: Role-based; suspend; view KPIs.
-- Priority: P1
+## 18. Background Jobs (BullMQ) (P1)
+- Features: reminders, payouts, image resize, slot sync.
+- AC: Jobs retry; failed logged; dashboard monitors.
 
-### 3.18 Background Jobs (BullMQ)
-- Reminders, sync, report, cleanup.
-- AC: Retry; idempotent; monitor.
-- Priority: P1
-
-## 4. Priorities Summary
-P0: Auth, Guest, Search, Detail, Booking, Appt, Slots, Payment, Provider. P1: Map, Categories, Profile, Types, Reviews, Notifs, Admin, Jobs. P2: Favorites.
-
-## 5. Success Metrics
-- 30% MoM bookings; <2% cancel; 4.5★ avg; 99.9% job uptime.
+---
+**Out of scope:** Real-time video, multi-language v1, loyalty program (P2).
