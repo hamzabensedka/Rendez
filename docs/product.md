@@ -1,124 +1,125 @@
 # Planity Clone — Product Specification
 
 **Owner:** Alex (Product Owner)
-**Goal:** Define complete feature specs and acceptance criteria for a Planity-style beauty & wellness booking marketplace (client apps + provider portal + admin + jobs).
-
-## Priorities
-- P0 (MVP): User Authentication, Guest Browse, Business Search, Map Search, Business Detail, Service Categories, Booking Flow, Appointment Management, Availability & Slot Computation, Shared Types & Design System, Notifications (basic), Provider Portal (core), Background Jobs (core).
-- P1: Favorites, Reviews & Ratings, Payment Integration, User Profile, Admin Dashboard, Map enhancements.
-- P2: Advanced notifications, analytics, promotions.
+**Goal:** Define complete feature specs and acceptance criteria for a Planity-style beauty & wellness booking marketplace (mobile-first). Priorities: P0 (must-have launch), P1 (post-launch fast follow), P2 (later).
 
 ## 1. User Authentication (P0)
-- Sign up (email/phone), login, logout, password reset.
+- Email/phone sign-up, login, logout.
 - OAuth: Google/Apple.
-- Role: customer, provider, admin.
-**AC:**
-1. User can register with verified email/phone.
-2. Invalid creds show error.
-3. JWT stored securely; session persists.
-4. Roles route to correct app section.
+- Password reset via email/SMS.
+- JWT-based sessions with refresh tokens.
+**Acceptance:**
+- User can register in <2 min; verification required.
+- Invalid creds show error; locked after 5 fails.
+- OAuth returns verified profile.
 
 ## 2. Guest Browse & Explore (P0)
-- Guests view categories, featured businesses, city landing.
-- No booking allowed; prompt login.
-**AC:**
-1. Guest sees home without auth.
-2. Tap book → login modal.
+- Guests view home, categories, business lists without login.
+- Prompt login only at booking.
+**Acceptance:**
+- 90% pages accessible as guest.
+- CTA appears on booking attempt.
 
 ## 3. Business Search & Discovery (P0)
 - Text search by name, service, location.
 - Filters: category, price, rating, distance.
-**AC:**
-1. Results < 500ms for 10k businesses.
-2. Filters combine correctly.
+**Acceptance:**
+- Results <500ms.
+- Empty state shown if no match.
 
 ## 4. Map-based Search (P1)
-- Show pins; move map updates results.
+- Google Maps view with pins.
 - Tap pin → preview card.
-**AC:**
-1. Map pan triggers debounced search.
-2. Pins reflect filters.
+**Acceptance:**
+- Pins clustered; map loads <2s.
+- Radius filter works.
 
 ## 5. Business Detail View (P0)
-- Gallery, services, staff, hours, reviews, book button.
-**AC:**
-1. Loads in <1s.
-2. Shows real-time slots.
+- Gallery, services, staff, hours, reviews.
+- “Book” button.
+**Acceptance:**
+- All data accurate; book disabled if no slot.
 
 ## 6. Service Categories (P0)
 - Tree: Hair, Nails, Spa, etc.
-**AC:**
-1. Categories seeded.
-2. Business maps to leaf categories.
+- Sub-services with duration/price.
+**Acceptance:**
+- Categories editable by admin.
+- Show count per category.
 
 ## 7. Booking Flow (P0)
-- Select service → staff → slot → confirm.
-**AC:**
-1. No double booking.
-2. Confirmation notification sent.
+- Select service → staff → slot → pay.
+- Multi-service cart.
+**Acceptance:**
+- Slot locked 10 min.
+- Confirmation email/SMS sent.
 
 ## 8. Appointment Management (P0)
-- List upcoming/past; cancel/reschedule.
-**AC:**
-1. Cancel frees slot.
-2. User gets notified.
+- User: list, reschedule, cancel.
+- Reminders 24h before.
+**Acceptance:**
+- Cancel frees slot.
+- History retained 12 months.
 
 ## 9. Favorites (P1)
 - Save businesses/services.
-**AC:**
-1. Sync across devices.
-2. Easy remove.
+- Push on offer.
+**Acceptance:**
+- Sync across devices.
 
-## 10. User Profile (P1)
-- Edit name, photo, addresses, payment methods.
-**AC:**
-1. Changes persist.
-2. GDPR delete available.
+## 10. User Profile (P0)
+- Name, phone, addresses, payment methods.
+**Acceptance:**
+- Editable; GDPR delete.
 
 ## 11. Availability & Slot Computation (P0)
-- Provider sets hours; system computes free slots minus appointments.
-**AC:**
-1. Correct across timezones.
-2. Buffer respected.
+- Per business/staff rules.
+- Compute free slots avoiding conflicts.
+**Acceptance:**
+- DST-safe; buffer respected.
 
 ## 12. Shared Types & Design System (P0)
-- TS types, UI kit, colors, components.
-**AC:**
-1. Used by all apps.
-2. Documented.
+- TS types, UI kit (React Native).
+**Acceptance:**
+- Reused by all modules.
 
 ## 13. Reviews & Ratings (P1)
-- Post-visit review; avg shown.
-**AC:**
-1. One review per visit.
-2. Abuse report.
+- Post-visit review, 1–5 stars.
+- Owner reply.
+**Acceptance:**
+- One review per visit.
+- Flagged content hidden.
 
-## 14. Payment Integration (P1)
-- Stripe; deposit/full; refund.
-**AC:**
-1. PCI compliant.
-2. Failure handled.
+## 14. Payment Integration (P0)
+- Stripe/Apple Pay.
+- Deposit or full.
+**Acceptance:**
+- PCI compliant; refund flow.
 
-## 15. Notifications (P0/P1)
-- Email/push: confirm, remind, cancel.
-**AC:**
-1. Opt-in respected.
-2. Delivered <1min.
+## 15. Notifications (P0)
+- Push, email, SMS.
+- Preferences.
+**Acceptance:**
+- Opt-in; 99% delivery.
 
-## 16. Provider / Business Owner Portal (P0)
-- Manage profile, services, staff, hours, bookings.
-**AC:**
-1. Live calendar.
-2. Pause bookings.
+## 16. Provider / Business Owner Portal (P1)
+- Manage profile, services, staff, slots.
+- View bookings, payouts.
+**Acceptance:**
+- Real-time calendar.
 
 ## 17. Admin Dashboard (P1)
-- Users, businesses, disputes, config.
-**AC:**
-1. Role-restricted.
-2. Audit log.
+- Moderate users, businesses, categories.
+- Metrics.
+**Acceptance:**
+- Role-based access.
 
 ## 18. Background Jobs (BullMQ) (P0)
-- Reminders, slot cleanup, emails.
-**AC:**
-1. Retry on fail.
-2. Monitorable.
+- Reminders, slot release, analytics.
+**Acceptance:**
+- Retry; dead-letter logged.
+
+## Priority Summary
+- P0: 1,2,3,5,6,7,8,10,11,12,14,15,18
+- P1: 4,9,13,16,17
+- P2: none at launch
