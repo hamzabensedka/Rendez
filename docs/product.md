@@ -6,147 +6,134 @@
 ## Priorities
 - **P0 (MVP):** User Auth, Guest Browse, Search & Discovery, Map Search, Business Detail, Categories, Booking Flow, Availability & Slots, Appointment Mgmt, Shared Types/Design, Notifications (basic), Provider Portal (core).
 - **P1:** Favorites, Reviews & Ratings, Payment Integration, User Profile, Admin Dashboard, Background Jobs.
-- **P2:** Advanced notifications, analytics, promotions.
+- **P2:** Advanced notifications, provider analytics, promos.
 
 ---
 
 ## 1. User Authentication
-**Spec:** Email/phone signup, login, logout, password reset. OAuth (Google/Apple) optional. JWT sessions.
+**Spec:** Email/phone signup-login, OAuth (Google/Apple), JWT sessions, password reset.
 **AC:**
-- User can register with email+password; receives verification email.
-- Login fails with wrong creds (error shown).
-- Password reset email sent and works.
-- Authenticated state persists across reloads.
+- User can register with email and verified phone.
+- Login returns JWT; protected routes require it.
+- Password reset email works.
+- OAuth completes in <5s.
 **Priority:** P0
 
 ## 2. Guest Browse & Explore
-**Spec:** Non-logged users can view categories, businesses, and details.
+**Spec:** Non-logged users view home, businesses, categories.
 **AC:**
-- Guest sees home with featured businesses.
-- Guest can open business detail but booking prompts login.
+- Guest sees curated list and can open details.
+- Booking prompts login.
 **Priority:** P0
 
 ## 3. Business Search & Discovery
-**Spec:** Text search by name, service, location. Filters: category, price, rating, distance.
+**Spec:** Text search, filters (category, price, rating, distance).
 **AC:**
-- Search returns relevant businesses.
-- Filters apply correctly and update list.
-- Empty state shown when no results.
+- Results <1s for 10k businesses.
+- Filters combine correctly.
 **Priority:** P0
 
 ## 4. Map-based Search
-**Spec:** Show businesses on map with pins; click pin → preview card.
+**Spec:** Leaflet/Mapbox view with pins, geolocation.
 **AC:**
-- Map loads with user location (permission).
-- Pins reflect current filters.
-- Clicking pin opens detail or quick view.
+- Pins reflect filters.
+- Tap pin opens preview card.
 **Priority:** P0
 
 ## 5. Business Detail View
-**Spec:** Photos, services, staff, hours, reviews, book button.
+**Spec:** Gallery, services, staff, hours, reviews summary, book button.
 **AC:**
-- All sections render with real data.
-- “Book” opens booking flow.
 - Shows next available slot.
+- All sections render on mobile.
 **Priority:** P0
 
 ## 6. Service Categories
-**Spec:** Tree of categories (Hair, Nails, Spa…) with icons.
+**Spec:** Tree of categories (Hair, Nails…) with icons.
 **AC:**
-- Categories list loads.
-- Selecting category filters discovery.
-- Provider can assign categories.
+- Category links to filtered search.
+- Provider can assign multiple.
 **Priority:** P0
 
 ## 7. Booking Flow
-**Spec:** Select service → staff (opt) → date/time → confirm → pay (if P1) → success.
+**Spec:** Select service → staff → slot → confirm → pay.
 **AC:**
-- Only available slots selectable.
-- Conflict prevented (no double book).
-- Confirmation saved and shown in appointments.
+- No double booking (lock slot).
+- Confirmation saved to appointments.
 **Priority:** P0
 
 ## 8. Appointment Management
-**Spec:** List upcoming/past, cancel, reschedule.
+**Spec:** List, reschedule, cancel, reminders.
 **AC:**
-- User sees appointments sorted by date.
-- Cancel updates provider availability.
-- Reschedule uses same flow.
+- User cancels with policy applied.
+- Provider sees update via jobs.
 **Priority:** P0
 
 ## 9. Favorites
-**Spec:** Save businesses to favorites list.
+**Spec:** Save businesses/services.
 **AC:**
-- Heart toggles state.
-- Favorites view lists saved items.
-- Syncs across sessions.
+- Persists across sessions.
+- Shown in profile.
 **Priority:** P1
 
 ## 10. User Profile
-**Spec:** Name, contact, addresses, payment methods.
+**Spec:** Personal info, addresses, payment methods, history.
 **AC:**
-- Editable fields persist.
-- Address used in search default.
+- Edits save.
+- GDPR delete available.
 **Priority:** P1
 
 ## 11. Availability & Slot Computation
-**Spec:** Provider sets hours + breaks + service duration; system computes free slots.
+**Spec:** Provider calendars + service duration → free slots.
 **AC:**
-- Slots exclude booked and breaks.
+- Computes slots excluding breaks/booked.
 - Timezone correct.
-- Concurrent requests safe.
 **Priority:** P0
 
 ## 12. Shared Types & Design System
-**Spec:** TS types, UI kit (buttons, cards, colors) in repo.
+**Spec:** TS types, UI kit (colors, components).
 **AC:**
-- Components reused across app.
-- Types imported by frontend/backend.
+- Used across apps.
+- Storybook exists.
 **Priority:** P0
 
 ## 13. Reviews & Ratings
-**Spec:** Post-visit review (1–5 stars + text). Display avg.
+**Spec:** Post-visit review, avg score.
 **AC:**
-- Only visited users can review.
-- Ratings update business average.
-- Abuse report available.
+- Only visited users review.
+- Moderation queue.
 **Priority:** P1
 
 ## 14. Payment Integration
-**Spec:** Stripe/Cash. Save card, charge on book.
+**Spec:** Stripe for cards, partial deposit.
 **AC:**
-- Payment success creates appointment.
-- Failure rolls back.
-- Receipt emailed.
+- Success/failure handled.
+- Refund via admin.
 **Priority:** P1
 
 ## 15. Notifications
-**Spec:** Email/push for booking, reminder, cancel.
+**Spec:** Email/push for confirm, remind, cancel.
 **AC:**
-- Triggered by events.
-- User can opt out.
+- Sent via BullMQ.
+- User opt-out works.
 **Priority:** P0/P1
 
 ## 16. Provider / Business Owner Portal
-**Spec:** Manage profile, services, staff, hours, appointments, payouts.
+**Spec:** Manage profile, services, staff, hours, bookings.
 **AC:**
-- Owner logs in to dashboard.
-- Edits reflect on public app.
-- Sees daily schedule.
+- Can block slots.
+- Sees daily agenda.
 **Priority:** P0
 
 ## 17. Admin Dashboard
-**Spec:** Manage users, businesses, categories, moderate reviews.
+**Spec:** Users, providers, disputes, categories.
 **AC:**
-- Admin role restricted.
-- Can suspend business.
-- View platform metrics.
+- Suspend provider.
+- View metrics.
 **Priority:** P1
 
 ## 18. Background Jobs (BullMQ)
-**Spec:** Queue for reminders, emails, slot cache.
+**Spec:** Reminders, slot cleanup, analytics.
 **AC:**
-- Job retries on fail.
-- No duplicate notifications.
-- Monitorable in Redis.
+- Retry on fail.
+- Dashboard monitors.
 **Priority:** P1
