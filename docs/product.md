@@ -1,182 +1,161 @@
 # Planity Clone — Product Specification
 
 **Owner:** Alex (Product Owner)
-**Goal:** Define complete feature specs and acceptance criteria for a Planity-style beauty & wellness booking marketplace (mobile-first). Priorities use MoSCoW: Must / Should / Could / Won't (now).
+**Goal:** Define complete feature specs and acceptance criteria for a Planity-style beauty & wellness booking marketplace (mobile-first web app + provider portal + admin).
+
+## Priorities
+- **P0 (MVP):** User Auth, Guest Browse, Search & Discovery, Map Search, Business Detail, Categories, Booking Flow, Availability & Slots, Appointment Mgmt, Shared Types/Design, Notifications (basic), Provider Portal (core).
+- **P1:** Favorites, Reviews & Ratings, Payment Integration, User Profile, Admin Dashboard, Background Jobs.
+- **P2:** Advanced notifications, analytics, promotions.
 
 ---
 
-## 1. Shared Types & Design System (Must)
-**Description:** Central TS types and UI kit for consistent UX across apps.
-**Spec:**
-- Define entities: User, Business, Service, Slot, Booking, Review, Payment, Notification.
-- Design system: colors, typography, buttons, cards, bottom nav, dark mode.
-**Acceptance:**
-- AC1: Types compile with no `any`.
-- AC2: Storybook shows all components.
-- AC3: Used by all features below.
+## 1. User Authentication
+**Spec:** Email/phone signup, login, social (Google/Apple), password reset, JWT sessions.
+**AC:**
+- User can register with email + password; receives verification email.
+- Login returns token; protected routes require token.
+- Password reset email works.
+- Social login creates account or links existing.
+**Priority:** P0
 
-## 2. User Authentication (Must)
-**Description:** Signup/login via email, phone OTP, Google/Apple.
-**Spec:**
-- JWT refresh, role claim (client/owner/admin).
-- Forgot password flow.
-**Acceptance:**
-- AC1: User can register in <2 min.
-- AC2: Wrong OTP blocked.
-- AC3: Session persists 7 days.
+## 2. Guest Browse & Explore
+**Spec:** Non-logged users can browse categories, businesses, and view details.
+**AC:**
+- Guest sees home with featured businesses and categories.
+- Guest can open business detail but booking prompts login.
+**Priority:** P0
 
-## 3. Guest Browse & Explore (Must)
-**Description:** Non-logged users view home, businesses, categories.
-**Spec:**
-- Home shows popular, near me, promos.
-- CTA to login on booking.
-**Acceptance:**
-- AC1: Guest sees 20+ businesses.
-- AC2: Booking prompts login.
+## 3. Business Search & Discovery
+**Spec:** Text search by name, service, location; filters by category, price, rating.
+**AC:**
+- Search returns relevant businesses in <1s.
+- Filters combine correctly.
+- Empty state shown when no results.
+**Priority:** P0
 
-## 4. Business Search & Discovery (Must)
-**Description:** Text search with filters (category, price, rating, distance).
-**Spec:**
-- Debounced search, recent queries.
-- Sort by relevance/distance/price.
-**Acceptance:**
-- AC1: Results <500ms.
-- AC2: Filters combine correctly.
+## 4. Map-based Search
+**Spec:** Show businesses on map with clustering; tap pin → preview card.
+**AC:**
+- Map loads with user location (permission handled).
+- Pins reflect current filters.
+- Tap pin opens detail or preview sheet.
+**Priority:** P0
 
-## 5. Map-based Search (Should)
-**Description:** Google Maps view with pins and radius filter.
-**Spec:**
-- Cluster pins, tap for preview card.
-**Acceptance:**
-- AC1: Pins load <1s.
-- AC2: Radius updates list.
+## 5. Business Detail View
+**Spec:** Photos, services, staff, hours, reviews summary, book button.
+**AC:**
+- Displays all active services with prices/durations.
+- Shows next available slot.
+- Reviews tab loads ratings.
+**Priority:** P0
 
-## 6. Business Detail View (Must)
-**Description:** Show info, services, staff, photos, reviews.
-**Spec:**
-- Hours, address, call button.
-- “Book” deep links to flow.
-**Acceptance:**
-- AC1: All sections render.
-- AC2: Gallery swipe works.
+## 6. Service Categories
+**Spec:** Tree of categories (Hair, Nails, Spa…) with icons.
+**AC:**
+- Categories seeded and editable by admin.
+- Selecting category filters discovery.
+**Priority:** P0
 
-## 7. Service Categories (Must)
-**Description:** Tree: Hair > Cut > Men’s Cut.
-**Spec:**
-- Seed 50 categories.
-**Acceptance:**
-- AC1: 3-level nav works.
-- AC2: Used in search.
+## 7. Booking Flow
+**Spec:** Select service → staff (optional) → date/time → confirm → pay.
+**AC:**
+- Only available slots selectable.
+- Confirmation screen + notification sent.
+- Double-booking prevented.
+**Priority:** P0
 
-## 8. Availability & Slot Computation (Must)
-**Description:** Generate slots from working hours, service duration, breaks.
-**Spec:**
-- Engine in backend, cache via Redis.
-- Handle timezone.
-**Acceptance:**
-- AC1: No overlap.
-- AC2: Correct under DST.
+## 8. Appointment Management
+**Spec:** List upcoming/past; cancel/reschedule; reminders.
+**AC:**
+- User can cancel with policy respected.
+- Reschedule reuses slot logic.
+- Status updates reflected in provider portal.
+**Priority:** P0
 
-## 9. Booking Flow (Must)
-**Description:** Select service > staff > slot > pay > confirm.
-**Spec:**
-- Support multi-service cart.
-- Coupon apply.
-**Acceptance:**
-- AC1: Completed in 4 steps.
-- AC2: Email/SMS sent.
+## 9. Favorites
+**Spec:** Save businesses/services; view in profile.
+**AC:**
+- Heart toggle works on detail.
+- Favorites list loads saved items.
+**Priority:** P1
 
-## 10. Appointment Management (Must)
-**Description:** List upcoming/past, reschedule, cancel.
-**Spec:**
-- 24h cancel rule.
-- Add to calendar.
-**Acceptance:**
-- AC1: Status accurate.
-- AC2: Push on change.
+## 10. User Profile
+**Spec:** Edit name, phone, addresses, payment methods.
+**AC:**
+- Changes persist.
+- Address used in booking default.
+**Priority:** P1
 
-## 11. Favorites (Should)
-**Description:** Save businesses/services.
-**Spec:**
-- Sync across devices.
-**Acceptance:**
-- AC1: Instant toggle.
-- AC2: List in profile.
+## 11. Availability & Slot Computation
+**Spec:** Provider sets hours, breaks, service durations; system computes free slots.
+**AC:**
+- Slots exclude booked + breaks.
+- Timezone correct.
+- Concurrent requests safe.
+**Priority:** P0
 
-## 12. User Profile (Must)
-**Description:** Edit name, phone, addresses, payment methods.
-**Spec:**
-- GDPR export.
-**Acceptance:**
-- AC1: Save validates.
-- AC2: Delete account purges.
+## 12. Shared Types & Design System
+**Spec:** TS types, UI kit (buttons, cards, colors) shared across apps.
+**AC:**
+- Single source of types imported by web/portal.
+- Components match Figma.
+**Priority:** P0
 
-## 13. Reviews & Ratings (Must)
-**Description:** 1–5 stars + text after visit.
-**Spec:**
-- Owner can reply.
-- Flag inappropriate.
-**Acceptance:**
-- AC1: Only past clients review.
-- AC2: Avg updates.
+## 13. Reviews & Ratings
+**Spec:** Post-visit review (1–5 stars + text); display aggregates.
+**AC:**
+- Only verified visits reviewable.
+- Average rating updates.
+- Abuse report available.
+**Priority:** P1
 
-## 14. Payment Integration (Must)
-**Description:** Stripe + Apple/Google Pay.
-**Spec:**
-- Save card, 3DS.
-- Refund via admin.
-**Acceptance:**
-- AC1: Success <3s.
-- AC2: Webhook updates booking.
+## 14. Payment Integration
+**Spec:** Stripe for cards; hold or charge; refund on cancel.
+**AC:**
+- Test card succeeds.
+- Failed payment blocks booking.
+- Refund triggers notification.
+**Priority:** P1
 
-## 15. Notifications (Must)
-**Description:** Push (FCM), SMS, email.
-**Spec:**
-- Templates: confirm, remind, cancel.
-- Preferences.
-**Acceptance:**
-- AC1: Reminder 24h before.
-- AC2: Opt-out honored.
+## 15. Notifications
+**Spec:** Email + push (web) for confirm, remind, cancel.
+**AC:**
+- Triggered by events via Background Jobs.
+- User can opt out.
+**Priority:** P0/P1
 
-## 16. Provider / Business Owner Portal (Must)
-**Description:** Web app for owners.
-**Spec:**
-- Manage profile, services, staff, hours.
-- View bookings, reply reviews.
-**Acceptance:**
-- AC1: Slots reflect changes.
-- AC2: Multi-staff supported.
+## 16. Provider / Business Owner Portal
+**Spec:** Manage profile, services, staff, availability, appointments, payouts.
+**AC:**
+- Owner logs in to own business only.
+- Edits reflect on client app.
+- Dashboard shows day bookings.
+**Priority:** P0
 
-## 17. Admin Dashboard (Should)
-**Description:** Super admin web.
-**Spec:**
-- Approve businesses, categories, refunds.
-- Metrics.
-**Acceptance:**
-- AC1: Suspend user.
-- AC2: Export CSV.
+## 17. Admin Dashboard
+**Spec:** Manage users, businesses, categories, moderate reviews.
+**AC:**
+- Admin can suspend business.
+- Category CRUD works.
+- Impersonate disabled in prod.
+**Priority:** P1
 
-## 18. Background Jobs (BullMQ) (Must)
-**Description:** Async: reminders, slot cache, sync.
-**Spec:**
-- Queues: notify, availability, report.
-- Retry/backoff.
-**Acceptance:**
-- AC1: Job retries 3x.
-- AC2: Failed logged.
+## 18. Background Jobs (BullMQ)
+**Spec:** Queue for reminders, emails, slot cleanup, analytics.
+**AC:**
+- Job retries on fail.
+- No duplicate reminders.
+- Monitorable in Redis.
+**Priority:** P1
 
 ---
 
-## Priority Summary
-- Must: 1,2,3,4,6,7,8,9,10,12,13,14,15,16,18
-- Should: 5,11,17
-- Could: loyalty, chat
-- Won't: native desktop
-
-## Milestones
-- M1 (Must core): 1–4,6–10,12–16,18
-- M2 (Should): 5,11,17
+## Success Metrics
+- 500+ bookings/month by month 3.
+- <2% double-booking rate.
+- 4.5+ avg review.
 
 ## Open Questions
-- SMS vendor region?
-- Multi-language scope?
+- Native apps later?
+- Multi-location businesses?
