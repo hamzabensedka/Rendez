@@ -1,149 +1,182 @@
 # Planity Clone — Product Specification
 
 **Owner:** Alex (Product Owner)
-**Goal:** Define complete feature specs and acceptance criteria for a Planity-style beauty & wellness booking marketplace (mobile-first web app + provider portal + admin).
-
-## Priorities
-- **P0 (MVP):** User Auth, Guest Browse, Search & Discovery, Map Search, Business Detail, Categories, Booking Flow, Appointment Mgmt, Availability & Slots, Shared Types/Design, Notifications (basic), Provider Portal (core).
-- **P1:** Favorites, Reviews & Ratings, Payment Integration, User Profile, Admin Dashboard, Background Jobs.
-- **P2:** Advanced notifications, provider analytics, admin moderation tools.
+**Goal:** Define complete feature specs and acceptance criteria for a Planity-style beauty & wellness booking marketplace (mobile-first). Priorities use MoSCoW: Must / Should / Could / Won't (now).
 
 ---
 
-## 1. User Authentication (P0)
-**Description:** Secure signup/login for clients and businesses.
-**Features:** Email+password, Google/Apple OAuth, OTP email verification, password reset, role selection (client/provider).
-**Acceptance Criteria:**
-- User can register with email and verify via link.
-- OAuth login works on iOS/Android/web.
-- Invalid credentials show error; 5 fails trigger lockout 15m.
-- JWT stored securely; refresh token rotates.
+## 1. Shared Types & Design System (Must)
+**Description:** Central TS types and UI kit for consistent UX across apps.
+**Spec:**
+- Define entities: User, Business, Service, Slot, Booking, Review, Payment, Notification.
+- Design system: colors, typography, buttons, cards, bottom nav, dark mode.
+**Acceptance:**
+- AC1: Types compile with no `any`.
+- AC2: Storybook shows all components.
+- AC3: Used by all features below.
 
-## 2. Guest Browse & Explore (P0)
-**Description:** Non-logged users can explore homepage and businesses.
-**Features:** Curated categories, top-rated, near-me preview, CTAs to login for booking.
-**Acceptance Criteria:**
-- Guest sees homepage with 6+ categories.
-- Tapping book prompts login/signup.
-- No personal data stored for guest.
+## 2. User Authentication (Must)
+**Description:** Signup/login via email, phone OTP, Google/Apple.
+**Spec:**
+- JWT refresh, role claim (client/owner/admin).
+- Forgot password flow.
+**Acceptance:**
+- AC1: User can register in <2 min.
+- AC2: Wrong OTP blocked.
+- AC3: Session persists 7 days.
 
-## 3. Business Search & Discovery (P0)
-**Description:** Text search with filters.
-**Features:** Query by name/service, filter by category, price, rating, distance, availability today.
-**Acceptance Criteria:**
-- Search returns <500ms for 10k businesses.
-- Filters combine with AND logic.
-- Empty state shown when no results.
+## 3. Guest Browse & Explore (Must)
+**Description:** Non-logged users view home, businesses, categories.
+**Spec:**
+- Home shows popular, near me, promos.
+- CTA to login on booking.
+**Acceptance:**
+- AC1: Guest sees 20+ businesses.
+- AC2: Booking prompts login.
 
-## 4. Map-based Search (P0)
-**Description:** Google Maps view with pins.
-**Features:** Geolocation, draggable map updates list, cluster pins, tap pin → preview card.
-**Acceptance Criteria:**
-- Map loads with user location (permission handled).
-- Moving map triggers debounced search.
-- Pin preview shows name, rating, next slot.
+## 4. Business Search & Discovery (Must)
+**Description:** Text search with filters (category, price, rating, distance).
+**Spec:**
+- Debounced search, recent queries.
+- Sort by relevance/distance/price.
+**Acceptance:**
+- AC1: Results <500ms.
+- AC2: Filters combine correctly.
 
-## 5. Business Detail View (P0)
-**Description:** Full business profile.
-**Features:** Gallery, services, staff, hours, reviews summary, book button.
-**Acceptance Criteria:**
-- Shows all active services with prices/durations.
-- Displays next 3 available slots.
-- Reviews tab loads paginated.
+## 5. Map-based Search (Should)
+**Description:** Google Maps view with pins and radius filter.
+**Spec:**
+- Cluster pins, tap for preview card.
+**Acceptance:**
+- AC1: Pins load <1s.
+- AC2: Radius updates list.
 
-## 6. Service Categories (P0)
-**Description:** Taxonomy of beauty/wellness services.
-**Features:** Hierarchical (e.g., Hair → Cut → Women). Seed 50+ categories.
-**Acceptance Criteria:**
-- Categories manageable via admin.
-- Each business maps to ≥1 category.
-- Search uses category IDs.
+## 6. Business Detail View (Must)
+**Description:** Show info, services, staff, photos, reviews.
+**Spec:**
+- Hours, address, call button.
+- “Book” deep links to flow.
+**Acceptance:**
+- AC1: All sections render.
+- AC2: Gallery swipe works.
 
-## 7. Booking Flow (P0)
-**Description:** Multi-step booking.
-**Steps:** Select service → staff (opt) → date → slot → confirm → pay (if P1) → success.
-**Acceptance Criteria:**
-- Only slots from availability shown.
-- Double-book prevented via lock.
-- Confirmation saved to appointment.
+## 7. Service Categories (Must)
+**Description:** Tree: Hair > Cut > Men’s Cut.
+**Spec:**
+- Seed 50 categories.
+**Acceptance:**
+- AC1: 3-level nav works.
+- AC2: Used in search.
 
-## 8. Appointment Management (P0)
-**Description:** Client and provider views.
-**Features:** Upcoming/past, cancel (24h rule), reschedule.
-**Acceptance Criteria:**
-- Client sees status (confirmed/done/cancelled).
-- Provider can mark completed.
-- Cancel frees slot.
+## 8. Availability & Slot Computation (Must)
+**Description:** Generate slots from working hours, service duration, breaks.
+**Spec:**
+- Engine in backend, cache via Redis.
+- Handle timezone.
+**Acceptance:**
+- AC1: No overlap.
+- AC2: Correct under DST.
 
-## 9. Favorites (P1)
-**Description:** Save businesses.
-**Features:** Heart icon, favorites list, removed sync.
-**Acceptance Criteria:**
-- Saved only when logged in.
-- List sorted by recent.
+## 9. Booking Flow (Must)
+**Description:** Select service > staff > slot > pay > confirm.
+**Spec:**
+- Support multi-service cart.
+- Coupon apply.
+**Acceptance:**
+- AC1: Completed in 4 steps.
+- AC2: Email/SMS sent.
 
-## 10. User Profile (P1)
-**Description:** Client profile.
-**Features:** Name, phone, addresses, payment methods, notifications prefs.
-**Acceptance Criteria:**
-- Edits persist.
-- Phone validated E.164.
+## 10. Appointment Management (Must)
+**Description:** List upcoming/past, reschedule, cancel.
+**Spec:**
+- 24h cancel rule.
+- Add to calendar.
+**Acceptance:**
+- AC1: Status accurate.
+- AC2: Push on change.
 
-## 11. Availability & Slot Computation (P0)
-**Description:** Core engine.
-**Features:** Business hours, staff schedules, service duration, breaks, buffer.
-**Acceptance Criteria:**
-- Slots generated in 15m increments.
-- Overlap with existing appts excluded.
-- Timezone correct per business.
+## 11. Favorites (Should)
+**Description:** Save businesses/services.
+**Spec:**
+- Sync across devices.
+**Acceptance:**
+- AC1: Instant toggle.
+- AC2: List in profile.
 
-## 12. Shared Types & Design System (P0)
-**Description:** Mono-repo types and UI kit.
-**Features:** TS interfaces, React Native + Web components, color/typography.
-**Acceptance Criteria:**
-- Single source of truth.
-- Components documented.
+## 12. User Profile (Must)
+**Description:** Edit name, phone, addresses, payment methods.
+**Spec:**
+- GDPR export.
+**Acceptance:**
+- AC1: Save validates.
+- AC2: Delete account purges.
 
-## 13. Reviews & Ratings (P1)
-**Description:** Post-visit reviews.
-**Features:** 1–5 stars, text, photo, helpful votes.
-**Acceptance Criteria:**
-- Only verified clients review.
-- Average shown on detail.
+## 13. Reviews & Ratings (Must)
+**Description:** 1–5 stars + text after visit.
+**Spec:**
+- Owner can reply.
+- Flag inappropriate.
+**Acceptance:**
+- AC1: Only past clients review.
+- AC2: Avg updates.
 
-## 14. Payment Integration (P1)
-**Description:** Stripe/Cards.
-**Features:** Save card, charge on book, refund on cancel.
-**Acceptance Criteria:**
-- PCI compliant (Stripe).
-- Failure rolls back booking.
+## 14. Payment Integration (Must)
+**Description:** Stripe + Apple/Google Pay.
+**Spec:**
+- Save card, 3DS.
+- Refund via admin.
+**Acceptance:**
+- AC1: Success <3s.
+- AC2: Webhook updates booking.
 
-## 15. Notifications (P0/P1)
-**Features:** Email + push (FCM/APN) for confirm, remind, cancel.
-**Acceptance Criteria:**
-- Sent via BullMQ.
-- User can opt out.
+## 15. Notifications (Must)
+**Description:** Push (FCM), SMS, email.
+**Spec:**
+- Templates: confirm, remind, cancel.
+- Preferences.
+**Acceptance:**
+- AC1: Reminder 24h before.
+- AC2: Opt-out honored.
 
-## 16. Provider / Business Owner Portal (P0)
-**Description:** Web dashboard.
-**Features:** Profile edit, services, staff, hours, appointments, slots override.
-**Acceptance Criteria:**
-- Provider logs in separated.
-- Changes reflect in app <1m.
+## 16. Provider / Business Owner Portal (Must)
+**Description:** Web app for owners.
+**Spec:**
+- Manage profile, services, staff, hours.
+- View bookings, reply reviews.
+**Acceptance:**
+- AC1: Slots reflect changes.
+- AC2: Multi-staff supported.
 
-## 17. Admin Dashboard (P1)
-**Description:** Super admin.
-**Features:** Manage categories, users, businesses, disputes.
-**Acceptance Criteria:**
-- Role-based access.
-- Audit log kept.
+## 17. Admin Dashboard (Should)
+**Description:** Super admin web.
+**Spec:**
+- Approve businesses, categories, refunds.
+- Metrics.
+**Acceptance:**
+- AC1: Suspend user.
+- AC2: Export CSV.
 
-## 18. Background Jobs (BullMQ) (P1)
-**Description:** Async tasks.
-**Features:** Reminders, slot cache, report gen, sync.
-**Acceptance Criteria:**
-- Retry on fail (3x).
-- Dashboard monitors queues.
+## 18. Background Jobs (BullMQ) (Must)
+**Description:** Async: reminders, slot cache, sync.
+**Spec:**
+- Queues: notify, availability, report.
+- Retry/backoff.
+**Acceptance:**
+- AC1: Job retries 3x.
+- AC2: Failed logged.
 
 ---
-**Open Questions:** Exact commission model, KYC for providers, multi-language.
+
+## Priority Summary
+- Must: 1,2,3,4,6,7,8,9,10,12,13,14,15,16,18
+- Should: 5,11,17
+- Could: loyalty, chat
+- Won't: native desktop
+
+## Milestones
+- M1 (Must core): 1–4,6–10,12–16,18
+- M2 (Should): 5,11,17
+
+## Open Questions
+- SMS vendor region?
+- Multi-language scope?
