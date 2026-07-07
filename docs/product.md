@@ -1,163 +1,162 @@
 # Planity Clone - Product Specification
 
-## Overview
-Planity Clone is a mobile-first platform connecting clients with beauty and wellness businesses (salons, barbers, spas). It supports discovery, booking, payments, and management for clients, business owners, and admins.
+## 1. Overview
+Planity Clone is a mobile-first platform connecting clients with beauty and wellness businesses for discovery, booking, and management. It includes consumer app, provider portal, and admin dashboard, supported by background jobs.
 
-## Feature List and Priorities
+## 2. Personas
+- Client: searches, books, manages appointments.
+- Business Owner: manages profile, services, availability, appointments.
+- Admin: oversees platform, users, businesses, content.
 
-### 1. User Authentication
-**Priority:** P0
-**Description:** Secure signup/login via email, phone, social (Google/Apple). JWT-based sessions.
-**Acceptance Criteria:**
-- Given a new user, when they submit valid email/password, then account is created and verification email sent.
-- Given a registered user, when they login with correct credentials, then they receive a JWT token.
-- Passwords are hashed (bcrypt). Social login returns user profile.
-- Logout invalidates token.
+## 3. Feature Specifications
 
-### 2. Guest Browse and Explore
-**Priority:** P0
-**Description:** Non-authenticated users can browse businesses, categories, and view details.
-**Acceptance Criteria:**
-- Guest can open app and see featured businesses and categories.
-- Guest can view business detail and services but booking prompts login.
-- No personal data stored for guest.
+### 3.1 User Authentication (P0)
+- Sign up and login via email, phone OTP, and social (Google/Apple).
+- JWT-based sessions with refresh token.
+- Password reset flow.
+Acceptance Criteria:
+- AC1: User can register with valid email and password; receives verification.
+- AC2: Invalid credentials show error.
+- AC3: OTP login sends code and verifies within 5 minutes.
+- AC4: Session persists across app restarts via secure storage.
 
-### 3. Business Search and Discovery
-**Priority:** P0
-**Description:** Text search with filters (category, price, rating, distance).
-**Acceptance Criteria:**
-- User can search by keyword and apply filters.
-- Results paginated, sorted by relevance/distance.
-- Empty state shown when no results.
+### 3.2 Guest Browse and Explore (P0)
+- Non-logged users can browse businesses and services.
+- Prompt to login only when booking or saving.
+Acceptance Criteria:
+- AC1: Guest sees home feed with featured businesses.
+- AC2: Attempting booking redirects to auth.
 
-### 4. Map-based Search
-**Priority:** P1
-**Description:** Interactive map showing business pins; tap to view summary.
-**Acceptance Criteria:**
-- Map displays businesses within viewport.
-- Pin clustering for dense areas.
-- Selecting pin opens bottom sheet with quick info and link to detail.
+### 3.3 Business Search and Discovery (P0)
+- Search by name, category, or keyword.
+- Filters: location, price, rating, availability.
+Acceptance Criteria:
+- AC1: Search returns relevant results in under 1 second.
+- AC2: Filters combine correctly.
+- AC3: Empty state shown when no results.
 
-### 5. Business Detail View
-**Priority:** P0
-**Description:** Full profile: photos, services, staff, hours, reviews.
-**Acceptance Criteria:**
-- Shows cover image, list of services with prices/durations.
-- Displays aggregate rating and recent reviews.
-- Book button initiates booking flow.
+### 3.4 Map-based Search (P1)
+- Display businesses on interactive map with pins.
+- Tap pin shows mini detail; navigate to detail.
+Acceptance Criteria:
+- AC1: Map loads with user location permission.
+- AC2: Pins reflect current filters.
+- AC3: Clustering for dense areas.
 
-### 6. Service Categories
-**Priority:** P0
-**Description:** Taxonomy of services (Hair, Nails, Spa, etc.) with subcategories.
-**Acceptance Criteria:**
-- Categories seeded from admin.
-- Each business assigns offered categories/services.
-- Client can browse by category from home.
+### 3.5 Business Detail View (P0)
+- Shows cover image, info, services, staff, reviews, availability.
+- Actions: Book, Call, Favorite, Share.
+Acceptance Criteria:
+- AC1: All data loads reliably.
+- AC2: Book button initiates booking flow.
+- AC3: Shows next available slot.
 
-### 7. Booking Flow
-**Priority:** P0
-**Description:** Multi-step: select service, staff (optional), date/time, confirm, pay.
-**Acceptance Criteria:**
-- Only available slots shown based on availability computation.
-- User can select multiple services in one booking.
-- On confirm, appointment created with pending payment status.
-- Success screen with add-to-calendar option.
+### 3.6 Service Categories (P0)
+- Tree of categories (Hair, Nails, Spa) and sub-services.
+- Acceptance Criteria:
+- AC1: Categories seeded and editable by admin.
+- AC2: Each service linked to duration and price.
+- AC3: Business can assign categories.
 
-### 8. Appointment Management
-**Priority:** P0
-**Description:** User sees upcoming/past appointments; can reschedule/cancel per policy.
-**Acceptance Criteria:**
-- List grouped by upcoming/past.
-- Cancel allowed up to X hours before; triggers notification to provider.
-- Reschedule opens booking with pre-filled service.
+### 3.7 Booking Flow (P0)
+- Select service, staff optional, date, slot, confirm.
+- Multi-service support.
+Acceptance Criteria:
+- AC1: Only available slots shown.
+- AC2: Price calculated correctly.
+- AC3: Confirmation screen with summary.
+- AC4: Creates appointment and notifies provider.
 
-### 9. Favorites
-**Priority:** P1
-**Description:** Users bookmark businesses.
-**Acceptance Criteria:**
-- Heart icon on business card/detail toggles favorite.
-- Favorites list accessible from profile.
-- Removing updates UI instantly.
+### 3.8 Appointment Management (P0)
+- Client views upcoming and past appointments.
+- Reschedule or cancel with rules (e.g., 24h).
+- Provider can confirm or decline.
+Acceptance Criteria:
+- AC1: List updates in real-time.
+- AC2: Cancellation triggers refund if applicable.
+- AC3: Reminder sent 24h before.
 
-### 10. User Profile
-**Priority:** P0
-**Description:** Manage personal info, payment methods, notifications settings.
-**Acceptance Criteria:**
-- User can edit name, phone, avatar.
-- Can add/remove cards (Stripe tokenization).
-- Can opt-in/out of push/email.
+### 3.9 Favorites (P1)
+- Save businesses or services.
+- Dedicated tab.
+Acceptance Criteria:
+- AC1: Save toggles state.
+- AC2: Persists across devices.
 
-### 11. Availability and Slot Computation
-**Priority:** P0
-**Description:** Backend computes slots from business hours, service duration, staff shifts, existing bookings.
-**Acceptance Criteria:**
-- Given business open 9-17, service 60min, no bookings, then slots at 9,10,11,12,13,14,15,16.
-- Buffer times respected.
-- Closed days excluded.
-- Concurrent bookings for multiple staff allowed.
+### 3.10 User Profile (P0)
+- Edit name, photo, contact, payment methods.
+- View history.
+Acceptance Criteria:
+- AC1: Changes persist.
+- AC2: GDPR delete option.
 
-### 12. Shared Types and Design System
-**Priority:** P0
-**Description:** Common TS types, UI components (buttons, cards, modals) for web/mobile.
-**Acceptance Criteria:**
-- Monorepo package with types (User, Business, Appointment, etc.).
-- Component library documented (Storybook).
-- Consistent theme tokens (color, spacing).
+### 3.11 Availability and Slot Computation (P0)
+- Provider sets working hours, breaks, holidays, service durations.
+- System computes free slots per service and staff.
+Acceptance Criteria:
+- AC1: No double-booking.
+- AC2: Timezone aware.
+- AC3: Handles concurrent requests.
 
-### 13. Reviews and Ratings
-**Priority:** P1
-**Description:** Clients rate visit (1-5 stars + text) after completed appointment.
-**Acceptance Criteria:**
-- Review prompt triggered post-appointment.
-- Only verified clients can review.
-- Business detail shows average and count.
+### 3.12 Shared Types and Design System (P0)
+- Common TS types, UI components (buttons, cards, colors).
+Acceptance Criteria:
+- AC1: Single source of truth in repo.
+- AC2: Components documented.
+- AC3: Accessibility compliant.
 
-### 14. Payment Integration
-**Priority:** P0
-**Description:** Stripe for cards, optional wallet; handles auth, capture, refund.
-**Acceptance Criteria:**
-- User can pay deposit or full amount.
-- Failed payment leaves appointment pending; retry allowed.
-- Refund via admin/provider triggers Stripe refund.
+### 3.13 Reviews and Ratings (P1)
+- Client leaves star rating and text after completed appointment.
+- Business replies.
+Acceptance Criteria:
+- AC1: Only verified visits can review.
+- AC2: Average rating computed.
+- AC3: Moderation by admin for abuse.
 
-### 15. Notifications
-**Priority:** P1 (core P0 for booking alerts)
-**Description:** Push (FCM/APN), email for booking confirm, remind, cancel.
-**Acceptance Criteria:**
-- On booking, user and provider get push/email.
-- Reminder sent 24h before via background job.
-- User can disable marketing notifications.
+### 3.14 Payment Integration (P0)
+- Stripe, Apple Pay, Google Pay.
+- Deposit or full payment.
+Acceptance Criteria:
+- AC1: PCI compliant.
+- AC2: Failed payment handled.
+- AC3: Refund automated via job.
 
-### 16. Provider / Business Owner Portal
-**Priority:** P1
-**Description:** Web dashboard for businesses to manage profile, services, staff, slots, appointments.
-**Acceptance Criteria:**
-- Owner can edit business info, add services, set hours.
-- View day/week calendar of appointments.
-- Accept/decline bookings (if manual confirmation).
+### 3.15 Notifications (P0)
+- Push (FCM/APNs), email, SMS.
+- Events: booking, reminder, promo.
+Acceptance Criteria:
+- AC1: User can opt-out.
+- AC2: Delivered within 1 min for critical.
+- AC3: Templates centralized.
 
-### 17. Admin Dashboard
-**Priority:** P1
-**Description:** Super admin manages categories, users, businesses, disputes.
-**Acceptance Criteria:**
-- CRUD for categories and service templates.
-- Suspend user/business.
-- View platform metrics (bookings, revenue).
+### 3.16 Provider / Business Owner Portal (P1)
+- Web dashboard to manage profile, services, staff, slots, appointments, analytics.
+Acceptance Criteria:
+- AC1: Role-based access.
+- AC2: Real-time updates.
+- AC3: Export data CSV.
 
-### 18. Background Jobs (BullMQ)
-**Priority:** P0
-**Description:** Queue for slot generation, reminder emails, analytics, webhooks.
-**Acceptance Criteria:**
-- Job sendReminder scheduled 24h pre-appointment.
-- Failed jobs retried with backoff.
-- Queue dashboard for monitoring.
+### 3.17 Admin Dashboard (P1)
+- Manage users, businesses, categories, reviews, payments.
+- Impersonate, suspend.
+Acceptance Criteria:
+- AC1: Secure admin login.
+- AC2: Audit log.
+- AC3: Dashboard metrics.
 
-## Prioritization Summary
-- P0 (MVP): 1,2,3,5,6,7,8,10,11,12,14,18
-- P1: 4,9,13,15,16,17
-- P2: future enhancements (loyalty, multi-location) out of scope.
+### 3.18 Background Jobs (BullMQ) (P0)
+- Queue for reminders, slot cleanup, refund, sync.
+Acceptance Criteria:
+- AC1: Jobs retry with backoff.
+- AC2: Failed jobs logged.
+- AC3: Idempotent processing.
 
-## Success Metrics
-- 80% booking completion rate.
-- Less than 2s search latency.
-- 4.5+ app store rating.
+## 4. Prioritization Summary
+- P0 (MVP): User Authentication, Guest Browse, Business Search, Business Detail, Service Categories, Booking Flow, Appointment Management, User Profile, Availability, Shared Types, Payment, Notifications, Background Jobs.
+- P1: Map-based Search, Favorites, Reviews, Provider Portal, Admin Dashboard.
+- P2: Future loyalty, multi-location (out of scope).
+
+## 5. Success Metrics
+- Booking conversion >20%
+- Repeat usage >40%
+- Provider retention >80%
