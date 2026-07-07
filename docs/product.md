@@ -2,309 +2,440 @@
 
 ## 1. Overview
 
-Planity Clone is a mobile-first platform connecting customers with beauty/wellness businesses for appointment booking. It serves three user types: **Customers** (book appointments), **Business Owners** (manage availability and bookings), and **Admin** (platform oversight).
+Planity Clone is a mobile-first platform connecting customers with local service businesses (salons, barbershops, spas, clinics) for appointment booking. The platform serves three user types: **Customers** (book appointments), **Business Owners** (manage their business), and **Admin** (platform oversight).
 
 ---
 
 ## 2. User Personas
 
-| Persona | Goal | Pain Point |
-|---------|------|------------|
-| **Customer** | Book services quickly, manage appointments | Finding available slots that fit their schedule |
-| **Guest** | Browse without commitment | Cannot save preferences or book without account |
-| **Business Owner** | Fill calendar, reduce no-shows | Manual scheduling overhead |
-| **Admin** | Monitor platform health, support users | Fraud, disputes, content quality |
+| Persona | Description | Primary Goals |
+|---------|-------------|---------------|
+| **Customer** | Wants to discover and book services quickly | Find available slots, book, manage appointments |
+| **Guest** | Unregistered user exploring the platform | Browse businesses without commitment |
+| **Business Owner** | Manages one or more service businesses | Configure services, hours, staff; manage bookings |
+| **Admin** | Platform operator | Monitor health, resolve disputes, manage business onboarding |
 
 ---
 
-## 3. Features & Acceptance Criteria
+## 3. Feature Specifications
 
 ### 3.1 User Authentication
-**Priority:** P0
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| AUTH-01 | Registration (email, phone, social) | User can register with email+password, phone OTP (Twilio), or Google/Apple OAuth. Verification required before booking. |
-| AUTH-02 | Login | JWT access + refresh token flow. Biometric login optional on mobile. |
-| AUTH-03 | Password reset | Secure token sent via email; expires in 1 hour. |
-| AUTH-04 | Session management | Auto-logout after 30 days idle. Concurrent session limit: 5 devices. |
-| AUTH-05 | Role-based access | Token contains `role`: `customer`, `business_owner`, `admin`. Middleware enforces route guards. |
+**Priority:** P0 (Critical)
+
+**Description:** Secure identity management for customers and business owners.
+
+**Functional Requirements:**
+- Email/password registration with validation
+- Social login (Google, Apple)
+- Phone number verification via SMS ( developer: Twilio or similar)
+- JWT-based session management with refresh token rotation
+- Password reset via email
+- Role-based access control (customer, business_owner, admin)
+
+**Acceptance Criteria:**
+- [ ] User can register with email, password, full name, phone number
+- [ ] Password requires minimum 8 characters, 1 uppercase, 1 number
+- [ ] Email verification required before booking
+- [ ] Social login creates account or links to existing
+- [ ] Token refresh is transparent to user, max 30 days idle
+- [ ] Rate limiting: 5 login attempts per 15 minutes
 
 ---
 
 ### 3.2 Guest Browse & Explore
+
 **Priority:** P0
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| GUE-01 | Category browsing without login | Guest sees all public business listings, categories, and basic search. |
-| GUE-02 | View business details | Guest sees services, prices, photos, reviews (read-only). |
-| GUE-03 | Prompt to register | "Book Now" and "Add to Favorites" trigger auth modal with preserved intent. |
-| GUE-04 | Session persistence | Guest search filters stored in localStorage; applied post-login. |
+**Description:** Unauthenticated access to discover businesses and services.
+
+**Functional Requirements:**
+- View business listings without login
+- Search by category, location, service
+- View business profiles, services, and reviews
+- Prompted to login only at booking initiation
+
+**Acceptance Criteria:**
+- [ ] Guest sees full business directory with no account
+- [ ] "Book Now" CTA triggers login/signup modal
+- [ ] Guest search history stored in localStorage, merged on login
+- [ ] No personal data collection from guests
 
 ---
 
 ### 3.3 Business Search & Discovery
+
 **Priority:** P0
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| SEA-01 | Text search | Search by business name, service name, or keyword. Results ranked by relevance + proximity + rating. |
-| SEA-02 | Filters | Category, price range, rating (4.0+), availability today, gender of staff, amenities. |
-| SEA-03 | Sort options | Relevance, distance, rating, price (low-high). |
-| SEA-04 | Auto-complete | Suggestions after 2 characters; includes businesses, services, neighborhoods. |
-| SEA-05 | Recent searches | Store last 10 searches per user; de-duplicated. |
+**Description:** Find businesses through multiple discovery paths.
+
+**Functional Requirements:**
+- Text search across business name, service name, description
+- Filter by: category, price range, rating, distance, availability ("open now"), amenities
+- Sort by: relevance, distance, rating, price (low to high)
+- Auto-complete search suggestions
+- Recent searches and trending searches
+
+**Acceptance Criteria:**
+- [ ] Search returns results within 200ms for cached queries
+- [ ] Empty states guide users to adjust filters
+- [ ] Location permission requested once; fallback to manual city selection
+- [ ] Results show: business photo, name, rating, distance, next available slot, price from
 
 ---
 
 ### 3.4 Map-based Search
+
 **Priority:** P0
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| MAP-01 | Interactive map | Google Maps or Mapbox integration. Clusters for dense areas. |
-| MAP-02 | Location detection | Auto-center on user GPS with permission prompt. Fallback to IP geolocation. |
-| MAP-03 | Map/list toggle | Seamless switch between map pins and list view; state synchronized. |
-| MAP-04 | Business pin interaction | Tap pin → bottom sheet with name, rating, next available slot, photo. Tap sheet → full detail. |
-| MAP-05 | Radius adjustment | Slider: 1km to 50km. Results update without full reload. |
+**Description:** Visual exploration of businesses on interactive map.
+
+**Functional Requirements:**
+- Map with business pins (clustered at zoom levels)
+- Tap pin to preview card; tap card to detail view
+- User location dot with accuracy ring
+- "Search this area" on map pan
+- List/map toggle with synced state
+
+**Acceptance Criteria:**
+- [ ] Map loads in under 2s on 4G
+- [ ] Max 50 pins rendered; clustering for density
+- [ ] Pin color indicates availability (green = slots today, gray = none)
+- [ ] Map bounds passed to search API for filtering
 
 ---
 
 ### 3.5 Business Detail View
+
 **Priority:** P0
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| BDV-01 | Header info | Business name, verified badge, average rating, review count, favorite toggle. |
-| BDV-02 | Media gallery | Up to 20 images/videos. Swipeable carousel, pinch-to-zoom. |
-| BDV-03 | Services list | Grouped by category. Each shows: name, duration, price, description. |
-| BDV-04 | Staff selection | View staff profiles, select preferred provider or "Any available." |
-| BDV-05 | Availability preview | "Next available: Today at 2:30 PM" or calendar mini-view. |
-| BDV-06 | Business info | Address, hours, phone, website, amenities, COVID policies, parking info. |
-| BDV-07 | Reviews summary | Star distribution, keyword tags ("clean," "professional"), paginated reviews. |
+**Description:** Comprehensive business profile with all booking-relevant information.
+
+**Functional Requirements:**
+- Image gallery (up to 10 photos)
+- Business info: name, address, phone, website, hours
+- Services list with pricing and duration
+- Staff/professionals with bios and photos
+- Reviews summary and detail
+- "Book" CTA per service
+- Share business (deep link)
+
+**Acceptance Criteria:**
+- [ ] Page loads core info in under 1.5s
+- [ ] Hours show current day status; closed days grayed
+- [ ] Services grouped by category
+- [ ] "Call" and "Get Directions" actions available
+- [ ] Photos swipeable with pinch-to-zoom
 
 ---
 
 ### 3.6 Service Categories
+
 **Priority:** P0
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| CAT-01 | Hierarchical categories | Root: Hair, Nails, Face, Body, Massage, Medical Aesthetic. 2-3 levels deep. |
-| CAT-02 | Category metadata | Icon, color code, popular services badge, SEO slug. |
-| CAT-03 | Dynamic discovery | Trending categories based on user location and seasonality. |
-| CAT-04 | Business categorization | Business can belong to 1 primary + 2 secondary categories. |
+**Description:** Hierarchical classification of services.
+
+**Functional Requirements:**
+- Platform-managed category tree (e.g., Hair > Coloring > Balayage)
+- Business can map services to categories
+- Category-based browsing and filtering
+- Category icons and localized names
+
+**Acceptance Criteria:**
+- [ ] Max 3 levels of category depth
+- [ ] Each service belongs to exactly one leaf category
+- [ ] Category changes versioned; existing bookings unaffected
+- [ ] Analytics track category popularity
 
 ---
 
 ### 3.7 Booking Flow
+
 **Priority:** P0
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| BK-01 | Service selection | User selects one or more services. Multi-service booking supported. |
-| BK-02 | Staff selection | Choose specific staff or "No preference." Staff-specific pricing if applicable. |
-| BK-03 | Date/time selection | Calendar view with available slots. Gray = unavailable, green = available. Real-time slot computation (see 3.11). |
-| BK-04 | Slot confirmation | Hold slot for 10 minutes during checkout (Redis lock). |
-| BK-05 | Guest info | Option to add notes (allergies, preferences). |
-| BK-06 | Payment | See 3.14. Support pay-in-app or pay-at-venue. |
-| BK-07 | Booking confirmation | Instant confirmation screen with add-to-calendar, share, directions. |
-| BK-08 | Cancellation policy | Displayed pre-booking. Varies by business (free, 24h, 48h). |
+**Description:** Core conversion flow for appointment reservation.
+
+**Functional Requirements:**
+- Step 1: Select service (with variant/options if applicable)
+- Step 2: Select staff member (or "no preference")
+- Step 3: Select date and available slot
+- Step 4: Review and confirm (with payment if required)
+- Guest checkout: collect name, phone, email; create account post-booking
+
+**Acceptance Criteria:**
+- [ ] Slot selection prevents double-booking (optimistic locking)
+- [ ] Booking confirmation within 3 seconds
+- [ ] 10-minute hold on slot during checkout; auto-release
+- [ ] Booking reference generated (QR code for in-store)
+- [ ] Calendar invitation (.ics) optional
+- [ ] Cancellation policy shown before confirm
 
 ---
 
-### 3.8 Appointment Management
+### 3. Immobility Management
+
 **Priority:** P0
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| APT-01 | Customer appointments list | Upcoming/past tabs. Sort: chronological. Shows: business, service, date/time, status. |
-| APT-02 | Appointment detail | Full info, map, contact buttons, modify/cancel actions. |
-| APT-03 | Reschedule | Select new slot if within business policy. Old slot released immediately. |
-| APT-04 | Cancel | Refund per policy. Push + email notification sent. |
-| APT-05 | Rebook | One-tap rebook same service/staff. |
-| APT-06 | Business owner calendar | Day/week/month views. Color-coded by status (confirmed, pending, completed, no-show). |
-| APT-07 | Owner actions | Confirm, decline, mark no-show, add notes, view customer history. |
+**Description:** Full lifecycle management of customer appointments.
+
+**Functional Requirements:**
+- View upcoming and past appointments
+- Reschedule (with availability check)
+- Cancel with reason (no-show, changed plans, etc.)
+- Rebook previous service
+- Add to phone calendar
+
+**Acceptance Criteria:**
+- [ ] Upcoming appointments sort by date ascending
+- [ ] Cancel button available until cutoff (configurable, default 2 hours before)
+- [ ] Reschedule shows only future available slots
+- [ ] Push notification 24h and 1h before appointment
+- [ ] Past appointments show rating prompt (if unrated)
 
 ---
 
 ### 3.9 Favorites
-**Priority:** P1
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| FAV-01 | Add/remove | Heart toggle on business card, detail, and map pin. Haptic feedback. |
-| FAV-02 | Favorites list | Grid/list view. Sort: recently added, alphabetical, nearest. |
-| FAV-03 | Availability alert | Notify when favorite business has open slots for preferred service. |
-| FAV-04 | Quick rebook | From favorites, one-tap to book previously booked service. |
+**Priority:** P1 (High)
+
+**Description:** Save businesses for quick re-access.
+
+**Functional Requirements:**
+- Toggle favorite from business card or detail
+- Favorites list with quick book
+- Favorite count on business (public)
+
+**Acceptance Criteria:**
+- [ ] Heart icon toggles with haptic feedback
+- [ ] Favorites synced across devices
+- [ ] Maximum 200 favorites per user
+- [ ] Favorites accessible offline (cached)
 
 ---
 
 ### 3.10 User Profile
+
 **Priority:** P1
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| PRF-01 | Profile info | Name, phone, email, photo, birthday (for birthday offers). |
-| PRF-02 | Addresses | Multiple saved addresses (home, work). Default for map search. |
-| PRF-03 | Payment methods | Saved cards (PCI-compliant tokenization). |
-| PRF-04 | Preferences | Notification settings, default radius, preferred categories. |
-| PRF-05 | Booking history | All past appointments with receipt access. |
-| PRF-06 | Privacy | GDPR data export, account deletion with 30-day grace period. |
+**Description:** Customer account management.
+
+**Functional Requirements:**
+- Edit personal info (name, phone, photo)
+- Notification preferences (push, email, SMS)
+- Payment methods management
+- Booking history with receipts
+- Data export (GDPR)
+- Account deletion
+
+**Acceptance Criteria:**
+- [ ] Profile photo upload with crop (1:1, max 5MB)
+- [ ] Changes sync immediately
+- [ ] Account deletion initiates 30-day grace period
+- [ ] Data export delivered within 24 hours via email
 
 ---
 
 ### 3.11 Availability & Slot Computation
-**Priority:** P0 (Critical Infrastructure)
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| SLOT-01 | Business hours | Recurring weekly schedule + exceptions (holidays, closures). |
-| SLOT-02 | Staff schedules | Each staff has independent availability and services offered. |
-| SLOT-03 | Slot generation | Compute available slots = business hours ∩ staff availability − existing bookings − buffer time. |
-| SLOT-04 | Service duration | Single or combo (e.g., haircut + color = 90 min). |
-| SLOT-05 | Buffer time | Configurable pre/post buffers per service. |
-| SLOT-06 | Real-time updates | Slot cache invalidated on new booking/cancellation. WebSocket push for active users. |
-| SLOT-07 | Timezone handling | All stored in UTC; displayed in business timezone. |
-| SLOT-08 | Performance | Slot query < 200ms for 30-day window. |
+**Priority:** P0
+
+**Description:** Core algorithm for generating bookable time slots.
+
+**Functional Requirements:**
+- Business defines: operating hours, break times, slot duration per service
+- Staff availability (time off, working hours)
+- Buffer time between appointments
+- Support for concurrent bookings (e.g., group classes)
+- Time zone handling
+
+**Acceptance Criteria:**
+- [ ] Slots computed on-demand, cached 5 minutes
+- [ ] Past dates excluded; future bookable up to 90 days
+- [ ] DST transitions handled without errors
+- [ ] Business can block specific dates (holiday closure)
+- [ ] Algorithm returns slots in <100ms for single staff, <300ms for all staff
 
 ---
 
 ### 3.12 Shared Types & Design System
-**Priority:** P1
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| DS-01 | Component library | Reusable: buttons, inputs, cards, modals, toasts, skeleton loaders. |
-| DS-02 | Typography scale | 6 levels. Responsive for mobile/tablet/desktop. |
-| DS-03 | Color system | Primary (brand), semantic (success, warning, error, info), neutrals. Dark mode support. |
-| DS-04 | Spacing grid | 4px base unit. Consistent padding/margins. |
-| DS-05 | Icons | Lucide or custom set. 24px default, 20px compact. |
-| DS-06 | Accessibility | WCAG 2.1 AA minimum. Screen reader labels, focus states, 44px touch targets. |
-| DS-07 | Shared types | TypeScript interfaces for all entities (User, Business, Service, Booking, etc.) in shared package. |
+**Priority:** P0
+
+**Description:** Consistent UI/UX across platform.
+
+**Functional Requirements:**
+- Component library: buttons, inputs, cards, modals, date pickers
+- Color tokens, typography scale, spacing system
+- Dark mode support
+- Accessibility: WCAG 2.1 AA minimum
+
+**Acceptance Criteria:**
+- [ ] All interactive elements minimum 44x44pt touch target
+- [ ] Screen reader labels on all images and icons
+- [ ] Focus indicators visible
+- [ ] Color contrast ratio 4.5:1 minimum for text
 
 ---
 
 ### 3.13 Reviews & Ratings
+
 **Priority:** P1
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| REV-01 | Post-review | Eligible 24 hours after appointment completion. Verified badge. |
-| REV-02 | Rating dimensions | Overall + optional: service quality, cleanliness, value, atmosphere. |
-| REV-03 | Review content | Text (500 char max), photos (up to 5). AI moderation for inappropriate content. |
-| REV-04 | Owner response | Public reply within 30 days. Notification to reviewer. |
-| REV-05 | Review display | Sort: most helpful, newest, highest/lowest rating. Helpful vote. |
-| REV-06 | Abuse prevention | One review per appointment. Flag system for dispute. |
+**Description:** Social proof and quality feedback.
+
+**Functional Requirements:**
+- 5-star rating with text review
+- Photo upload option
+- Business owner response
+- Flag inappropriate content
+- Verified purchase badge (completed appointment)
+
+**Acceptance Criteria:**
+- [ ] Reviews solicited 24h after appointment
+- [ ] Minimum 10 characters for text review
+- [ ] Editable within 14 days
+- [ ] Business response shown below review
+- [ ] Average rating recalculated nightly
 
 ---
 
 ### 3.14 Payment Integration
-**Priority:** P0
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| PAY-01 | Payment methods | Cards (Stripe), Apple Pay, Google Pay. BNPL (Klarna/Afterpay) optional. |
-| PAY-02 | Pricing models | Fixed price, deposit-only, or free booking. Business-configurable. |
-| PAY-03 | Hold and capture | Pre-authorize card; capture on service completion or auto-capture after 24h. |
-| PAY-04 | Refunds | Full or partial via Stripe API. Refund policy enforced automatically. |
-| PAY-05 | Receipts | PDF receipt emailed. In-app receipt history. |
-| PAY-06 | Payouts | Stripe Connect for business owners. Weekly payouts, dashboard with pending/available balance. |
-| PAY-07 | Tax | VAT/GST calculated by location. Invoice generation for B2B. |
+**Priority:** P1
+
+**Description:** Secure handling of customer payments.
+
+**Functional Requirements:**
+- Stripe/PayPal integration
+- Card on file for quick checkout
+- Deposit or full payment options
+- Refund processing (full and partial)
+- Invoice generation
+
+**Acceptance Criteria:**
+- [ ] PCI compliance via tokenization (no card data stored)
+- [ ] 3D Secure for applicable cards
+- [ ] Payment confirmation within 5 seconds
+- [ ] Failed payment with retry option
+- [ ] Refunds processed within 5-10 business days
 
 ---
 
 ### 3.15 Notifications
+
 **Priority:** P1
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| NOT-01 | Channels | Push (OneSignal/Firebase), email (SendGrid), SMS (Twilio) for critical alerts. |
-| NOT-02 | Trigger events | Booking confirmed, 24h reminder, modified, cancelled, completed, review prompt. |
-| NOT-03 | Owner alerts | New booking, cancellation, low availability warning. |
-| NOT-04 | Preferences | Granular opt-in/out per channel and event type. |
-| NOT-05 | Deep linking | Notification tap routes to relevant screen. |
-| NOT-06 | Batch digest | Daily/weekly summary option for non-urgent. |
+**Description:** Multi-channel communication system.
+
+**Functional Requirements:**
+- Push notifications (Firebase Cloud Messaging)
+- SMS (Twilio)
+- Email (SendGrid)
+- In-app notification center
+- Preference management per channel
+
+**Acceptance Criteria:**
+- [ ] Critical notifications (booking confirmed, cancelled) sent immediately
+- - [ ] Reminder notifications batchable (e.g., morning digest)
+- [ ] Failed push falls back to SMS for critical
+- [ ] Notification history retained 90 days
 
 ---
 
 ### 3.16 Provider / Business Owner Portal
+
 **Priority:** P0
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| BOP-01 | Dashboard | Today's bookings, revenue this week, occupancy rate, upcoming week preview. |
-| BOP-02 | Calendar management | Drag-drop to block time, set recurring availability, add time off. |
-| BOP-03 | Service management | CRUD services-retail services with name, duration, price, description, staff assignment. |
-| BOP-04 | Staff management | Add staff, set their services, hours, and permissions (view-only vs. full admin). |
-| BOP-05 | Booking rules | Lead time (e.g., 2 hours ahead), cancellation window, max future booking (e.g., 60 days). |
-| BOP-06 | Customer notes | View past appointments, preferences, allergies per customer. |
-| BOP-07 | Analytics | Booking volume, revenue, no-show rate, popular services, peak hours. Export to CSV. |
-| BOP-08 | Profile settings | Business info, photos, hours, policies, payment account (Stripe Connect onboarding). |
+**Description:** Self-service management for business owners.
+
+**Functional Requirements:**
+- Dashboard: upcoming appointments, revenue, occupancy rate
+- Calendar view (day/week/month) with drag-drop reschedule
+- Service management (CRUD)
+- Staff management with permissions
+- Customer management (notes, history)
+- Settings: hours, cancellation policy, booking rules
+
+**Acceptance Criteria:**
+- [ ] Portal responsive on tablet and desktop
+- [ ] Real-time updates via WebSocket
+- [ ] Export bookings to CSV
+- [ ] Multi-location switcher (if applicable)
+- [ ] Role-based access: owner, manager, staff
 
 ---
 
 ### 3.17 Admin Dashboard
-**Priority:** P1
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| ADM-01 | User management | Search, view, suspend/activate users. Impersonation for support. |
-| ADM-02 | Business onboarding | Review and approve new business registrations. KYC document verification. |
-| ADM-03 | Content moderation | Review flagged reviews, business photos. Bulk actions. |
-| ADM-04 | Dispute handling | View payment disputes, issue refunds, communicate with parties. |
-| ADM-05 | Platform analytics | MAU, bookings, GMV, churn, top categories/geographies. Real-time dashboard. |
-| ADM-06 | Promotions | Create coupon codes, featured business slots, push campaign composer. |
-| ADM-07 | System health | Monitor BullMQ queues, error rates, API latency. Alert thresholds. |
+**Priority:** P2 (Medium)
+
+**Description:** Platform administration and oversight.
+
+**Functional Requirements:**
+- Business onboarding and verification
+- User management (search, view, suspend)
+- Transaction monitoring
+- Content moderation (reviews, business photos)
+- Analytics: MAU, bookings, GMV, churn
+- System health monitoring
+
+**Acceptance Criteria:**
+- [ ] Admin actions audited (who, what, when)
+- [ ] Bulk operations available (export, message)
+- [ ] Alerts for anomalous patterns (fraud, abuse)
 
 ---
 
 ### 3.18 Background Jobs (BullMQ)
-**Priority:** P1 (Infrastructure)
 
-| ID | Requirement | Acceptance Criteria |
-|----|-------------|---------------------|
-| JOB-01 | Job types | Reminder emails/SMS (24h, 2h before), review prompts, payout processing, slot cache warm-up, analytics aggregation, data retention cleanup. |
-| JOB-02 | Scheduling | Cron-based and event-triggered. Idempotent execution. |
-| JOB-03 | Retry policy | Exponential backoff: 5s, 25s, 125s, then dead-letter. Max 5 attempts. |
-| JOB-04 | Monitoring | Bull Board UI for queue depth, failed jobs, processing time. Alerts on queue > 1000. |
-| JOB-05 | Concurrency | Configurable workers per queue. Priority queues: notifications > payments > analytics. |
-| JOB-06 | Job deduplication | Unique job ID for idempotent operations (e.g., one reminder per appointment). |
+**Priority:** P1
+
+**Description:** Asynchronous processing for reliability and performance.
+
+**Functional Requirements:**
+- Job queues: notifications, payments, reports, data exports, search index updates
+- Retry with exponential backoff
+- Dead letter queue for failed jobs
+- Job monitoring and manual retry
+
+**Acceptance Criteria:**
+- [ ] Jobs processed within 5 minutes of enqueue (standard priority)
+- [ ] Failed jobs retried 3 times before DLQ
+- [ ] Queue depth and processing rate visible in admin
+- [ ] Graceful shutdown: finish in-progress jobs before exit
 
 ---
 
 ## 4. Non-Functional Requirements
 
-| Area | Requirement |
-|------|-------------|
-| **Performance** | App cold start < 3s. API p95 < 200ms. Image lazy loading. |
-| **Scalability** | Horizontal scaling via Kubernetes. Read replicas for analytics. |
-| **Security** | OWASP Top 10 mitigation. Encrypt PII at rest. Rate limiting. |
-| **Reliability** | 99.9% uptime. Database backups every 6 hours. |
-| **Compliance** | GDPR, CCPA, PCI-DSS (Stripe handles SAQ-A). |
+| Aspect | Requirement |
+|--------|-------------|
+| Performance | API p95 < 200ms; page load < 2s |
+| Availability | 99.9% uptime SLA |
+| Security | OWASP Top 10 mitigation; annual penetration test |
+| Scalability | Support 10,000 concurrent users |
+| Compliance | GDPR, CCPA, PCI DSS |
 
 ---
 
-## 5. Prioritization Summary
+## 5. Analytics & Metrics
 
-| Priority | Features |
-|----------|----------|
-| **P0 — MVP** | Auth, Guest Browse, Search, Map, Business Detail, Service Categories, Booking Flow, Appointment Mgmt, Availability/Slots, Payments, Owner Portal |
-| **P1 — Post-MVP** | Favorites, User Profile, Reviews, Notifications, Admin, Design System hardening, Background Jobs polish |
-| **P2 — Growth** | BNPL, Loyalty program, Referrals, AI recommendations, Multi-language |
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| Booking conversion rate | >15% | Bookings / unique visitors |
+| Search-to-book time | <3 min | Time from first search to confirmation |
+| Cancellation rate | <10% | Cancelled / total bookings |
+| NPS | >50 | Post-booking survey |
 
 ---
 
-## 6. Success Metrics
+## 6. Release Phases
 
-| Metric | Target |
-|--------|--------|
-| Booking conversion rate | > 15% |
-| Search-to-booking time | < 5 minutes |
-| Business owner activation | > 80% complete profile |
-| Customer retention (30d) | > 40% |
-| App store rating | > 4.5 stars |
-| Support tickets per 1000 bookings | < 5 |
+| Phase | Features | Timeline |
+|-------|----------|----------|
+| MVP | Auth, Search, Business Detail, Booking, Appointments, Business Owner Portal | 8 weeks |
+| V1 | Map, Reviews, Favorites, Profile, Notifications | +4 weeks |
+| V2 | Payment, Admin, Background Jobs, Analytics | +4 weeks |
 
 ---
 
