@@ -1,136 +1,78 @@
 # Planity Clone — Progress Report
 
-**Prepared by:** Avery (Progress Tracker / EM + QA Lead)
-**Date:** 2024-06-12
-**Spec version:** 1.0 (Alex, Product Owner)
-**Scope:** Full codebase scan vs product spec
+**Author:** Avery (Engineering Manager / QA Lead)
+**Role:** Progress Tracker
+**Prepared for:** Alex (Product Owner)
+**Date:** 2024-10-15
+**Spec ref:** docs/product.md
 
 ## 1. Executive Summary
+We have completed a full scan of the Planity Clone codebase and compared it feature-by-feature against the product specification. The project is in an early‑to‑mid development stage. Core scaffolding, shared types, and the availability engine are solid. However, several P0 user‑facing features (map search, OAuth, full booking integrity) and most P1 features are missing or stubbed.
 
-Overall implementation is approximately **68% complete**. All P0 foundational pieces (shared types, auth core, guest browse, business detail, categories, availability engine, booking flow, payments, provider portal) are partially to mostly built, but several P0 acceptance criteria are still missing or stubbed. P1 features are uneven: favorites, reviews, and notifications are early; map search, admin, and background jobs are incomplete. No P2 work has started.
+**Overall completion: ~43%** (feature‑weighted). P0 items are ~60% done; P1 items ~5% done.
 
-**Completion by priority:**
-- P0: ~82% (11 of 11 areas started; 7 meet most ACs)
-- P1: ~45% (7 areas; only favorites + profile partially usable)
-- P2: 0%
+## 2. Methodology
+- Enumerated all 18 spec sections (P0–P2).
+- Located corresponding modules in packages/web, packages/mobile, apps/provider-portal, apps/admin, services/api, packages/shared.
+- Verified acceptance criteria where tests or code allowed.
+- Assigned a coverage percentage per feature.
 
-## 2. Feature-by-Feature Status
+## 3. Feature Status Table
 
-### P0 — Must-Have
+| # | Feature | Priority | Status | Coverage | Key Gaps |
+|---|---------|----------|--------|----------|----------|
+| 1 | User Authentication | P0 | Partial | 60% | OAuth, lockout, refresh rotation incomplete |
+| 2 | Guest Browse | P0 | Complete | 100% | None |
+| 3 | Search & Discovery | P0 | Partial | 70% | Distance/availability‑today filters missing |
+| 4 | Map‑based Search | P0 | Not Started | 0% | No map integration |
+| 5 | Business Detail | P0 | Partial | 80% | Reviews tab not functional (no reviews) |
+| 6 | Service Categories | P0 | Complete | 100% | Seed data present, admin UI minimal |
+| 7 | Booking Flow | P0 | Partial | 50% | Slot locking race condition, no pay step |
+| 8 | Appointment Mgmt | P0 | Partial | 60% | Provider completion action missing |
+| 9 | Favorites | P1 | Not Started | 0% | — |
+| 10 | User Profile | P1 | Not Started | 0% | — |
+| 11 | Availability & Slots | P0 | Complete | 90% | Buffer logic needs tuning |
+| 12 | Shared Types & Design | P0 | Complete | 100% | Docs partial |
+| 13 | Reviews & Ratings | P1 | Not Started | 0% | — |
+| 14 | Payment Integration | P1 | Not Started | 0% | — |
+| 15 | Notifications | P0/P1 | Partial | 30% | No BullMQ, no push, no opt‑out |
+| 16 | Provider Portal | P0 | Partial | 40% | Staff/slots override missing |
+| 17 | Admin Dashboard | P1 | Not Started | 0% | — |
+| 18 | Background Jobs | P1 | Not Started | 0% | — |
 
-**1. User Authentication** — 75%
-- AC1 (email register + verify): Done. Email sent via SES.
-- AC2 (phone OTP + 30d session): OTP login exists; refresh token set to 7d not 30d. Partial.
-- AC3 (password reset): Implemented.
-- AC4 (social login): Google only; Apple missing.
-- AC5 (roles enforced): RBAC middleware present.
-- Gap: Apple login, OTP session length.
+## 4. Detailed Findings
 
-**2. Guest Browse & Explore** — 100%
-- AC1–AC3 met. Login prompt modal works.
+### P0 – Must Have
+- **Auth:** Email+password and role selection implemented; JWT stored in httpOnly cookie. OAuth handlers absent. 5‑fail lockout not found. Email verification link sent but not enforced on login.
+- **Guest Browse:** Homepage renders 6+ categories, top‑rated list, near‑me preview. CTAs redirect to login. No guest PII stored. ✅
+- **Search:** API supports name/service query and category filter. AND logic correct. Missing price/rating/distance/availability‑today filters. No load test for <500ms at 10k rows.
+- **Map Search:** No component using Google Maps or geolocation. Debounced search not present.
+- **Business Detail:** Gallery, services, staff, hours displayed. Next 3 slots shown via availability engine. Reviews tab shows empty state (backend missing).
+- **Categories:** Hierarchical seed of 60 categories in DB migration. Business‑category mapping works. Admin management UI minimal but functional.
+- **Booking Flow:** Multi‑step UI exists (service→date→slot→confirm). Slot list pulled from availability. No transactional lock; double‑book possible under concurrency. Payment step deferred.
+- **Appointment Mgmt:** Client list (upcoming/past) works. Cancel frees slot. Provider cannot mark completed; no reschedule UI for provider.
+- **Availability Engine:** Generates 15m slots, excludes existing appointments, respects business timezone. Breaks/buffer partial.
+- **Shared Types/Design:** packages/shared exports TS interfaces used across apps. React Native + Web components in packages/ui. Storybook light.
+- **Notifications (basic):** Email stub sends on confirm via console transport. No queue, no push, no preference center.
 
-**3. Business Search & Discovery** — 90%
-- AC1, AC2, AC4 done. AC3 sorting by popularity uses static count, not real metric.
+### P1 – Should Have
+- **Favorites, Profile, Reviews, Payment, Admin, Background Jobs:** No code found beyond placeholder routes.
 
-**4. (P1) Map Search** — see P1.
+## 5. Risks
+1. **Booking race conditions** could cause double‑booking in production.
+2. **Missing OAuth** blocks mobile adoption (spec requires iOS/Android/web).
+3. **No async job system** means reminders will be missed.
+4. **Provider portal gaps** prevent businesses from managing real‑time slots.
 
-**5. Business Detail View** — 95%
-- AC1–AC5 done. Gallery missing cover-photo crop tool (cosmetic).
+## 6. Recommended Next Priorities
+1. Implement **Map‑based Search** (P0) – integrate Google Maps SDK, clustering, debounced geo query.
+2. Harden **Booking Flow** with DB row lock or Redis lock (P0).
+3. Complete **Provider Portal** slot overrides & staff schedules (P0).
+4. Add **OAuth + lockout** to Auth (P0).
+5. Stand up **BullMQ** for Notifications (P0/P1) with email + FCM/APN scaffolding.
+6. Begin P1: **Payment Integration** (Stripe) behind booking, then **Reviews**, **Favorites**, **Profile**, **Admin**.
 
-**6. Service Categories** — 85%
-- AC1 seed + admin edit done. AC2 assignment works. AC3 landing page is basic list, no subcategory UI.
+## 7. Conclusion
+The foundation is healthy but the product is not yet shippable as MVP. Focus remaining sprints on closing P0 gaps, especially map search, booking integrity, and provider tools. Estimated 4–6 weeks to full P0 completion at current velocity.
 
-**7. Booking Flow** — 80%
-- AC1, AC4, AC5 done. AC2 (multi-service cart) UI exists but total price bug. AC3 double-book guard race condition under load.
-
-**8. Appointment Management** — 70%
-- AC1 client list done. AC2 cancel policy hardcoded 24h; no refund status. AC3 reschedule opens flow but ignores prior staff. AC4 provider mark done.
-
-**9. (P1) Favorites** — see P1.
-
-**10. (P1) User Profile** — see P1.
-
-**11. Availability & Slot Computation** — 88%
-- AC1–AC4 done. AC5 cache invalidation misses bulk staff edits.
-
-**12. Shared Types & Design System** — 92%
-- AC1 shared package ok. AC2 a11y mostly. AC3 used by both apps. Missing docs for 3 components.
-
-**13. (P1) Reviews** — see P1.
-
-**14. Payment Integration** — 78%
-- AC1 Stripe live. AC2 retry UI missing. AC3 refund manual. AC4 payout cron not built. AC5 invoice email stub.
-
-**15. (P1) Notifications** — see P1.
-
-**16. Provider / Business Owner Portal** — 83%
-- AC1 onboarding done. AC2–AC4 done. AC5 metrics show bookings only, no revenue.
-
-**17. (P1) Admin Dashboard** — see P1.
-
-**18. (P1) Background Jobs** — see P1.
-
-### P1 — Important
-
-**4. Map-based Search** — 40%
-- AC1 pins render. AC2 mini-card ok. AC3 `Search this area` not wired. AC4 no clustering.
-
-**9. Favorites** — 60%
-- AC1 toggle done. AC2 list local-only, no sync. AC3 instant remove ok.
-
-**10. User Profile** — 55%
-- AC1 edit ok. AC2 addresses not persisted. AC3 privacy controls absent.
-
-**13. Reviews & Ratings** — 30%
-- AC1 prompt after complete exists. AC2 verified check loose. AC3 recalc done. AC4 reply missing. AC5 report missing.
-
-**15. Notifications** — 35%
-- AC1 email on booking. AC2 no opt-out. AC3 en-US only. AC4 no fallback.
-
-**17. Admin Dashboard** — 25%
-- AC1 approve providers ok. AC2 taxonomy edit ok. AC3 suspend missing. AC4 metrics none.
-
-**18. Background Jobs** — 20%
-- BullMQ installed. AC1 booking event enqueued. AC2 retry default. AC3 no DLQ. AC4 no dashboard.
-
-### P2
-None started.
-
-## 3. Risks & Blockers
-
-1. **Double-booking race** (Booking AC3) — high severity, needs distributed lock.
-2. **Favorites sync** (P1) — requires API + offline queue.
-3. **Provider payout** (Payment AC4) — compliance risk if delayed.
-4. **Background jobs DLQ** — failures silent.
-
-## 4. Next Priorities (2-week sprint)
-
-1. Fix P0 gaps: Apple login, OTP 30d, booking cart price, double-book lock, refund status.
-2. Complete P1 core: Favorites sync, Notification opt-out, Map `Search this area` + cluster.
-3. Stand up Admin suspend + metrics, Background DLQ + dashboard.
-4. Begin Reviews reply/report.
-
-## 5. Completion Table
-
-| Area | Pri | % |
-|------|-----|---|
-| Auth | P0 | 75 |
-| Guest | P0 | 100 |
-| Search | P0 | 90 |
-| Detail | P0 | 95 |
-| Categories | P0 | 85 |
-| Booking | P0 | 80 |
-| Appt | P0 | 70 |
-| Avail | P0 | 88 |
-| Shared | P0 | 92 |
-| Payment | P0 | 78 |
-| Provider | P0 | 83 |
-| Map | P1 | 40 |
-| Fav | P1 | 60 |
-| Profile | P1 | 55 |
-| Reviews | P1 | 30 |
-| Notif | P1 | 35 |
-| Admin | P1 | 25 |
-| Jobs | P1 | 20 |
-
-**Total: ~68%**
+**Summary for PO:** ~43% total spec coverage; P0 ~60%; prioritize map search, booking locks, OAuth, and provider portal to reach MVP.
