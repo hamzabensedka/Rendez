@@ -1,162 +1,148 @@
 # Planity Clone - Product Specification
 
-## Overview
+## 1. Overview
 Planity Clone is a mobile-first platform connecting clients with beauty & wellness businesses (salons, barbers, spas). It supports discovery, booking, payments, and management for clients, providers, and admins.
 
-## Feature Specifications
+## 2. Feature Specifications
 
-### 1. User Authentication
-**Priority:** P0
-**Description:** Secure signup/login via email, phone, social (Google/Apple). JWT-based sessions.
+### 2.1 User Authentication (Priority: P0)
+**Description:** Secure sign-up/login via email, phone, and OAuth (Google/Apple). JWT-based sessions.
 **Acceptance Criteria:**
 - User can register with email+password; receives verification email.
-- User can login with correct credentials; gets JWT.
-- Invalid credentials show error.
-- Passwords hashed (bcrypt).
-- Social login returns user profile.
+- User can login with phone OTP.
+- OAuth providers redirect and create account.
+- Password reset flow works.
+- Token refresh handled securely.
 
-### 2. Guest Browse & Explore
-**Priority:** P0
-**Description:** Non-authenticated users can browse businesses, categories, and deals.
+### 2.2 Guest Browse & Explore (Priority: P0)
+**Description:** Non-authenticated users can browse businesses and services.
 **Acceptance Criteria:**
-- Guest can view home feed of featured businesses.
-- Guest can view business detail and services without booking.
-- Attempt to book redirects to login.
+- Guest sees curated lists (popular, nearby, new).
+- Guest can view business detail but booking prompts login.
+- No personal data stored for guest.
 
-### 3. Business Search & Discovery
-**Priority:** P0
+### 2.3 Business Search & Discovery (Priority: P0)
 **Description:** Text search with filters (category, price, rating, distance).
 **Acceptance Criteria:**
-- Search returns relevant businesses by name, service, or tag.
-- Filters apply correctly and update results.
+- Search returns relevant businesses with debounce.
+- Filters apply correctly and combine.
 - Empty state shown when no results.
 
-### 4. Map-based Search
-**Priority:** P1
-**Description:** Display businesses on map with geolocation; tap pin for preview.
+### 2.4 Map-based Search (Priority: P1)
+**Description:** Interactive map showing business pins; tap to preview.
 **Acceptance Criteria:**
-- Map shows pins within viewport based on search.
-- User can pan/zoom to reload results (debounced).
-- Pin click opens bottom sheet with business summary.
+- Map loads with user location permission.
+- Pins reflect current filters.
+- Selecting pin opens bottom sheet with summary.
 
-### 5. Business Detail View
-**Priority:** P0
+### 2.5 Business Detail View (Priority: P0)
 **Description:** Full profile: photos, services, staff, hours, reviews.
 **Acceptance Criteria:**
-- Shows cover image, description, list of services with prices.
-- Displays working hours and next available slot.
-- Shows aggregate rating and recent reviews.
+- Displays all required info from API.
+- Shows real-time availability slots.
+- CTA to book or favorite.
 
-### 6. Service Categories
-**Priority:** P0
-**Description:** Hierarchical categories (e.g., Hair > Coloring).
+### 2.6 Service Categories (Priority: P0)
+**Description:** Taxonomy of services (Hair, Nails, Massage, etc.).
 **Acceptance Criteria:**
-- Categories seeded and editable via admin.
-- Businesses assign services to leaf categories.
-- Browse by category returns correct businesses.
+- Categories hierarchical and seeded.
+- Businesses assign services to categories.
+- Navigation by category works.
 
-### 7. Booking Flow
-**Priority:** P0
-**Description:** Select service, staff, date, slot, confirm, pay.
+### 2.7 Booking Flow (Priority: P0)
+**Description:** Multi-step: select service, staff, slot, confirm, pay.
 **Acceptance Criteria:**
-- User selects service; system shows available slots from availability engine.
-- User can pick alternative staff if available.
-- On confirm, appointment created with pending payment status.
-- Success returns confirmation and notification sent.
+- Only available slots selectable.
+- Price calculated correctly (service + add-ons).
+- Confirmation screen and email sent.
+- Concurrent booking lock prevents double-book.
 
-### 8. Appointment Management
-**Priority:** P0
-**Description:** List upcoming/past appointments; cancel/reschedule.
+### 2.8 Appointment Management (Priority: P0)
+**Description:** User sees upcoming/past appointments; can reschedule/cancel.
 **Acceptance Criteria:**
-- User sees appointments sorted by date.
-- Cancel frees slot and notifies provider.
-- Reschedule uses same booking flow with prior context.
+- List synced with backend.
+- Cancel respects business policy (free within X hours).
+- Reschedule opens slot picker.
 
-### 9. Favorites
-**Priority:** P1
-**Description:** Save businesses or services to favorites.
+### 2.9 Favorites (Priority: P1)
+**Description:** Save businesses/services for quick access.
 **Acceptance Criteria:**
-- Heart icon toggles favorite state.
+- Add/remove from detail view and list.
 - Favorites list view accessible from profile.
-- Favorites persist across sessions.
+- Persists across sessions.
 
-### 10. User Profile
-**Priority:** P1
-**Description:** Manage personal info, payment methods, notifications settings.
+### 2.10 User Profile (Priority: P0)
+**Description:** Manage personal info, payment methods, notifications pref.
 **Acceptance Criteria:**
-- User can update name, phone, avatar.
-- User can add/remove card (tokenized).
-- User can toggle push/email notifications.
+- Edit name, phone, avatar.
+- View booking history.
+- Toggle notification settings.
 
-### 11. Availability & Slot Computation
-**Priority:** P0
-**Description:** Compute slots from business hours, service duration, staff shifts, existing bookings.
+### 2.11 Availability & Slot Computation (Priority: P0)
+**Description:** Backend logic generating slots from business hours, service duration, staff shifts, and existing bookings.
 **Acceptance Criteria:**
-- Engine returns 15/30-min slots excluding breaks and booked times.
-- Handles multiple staff with different schedules.
-- Timezone aware per business.
+- Generates 15/30-min slots based on service length.
+- Excludes breaks and booked times.
+- Handles timezone correctly.
+- Recalculates on any schedule change.
 
-### 12. Shared Types & Design System
-**Priority:** P0
+### 2.12 Shared Types & Design System (Priority: P0)
 **Description:** Common TS types, UI components (buttons, cards, colors) for web/mobile.
 **Acceptance Criteria:**
-- Monorepo package exports types and components.
-- Storybook shows components.
-- Consistent spacing/typography across screens.
+- Single source of truth for API models.
+- Component library documented.
+- Theme consistent across app.
 
-### 13. Reviews & Ratings
-**Priority:** P1
+### 2.13 Reviews & Ratings (Priority: P1)
 **Description:** Post-visit reviews with star rating and text.
 **Acceptance Criteria:**
-- User can submit review only for completed appointments.
-- Average rating recalculated on new review.
-- Provider can respond to reviews.
+- Only verified appointments can review.
+- Average rating computed and shown.
+- Moderation flag for inappropriate content.
 
-### 14. Payment Integration
-**Priority:** P0
-**Description:** Stripe/PayPal for cards, wallets; handle refunds.
+### 2.14 Payment Integration (Priority: P0)
+**Description:** Stripe/PayPal for booking deposit or full payment.
 **Acceptance Criteria:**
-- Secure card entry via PCI-compliant SDK.
-- Payment success marks appointment confirmed.
-- Failed payment keeps appointment pending with retry.
-- Refund issued from admin/provider triggers Stripe refund.
+- PCI-compliant checkout.
+- Handles success/failure/refund.
+- Receipt emailed.
+- Provider payout scheduled.
 
-### 15. Notifications
-**Priority:** P1 (core P0 for booking)
-**Description:** Push (FCM/APNs), email for booking, reminders, marketing.
+### 2.15 Notifications (Priority: P1)
+**Description:** Push (FCM/APN) and email for booking, reminders, promos.
 **Acceptance Criteria:**
-- Booking confirmation sent immediately.
-- Reminder sent 24h before via background job.
-- User can opt-out per channel.
+- Opt-in per type.
+- Sent via background job.
+- Localization supported.
 
-### 16. Provider / Business Owner Portal
-**Priority:** P1
-**Description:** Manage business profile, services, staff, availability, appointments.
+### 2.16 Provider / Business Owner Portal (Priority: P1)
+**Description:** Web dashboard for businesses to manage profile, services, staff, slots, bookings.
 **Acceptance Criteria:**
-- Owner can edit business info and photos.
-- Owner can add staff and set weekly schedules.
-- Owner can view day/week calendar and manually book.
-- Owner can see basic stats (bookings, revenue).
+- CRUD on services and availability.
+- View upcoming appointments.
+- Respond to reviews.
+- Access analytics.
 
-### 17. Admin Dashboard
-**Priority:** P1
-**Description:** Platform-wide management: users, businesses, categories, moderations.
+### 2.17 Admin Dashboard (Priority: P2)
+**Description:** Super-admin to manage categories, users, businesses, flag content.
 **Acceptance Criteria:**
-- Admin can approve/reject business registrations.
-- Admin can edit global categories and service templates.
-- Admin can suspend users/businesses.
-- Admin can view aggregated metrics.
+- Approve/reject business registrations.
+- Suspend users.
+- View platform metrics.
 
-### 18. Background Jobs (BullMQ)
-**Priority:** P0
-**Description:** Queue for slot caching, reminder emails, analytics, webhooks.
+### 2.18 Background Jobs (BullMQ) (Priority: P1)
+**Description:** Queue for notifications, reminder emails, slot recompute, payouts.
 **Acceptance Criteria:**
-- Job for sending reminders runs daily.
-- Failed jobs retry with backoff.
-- Queue dashboard shows metrics.
-- Slot computation triggered on availability change.
+- Jobs retry with backoff.
+- Failed jobs logged and alerted.
+- Scales with Redis.
 
-## Prioritization Summary
-- P0 (MVP): 1,2,3,5,6,7,8,11,12,14,18
-- P1 (V1.1): 4,9,10,13,15,16,17
-- P2 (Later): advanced analytics, loyalty, multi-location.
+## 3. Prioritization Summary
+- P0: Core MVP (Auth, Browse, Search, Detail, Categories, Booking, Appt, Profile, Availability, Types, Payment)
+- P1: Enhancement (Map, Favorites, Reviews, Notifications, Provider Portal, BullMQ)
+- P2: Admin (Admin Dashboard)
+
+## 4. Success Metrics
+- Booking conversion > 20%
+- Weekly active bookers > 5k in 6 months
+- Provider satisfaction > 4.2/5
