@@ -1,19 +1,335 @@
-{
-  "content": "# Planity Clone System Architecture\n\n## 1. Overview\nThis document describes the end‑to‑end architecture for the Planity Clone mobile application and its supporting backend services. The solution follows a clean‑architecture approach with clear separation of concerns, leveraging a monorepo managed by Nx, pnpm workspaces, and Docker‑based local development.\n\n## 2. Technology Stack\n- **Mobile**: Expo (SDK 50), React Native, TypeScript, Expo Router, TanStack React Query, React Native Reanimated\n- **Web/Admin**: Same stack as mobile (Expo Web) for provider portal and admin dashboard\n- **Backend**: NestJS (Node.js), Prisma ORM, PostgreSQL + PostGIS extension, Redis (caching & pub/sub), BullMQ (job queue)\n- **DevOps**: Nx (monorepo tooling), pnpm (workspace manager), Docker Compose (local services), GitHub Actions (CI/CD), EAS Build (Expo app builds), Supabase (optional auth/storage fallback), Jest (testing)\n\n## 3. High‑Level Architecture\n```\n+-------------------+        +-------------------+        +-------------------+\n|   Mobile App      | <----> |   API Gateway     | <----> |   Business Logic  |\n| (Expo RN)         |        | (NestJS Controllers) |   (NestJS Services) |\n+-------------------+        +-------------------+        +-------------------+\n                                    ^                         ^\n                                    |                         |\n                           +-------------------+   +-------------------+\n                           |   Data Access     |   |   Infra Services  |\n                           | (Prisma + PostGIS)|   | (Redis, BullMQ)   |\n                           +-------------------+   +-------------------+\n                                    |                         |\n                                    v                         v\n                             +-------------------+   +-------------------+\n                             | PostgreSQL DB     |   |  Redis Cache /    |\n                             | + PostGIS Ext     |   |  Job Queue (BullMQ)|\n                             +-------------------+   +-------------------+\n```\n- **API Gateway**: Thin NestJS layer that validates JWT, routes to/Session, applies global guards, and forwards requests to feature modules.\n- **Business Logic**: Feature‑oriented NestJS modules (Auth, Business, Booking, Provider, Admin, Notification, etc.) each encapsulating use‑cases, DTOs, validation, and transaction boundaries.\n- **Data Access**: Prisma client wrapped in repository‑style services; raw SQL for spatial queries (PostGIS) where needed.\n- **Infra Services**: Redis for session store, rate‑limiting, caching of frequent queries (search, business list); BullMQ for background jobs (email/SMS, payment webhook handling, slot recomputation).\n\n## 4. Service Boundaries\n| Boundary          | Responsibility                                                                 | Owner (Team)        |
-|-------------------|-------------------------------------------------------------------------------|---------------------|
-| **Mobile Frontend** | UI, navigation, local state (React Query), gestures (Reanimated), offline cache, deep linking | Mobile Team         |
-| **Web Portal**     | Provider & Admin dashboards (same codebase, responsive web)                    | Portal Team         |
-| **Auth Service**   | User registration, login, social OAuth, JWT issuance, email verification       | Backend Team        |
-| **Business Service**| CRUD for businesses, categories, geospatial search, rating aggregation         | Backend Team        |
-| **Booking Service**| Slot computation, appointment creation/rescheduling/cancellation, conflict detection | Backend Team        |
-| **Provider Service**| Business owner portal APIs (schedule management, payouts, analytics)          | Backend Team        |
-| **Admin Service**  | Super‑user APIs (user/business moderation, system config, audit logs)          | Backend Team        |
-| **Notification Service**| Template management, push/email/SMS dispatch via BullMQ workers            | Backend Team        |
-| **Payment Service**| Integration with payment gateway (Stripe/PayPal), webhook handling, invoice   | Backend Team        |
-| **Search Service** | Elastic‑like search via PostgreSQL full‑text + PostGIS, faceted filters       | Backend Team        |
-| **Job Workers**    | BullMQ processors for async tasks (emails, slot recompute, cleanup)          | Backend Team        |
+Overview
+=======
+Planity Clone is a mobile-first appointment booking platform that connects users with local businesses. The system follows a clean layered architecture with clear separation of concerns, leveraging an Nx monorepo to share types, UI components, and utilities between the Expo mobile app and the NestJS backend.
 
-Each NestJS module owns its DTOs, validation pipes, guards, interceptors, and services. Modules communicate only via well‑defined interfaces (DTOs/events) – no direct service‑to‑service calls across boundaries.\n\n## 5. Folder Structure (Nx Monorepo)\n```\nplanity-clone/\n├── apps/\n│   ├── mobile/                 # Expo React Native app\n│   │   ├── src/\n│   │   │   ├── assets/\n│   │   │   ├── components/\n│   │   │   │   ├── ui/          # shared UI primitives (buttons, inputs)\n│   │   │   │   └── layout/\n│   │   │   ├── screens/\n│   │   │   │   ├── (tabs)/      # Expo Router file‑based routing\n│   │   │   │   ├── auth/\n│   │   │   │   ├── business/\n│   │   │   │   ├── booking/\n│   │   │   │   ├── profile/\n│   │   │   │   └── provider/\n│   │   │   ├── hooks/\n│   │   │   │   └── useQuery.ts   # React Query wrapper\n│   │   │   ├── store/\n│   │   │   │   └── auth.ts      # optional Zustand/Jotai for auth state\n│   │   │   ├── types/\n│   │   │   │   └── generated/    # Prisma‑generated TS types (via prisma generate)\n│   │   │   ├── utils/\n│   │   │   │   ├── geolocation.ts\n│   │   │   │   └── analytics.ts\n│   │   │   └── App.tsx\n│   │   ├── expo.config.ts\n│   │   └── eas.json\n│   ├── web/                    # Expo Web (provider + admin)\n│   │   └── src/ (same structure as mobile, web‑specific routes)\n│   └── api/                    # NestJS backend\n│       ├── src/\n│       │   ├── app.module.ts\n│       │   ├── main.ts\n│       │   ├── config/\n│       │   │   └── database.config.ts\n│       │   ├── common/\n│       │   │   ├── guards/\n│       │   │   │   ├── jwt.guard.ts\n│       │   │   │   └── roles.guard.ts\n│       │   │   ├── pipes/\n│       │   │   │   └── validation.pipe.ts\n│       │   │   ├── interceptors/\n│       │   │   │   └── logging.interceptor.ts\n│       │   │   └── exceptions/\n│       │   │       └── http-exception.filter.ts\n│       │   ├── auth/\n│       │   │   ├── controller/\n│       │   │   ├── service/\n│       │   │   ├── dto/\n│       │   │   └── auth.module.ts\n│       │   ├── business/\n│       │   │   ├── controller/\n│       │   │   ├── service/\n│       │   │   ├── repository/\n│       │   │   │   └── business.repository.ts\n│       │   │   ├── dto/\n│       │   │   └── business.module.ts\n│       │   ├── booking/\n│       │   │   ├── controller/\n│       │   │   ├── service/\n│       │   │   │   └── slot.compute.ts   # heavy logic isolated\n│       │   │   ├── repository/\n│       │   │   ├── dto/\n│       │   │   └── booking.module.ts\n│       │   ├── provider/\n│       │   │   └── provider.module.ts\n│       │   ├── admin/\n│       │   │   └── admin.module.ts\n│       │   ├── notification/\n│       │   │   └── notification.module.ts\n│       │   ├── payment/\n│       │   │   └── payment.module.ts\n│       │   ├── search/\n│       │   │   └── search.module.ts\n│       │   └── jobs/\n│       │       ├── processor/\n│       │       │   ├── email.processor.ts\n│       │       │   └── slot.recompute.processor.ts\n│       │       └── jobs.module.ts\n│       ├── prisma/\n│       │   ├── schema.prisma\n│       │   └── migrations/\n│       ├── test/\n│       │   ├── unit/\n│       │   └── integration/\n│       └── dockerfile\n├── libs/\n│   ├── ui/                     # shared React Native/Web component library\n│   ├── types/                  # global TS interfaces (e.g., User, Business)\n│   ├── utils/                  # cross‑platform helpers (date, currency)\n│   └── config/                 # nx workspace config, jest, eslint\n├── docker-compose.yml\n├── nx.json\n├── package.json (pnpm workspace root)\n└── README.md\n```\n\n## 6. Data Model Highlights (Prisma Schema)\n```prisma\nmodel User {\n  id            String   @id @default(uuid())\n  email         String   @unique\n  passwordHash  String\n  role          Role     @default(USER)\n  profile       Profile? @relation(\"userProfile\")\n  businesses    Business[] @relation(\"ownerBusinesses\")\n  bookings      Booking[] @relation(\"userBookings\")\n  favorites     Business[] @relation(\"favoriteBusinesses\")\n  createdAt     DateTime @default(now())\n}\n\nmodel Business {\n  id            String   @id @default(uuid())\n  name          String\n  address       String\n  location      Point    @db.Point   // PostGIS\n  categoryId    String\n  category      Category @relation(fields: [categoryId], references: [id])\n  ownerId       String\n  owner         User     @relation(fields: [ownerId], references: [id])\n  services      Service[]\n  bookings      Booking[]\n  reviews       Review[]\n  ratingAvg     Float    @default(0)\n  createdAt     DateTime @default(now())\n}\n\nmodel Service {\n  id            String   @id @default(uuid())\n  name          String\n  durationMin   Int\n  price         Float\n  businessId    String\n  business      Business @relation(fields: [businessId], references: [id])\n  slots         Slot[]   @relation(\"serviceSlots\")\n}\n\nmodel Slot {\n  id            String   @id @default(uuid())\n  startTime     DateTime\n  endTime       DateTime\n  isAvailable   Boolean  @default(true)\n  serviceId     String\n  service       Service  @relation(fields: [serviceId], references: [id])\n  booking       Booking? @relation(\"slotBooking\")\n}\n\nmodel Booking {\n  id            String   @id @default(uuid())\n  userId        String\n  user          User     @relation(fields: [userId], references: [id])\n  serviceId     String\n  service       Service  @relation(fields: [serviceId], references: [id])\n  slotId        String\n  slot          Slot     @relation(fields: [slotId], references: [id])\n  status        BookingStatus @default(PENDING)\n  paymentId     String?\n  createdAt     DateTime @default(now())\n}\n\n// Enums, Category, Review, Profile, etc. omitted for brevity\n```\nGeospatial queries use `ST_DWithin` via Prisma raw (`$queryRaw`) for nearest‑business search.\n\n## 7. API Contracts (OpenAPI‑style snippets)\n- **POST /auth/register** – `{email, password, firstName, lastName}` → `{accessToken, refreshToken}`\n- **GET /businesses?lat=&lng=&radius=&category=&q=&page=&limit=`** – returns paginated list with distance.\n- **GET /businesses/:id** – detailed info, services, avg rating.\n- **POST /bookings** – `{serviceId, slotId}` → booking record + payment intent.\n- **PATCH /bookings/:id/cancel** – updates status to CANCELED, frees slot.\n- **GET /provider/dashboard** – aggregated stats, upcoming bookings.\n- **POST /notifications/send** – enqueues BullMQ job (templateId, recipient, payload).\n\nAll endpoints are guarded by JWT (`Authorization: Bearer <token>`) and role‑based guards where needed.\n\n## 8. State Management & Data Fetching\n- **React Query** handles server state: queries (`useBusinesses`, `useBooking`) with automatic refetch intervals, stale‑time, and cache invalidation via query keys.\n- **Mutations** (`useCreateBooking`, `useCancelBooking`) trigger optimistic updates and invalidate related queries.\n- **Auth state** stored in SecureStore (Expo) and persisted via `expo-auth-session`; a lightweight context provides `currentUser` to UI.\n- **Reanimated 2** used for gesture‑driven UI (map drag, swipe‑to‑cancel) – runs on UI thread for 60fps.\n\n## 9. Authentication & Authorization\n- **Auth Module** issues access (15 min) and refresh (7 d) JWTs signed with RS256; public key stored in NestJS config.\n- **Refresh token** rotated on use, stored in Redis with user‑ID key for revocation.\n- **Roles**: `USER`, `PROVIDER`, `ADMIN`. Guards (`RolesGuard`) check `request.user.role`.\n- **Social login** (Google/Apple) handled via Expo `AuthSession`; backend verifies token and creates/link user.\n\n## 10. Caching & Performance\n- **Redis**: \n  - Session store (refresh tokens).\n  - Geo‑cache: hashed business IDs by geohash for rapid proximity lookups (TTL 5 min).\n  - Rate‑limiting token bucket per IP (express‑rate‑limit‑redis).\n- **React Query**: stale‑time 2 min for business lists, 5 min for business detail.\n- **Database indexes**: `GIST` on `location` column, composite indexes on `(categoryId, isActive)`.\n\n## 11. Background Jobs (BullMQ)\n- **Queues**: `email`, `sms`, `slot-recompute`, `payment-webhook`.\n- **Workers**: separate NestJS services (`JobsModule`) processing concurrency based on CPU count.\n- **Retry policy**: exponential backoff, max 3 attempts, dead‑letter queue for manual inspection.\n- **Slot recompute**: triggered on booking create/cancel/update; recalculates affected service slots and updates `Slot.isAvailable`.\n\n## 12. Payment Integration\n- **Provider**: Stripe Connect (or PayPal Payouts).\n- **Flow**: \n  1. Frontend creates payment intent via `/payment/create-intent`.\n  2. Confirms with Stripe SDK on client.\n  3. Webhook (`/payment/webhook`) verifies event, updates `Booking.paymentId` and status to `CONFIRMED`.\n  4. On success, triggers `slot-recompute` job and sends confirmation notification.\\n- **Webhook security**: signature verification using endpoint secret.\n\n## 13. Notifications\n- **Channels**: Push (Expo Notifications), Email (SendGrid/SMTP), SMS (Twilio).\n- **Template Service**: stores handlebar‑based templates; notification job renders payload and dispatches via appropriate provider.\n- **User Preferences**: stored in `UserNotificationSettings` (opt‑in per type).\n\n## 14. Provider & Admin Portals\n- Built as **Expo Web** apps sharing the same component library (`libs/ui`).\n- Provider portal: business CRUD, schedule editor (calendar heatmap), booking list, payouts.\n- Admin portal: user/business moderation, role management, system settings, audit logs (append‑only table).\n- Both portals reuse backend modules (`provider`, `admin`) – only UI differs.\n\n## 15. DevOps & CI/CD\n- **Local**: `docker compose up` spins up PostgreSQL (with PostGIS), Redis, and NestJS API (hot reload via `nx serve api`).\n- **Expo**: `eas build --platform ios/android` for store builds; `expo start` for development.\n- **GitHub Actions**:\n  - Lint (`nx lint`), TypeCheck (`nx type-check`), Unit/Jest tests (`nx test api mobile web`).\n  - On push to `main`: build Docker images, push to registry, deploy to staging via SSH/ECS.\n  - On tag: production release, trigger EAS store submission.\n- **Environment variables**: managed via `nx` workspace `.env.*` files; secrets injected in CI.\n\n## 16. Testing Strategy\n- **Unit**: Jest services, utilities, React components (with `@testing-library/react-native`).\n- **Integration**: SuperTest for API endpoints; Prisma uses a temporary test database (Docker).\n- **E2E**: Detox for critical flows (login → search → book → cancel).\n- **Coverage target**: 80%+ overall.\n\n## 17. Scalability & Future Enhancements\n- **Horizontal scaling**: API stateless; Redis session store enables multiple instances.\n- **Read replicas**: PostgreSQL read‑replica for heavy search queries.\n- **Search upgrade**: migrate to ElasticSearch/OpenSearch if geo‑search complexity grows.\n- **Feature flags**: launchdarkly‑style service for gradual rollout.\n- **Offline first**: persist React Query cache to AsyncStorage; queue mutations when offline.\n\n---\n*This architecture provides a clear separation of concerns, leverages the strengths of the chosen stack, and is ready for iterative delivery of the features outlined in the product specification.*\n",
-  "summary": "A clean‑architecture monorepo using Expo React Native, NestJS, Prisma/PostGIS, Redis, BullMQ, and Nx that separates mobile, web portal, and backend services with well‑defined APIs, caching, and background job processing."
-}
-}
+Tech Stack
+----------
+- Mobile: Expo (React Native, TypeScript), Expo Router, TanStack React Query, React Native Reanimated
+- Backend: NestJS (TypeScript), Prisma ORM, PostgreSQL + PostGIS, Redis, BullMQ (via NestJS)
+- Monorepo: Nx, pnpm
+- CI/CD: GitHub Actions, Docker Compose, EAS Build (mobile), Supabase (optional auth/storage)
+- Testing: Jest
+- Documentation: Shared types & design system
+
+High-Level Architecture
+-----------------------
+The system is divided into five layers, each enforced by Nx library boundaries:
+1. Presentation Layer (Expo mobile app)
+2. Application Layer (NestJS controllers, DTOs, validators)
+3. Domain Layer (NestJS services, business logic, use‑cases)
+4. Infrastructure Layer (Prisma models, Redis clients, external integrations)
+5. Data Layer (PostgreSQL/PostGIS, Redis)
+
+Mobile App Structure (apps/mobile)
+----------------------------------
+apps/mobile/
+├─ src/
+│   ├─ app/                 # Expo Router file‑based routes
+│   │   ├─ (tabs)/          # Tab navigator (Home, Search, Map, Profile, Bookings)
+│   │   │   ├─ home.tsx
+│   │   │   ├─ search.tsx
+│   │   │   ├─ map.tsx
+│   │   │   ├─ profile.tsx
+│   │   │   └─ bookings.tsx
+│   │   ├─ auth/
+│   │   │   ├─ sign-in.tsx
+│   │   │   ├─ sign-up.tsx
+│   │   │   └─ reset-password.tsx
+│   │   ├─ businesses/
+│   │   │   ├─ [id]/        # Business detail route
+│   │   │   │   ├─ index.tsx
+│   │   │   │   ├─ services.tsx
+│   │   │   │   ├─ reviews.tsx
+│   │   │   │   └─ book.tsx
+│   │   │   └─ list.tsx
+│   │   ├─ bookings/
+│   │   │   ├─ upcoming.tsx
+│   │   │   └─ history.tsx
+│   │   ├─ favorites/
+│   │   │   └─ index.tsx
+│   │   └─ _layout.tsx      # Root layout (providers, error boundaries)
+│   ├─ components/          # Shared UI components (design system)
+│   │   ├─ ui/
+│   │   │   ├─ button.tsx
+│   │   │   ├─ input.tsx
+│   │   │   ├─ card.tsx
+│   │   │   └─ modal.tsx
+│   │   ├─ layout/
+│   │   │   ├─ header.tsx
+│   │   │   └─ footer.tsx
+│   │   └─ maps/
+│   │       └─ map-view.tsx # Uses react‑native‑maps with Reanimated gestures
+│   ├─ hooks/               # Custom React hooks (query keys, form helpers)
+│   │   ├─ useAuth.ts
+│   │   ├─ useBusinesses.ts
+│   │   └─ useBooking.ts
+│   ├─ stores/              # Optional client‑state (Zustand/Jotai) for non‑query state
+│   │   └─ authStore.ts
+│   ├─ utils/               # Helper functions (date formatting, geolocation)
+│   │   ├─ geo.ts
+│   │   └─ formatting.ts
+│   ├─ assets/              # Images, icons, fonts
+│   │   └─ ...
+│   ├─ theme/               # Design system tokens (colors, spacing, typography)
+│   │   └─ tokens.ts
+│   └─ types/               # Shared TypeScript interfaces (imported from libs/shared-types)
+│       └─ index.ts
+├─ expo.config.ts
+├─ tsconfig.json
+└─ package.json
+
+Backend Structure (apps/api)
+----------------------------
+apps/api/
+├─ src/
+│   ├─ main.ts                  # NestJS bootstrap
+│   ├─ app.module.ts            # Root module
+│   ├─ config/                  # Configuration (dotenv, validation)
+│   │   └─ config.module.ts
+│   ├─ common/                  # Guards, interceptors, pipes, exceptions
+│   │   ├─ auth/
+│   │   │   ├─ jwt-auth.guard.ts
+│   │   │   └─ roles.guard.ts
+│   │   ├─ validation/
+│   │   │   └─ uuid.validation.pipe.ts
+│   │   └─ logging.interceptor.ts
+│   ├─ modules/                 # Feature modules (DDD‑style)
+│   │   ├─ auth/
+│   │   │   ├─ auth.controller.ts
+│   │   │   ├─ auth.service.ts
+│   │   │   ├─ dto/
+│   │   │   │   ├─ sign-up.dto.ts
+│   │   │   │   └─ sign-in.dto.ts
+│   │   │   ├─ entities/
+│   │   │   │   └─ user.entity.ts
+│   │   │   └─ auth.module.ts
+│   │   ├─ businesses/
+│   │   │   ├─ businesses.controller.ts
+│   │   │   ├─ businesses.service.ts
+│   │   │   ├─ dto/
+│   │   │   │   ├─ create-business.dto.ts
+│   │   │   │   └─ search-business.dto.ts
+│   │   │   ├─ entities/
+│   │   │   │   ├─ business.entity.ts
+│   │   │   │   ├─ service.entity.ts
+│   │   │   │   └─ category.entity.ts
+│   │   │   ├─ repositories/
+│   │   │   │   └─ business.repository.ts (Prisma)
+│   │   │   └─ businesses.module.ts
+│   │   ├─ bookings/
+│   │   │   ├─ bookings.controller.ts
+│   │   │   ├─ bookings.service.ts
+│   │   │   ├─ dto/
+│   │   │   │   ├─ create-booking.dto.ts
+│   │   │   │   ├─ reschedule-booking.dto.ts
+│   │   │   │   └─ cancel-booking.dto.ts
+│   │   │   ├─ entities/
+│   │   │   │   ├─ booking.entity.ts
+│   │   │   │   └─ time-slot.entity.ts
+│   │   │   ├─ repositories/
+│   │   │   │   └─ booking.repository.ts
+│   │   │   └─ bookings.module.ts
+│   │   ├─ reviews/
+│   │   │   ├─ reviews.controller.ts
+│   │   │   ├─ reviews.service.ts
+│   │   │   ├─ dto/
+│   │   │   │   └─ create-review.dto.ts
+│   │   │   ├─ entities/
+│   │   │   │   └─ review.entity.ts
+│   │   │   └─ reviews.module.ts
+│   │   ├─ payments/
+│   │   │   ├─ payments.controller.ts
+│   │   │   ├─ payments.service.ts
+│   │   │   ├─ dto/
+│   │   │   │   └─ process-payment.dto.ts
+│   │   │   ├─ entities/
+│   │   │   │   └─ payment.entity.ts
+│   │   │   └─ payments.module.ts
+│   │   ├─ notifications/
+│   │   │   ├─ notifications.controller.ts
+│   │   │   ├─ notifications.service.ts
+│   │   │   ├─ bullmq/
+│   │   │   │   ├─ processor/
+│   │   │   │   │   ├─ appointment-reminder.processor.ts
+│   │   │   │   │   └─ payment-receipt.processor.ts
+│   │   │   │   └─ queue.module.ts
+│   │   │   └─ notifications.module.ts
+│   │   ├─ admin/
+│   │   │   ├─ admin.controller.ts
+│   │   │   ├─ admin.service.ts
+│   │   │   ├─ dto/
+│   │   │   │   └─ user-management.dto.ts
+│   │   │   ├─ entities/
+│   │   │   │   └─ admin-user.entity.ts
+│   │   │   └─ admin.module.ts
+│   │   └─ providers/           # Business owner portal (similar to businesses but scoped)
+│   │       ├─ provider.controller.ts
+│   │       ├─ provider.service.ts
+│   │       └─ provider.module.ts
+│   ├─ prisma/                  # Prisma schema and client
+│   │   ├─ schema.prisma
+│   │   └─ seed.ts
+│   ├─ redis/                   # Redis client wrapper
+│   │   └─ redis.service.ts
+│   ├─ utils/                   # Geospatial helpers (PostGIS), slot calculation
+│   │   ├─ geo.utils.ts
+│   │   └─ slot-calculator.utils.ts
+│   └─ types/                   # Shared backend types (re‑export from libs/shared-types)
+│       └─ index.ts
+├─ Dockerfile
+├─ tsconfig.json
+└─ package.json
+
+Shared Nx Libraries
+-------------------
+libs/
+├─ shared-types/
+│   ├─ src/
+│   │   ├─ lib/
+│   │   │   ├─ user.ts
+│   │   │   ├─ business.ts
+│   │   │   ├─ booking.ts
+│   │   │   ├─ review.ts
+│   │   │   ├─ payment.ts
+│   │   │   └─ geo.ts
+│   │   └─ index.ts
+│   ├─ tsconfig.json
+│   └─ package.json
+├─ ui-kit/
+│   ├─ src/
+│   │   ├─ lib/
+│   │   │   ├─ button.tsx
+│   │   │   ├─ input.tsx
+│   │   │   ├─ card.tsx
+│   │   │   └─ modal.tsx
+│   │   └─ index.ts
+│   ├─ tsconfig.json
+│   └─ package.json
+├─ design-tokens/
+│   ├─ src/
+│   │   └─ lib/
+│   │       └─ tokens.ts
+│   ├─ tsconfig.json
+│   └─ package.json
+└─ utils/
+    ├─ src/
+    │   ├─ lib/
+    │   │   ├─ date.ts
+    │   │   ├─ validation.ts
+    │   │   └─ api-client.ts   # wrapper for React Query + fetch
+    │   └─ index.ts
+    ├─ tsconfig.json
+    └─ package.json
+
+Database Schema (Prisma)
+------------------------
+Prisma schema (apps/api/prisma/schema.prisma) defines:
+- User (id, email, passwordHash, role, createdAt, updatedAt)
+- Business (id, ownerId, name, description, address, lat, lng, phone, website, createdAt, updatedAt)
+- Service (id, businessId, name, durationMin, price, categoryId)
+- Category (id, name)
+- Booking (id, userId, businessId, serviceId, startTime, endTime, status, pricePaid, createdAt, updatedAt)
+- TimeSlot (id, businessId, serviceId, startTime, endTime, isAvailable)
+- Review (id, businessId, userId, rating, comment, createdAt)
+- Payment (id, bookingId, amount, provider, status, transactionId, createdAt)
+- AdminUser (id, email, passwordHash, role, createdAt)
+- Favorite (id, userId, businessId, createdAt)
+
+PostGIS extension is used for the `lat/lng` stored as a `Point` type; queries leverage `ST_DWithin` for radius‑based search.
+
+Caching & Pub/Sub
+-----------------
+- Redis caches:
+  * Business list/search results (TTL 5 min)
+  * User sessions (JWT refresh tokens)
+  * Popular services
+- BullMQ queues (via NestJS) for:
+  * Appointment reminder notifications
+  * Payment receipt emails/SMS
+  * Daily analytics aggregation
+
+CI/CD & DevOps
+--------------
+- GitHub Actions workflow:
+  * lint, type‑check, unit tests (Jest) on push/PR
+  * Docker build for API, push to registry
+  * EAS Build for iOS/Android on tag/release
+  * Deploy API to staging/prod via Docker Compose on VM or Kubernetes (optional)
+- Docker Compose (local dev):
+  * api (NestJS)
+  * db (PostgreSQL + PostGIS)
+  * redis
+  * (optional) maildev for email preview
+- Supabase used optionally for:
+  * Auth (email link) as alternative to custom JWT
+  * Storage for business images
+- Monitoring:
+  * API health endpoint
+  * React Query devtools in development
+  * Error tracking via Sentry (optional)
+  * Log aggregation (ELK or Loki)
+
+Service Boundaries
+------------------
+1. **Mobile App (Expo)** – Presentation only; communicates with API via REST. No direct DB access.
+2. **API Gateway (NestJS)** – Entry point; handles auth, validation, routing, rate limiting.
+3. **Domain Services** – Encapsulate business logic (booking flow, slot calculation, payment processing).
+4. **Data Access Layer** – Prisma models + repositories; abstracts DB.
+5. **Caching Layer** – Redis service; transparent to domain.
+6. **Background Workers** – BullMQ processors; triggered by domain events (e.g., booking created).
+7. **Admin/Provider Portals** – Separate NestJS modules sharing the same DB but with role‑based guards.
+8. **Shared Libraries** – Types, UI kit, utils; consumed by both mobile and API (via Nx).
+
+Data Flow Examples
+------------------
+- **Guest Search**:
+  1. Mobile → GET /businesses?lat=&lng=&radius=&category=
+  2. API controller validates query, calls BusinessService.
+  3. Service checks Redis cache; if miss, queries Prisma with PostGIS ST_DWithin.
+  4. Result cached, returned as JSON.
+- **Booking Flow**:
+  1. Mobile POST /bookings with JWT.
+  2. API validates JWT, validates DTO, checks slot availability via Service.
+  3. Service creates Booking record, marks TimeSlot as unavailable, creates Payment intent.
+  4. Event emitted → BullMQ queue for confirmation email & reminder.
+  5. Response returns booking details.
+- **Review Submission**:
+  1. Mobile POST /reviews with JWT.
+  2. API validates, creates Review, updates Business average rating (via trigger or service).
+  3. Cached business list invalidated.
+
+Security Considerations
+-----------------------
+- JWT (access token 15 min, refresh token 7 d) stored in SecureStore (expo‑secure‑store).
+- HTTPS enforced; API behind TLS.
+- Role‑based access control (USER, PROVIDER, ADMIN).
+- Input validation via class‑validator & DTOs.
+- Prisma protects against SQL injection.
+- Rate limiting via NestJS Throttler.
+- Sensitive payment details never stored; delegated to PCI‑compliant gateway (Stripe/PayPal).
+
+Scalability & Performance
+-------------------------
+- Horizontal scaling of API nodes behind a load balancer.
+- Read replicas for PostgreSQL for search‑heavy workloads.
+- Redis cluster for caching and BullMQ.
+- GIS indexing (GIST) on Point column for fast radius queries.
+- Pagination (cursor‑based) for large lists.
+- Lazy loading of images via Expo Image with CDN.
+
+Testing Strategy
+----------------
+- Unit tests: Jest for services, utilities, React hooks.
+- Integration tests: Supertest for API endpoints; React Native Testing Library for screens.
+- E2E: Detox for critical flows (login → search → book).
+- Test coverage target >80 %.
+
+Documentation & Onboarding
+--------------------------
+- Storybook for UI kit (optional).
+- Generated OpenAPI spec from NestJS controllers (Swagger module).
+- Internal Confluence/wiki with architecture decisions (ADRs).
+
+Conclusion
+----------
+This architecture separates concerns, leverages the power of an Nx monorepo for code sharing, uses battle‑tested tools (Expo, NestJS, Prisma, PostGIS, Redis) and provides a clear path to scale from MVP to a production‑ready appointment‑booking platform.
