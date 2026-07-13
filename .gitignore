@@ -58,24 +58,12 @@ dist/
 logs/
 *.log
 
-# Docs
-docs/user-roadmap/
-docs/user-roadmap/**
-docs/stitch_onboarding_welcome_to_bookly/
-docs/stitch_onboarding_welcome_to_bookly/**
-docs/skills/
-docs/skills/**
-docs/skills/**/*.md
-docs/skills/**/*.ts
-docs/skills/**/*.tsx
-docs/skills/**/*.js
-docs/skills/**/*.jsx
-!docs/
-!docs/README.md
-!docs/audit/
-!docs/audit/**
+# Docs — internal dev notes (optional local only)
+docs/internal/
 
-
-.nx/polygraph
-.claude/worktrees
-.claude/settings.local.json
+# AI / IDE tool configs (not part of the product)
+.agents/
+.cursor/
+.github/skills/
+.github/agents/
+.github/prompts/
