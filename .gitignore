@@ -75,3 +75,7 @@ docs/skills/**/*.jsx
 !docs/audit/
 !docs/audit/**
 
+
+.nx/polygraph
+.claude/worktrees
+.claude/settings.local.json
