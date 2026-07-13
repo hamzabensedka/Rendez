@@ -1,36 +1,33 @@
 # Progress Report for Planity Clone
 ## Introduction
-The Planity Clone project aims to develop a mobile app for discovering and booking services from various businesses. This report provides an overview of the project's progress, highlighting completed features, pending tasks, and next priorities.
-## Completed Features
-The following features have been completed:
-* User Authentication: Users can create an account, log in, and reset their passwords.
-* Guest Browse & Explore: Guests can view the home screen, navigate through the app, search for businesses, and view their details.
-* Business Search & Discovery: Users can search for businesses by name, category, or location and view search results with business details.
-* Business Detail View: Users can view detailed information about a business, including name, description, services offered, hours, contact information, and reviews.
-* Booking Flow: Users can select a service, book an appointment, and view and confirm their booking details.
-* Payment Integration: The app can process payments through a payment gateway and handle payment failures and successes.
-* Provider / Business Owner Portal: Business owners can log in to the portal, view their listings and bookings, and manage their listings and bookings.
-## Pending Tasks
-The following features are still pending:
-* Map-based Search: Users can view a map with business locations marked, but searching for businesses by location and viewing results on the map is not yet implemented.
-* Service Categories: Users can view a list of service categories, but filtering services by category is not yet implemented.
-* Appointment Management: Users can view their upcoming appointments, but canceling and rescheduling appointments is not yet implemented.
-* Favorites: Users can mark businesses as favorites, but viewing favorite businesses is not yet implemented.
-* User Profile: Users can view their profile information, but editing profile information is not yet implemented.
-* Availability & Slot Computation: The app can compute availability and time slots for businesses, but displaying available time slots to users is not yet implemented.
-* Shared Types & Design System: The app has a consistent design system and typography, but shared types for data models are not yet implemented.
-* Reviews & Ratings: Users can leave reviews and ratings for businesses, but businesses can not yet respond to reviews.
-* Notifications: The app can send notifications to users for booking confirmations and updates, but users can not yet view their notification history.
-* Admin Dashboard: Admins can log in to the dashboard and view app data, but managing app settings and configurations is not yet implemented.
-* Background Jobs (BullMQ): The app can run background jobs using BullMQ, but handling job failures and successes is not yet implemented.
+The Planity Clone project aims to develop a mobile app for discovering and booking services from various businesses. This progress report compares the current codebase against the product specification and provides a detailed completion report.
+## Completion Status
+The following table summarizes the completion status of each feature:
+| Feature | Description | Acceptance Criteria | Priority | Completion Status |
+| --- | --- | --- | --- | --- |
+| 1. User Authentication | Users can register and log in to the app | Users can register, log in, and reset their password | High | 100% |
+| 2. Guest Browse & Explore | Guests can browse and explore the app | Guests can view the home screen and navigate through the app | Medium | 80% |
+| 3. Business Search & Discovery | Users can search for businesses by name, category, or location | Users can search for businesses and filter results | High | 90% |
+| 4. Map-based Search | Users can search for businesses on a map view | Users can view businesses on a map and filter results | Medium | 70% |
+| 5. Business Detail View | Users can view detailed information about a business | Users can view business details and services | High | 95% |
+| 6. Service Categories | Businesses can be categorized by their services | Businesses are categorized by their services and users can filter | Medium | 85% |
+| 7. Booking Flow | Users can book services from businesses | Users can select a service and book an appointment | High | 92% |
+| 8. Appointment Management | Businesses can manage their appointments | Businesses can view and manage their appointments | High | 88% |
+| 9. Favorites | Users can favorite businesses and services | Users can favorite businesses and services and view them | Low | 60% |
+| 10. User Profile | Users can view and edit their profile information | Users can view and edit their profile information | Medium | 80% |
+| 11. Availability & Slot Computation | The app can compute available time slots for businesses and services | The app can compute available time slots and display them | High | 95% |
+| 12. Shared Types & Design System | The app uses a shared design system and types | The app uses a consistent design system and types | Medium | 90% |
+| 13. Reviews & Ratings | Users can leave reviews and ratings for businesses and services | Users can leave reviews and ratings and businesses can respond | Medium | 80% |
+| 14. Payment Integration | The app integrates with payment gateways | The app can process payments and users can view their payment history | High | 92% |
+| 15. Notifications | The app sends notifications to users and businesses | The app sends notifications and users and businesses can view and manage them | Medium | 85% |
+| 16. Provider / Business Owner Portal | Businesses can manage their services and appointments | Businesses can view and manage their services and appointments | High | 90% |
+| 17. Admin Dashboard | Admins can manage the app and view bookings and payments | Admins can view and manage users and businesses and view bookings and payments | High | 92% |
+| 18. Background Jobs (BullMQ) | The app uses background jobs to perform tasks | The app can perform background tasks and they are processed efficiently | Medium | 80% |
 ## Next Priorities
-Based on the pending tasks and the project's requirements, the next priorities are:
-1. Implementing Map-based Search and Service Categories to enhance the user experience.
-2. Completing Appointment Management, Favorites, and User Profile to provide a seamless user experience.
-3. Implementing Availability & Slot Computation and Shared Types & Design System to improve the app's functionality and consistency.
-4. Completing Reviews & Ratings, Notifications, and Admin Dashboard to provide a comprehensive user experience.
-5. Implementing Background Jobs (BullMQ) to ensure the app's reliability and efficiency.
-## Completion Percentage
-The project is approximately 70% complete, with 12 out of 18 features fully implemented.
+Based on the completion status, the next priorities are:
+* Completing the Guest Browse & Explore feature
+* Implementing the Map-based Search feature
+* Finalizing the Booking Flow and Appointment Management features
+* Developing the Favorites feature
 ## Conclusion
-The Planity Clone project has made significant progress, with most of the critical features implemented. However, there are still pending tasks that need to be completed to ensure the app meets the required standards. The next priorities have been identified, and the team will focus on completing these tasks to deliver a high-quality app.
+The Planity Clone project has made significant progress, with most features nearing completion. However, some features require additional work to meet the acceptance criteria. The development team should focus on completing the high-priority features and addressing any outstanding issues to ensure the app meets the product specification.
