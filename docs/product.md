@@ -1,6 +1,6 @@
 # Planity Clone Product Specification
 ## Introduction
-The Planity Clone is a mobile application designed to connect users with local businesses, allowing them to discover, book, and manage appointments. This document outlines the features, acceptance criteria, and priorities for the Planity Clone project.
+The Planity Clone is a mobile application designed to connect users with local businesses, allowing them to discover, book, and manage appointments. This document outlines the features, acceptance criteria, and priorities for the Planity Clone application.
 ## Features
 ### 1. User Authentication
 * Description: Users can create an account and log in to access personalized features.
@@ -16,24 +16,22 @@ The Planity Clone is a mobile application designed to connect users with local b
   + Guests can search for businesses.
 * Priority: Medium
 ### 3. Business Search & Discovery
-* Description: Users can search for businesses by name, category, or location.
+* Description: Users can search and discover local businesses.
 * Acceptance Criteria:
-  + Users can search for businesses by name.
-  + Users can search for businesses by category.
-  + Users can search for businesses by location.
+  + Users can search for businesses by name, category, or location.
+  + Users can view business listings with relevant information.
 * Priority: High
 ### 4. Map-based Search
 * Description: Users can search for businesses on a map view.
 * Acceptance Criteria:
   + Users can view businesses on a map.
-  + Users can filter businesses by category on the map.
+  + Users can filter businesses by category or distance.
 * Priority: Medium
 ### 5. Business Detail View
 * Description: Users can view detailed information about a business.
 * Acceptance Criteria:
-  + Users can view business hours.
-  + Users can view business services.
-  + Users can view business reviews.
+  + Users can view business hours, address, and contact information.
+  + Users can view services offered by the business.
 * Priority: High
 ### 6. Service Categories
 * Description: Businesses can be categorized by service type.
@@ -51,12 +49,12 @@ The Planity Clone is a mobile application designed to connect users with local b
 * Description: Users can manage their booked appointments.
 * Acceptance Criteria:
   + Users can view their upcoming appointments.
-  + Users can cancel or reschedule their appointments.
+  + Users can cancel or reschedule appointments.
 * Priority: High
 ### 9. Favorites
 * Description: Users can save their favorite businesses.
 * Acceptance Criteria:
-  + Users can add businesses to their favorites.
+  + Users can add businesses to their favorites list.
   + Users can view their favorite businesses.
 * Priority: Low
 ### 10. User Profile
@@ -66,16 +64,16 @@ The Planity Clone is a mobile application designed to connect users with local b
   + Users can edit their profile information.
 * Priority: Medium
 ### 11. Availability & Slot Computation
-* Description: The system can compute available time slots for businesses.
+* Description: The application computes available time slots for businesses.
 * Acceptance Criteria:
-  + The system can compute available time slots.
-  + The system can handle multiple booking schedules.
+  + The application can compute available time slots.
+  + The application can handle multiple bookings.
 * Priority: High
 ### 12. Shared Types & Design System
-* Description: A shared design system and type definitions are used across the application.
+* Description: The application uses a shared design system and types.
 * Acceptance Criteria:
-  + A consistent design system is used.
-  + Type definitions are shared across the application.
+  + The application uses a consistent design system.
+  + The application uses shared types for data consistency.
 * Priority: Medium
 ### 13. Reviews & Ratings
 * Description: Users can leave reviews and ratings for businesses.
@@ -84,32 +82,32 @@ The Planity Clone is a mobile application designed to connect users with local b
   + Businesses can respond to reviews.
 * Priority: Medium
 ### 14. Payment Integration
-* Description: The system can process payments for bookings.
+* Description: The application integrates with a payment gateway.
 * Acceptance Criteria:
-  + The system can process payments.
-  + The system can handle multiple payment methods.
+  + The application can process payments.
+  + The application can handle payment errors.
 * Priority: High
 ### 15. Notifications
-* Description: The system can send notifications for bookings and appointments.
+* Description: The application sends notifications to users and businesses.
 * Acceptance Criteria:
-  + The system can send notifications.
-  + Users can customize their notification settings.
+  + The application can send notifications.
+  + Users can control their notification preferences.
 * Priority: Medium
 ### 16. Provider / Business Owner Portal
 * Description: Businesses can manage their listings and bookings.
 * Acceptance Criteria:
-  + Businesses can view their bookings.
   + Businesses can manage their listings.
+  + Businesses can view and manage their bookings.
 * Priority: High
 ### 17. Admin Dashboard
-* Description: Admins can manage the application and its data.
+* Description: Administrators can manage the application and its data.
 * Acceptance Criteria:
-  + Admins can view application analytics.
-  + Admins can manage user and business data.
+  + Administrators can view application analytics.
+  + Administrators can manage user and business data.
 * Priority: Medium
 ### 18. Background Jobs (BullMQ)
-* Description: The system can run background jobs for tasks such as sending notifications.
+* Description: The application uses background jobs for tasks like sending notifications.
 * Acceptance Criteria:
-  + The system can run background jobs.
-  + Background jobs can be scheduled and managed.
+  + The application can run background jobs.
+  + The application can handle job failures.
 * Priority: Medium
