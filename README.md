@@ -1,72 +1,82 @@
-# Planity Clone - Booking Marketplace MVP
+# Rondez
 
-A salon/beauty booking marketplace with Apple-style UI/UX, built with React Native (Expo), NestJS, and Postgres.
+Salon and beauty booking marketplace with an Apple-inspired mobile experience. Discover local businesses, browse services, pick time slots, and manage appointments.
 
-## Tech Stack
+## Tech stack
 
-- **Mobile**: Expo React Native + TypeScript (Expo Router)
-- **Backend**: NestJS + Prisma + Postgres
-- **Monorepo**: Nx
+- **Monorepo:** Nx + pnpm
+- **Mobile:** Expo React Native, Expo Router, TypeScript
+- **Backend:** NestJS, Prisma, PostgreSQL (Supabase)
+- **Shared packages:** `@planity/ui` (design system), `@planity/shared` (types & utils)
 
-Cache/Jobs (Redis + BullMQ) and admin dashboard are planned; the current codebase is the API + mobile app only.
+## Features (shipped)
 
-## Getting Started
+- User auth (register, login, JWT refresh via SecureStore)
+- Explore businesses, business detail (services, staff, reviews placeholder)
+- Real-time availability and appointment booking
+- My bookings list and appointment detail
+- Device-local favorites
+- Provider business creation API (JWT-protected)
 
-**👉 See [QUICK_START.md](QUICK_START.md) for detailed step-by-step instructions!**
-
-### Quick Overview
-
-1. **Install dependencies:**
-   ```bash
-   pnpm install
-   ```
-
-2. **Set up environment variables:**
-   - API: Copy `apps/api/.env.example` to `apps/api/.env` and set `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` (see [QUICK_START.md](QUICK_START.md) or `SUPABASE_SETUP.md`).
-   - Mobile: Create `apps/mobile/.env` with `EXPO_PUBLIC_API_URL=http://localhost:3000/v1`
-
-3. **Set up database (Supabase):**
-   ```bash
-   cd apps/api
-   pnpm prisma:generate
-   pnpm prisma:migrate
-   pnpm prisma:seed
-   ```
-
-4. **Start development servers:**
-   - Terminal 1: `cd apps/api && pnpm start:dev` (API at http://localhost:3000/v1)
-   - Terminal 2: `cd apps/mobile && pnpm start` (Mobile app via Expo)
-
-**For detailed instructions, see [QUICK_START.md](QUICK_START.md)**
-
-## Project Structure
+## Project structure
 
 ```
 apps/
-  api/          # NestJS backend
-  mobile/       # Expo React Native app
-
+  api/       # NestJS backend (prefix /v1)
+  mobile/    # Expo React Native app
 packages/
-  shared/       # Shared types, utils, constants
-  ui/           # Design tokens, components
-  config/       # ESLint, TypeScript configs
-
-docs/           # Architecture, roadmap, audit notes
+  shared/    # Types, utils, constants
+  ui/        # Design tokens and components
+docs/        # Architecture, setup, product spec
 ```
 
-Planned later: admin dashboard (Next.js), Redis/BullMQ, deployment/infra.
+## Getting started
 
-## Development
+**Full setup guide:** [docs/setup/QUICK_START.md](docs/setup/QUICK_START.md)
 
-- `pnpm dev` - Start all apps in dev mode
-- `pnpm build` - Build all apps
-- `pnpm lint` - Lint all projects
-- `pnpm test` - Run tests
-- `pnpm nx serve api` - Start API only
-- `pnpm nx start mobile` - Start mobile app only
+### Quick start
 
-## Environment Variables
+```bash
+pnpm install
 
-- **API**: Copy `apps/api/.env.example` to `apps/api/.env` and set real values (never commit `.env` or real secrets). See [QUICK_START.md](QUICK_START.md).
-- **Mobile**: Create `apps/mobile/.env` with `EXPO_PUBLIC_API_URL` pointing at your API.
+# API
+cd apps/api && cp .env.example .env
+# Set DATABASE_URL, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET
+pnpm prisma:generate && pnpm prisma:migrate && pnpm prisma:seed
+pnpm start:dev                    # http://localhost:3000/v1
 
+# Mobile (separate terminal)
+cd apps/mobile
+# Create .env with EXPO_PUBLIC_API_URL=http://localhost:3000/v1
+pnpm start
+```
+
+Swagger API docs: `http://localhost:3000/api` when the API is running.
+
+## Documentation
+
+| Doc | Description |
+|-----|-------------|
+| [docs/setup/QUICK_START.md](docs/setup/QUICK_START.md) | Step-by-step local setup |
+| [docs/setup/SUPABASE_SETUP.md](docs/setup/SUPABASE_SETUP.md) | Supabase database setup |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture |
+| [docs/IMPLEMENTATION_SUMMARY.md](docs/IMPLEMENTATION_SUMMARY.md) | What's built vs. roadmap |
+| [docs/product.md](docs/product.md) | Product specification |
+| [apps/api/README.md](apps/api/README.md) | API module reference |
+
+## Development commands
+
+```bash
+pnpm dev          # Start API + mobile in parallel
+pnpm build        # Build all apps
+pnpm lint         # Lint all projects
+pnpm test         # Run tests
+```
+
+## Roadmap
+
+Payments, admin dashboard (Next.js), Redis/BullMQ job queue, provider mobile app, push notifications, account-level favorites.
+
+## License
+
+Private — portfolio project.
