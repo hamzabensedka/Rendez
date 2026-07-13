@@ -58,9 +58,6 @@ dist/
 logs/
 *.log
 
-# Docs — internal dev notes (optional local only)
-docs/internal/
-
 # AI / IDE tool configs (not part of the product)
 .agents/
 .cursor/
