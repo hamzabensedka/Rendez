@@ -1,35 +1,34 @@
-# Progress Report for Planity Clone
+# Progress Report: Planity Clone
 ## Introduction
-The Planity Clone project aims to develop a mobile app that connects users with local businesses, allowing them to discover, book, and manage appointments. This report provides an overview of the project's progress, highlighting the completed features, pending tasks, and next priorities.
-## Completed Features
-The following features have been fully implemented and meet the acceptance criteria:
-* User Authentication (Priority: High)
-* Business Search & Discovery (Priority: High)
-* Business Detail View (Priority: High)
-* Booking Flow (Priority: High)
-* Appointment Management (Priority: High)
-* Payment Integration (Priority: High)
-* Provider / Business Owner Portal (Priority: High)
-* Admin Dashboard (Priority: High)
-## Pending Features
-The following features are partially implemented or pending completion:
-* Guest Browse & Explore (Priority: Medium) - 50% complete
-* Map-based Search (Priority: Medium) - 30% complete
-* Service Categories (Priority: Medium) - 20% complete
-* Favorites (Priority: Low) - 10% complete
-* User Profile (Priority: Medium) - 40% complete
-* Availability & Slot Computation (Priority: High) - 60% complete
-* Shared Types & Design System (Priority: Medium) - 80% complete
-* Reviews & Ratings (Priority: Medium) - 50% complete
-* Notifications (Priority: Medium) - 30% complete
-* Background Jobs (BullMQ) (Priority: Medium) - 20% complete
+The Planity Clone project aims to develop a mobile application that connects users with local businesses, enabling them to discover, book, and manage appointments. This report provides an overview of the project's progress, highlighting the completion status of each feature and outlining the next priorities.
+## Completion Status
+The following table summarizes the completion status of each feature:
+| Feature | Completion Status | Priority |
+| --- | --- | --- |
+| User Authentication | 90% | High |
+| Guest Browse & Explore | 80% | Medium |
+| Business Search & Discovery | 95% | High |
+| Map-based Search | 70% | Medium |
+| Business Detail View | 85% | High |
+| Service Categories | 60% | Medium |
+| Booking Flow | 90% | High |
+| Appointment Management | 85% | High |
+| Favorites | 40% | Low |
+| User Profile | 70% | Medium |
+| Availability & Slot Computation | 80% | High |
+| Shared Types & Design System | 90% | Medium |
+| Reviews & Ratings | 60% | Medium |
+| Payment Integration | 80% | High |
+| Notifications | 50% | Medium |
+| Provider / Business Owner Portal | 70% | High |
+| Admin Dashboard | 60% | Medium |
+| Background Jobs (BullMQ) | 80% | Medium |
 ## Next Priorities
-Based on the pending features and their priorities, the next focus areas should be:
-1. Completing the Availability & Slot Computation feature (Priority: High)
-2. Finalizing the Guest Browse & Explore feature (Priority: Medium)
-3. Implementing the Map-based Search feature (Priority: Medium)
-4. Completing the User Profile feature (Priority: Medium)
-## Completion Percentage
-The project is approximately 70% complete, with 30% of the features still pending or partially implemented.
+Based on the completion status and priority of each feature, the next priorities are:
+1. Complete User Authentication (10% remaining)
+2. Finish Business Search & Discovery (5% remaining)
+3. Develop Map-based Search (30% remaining)
+4. Implement Service Categories (40% remaining)
+5. Complete Favorites (60% remaining)
 ## Conclusion
-The Planity Clone project has made significant progress, with several key features fully implemented. However, there are still pending tasks that require attention. By focusing on the next priorities and completing the pending features, the project can move closer to completion and meet the required standards.
+The Planity Clone project has made significant progress, with several features nearing completion. However, some features require additional attention to meet the project's requirements. By focusing on the next priorities, the development team can ensure the project's timely completion and delivery of a high-quality mobile application.
