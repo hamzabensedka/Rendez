@@ -1,17 +1,41 @@
-import { IsNumber, IsString, IsOptional, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsArray,
+  IsIn,
+  Min,
+} from 'class-validator';
 
 export class CreatePaymentIntentDto {
-  @IsNumber()
-  @Min(0.5)
-  amount: number;
+  @IsString()
+  appointmentId: string;
 
   @IsString()
+  userId: string;
+
   @IsOptional()
+  @IsIn(['eur', 'usd', 'gbp'])
   currency?: string;
 
-  @IsString()
-  businessId: string;
+  @IsOptional()
+  @IsIn(['automatic', 'manual'])
+  captureMethod?: 'automatic' | 'manual';
 
-  @IsString()
-  customerId: string;
+  @IsOptional()
+  @IsArray()
+  paymentMethodTypes?: string[];
+
+  @IsOptional()
+  savePaymentMethod?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  tipAmount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountAmount?: number;
 }

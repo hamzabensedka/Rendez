@@ -1,9 +1,13 @@
-import { IsString } from 'class-validator';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
 
 export class SavePaymentMethodDto {
   @IsString()
-  customerId: string;
+  userId: string;
 
   @IsString()
-  paymentMethodId: string;
+  setupIntentId: string;
+
+  @IsOptional()
+  @IsBoolean()
+  setAsDefault?: boolean;
 }

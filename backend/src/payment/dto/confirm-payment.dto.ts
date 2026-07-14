@@ -1,6 +1,14 @@
-import { IsString } from 'class-validator';
+import { IsString, IsOptional } from 'class-validator';
 
 export class ConfirmPaymentDto {
   @IsString()
-  paymentIntentId: string;
+  paymentId: string;
+
+  @IsOptional()
+  @IsString()
+  paymentMethodId?: string;
+
+  @IsOptional()
+  @IsString()
+  returnUrl?: string;
 }
