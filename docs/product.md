@@ -1,119 +1,113 @@
 # Planity Clone Product Specification
 ## Introduction
-The Planity Clone is a mobile app that allows users to discover and book services from various businesses. The app aims to provide a seamless user experience, making it easy for users to find and book services.
+The Planity Clone is a mobile app designed to connect users with local businesses, allowing them to discover, book, and manage appointments. This document outlines the features, acceptance criteria, and priorities for the app.
 ## Features
 ### 1. User Authentication
-* Description: Allow users to log in and register for the app
+* Description: Users can register and log in to their accounts using email, password, or social media.
 * Acceptance Criteria:
-  + Users can register for the app using their email and password
-  + Users can log in to the app using their registered email and password
-  + Users can reset their password
+  + Users can successfully register for an account.
+  + Users can log in and out of their accounts.
+  + Password reset and account recovery functions work as expected.
 * Priority: High
 ### 2. Guest Browse & Explore
-* Description: Allow guests to browse and explore the app without logging in
+* Description: Guests can browse and explore businesses without an account.
 * Acceptance Criteria:
-  + Guests can view the app's home screen
-  + Guests can browse through the list of businesses
-  + Guests can view business details
+  + Guests can view business listings and details.
+  + Guests can search for businesses by location or category.
 * Priority: Medium
 ### 3. Business Search & Discovery
-* Description: Allow users to search for businesses and discover new ones
+* Description: Users can search for businesses by location, category, or keyword.
 * Acceptance Criteria:
-  + Users can search for businesses by name, category, or location
-  + Users can view a list of search results
-  + Users can filter search results by rating, distance, or category
+  + Search results are accurate and relevant.
+  + Users can filter search results by distance, rating, or category.
 * Priority: High
 ### 4. Map-based Search
-* Description: Allow users to search for businesses on a map
+* Description: Users can search for businesses on a map view.
 * Acceptance Criteria:
-  + Users can view a map of businesses
-  + Users can search for businesses by location
-  + Users can view business details on the map
+  + Businesses are accurately displayed on the map.
+  + Users can filter map results by distance or category.
 * Priority: Medium
 ### 5. Business Detail View
-* Description: Display detailed information about a business
+* Description: Users can view detailed information about a business, including services, reviews, and contact information.
 * Acceptance Criteria:
-  + Users can view business details, including name, address, phone number, and hours of operation
-  + Users can view business reviews and ratings
-  + Users can view business services and prices
+  + Business details are accurate and up-to-date.
+  + Users can view reviews and ratings for the business.
 * Priority: High
 ### 6. Service Categories
-* Description: Allow users to view and select service categories
+* Description: Businesses can be categorized by service type (e.g. hair salons, restaurants).
 * Acceptance Criteria:
-  + Users can view a list of service categories
-  + Users can select a service category to view businesses that offer that service
+  + Service categories are accurately displayed.
+  + Users can filter businesses by service category.
 * Priority: Medium
 ### 7. Booking Flow
-* Description: Allow users to book services from businesses
+* Description: Users can book appointments with businesses through the app.
 * Acceptance Criteria:
-  + Users can select a business and service to book
-  + Users can select a date and time for the booking
-  + Users can confirm their booking
+  + Booking process is straightforward and easy to use.
+  + Users receive confirmation of their bookings.
 * Priority: High
 ### 8. Appointment Management
-* Description: Allow users to manage their appointments
+* Description: Users can manage their booked appointments, including rescheduling or canceling.
 * Acceptance Criteria:
-  + Users can view their upcoming appointments
-  + Users can cancel or reschedule their appointments
-  + Users can receive reminders for their appointments
-* Priority: Medium
+  + Users can view and manage their upcoming appointments.
+  + Users can reschedule or cancel appointments as needed.
+* Priority: High
 ### 9. Favorites
-* Description: Allow users to favorite businesses and services
+* Description: Users can save their favorite businesses for easy access.
 * Acceptance Criteria:
-  + Users can favorite businesses and services
-  + Users can view their favorite businesses and services
+  + Users can add and remove businesses from their favorites list.
+  + Favorites are accurately displayed and easily accessible.
 * Priority: Low
 ### 10. User Profile
-* Description: Allow users to view and edit their profile information
+* Description: Users can view and edit their profile information, including name, email, and password.
 * Acceptance Criteria:
-  + Users can view their profile information, including name, email, and phone number
-  + Users can edit their profile information
+  + Users can view and edit their profile information.
+  + Profile information is accurately saved and displayed.
 * Priority: Medium
 ### 11. Availability & Slot Computation
-* Description: Compute available time slots for businesses
+* Description: Businesses can set their availability and the app will compute available time slots for booking.
 * Acceptance Criteria:
-  + The app can compute available time slots for businesses
-  + The app can display available time slots to users
+  + Businesses can set their availability accurately.
+  + Available time slots are accurately computed and displayed.
 * Priority: High
 ### 12. Shared Types & Design System
-* Description: Establish a shared design system and types for the app
+* Description: A shared design system and type definitions will be used across the app for consistency.
 * Acceptance Criteria:
-  + The app has a consistent design system
-  + The app uses shared types for data models
+  + Design system is consistently applied across the app.
+  + Type definitions are accurate and consistent.
 * Priority: Medium
 ### 13. Reviews & Ratings
-* Description: Allow users to leave reviews and ratings for businesses
+* Description: Users can leave reviews and ratings for businesses.
 * Acceptance Criteria:
-  + Users can leave reviews and ratings for businesses
-  + Businesses can respond to reviews
+  + Users can leave reviews and ratings for businesses.
+  + Reviews and ratings are accurately displayed and updated.
 * Priority: Medium
 ### 14. Payment Integration
-* Description: Integrate payment gateways for booking services
+* Description: The app will integrate with a payment gateway for secure payments.
 * Acceptance Criteria:
-  + The app can process payments through a payment gateway
-  + The app can handle payment errors and exceptions
+  + Payments are processed securely and accurately.
+  + Users receive confirmation of successful payments.
 * Priority: High
 ### 15. Notifications
-* Description: Send notifications to users for appointments and bookings
+* Description: The app will send notifications to users for bookings, appointments, and other important events.
 * Acceptance Criteria:
-  + The app can send notifications to users
-  + The app can handle notification preferences
+  + Notifications are sent accurately and in a timely manner.
+  + Users can manage their notification preferences.
 * Priority: Medium
 ### 16. Provider / Business Owner Portal
-* Description: Create a portal for business owners to manage their services and bookings
+* Description: Businesses can manage their listings, bookings, and availability through a provider portal.
 * Acceptance Criteria:
-  + Business owners can log in to the portal
-  + Business owners can manage their services and bookings
+  + Businesses can manage their listings and bookings accurately.
+  + Businesses can set their availability and receive bookings.
 * Priority: High
 ### 17. Admin Dashboard
-* Description: Create an admin dashboard to manage the app and its data
+* Description: Admins can manage the app, including user and business management, through an admin dashboard.
 * Acceptance Criteria:
-  + Admins can log in to the dashboard
-  + Admins can manage app data and settings
+  + Admins can manage users and businesses accurately.
+  + Admins can view analytics and insights on app usage.
 * Priority: Medium
 ### 18. Background Jobs (BullMQ)
-* Description: Run background jobs for tasks such as sending notifications and computing availability
+* Description: The app will use a background job queue to process tasks asynchronously.
 * Acceptance Criteria:
-  + The app can run background jobs
-  + The app can handle job errors and exceptions
+  + Background jobs are processed accurately and efficiently.
+  + Errors are handled and logged correctly.
 * Priority: Medium
