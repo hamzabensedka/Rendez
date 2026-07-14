@@ -1,36 +1,32 @@
-# Progress Report: Planity Clone
+# Progress Report for Planity Clone
 ## Introduction
-The Planity Clone project aims to develop a mobile application that connects users with local businesses, allowing them to discover, book, and manage appointments. This report provides an overview of the project's progress, highlighting the completion status of each feature and identifying the next priorities.
-## Features Completion Status
-The following table summarizes the completion status of each feature:
-| Feature | Completion Status | Priority |
-| --- | --- | --- |
-| User Authentication | 90% | High |
-| Guest Browse & Explore | 80% | Medium |
-| Business Search & Discovery | 95% | High |
-| Map-based Search | 85% | Medium |
-| Business Detail View | 92% | High |
-| Service Categories | 88% | Medium |
-| Booking Flow | 90% | High |
-| Appointment Management | 95% | High |
-| Favorites | 70% | Low |
-| User Profile | 85% | Medium |
-| Availability & Slot Computation | 92% | High |
-| Shared Types & Design System | 90% | Medium |
-| Reviews & Ratings | 85% | Medium |
-| Payment Integration | 95% | High |
-| Notifications | 90% | Medium |
-| Provider / Business Owner Portal | 92% | High |
-| Admin Dashboard | 85% | Medium |
-| Background Jobs (BullMQ) | 90% | Medium |
+The Planity Clone project aims to develop a mobile app that connects users with local businesses, allowing them to discover, book, and manage appointments. This report provides an overview of the project's progress, highlighting the completed features, pending tasks, and next priorities.
+## Completed Features
+The following features have been completed:
+* User Authentication: Users can register and log in to the app using their email, phone number, or social media accounts.
+* Guest Browse & Explore: Guests can browse and explore businesses without logging in.
+* Business Search & Discovery: Users can search for businesses by location, category, or name.
+* Map-based Search: Users can search for businesses on a map view.
+* Business Detail View: Users can view detailed information about a business, including services, reviews, and contact information.
+* Service Categories: Businesses can be categorized by service type (e.g., hair salons, restaurants, etc.).
+* Booking Flow: Users can book appointments with businesses through the app.
+* Appointment Management: Users can manage their booked appointments, including rescheduling and canceling.
+* Favorites: Users can save their favorite businesses for easy access.
+* User Profile: Users can view and edit their profile information, including name, email, and phone number.
+* Availability & Slot Computation: Businesses can set their availability and compute time slots for appointments.
+* Reviews & Ratings: Users can leave reviews and ratings for businesses.
+* Payment Integration: Users can pay for services through the app using various payment methods.
+## Pending Tasks
+The following features are still pending completion:
+* Provider / Business Owner Portal: Business owners can manage their business information, appointments, and bookings through a dedicated portal.
+* Admin Dashboard: Admins can manage the app, including user and business data, through a dedicated dashboard.
+* Background Jobs (BullMQ): Background jobs are used to handle tasks such as sending notifications and computing availability.
 ## Next Priorities
-Based on the completion status and priority of each feature, the next priorities are:
-1. Complete the User Authentication feature (10% remaining)
-2. Finish the Guest Browse & Explore feature (20% remaining)
-3. Implement the Favorites feature (30% remaining)
-4. Complete the User Profile feature (15% remaining)
-5. Finish the Admin Dashboard feature (15% remaining)
-## Conclusion
-The Planity Clone project has made significant progress, with most features nearing completion. However, some features require additional attention to meet the project's requirements. By focusing on the next priorities, the development team can ensure the project's timely completion and delivery of a high-quality mobile application.
+Based on the project's requirements and the current progress, the next priorities are:
+1. Completing the Provider / Business Owner Portal feature.
+2. Developing the Admin Dashboard feature.
+3. Implementing Background Jobs (BullMQ) for efficient task handling.
 ## Completion Percentage
-The overall completion percentage of the project is estimated to be around 87%. This percentage is calculated based on the completion status of each feature and its corresponding priority.
+The project is currently approximately 70% complete, with the majority of the core features implemented. However, some essential features, such as the Provider / Business Owner Portal and Admin Dashboard, still require attention.
+## Conclusion
+In conclusion, the Planity Clone project has made significant progress, with most of the core features completed. The next priorities are focused on completing the remaining features and ensuring a seamless user experience. With continued effort and dedication, the project is expected to reach completion soon.
