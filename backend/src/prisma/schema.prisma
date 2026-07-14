@@ -1,75 +1,251 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  passwordHash  String?
-  name          String?
-  phone         String?
-  role          String    @default("CLIENT")
-  fcmToken      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  bookings      Booking[]
-  notifications Notification[]
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String?
+  role      String   @default("Customer") // Customer | BusinessOwner | Admin
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile     UserProfile?
+  appointments Appointment[]
+  payments    Payment[]
+  reviews     Review[]
+  favorites   Favorite[]
+  paymentMethods PaymentMethod[]
+}
+
+model UserProfile {
+  id               String  @id @default(uuid())
+  userId           String  @unique
+  user             User    @relation(fields: [userId], references: [id])
+  name             String?
+  phone            String?
+  photo            String?
+  birthday         DateTime?
+  gender           String?
+  stripeCustomerId String?
+
+  addresses       SavedAddress[]
+  notificationPrefs Json?
+}
+
+model SavedAddress {
+  id        String  @id @default(uuid())
+  profileId String
+  profile   UserProfile @relation(fields: [profileId], references: [id])
+  label     String
+  lat       Float
+  lng       Float
+  address   String
 }
 
 model Business {
-  id          String     @id @default(uuid())
+  id          String   @id @default(uuid())
+  ownerId     String
   name        String
   description String?
-  address     String
-  latitude    Float
-  longitude   Float
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  phone       String?
+  email       String?
+  website     String?
+  categoryId  String?
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  location    BusinessLocation?
+  hours       BusinessHour[]
   services    Service[]
-  bookings    Booking[]
+  staff       Staff[]
+  appointments Appointment[]
+  reviews     Review[]
+  promotions  Promotion[]
+}
+
+model BusinessLocation {
+  id         String  @id @default(uuid())
+  businessId String  @unique
+  business   Business @relation(fields: [businessId], references: [id])
+  lat        Float
+  lng        Float
+  address    String
+  city       String?
+  postcode   String?
+}
+
+model BusinessHour {
+  id         String @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  dayOfWeek  Int    // 0-6 Sun-Sat
+  openTime   String // HH:mm
+  closeTime  String // HH:mm
 }
 
 model Service {
-  id          String    @id @default(uuid())
-  name        String
-  duration    Int
-  price       Float
+  id          String   @id @default(uuid())
   businessId  String
   business    Business  @relation(fields: [businessId], references: [id])
-  bookings    Booking[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  name        String
+  description String?
+  price       Float
+  durationMin Int
+  bufferMin   Int      @default(0)
+  categoryId  String?
+  isActive    Boolean  @default(true)
 }
 
-model Booking {
-  id              String   @id @default(uuid())
-  clientId        String
-  client          User     @relation(fields: [clientId], references: [id])
+model Staff {
+  id         String  @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  name       String
+  specialty  String?
+  photo      String?
+  isActive   Boolean @default(true)
+
+  schedules  StaffSchedule[]
+  timeOffs   TimeOff[]
+  appointments Appointment[]
+}
+
+model StaffSchedule {
+  id        String @id @default(uuid())
+  staffId   String
+  staff     Staff  @relation(fields: [staffId], references: [id])
+  dayOfWeek Int
+  openTime  String
+  closeTime String
+}
+
+model TimeOff {
+  id      String   @id @default(uuid())
+  staffId String
+  staff   Staff    @relation(fields: [staffId], references: [id])
+  start   DateTime
+  end     DateTime
+  reason  String?
+}
+
+model Appointment {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
   businessId      String
-  business        Business @relation(fields: [businessId], references: [id])
+  business        Business  @relation(fields: [businessId], references: [id])
   serviceId       String
-  service         Service  @relation(fields: [serviceId], references: [id])
-  date            DateTime
-  status          String   @default("CONFIRMED")
-  reminder24hSent Boolean  @default(false)
-  reminder1hSent  Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  staffId         String?
+  staff           Staff?    @relation(fields: [staffId], references: [id])
+  status          String    @default("Pending") // Pending|Confirmed|Completed|Cancelled|NoShow
+  startTime       DateTime
+  endTime         DateTime
+  price           Float
+  serviceName     String?
+  bookingHeldUntil DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  payment         Payment?
+  review          Review?
 }
 
-model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  title     String
-  body      String
-  type      String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Payment {
+  id                    String   @id @default(uuid())
+  appointmentId         String   @unique
+  appointment           Appointment @relation(fields: [appointmentId], references: [id])
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id])
+  stripePaymentIntentId String?  @unique
+  amount                Int
+  currency              String   @default("eur")
+  status                String   @default("payment_processing") // payment_processing|payment_succeeded|failed|cancelled|refunded|partially_refunded
+  idempotencyKey        String?
+  captureMethod         String?
+  failureMessage        String?
+  paidAt                DateTime?
+  failedAt              DateTime?
+  metadata              Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  refunds               Refund[]
+}
+
+model Refund {
+  id             String   @id @default(uuid())
+  paymentId      String
+  payment        Payment  @relation(fields: [paymentId], references: [id])
+  stripeRefundId String   @unique
+  amount         Int
+  status         String
+  reason         String?
+  createdAt      DateTime @default(now())
+}
+
+model PaymentMethod {
+  id                     String   @id @default(uuid())
+  userId                 String
+  user                   User     @relation(fields: [userId], references: [id])
+  stripePaymentMethodId  String   @unique
+  stripeCustomerId       String
+  type                   String   // card, ideal, etc
+  lastFour               String?
+  brand                  String?
+  expiryMonth            Int?
+  expiryYear             Int?
+  isDefault              Boolean  @default(false)
+  lastUsedAt             DateTime?
+  createdAt              DateTime @default(now())
+}
+
+model StripeWebhookEvent {
+  id            String   @id @default(uuid())
+  stripeEventId String   @unique
+  type          String
+  payload       Json
+  createdAt     DateTime @default(now())
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id])
+  appointmentId String? @unique
+  rating       Int      // 1-5
+  text         String?
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
+model Favorite {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  businessId String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, businessId])
+}
+
+model Promotion {
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  code       String   @unique
+  discountPercent Float?
+  discountAmount  Float?
+  validFrom  DateTime
+  validUntil DateTime
+  maxUses    Int?
+  usedCount  Int      @default(0)
 }
