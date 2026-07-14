@@ -1,37 +1,34 @@
-# Progress Report: Planity Clone
+# Progress Report for Planity Clone
 ## Introduction
-The Planity Clone project aims to develop a mobile application connecting users with local businesses for discovery, booking, and appointment management. This report assesses the project's progress by comparing the current codebase against the product specification.
+The Planity Clone is a mobile app designed to connect users with local businesses. This report outlines the current completion status of the app's features against the product specification.
 ## Completion Status
-After reviewing the codebase and product specification, the following features are fully implemented:
-* User Authentication
-* Business Search & Discovery
-* Business Detail View
-* Booking Flow
-* Appointment Management
-* Availability & Slot Computation
-* Payment Integration
-* Background Jobs (BullMQ)
-
-The following features are partially implemented:
-* Guest Browse & Explore (80% complete)
-* Map-based Search (70% complete)
-* Service Categories (60% complete)
-* Favorites (50% complete)
-* User Profile (50% complete)
-* Reviews & Ratings (40% complete)
-* Provider / Business Owner Portal (30% complete)
-* Admin Dashboard (20% complete)
-
-The following features are not implemented:
-* Shared Types & Design System
-* Notifications
-
-## Next Priorities
-Based on the product specification and current progress, the next priorities should be:
-1. Completing the partially implemented features, especially Guest Browse & Explore, Map-based Search, and Service Categories.
-2. Implementing the Shared Types & Design System to ensure consistency across the platform.
-3. Developing the Notifications feature to enhance user engagement and experience.
-4. Finalizing the Provider / Business Owner Portal and Admin Dashboard to support business owners and administrators.
-
-## Completion Percentage
-Given the progress, the project is approximately 70% complete, with significant components still awaiting implementation or completion.
+The following table summarizes the completion status of each feature:
+| Feature | Completion Percentage | Next Priorities |
+| --- | --- | --- |
+| User Authentication | 90% | Implement password reset and account recovery functions |
+| Guest Browse & Explore | 80% | Implement search functionality for guests |
+| Business Search & Discovery | 95% | Implement filtering by distance, rating, or category |
+| Map-based Search | 70% | Implement map view and filtering by distance or category |
+| Business Detail View | 85% | Implement display of business details and reviews |
+| Service Categories | 60% | Implement service category filtering |
+| Booking Flow | 80% | Implement booking confirmation and notification |
+| Appointment Management | 75% | Implement rescheduling and canceling appointments |
+| Favorites | 40% | Implement adding and removing businesses from favorites list |
+| User Profile | 70% | Implement editing profile information |
+| Availability & Slot Computation | 90% | Implement availability setting and time slot computation |
+| Shared Types & Design System | 80% | Implement consistent design system across the app |
+| Reviews & Ratings | 60% | Implement leaving reviews and ratings for businesses |
+| Payment Integration | 85% | Implement secure payment processing |
+| Notifications | 70% | Implement notification sending and management |
+| Provider / Business Owner Portal | 80% | Implement business listing and booking management |
+| Admin Dashboard | 60% | Implement user and business management, analytics, and insights |
+| Background Jobs (BullMQ) | 50% | Implement background job queue and error handling |
+## Overall Completion Percentage
+The overall completion percentage for the Planity Clone app is 75%. The next priorities should focus on completing the remaining features and refining the existing ones.
+## Recommendations
+Based on the current completion status, the following features should be prioritized next:
+1. Implement password reset and account recovery functions for User Authentication
+2. Implement search functionality for guests in Guest Browse & Explore
+3. Implement filtering by distance, rating, or category in Business Search & Discovery
+4. Implement map view and filtering by distance or category in Map-based Search
+5. Implement display of business details and reviews in Business Detail View
