@@ -1,0 +1,66 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output
+
+# Production
+dist/
+build/
+.next/
+out/
+
+# Misc
+.DS_Store
+*.pem
+.env
+.env.local
+.env.*.local
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+
+# Local design exports / screenshots (keep out of version control)
+stitch_premium_salon_search_results_v1/
+screenshot.png
+
+# Nx
+.nx/cache
+.nx/workspace-data
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+
+# Prisma
+*.db
+*.db-journal
+
+# Logs
+logs/
+*.log
+
+# AI / IDE tool configs (not part of the product)
+.agents/
+.cursor/
+.github/skills/
+.github/agents/
+.github/prompts/

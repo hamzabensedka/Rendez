@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Rendez",
+    "slug": "rendez",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rendez.app"
+    },
+    "android": {
+      "package": "com.rendez.app"
+    },
+    "web": {},
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "@maplibre/maplibre-react-native"
+    ],
+    "scheme": "rendez",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "71437d10-d154-4254-9f57-563559d607c9"
+      }
+    },
+    "owner": "hamzasedka"
+  }
+}

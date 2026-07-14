@@ -1,0 +1,13 @@
+diff --git a/android/build.gradle b/android/build.gradle
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -139,7 +139,8 @@ android {
+             cmake {
+                 arguments "-DANDROID_STL=c++_shared",
+                         "-DRNS_NEW_ARCH_ENABLED=${IS_NEW_ARCHITECTURE_ENABLED}",
+-                        "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
++                        "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
++                        "-DCMAKE_OBJECT_PATH_MAX=512"
+             }
+         }
+     }

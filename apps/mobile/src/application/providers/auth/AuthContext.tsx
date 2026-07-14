@@ -1,0 +1,100 @@
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import { getCurrentUser, logout as apiLogout } from '../../../shared/lib/auth';
+import { appQueryClient } from '../../query/queryClient';
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  status?: string;
+  createdAt?: string;
+}
+
+export interface PendingRegistration {
+  email: string;
+  password: string;
+}
+
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+  login: (user: User) => void;
+  logout: () => Promise<void>;
+  clearError: () => void;
+  pendingRegistration: PendingRegistration | null;
+  setPendingRegistration: (data: PendingRegistration | null) => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pendingRegistration, setPendingRegistration] = useState<PendingRegistration | null>(null);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  async function checkAuth() {
+    setError(null);
+    try {
+      const token = await SecureStore.getItemAsync('accessToken');
+      if (token) {
+        const userData = await getCurrentUser();
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Auth check failed';
+      setError(message);
+      if (__DEV__) {
+        console.warn('[AuthContext] Bootstrap auth check failed:', e);
+      }
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function login(userData: User) {
+    setUser(userData);
+    setError(null);
+  }
+
+  function clearError() {
+    setError(null);
+  }
+
+  async function logout() {
+    try {
+      await apiLogout();
+    } catch {
+      // Ignore errors
+    } finally {
+      appQueryClient.clear();
+      setUser(null);
+    }
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, loading, error, login, logout, clearError, pendingRegistration, setPendingRegistration }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
+

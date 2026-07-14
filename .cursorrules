@@ -1,0 +1,46 @@
+# Frontend Architecture: Feature-Based (Vertical Slice)
+
+Follow this structure for all frontend development in the `apps/mobile` directory. Organize code by business features rather than technical file types.
+
+## Directory Structure
+
+```text
+src/
+├── application/        # App-wide configuration & initialization (NOT Expo Router routes)
+│   ├── router.tsx      # Navigation/Router setup
+│   ├── store.ts        # Global state management
+│   └── providers/      # Context/Global providers
+│
+├── features/           # Core business logic (Vertical Slices)
+│   ├── [feature-name]/
+│   │   ├── api.ts      # Feature-specific API calls
+│   │   ├── [name].slice.ts # Feature-specific state
+│   │   ├── components/ # Components used only within this feature
+│   │   ├── hooks.ts    # Custom hooks for this feature
+│   │   └── pages/      # Screen/Page components for this feature
+│
+├── entities/           # Domain models and logic (Optional)
+│   ├── [entity-name]/  # user, product, business, etc.
+│   │   ├── types.ts
+│   │   └── ui/         # Entity-specific UI fragments
+│
+├── shared/             # Reusable, app-agnostic modules
+│   ├── ui/             # Atomic components (Buttons, Inputs, etc.)
+│   ├── hooks/          # Global reusable hooks
+│   ├── lib/            # Utility libraries, formatters
+│   └── types/          # Global TypeScript definitions
+│
+├── assets/             # Static assets (images, fonts)
+├── styles/             # Global styles and themes
+└── main.tsx            # Entry point
+```
+
+## Key Principles
+
+1.  **Feature Encapsulation**: If a component or helper is only used by one feature, it should live inside that feature's folder.
+2.  **Shared vs. Feature**: Only move code to `shared/` if it is truly generic and reusable across multiple unrelated features.
+3.  **Cross-Feature Imports**: Avoid deep nesting imports between features. Features should ideally interact through shared state or the router.
+4.  **Avoid Expo Router Collision**: Expo Router treats `src/app` as the **routes root**. Since our routes live in `apps/mobile/app/`, we keep app initialization under `src/application/`.
+5.  **Avoid Type-Based Folders**: Do not use global `components/`, `services/`, or `utils/` folders unless the code is genuinely shared across the whole app.
+6.  **Scaling**: This architecture is designed to scale as the app grows. Each feature should be self-contained enough to be understood in isolation.
+
