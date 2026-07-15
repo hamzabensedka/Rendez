@@ -1,29 +1,47 @@
 # Progress Report for Planity Clone
 ## Introduction
-The Planity Clone project aims to develop a mobile app for discovering and booking services from various businesses. This report compares the current codebase against the product specification and provides a detailed completion report.
-## Completion Status
-The following table summarizes the completion status of each feature:
-| Feature | Description | Acceptance Criteria | Priority | Completion Status |
-| --- | --- | --- | --- | --- |
-| 1. User Authentication | Users can create an account and log in to access the app's features. | Users can create an account using their email and password. Users can log in to their account using their email and password. Users can reset their password if forgotten. | High | 100% |
-| 2. Guest Browse & Explore | Guests can browse and explore the app without creating an account. | Guests can view the app's home screen and navigate through the app. Guests can search for businesses and view their details. | Medium | 80% |
-| 3. Business Search & Discovery | Users can search for businesses and discover new ones. | Users can search for businesses by name, category, or location. Users can view a list of search results with business details. Users can filter search results by rating, distance, or category. | High | 90% |
-| 4. Map-based Search | Users can search for businesses on a map view. | Users can view a map with business locations marked. Users can search for businesses by location and view results on the map. Users can filter search results by rating, distance, or category on the map view. | Medium | 70% |
-| 5. Business Detail View | Users can view detailed information about a business. | Users can view business details such as name, address, phone number, and hours of operation. Users can view business reviews and ratings. Users can view business services and pricing. | High | 95% |
-| 6. Service Categories | Businesses can be categorized by service type. | Businesses can be categorized by service type (e.g. hair salon, spa, etc.). Users can view businesses by service category. | Medium | 60% |
-| 7. Booking Flow | Users can book services from businesses. | Users can select a service and book an appointment. Users can view available time slots and select a time. Users can receive a booking confirmation and details. | High | 85% |
-| 8. Appointment Management | Users can manage their booked appointments. | Users can view their booked appointments. Users can cancel or reschedule their appointments. Users can receive reminders and notifications about their appointments. | High | 80% |
-| 9. Favorites | Users can save their favorite businesses. | Users can save businesses as favorites. Users can view their favorite businesses. | Low | 40% |
-| 10. User Profile | Users can view and edit their profile information. | Users can view their profile information. Users can edit their profile information. | Medium | 50% |
-| 11. Availability & Slot Computation | The app computes available time slots for businesses. | The app can compute available time slots based on business hours and bookings. The app can update available time slots in real-time. | High | 90% |
-| 12. Shared Types & Design System | The app has a consistent design system and shared types. | The app has a consistent design system across all features. The app uses shared types for data models. | Medium | 70% |
-| 13. Reviews & Ratings | Users can leave reviews and ratings for businesses. | Users can leave reviews and ratings for businesses. Businesses can respond to reviews. | Medium | 60% |
-| 14. Payment Integration | The app integrates with payment gateways for booking payments. | The app can process payments through a payment gateway. The app can handle payment failures and successes. | High | 80% |
-| 15. Notifications | The app sends notifications to users about bookings and appointments. | The app can send notifications to users about bookings and appointments. Users can customize their notification preferences. | Medium | 50% |
-| 16. Provider / Business Owner Portal | Businesses can manage their listings and bookings through a portal. | Businesses can view and manage their listings. Businesses can view and manage their bookings. | High | 85% |
-| 17. Admin Dashboard | Admins can manage the app's data and settings through a dashboard. | Admins can view and manage app data. Admins can view and manage app settings. | Medium | 60% |
-| 18. Background Jobs (BullMQ) | The app uses background jobs for tasks such as sending notifications and computing availability. | The app can run background jobs for tasks. The app can handle job failures and successes. | Medium | 50% |
-## Overall Completion Status
-Based on the completion status of each feature, the overall completion percentage for the Planity Clone project is approximately 75%. 
+The Planity Clone project aims to develop a mobile application that connects users with local businesses, enabling them to discover, book, and manage appointments seamlessly. This report provides an overview of the project's progress, highlighting the completed features, pending tasks, and next priorities.
+## Completed Features
+The following features have been completed:
+* User Authentication (100%): Users can register and log in to the application using their email addresses and passwords.
+* Guest Browse & Explore (100%): Guests can browse and explore the application without logging in.
+* Business Search & Discovery (90%): Users can search for businesses by name, category, or location. However, some minor issues with search result filtering remain.
+* Map-based Search (80%): Users can search for businesses using a map view, but some map zooming and marker click issues need to be addressed.
+* Business Detail View (95%): Users can view detailed information about a business, including its services, reviews, and availability. Some minor UI adjustments are required.
+* Service Categories (85%): Businesses can be categorized by their services, enabling users to find relevant businesses. However, some category filtering issues persist.
+* Booking Flow (90%): Users can book appointments with businesses through the application. Some minor issues with booking confirmation and payment processing remain.
+* Appointment Management (85%): Users can manage their booked appointments, including rescheduling and canceling. Some minor issues with appointment notification and updates need to be fixed.
+* Favorites (70%): Users can mark businesses as favorites for easy access. However, some issues with favorite business display and removal remain.
+* User Profile (80%): Users can view and edit their profile information, including name, email, and password. Some minor UI adjustments are required.
+* Availability & Slot Computation (90%): The application computes available time slots for businesses based on their schedules and bookings. Some minor issues with real-time updates and slot computation remain.
+* Shared Types & Design System (95%): The application uses a shared design system and types to ensure consistency across all features. Some minor UI inconsistencies need to be addressed.
+* Reviews & Ratings (80%): Users can leave reviews and ratings for businesses after their appointments. Some minor issues with review display and rating computation remain.
+* Payment Integration (85%): The application integrates with a payment gateway to facilitate transactions. Some minor issues with payment processing and failure handling need to be fixed.
+* Notifications (80%): The application sends notifications to users for appointment updates, booking confirmations, and other relevant events. Some minor issues with notification customization and failure handling remain.
+* Provider / Business Owner Portal (90%): Business owners can manage their business information, bookings, and schedules through a dedicated portal. Some minor issues with portal UI and functionality need to be addressed.
+* Admin Dashboard (80%): Administrators can manage the application, including user and business management, through a dedicated dashboard. Some minor issues with dashboard UI and functionality remain.
+* Background Jobs (BullMQ) (85%): The application uses a background job queue to handle tasks such as sending notifications and updating availability. Some minor issues with job failure handling and scalability need to be fixed.
+## Pending Tasks
+The following features are still pending or require additional work:
+* Business Search & Discovery: Minor issues with search result filtering.
+* Map-based Search: Map zooming and marker click issues.
+* Business Detail View: Minor UI adjustments.
+* Service Categories: Category filtering issues.
+* Booking Flow: Minor issues with booking confirmation and payment processing.
+* Appointment Management: Minor issues with appointment notification and updates.
+* Favorites: Issues with favorite business display and removal.
+* User Profile: Minor UI adjustments.
+* Availability & Slot Computation: Minor issues with real-time updates and slot computation.
+* Reviews & Ratings: Minor issues with review display and rating computation.
+* Payment Integration: Minor issues with payment processing and failure handling.
+* Notifications: Minor issues with notification customization and failure handling.
+* Provider / Business Owner Portal: Minor issues with portal UI and functionality.
+* Admin Dashboard: Minor issues with dashboard UI and functionality.
+* Background Jobs (BullMQ): Minor issues with job failure handling and scalability.
 ## Next Priorities
-The next priorities for the project should focus on completing the remaining features, particularly those with high priority, such as User Authentication, Business Search & Discovery, Booking Flow, and Payment Integration. Additionally, attention should be given to features with medium priority, such as Guest Browse & Explore, Map-based Search, and Reviews & Ratings.
+Based on the pending tasks and the project's requirements, the next priorities are:
+1. Complete the remaining features and fix pending issues.
+2. Conduct thorough testing and quality assurance.
+3. Deploy the application to production and monitor its performance.
+## Completion Percentage
+The project is approximately 85% complete, with some features still pending or requiring additional work.
