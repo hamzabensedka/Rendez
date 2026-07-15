@@ -1,4 +1,229 @@
-{
-  "content": "# Planity Clone Architecture\n\n## Overview\nThe Planity Clone is a monorepo built with Nx and pnpm, comprising a React Native mobile app (Expo) and a NestJS backend API. The architecture follows clean architecture principles with clear separation of concerns: presentation, domain/application, and infrastructure layers. Services are split into bounded contexts aligned with product features.\n\n## Tech Stack\n- **Mobile**: Expo, React Native, TypeScript, Expo Router, TanStack React Query, React Native Reanimated\n- **Backend**: NestJS, TypeScript, Prisma ORM, PostgreSQL (with PostGIS extension), Redis, BullMQ\n- **Tooling**: Nx monorepo, pnpm, Docker Compose, GitHub Actions, EAS Build, Supabase (auth/storage), Jest\n\n## High-Level Architecture\n```\n+-------------------+        +---------------------+        +-------------------+\n|   Mobile App      | <----> |   API Gateway (Nest) | <----> |   PostgreSQL/PostGIS|\n| (Expo/React)     |        |   (NestJS)          |        |   + Redis Cache   |\n+-------------------+        +---------------------+        +-------------------+\n        ^                             ^                         ^\n        |                             |                         |\n   Expo Push Notifications   Background Jobs (BullMQ)   File Storage (Supabase)\n```\n\n## Service Boundaries (Bounded Contexts)\n1. **Auth** – user registration, login, social login, token management.\n2. **Business** – CRUD of businesses, categories, location (PostGIS), hours.\n3. **Booking** – appointment slot generation, booking flow, rescheduling, cancellation.\n4. **Payment** – integration with payment provider, invoices, webhooks.\n5. **Notification** – push/email/SMS via Supabase functions or external service, triggered by BullMQ jobs.\n6. **Reviews** – ratings, comments, moderation.\n7. **Favorite** – user‑business many‑to‑many relation.\n8. **Portal** – business owner UI (NestJS serving admin pages or separate SPA; out of scope for mobile).\n9. **Admin** – dashboard metrics, user/business management.\n10. **Shared** – common DTOs, validation, utility libraries, design system tokens.\n\n## Folder Structure (Nx Monorepo)\n```\nplanity-clone/\n├── apps/\n│   ├── mobile/                 # Expo React Native app\n│   │   ├── src/\n│   │   │   ├── assets/\n│   │   │   ├── components/     # shared UI atoms/molecules\n│   │   │   ├── screens/\n│   │   │   │   ├── (tabs)/     # Expo Router file‑based routing\n│   │   │   │   ├── auth/\n│   │   │   │   ├── business/\n│   │   │   │   ├── booking/\n│   │   │   │   ├── profile/\n│   │   │   │   └── ...\n│   │   │   ├── hooks/\n│   │   │   ├── lib/\n│   │   │   │   ├── query/\n│   │   │   │   ├── react-query.ts\n│   │   │   │   └── api.ts\n│   │   │   ├── navigation/\n│   │   │   ├── theme/\n│   │   │   └── types/\n│   │   ├── app.json\n│   │   ├── eas.json\n│   │   └── tsconfig.json\n│   └── api/                    # NestJS backend\n│       ├── src/\n│       │   ├── auth/\n│       │   ├── business/\n│       │   ├── booking/\n│       │   ├── payment/\n│       │   ├── notification/\n│       │   ├── review/\n│       │   ├── favorite/\n│       │   ├── portal/\n│       │   ├── admin/\n│       │   ├── shared/\n│       │   │   ├── dto/\n│       │   │   ├── guards/\n│       │   │   ├── interceptors/\n│       │   │   └── utils/\n│       │   ├── app.module.ts\n│       │   └── main.ts\n│       ├── test/\n│       │   ├── unit/\n│       │   └── e2e/\n│       ├── dockerfile\n│       └── tsconfig.json\n├── libs/\n│   ├── design-system/          # React Native UI tokens, shared with web if needed\n│   ├── types/                  # TypeScript interfaces shared between mobile & api\n│   ├── prisma/                 # Prisma schema & migrations\n│   │   ├── schema.prisma\n│   │   └── migrations/\n│   ├── utils/                  # generic helpers (date, geo, validation)\n│   └── test-helpers/\n├── prisma/\n│   └── schema.prisma           # (also mirrored in libs/prisma for IDE)\n├── docker-compose.yml\n├── .github/\n│   └── workflows/\n│       ├── ci.yml\n│       └── eas-build.yml\n├── jest.config.js\n├── nx.json\n├── package.json\n└── pnpm-workspace.yaml\n```\n\n## Data Layer\n- **Prisma** defines models: User, Business, BusinessCategory, BusinessHours, Service, Appointment, PaymentTransaction, Review, Favorite, Notification.\n- **PostGIS** column `location` on Business for geo‑queries (distance, bounding box).\n- **Redis** used for:\n  - Session store (access token blacklist).\n  - Caching of frequent read‑only queries (business list, categories).\n  - BullMQ job queue backend.\n\n## Background Jobs\n- BullMQ workers run as separate NestJS services (or same API with queue processors).\n- Jobs: send notification, sync external calendars, payment webhook retry, analytics aggregation.\n- Monitored via dashboard (optional) and logged to stdout (captured by Docker).\n\n## DevOps & CI/CD\n- **Docker Compose** defines services: api, redis, postgres, (optional) maildev.\n- **GitHub Actions**:\n  - `ci.yml` runs lint, typecheck, unit tests (Jest) on PR.\n  - `eas-build.yml` triggers Expo EAS build for iOS/Android on main branch.\n- **EAS Build** handles OTA updates and store submissions.\n- **Supabase** provides:\n  - Auth (social providers) – can be swapped with Nest JWT.\n  - Storage for user uploads (profile pics, business photos).\n  - Edge Functions for webhook receipts if needed.\n\n## Testing Strategy\n- **Unit**: Jest for business logic, Prisma mocks, utility functions.\n- **Integration**: Supertest for NestJS endpoints; React Native Testing Library + Jest for mobile components.\n- **E2E**: Detox for mobile flows (login, search, booking).\n- **Contract**: Pact or OpenAPI validation between mobile and API (generated from Nest DTOs).\n\n## Decision Rationale\n- **Expo Router** provides file‑based routing and deep linking, simplifying navigation.\n- **TanStack React Query** handles server state, caching, background updates, reducing boilerplate.\n- **Reanimated** enables smooth gestures and animations for map and booking UI.\n- **NestJS** offers modular architecture, built‑in validation, guards, interceptors – fits bounded contexts.\n- **Prisma** gives type‑safe DB access and migrations; PostGIS extension enables geo queries.\n- **Redis + BullMQ** provides reliable background processing with retries.\n- **Nx** enables code sharing, consistent linting, and scalable monorepo.\n- **pnpm** yields efficient installs and deterministic workflows.\n- **Docker Compose** simplifies local dev and CI reproducibility.\n- **GitHub Actions** automates testing, building, and deployment.\n- **Supabase** offloads auth and storage, reducing custom infra.\n- **EAS Build** manages over‑the‑air updates and store builds.\n\n## Security Considerations\n- JWT access tokens with short expiry; refresh token stored securely (SecureStore).\n- Passwords hashed with bcrypt.\n- Role‑based guards (USER, BUSINESS_OWNER, ADMIN).\n- Input validation via class‑validator and DTOs.\n- Rate limiting on auth endpoints.\n- HTTPS enforced; API behind gateway (could be NGINX).\n- Sensitive data (payment details) never stored; delegated to PCI‑compliant provider.\n\n## Scalability\n- Horizontal scaling of API stateless nodes behind load balancer.\n- Read replicas for PostGIS heavy geo queries.\n- Redis cluster for caching and job queue.\n- CDN for static assets (Supabase CDN).\n\n## Monitoring & Observability\n- Structured logging (pino) in NestJS.\n- Error tracking via Sentry (optional).\n- Metrics exported to Prometheus via @nestjs/terminus.\n- Mobile crash reporting via Expo Sentry SDK.\n\n---\n*This document captures the current architecture; it will evolve as features are added.*",
-  "summary": "The Planity Clone architecture uses an Nx monorepo with Expo React Native frontend and NestJS backend, employing clean architecture, Prisma/PostGIS/Redis data layer, BullMQ jobs, Docker, GitHub Actions, Supabase, and EAS Build for scalable, maintainable delivery."
+# Planity Clone Architecture
+
+## 1. Overview
+The Planity Clone is a full‑stack mobile‑first application that connects users with local service businesses. It consists of a React Native client built with Expo, a NestJS API server, and shared infrastructure (PostgreSQL/PostGIS, Redis, BullMQ). The architecture follows clean‑architecture principles: clear separation between presentation, domain, and infrastructure layers, with domain‑driven boundaries for Users, Businesses, Appointments, Payments, Reviews, and Admin.
+
+## 2. Technology Stack
+- **Client**: Expo (SDK 49), React Native, TypeScript, Expo Router, TanStack React Query, React Native Reanimated, React Native SVG, AsyncStorage (or MMKV) for local cache.
+- **Server**: NestJS (Node.js), TypeScript, Prisma ORM, PostgreSQL + PostGIS extension, Redis (caching & pub/sub), BullMQ (job queue).
+- **DevOps**: Nx monorepo, pnpm workspace, Docker Compose for local dev, GitHub Actions for CI, EAS Build for Expo OTA & app store builds, Supabase (optional for auth & storage fallback), Jest for unit/integration tests.
+- **Design System**: Custom token‑based design system (colors, spacing, typography) built with StyleSheet.create and shared via `libs/ui`.
+
+## 3. High‑Level Components
+(Client) Expo App --> (API Gateway) NestJS --> (Services) Business, Auth, Booking, Payment, Review, Notification, Admin --> (Data) PostgreSQL/PostGIS + Redis --> (External) Payment Gateway (Stripe), Email Provider (SendGrid), Push Notifications (Expo Push/Firebase)
+
+## 4. Folder Structure (Nx Monorepo)
+planity-clone/
+├─ apps/
+│   ├─ mobile/            # Expo React Native app
+│   │   ├─ src/
+│   │   │   ├─ assets/            # images, fonts, icons
+│   │   │   ├─ components/        # reusable UI (buttons, cards, modals)
+│   │   │   ├─ screens/           # Expo Router route‑based screens
+│   │   │   ├─ navigation/        # custom navigators (if needed)
+│   │   │   ├─ hooks/             # custom React hooks
+│   │   │   ├─ lib/               # utils, constants, API client
+│   │   │   ├─ store/             # React Query query keys & mutators
+│   │   │   ├─ theme/             # design tokens, StyleSheet helpers
+│   │   │   ├─ types/             # shared TS interfaces (re‑exported from libs/types)
+│   │   │   └─ App.tsx            # root entry (Expo Router)
+│   │   ├─ e2e/                   # Detox tests
+│   │   ├─ __tests__/             # Jest unit tests
+│   │   ├─ app.json
+│   │   ├─ babel.config.js
+│   │   ├─ tsconfig.json
+│   │   └─ expo.config.js
+│   └─ api/                     # NestJS server
+│       ├─ src/
+│       │   ├─ app.module.ts
+│       │   ├─ main.ts
+│       │   ├─ config/            # env validation (nestjs/config)
+│       │   ├─ common/            # guards, interceptors, pipes, exceptions
+│       │   ├─ auth/              # JWT strategy, local & social strategies
+│       │   ├─ users/             # CRUD, profile
+│       │   ├─ businesses/        # business CRUD, geo search (PostGIS)
+│       │   ├─ services/          # service catalog, categories
+│       │   ├─ appointments/      # booking logic, slot generation
+│       │   ├─ payments/          # Stripe integration, webhook handler
+│       │   ├─ reviews/           # rating & review CRUD
+│       │   ├─ notifications/     # BullMQ processors, email/sms send
+│       │   ├─ admin/             # admin‑only endpoints
+│       │   ├─ libs/              # shared NestJS utilities (prisma service, redis wrapper)
+│       │   ├─ prisma/            # schema.prisma, migrations
+│       │   └─ test/              # unit & e2e (Jest, SuperTest)
+│       ├─ Dockerfile
+│       ├─ .env.example
+│       └─ tsconfig.json
+├─ libs/
+│   ├─ types/                     # shared DTOs & domain interfaces (used by both client & server)
+│   ├─ ui/                        # design system components (Button, Input, Card, etc.)
+│   ├─ utils/                     # cross‑platform helpers (date, geo, formatting)
+│   ├─ config/                    # shared constants (API endpoints, feature flags)
+│   └─ testing/                   # test helpers, mocks
+├─ docker-compose.yml
+├─ .github/
+│   └─ workflows/
+│       ├─ ci.yml                 # lint, test, build
+│       └─ cd.yml                 # EAS build & deploy, Docker push
+├─ nx.json
+├─ package.json
+├─ pnpm-workspace.yaml
+└─ README.md
+
+## 5. Service Boundaries (Domain‑Driven)
+| Bounded Context | Responsibility | Key Entities | Main APIs (NestJS) |
+|-----------------|----------------|--------------|--------------------|
+| Auth | Registration, login, password reset, social OAuth, JWT issuance | User, AuthToken | POST /auth/register, POST /auth/login, POST /auth/refresh, POST /auth/logout |
+| Users | Profile management, preferences, favorites | User, Favorite | GET /users/me, PATCH /users/me, GET /users/favorites, POST /users/favorites/:businessId |
+| Businesses | CRUD, geo‑search, categories, operating hours | Business, Category, OperatingHour | GET /businesses, GET /businesses/:id, POST /businesses, PATCH /businesses/:id, GET /businesses/search?lat=&lng=&radius=&category= |
+| Services | Service catalog tied to businesses | Service, Category | GET /services, GET /services/:id, POST /services (business‑scoped) |
+| Appointments | Availability computation, slot generation, booking, rescheduling, cancellation | Appointment, TimeSlot, BusinessHours | GET /appointments (user), POST /appointments, PATCH /appointments/:id, DELETE /appointments/:id, GET /businesses/:businessId/slots?date= |
+| Payments | Payment intent creation, webhook handling, invoices | Payment, Invoice | POST /payments/create-intent, POST /payments/webhook (Stripe), GET /payments/:id |
+| Reviews | Ratings, comments, business responses | Review, ReviewResponse | GET /reviews?businessId=&page=, POST /reviews, PATCH /reviews/:id (business response) |
+| Notifications | Email/SMS/push delivery, preference management | NotificationTemplate, UserNotificationPreference | POST /notifications/send (internal), GET /users/me/notification-prefs, PATCH /users/me/notification-prefs |
+| Admin | Platform oversight, moderation, analytics | AdminUser, AuditLog | GET /admin/users, PATCH /admin/users/:id/status, GET /admin/metrics |
+| Background Jobs (BullMQ) | Async tasks: send confirmation emails, push reminders, payment retry, data cleanup | Job Queues: email, push, payment-retry, cleanup | Internal only – triggered via NestJS services |
+
+## 6. Data Model (Prisma Schema Highlights)
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  role          Role     @default(USER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  favorites     Business[] @relation("UserFavorites")
+  appointments  Appointment[]
+  reviews       Review[]
 }
+
+model Business {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  address       String
+  lat           Float
+  lng           Float
+  location      Point?   @db.Point
+  categoryId    String
+  category      Category @relation(fields: [categoryId], references: [id])
+  operatingHours OperatingHour[]
+  services      Service[]
+  appointments  Appointment[]
+  reviews       Review[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Category {
+  id   String @id @default(uuid())
+  name String @unique
+  businesses Business[]
+  services Service[]
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String
+  durationMin Int      // minutes per slot
+  price       Float
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id])
+  categoryId  String?
+  category    Category @relation(fields: [categoryId], references: [id])
+}
+
+model Appointment {
+  id            String   @id @default(uuid())
+  userId        String
+  businessId    String
+  serviceId     String
+  startDateTime DateTime
+  endDateTime   DateTime
+  status        AppointmentStatus
+  paymentId     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id])
+  business      Business @relation(fields: [businessId], references: [id])
+  service       Service  @relation(fields: [serviceId], references: [id])
+  payment       Payment? @relation(fields: [paymentId], references: [id])
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  amount        Float
+  currency      String   @default("usd")
+  stripeIntentId String @unique
+  status        PaymentStatus
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  appointmentId String?
+  createdAt     DateTime @default(now())
+}
+
+(Plus enums, indexes on `location` for PostGIS, and `UserNotificationPreference` table.)
+
+## 7. API Contract Principles
+- **Versioning**: `/api/v1/` prefix.
+- **Response Envelope**: `{ success: boolean, data?: T, error?: { code:string, message:string } }`.
+- **Pagination**: `limit` & `offset` (or cursor) for lists.
+- **Filtering**: Query params (`?category=hair&lat=48.85&lng=2.35&radius=5000`).
+- **Error Handling**: Central NestJS exception filter maps to HTTP status codes.
+- **Authentication**: JWT Bearer token in `Authorization` header; public routes (guest browse) omit token.
+- **Rate Limiting**: Per‑IP & per‑user via NestJS throttler.
+- **Validation**: class‑validator + class‑transformer DTOs.
+
+## 8. Client State Management
+- **TanStack React Query** handles server state: queries for lists, mutations for writes.
+- Query keys are namespaced: `['businesses',{lat,lng,radius}]`, `['appointments','me']`.
+- Mutations invalidate related queries optimistically.
+- **Local UI state** (modals, form inputs) managed with React `useState` or `useReducer`.
+- **Authentication** state persisted via `AsyncStorage` (or MMKV) and refreshed silently via a background query.
+
+## 9. Design System & Styling
+- Tokens defined in `libs/ui/theme.ts` (colors, spacing, radius, typography).
+- Components built with `StyleSheet.create` and styled via props (variant, size).
+- Dark mode support via `useColorScheme`.
+- Shared via Nx lib; both mobile and any future web apps can consume.
+
+## 10. DevOps & CI/CD
+- **Local Dev**: `docker compose up` runs PostgreSQL (with PostGIS), Redis, NestJS API, and Expo dev server.
+- **Nx**: Affected commands (`nx affected:test`, `nx affected:build`) for monorepo efficiency.
+- **GitHub Actions**:
+  - `ci.yml`: lint (eslint, prettier), typecheck (`tsc`), unit tests (Jest), build Docker image.
+  - `cd.yml`: on push to `main`, trigger EAS build (`eas build --platform all --auto-submit`) and push Docker image to registry.
+- **EAS Build**: Manages iOS/Android binaries, OTA updates via Expo.
+- **Supabase** (optional): fallback for auth & storage if needed; not primary.
+
+## 11. Testing Strategy
+- **Unit Tests**: Jest for pure functions, utility libs, NestJS services (mocked Prisma/Redis).
+- **Integration Tests**:
+  - Client: React Native Testing Library + Jest for screen rendering & query mocking.
+  - Server: SuperTest against in‑memory SQLite (or testcontainers PostgreSQL) to validate endpoints.
+- **E2E**: Detox for critical flows (login → browse → book → confirmation).
+- **Contracts**: Pact or manual schema validation to ensure client‑server DTO alignment.
+- **Coverage Target**: ≥80% for business logic.
+
+## 12. Security Considerations
+- **Authentication**: JWT with short‑lived access token (15 min) + refresh token stored HTTP‑only cookie (or‑secure storage.
+- **Authorization**: Role‑based guards (`ADMIN`, `BUSINESS_OWNER`, `USER`).
+- **Data Protection**: TLS everywhere; password hashed with bcrypt; PII encrypted at rest (PGPDB extension optional).
+- **Input Validation**: DTO whitelisting, Prisma prevents SQL injection.
+- **Rate Limiting & Brute‑Force**: NestJS throttler + captcha on login after N failures.
+
+- **Secrets**: Managed via GitHub Actions secrets & Docker secrets; `.env` never committed.
+- **Audit Log**: Admin actions logged to `AuditLog` table.
+
+## 13. Deployment Overview
+1. **Developer** pushes feature branch → CI runs lint, test, build.
+2. **Merge to main** triggers CD:
+   - Docker image built & pushed to registry (e.g., GHCR).
+   - NestJS API deployed to Kubernetes / ECS (or simple VM) with rolling update.
+   - Expo OTA update released via EAS; optional store build for iOS/Android.
+3. **Database migrations** run automatically on startup via Prisma Migrate (or via separate migration job).
+4. **Redis** persisted via Docker volume or managed Elasticache.
+5. **Monitoring**: Prometheus + Grafana for API metrics; Expo logs via Sentry; application logs shipped to Loki.
+
+## 14. Summary
+The architecture separates concerns into clearly defined bounded contexts, leverages an Nx monorepo for code sharing, uses Expo + React Native for a performant mobile client, and relies on NestJS/Prisma/PostgreSQL for a scalable backend. Clean‑layered design, strong typing, and automated CI/CD ensure maintainability and rapid iteration as the Planity Clone grows.
