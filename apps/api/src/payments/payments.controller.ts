@@ -1,54 +1,46 @@
-import {
-  Controller,
-  Post,
-  Headers,
-  Req,
-  Res,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import { Stripe } from 'stripe';
-import { ConfigService } from '@nestjs/config';
-import { Request, Response } from 'express';
+import { Controller, Post, Headers, Req, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import Stripe from 'stripe';
+import { Request } from 'express';
+import { PaymentService } from './payment.service';
 
+@ApiTags('payments')
 @Controller('payments')
 export class PaymentsController {
-  private stripe: Stripe;
-
-  constructor(private configService: ConfigService) {
-    const apiKey = this.configService.get<string>('STRIPE_API_KEY');
-    this.stripe = new Stripe(apiKey, { apiVersion: '2023-10-16' });
-  }
+  constructor(private readonly paymentService: PaymentService) {}
 
   @Post('webhook')
+  @ApiOperation({ summary: 'Stripe webhook endpoint' })
   @HttpCode(HttpStatus.OK)
-  async handleWebhook(
-    @Headers('stripe-signature') signature: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
-    const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
-
-    // Stripe expects the raw request body to verify the signature
-    // In a real app you might use a middleware to expose req.rawBody
-    const event = this.stripe.webhooks.constructEvent(
-      req['rawBody'] as Buffer,
-      signature,
-      webhookSecret,
-    );
-
-    // Handle the event
-    switch (event.type) {
-      case 'checkout.session.completed':
-        // TODO: fulfill booking, update payment status, etc.
-        break;
-      case 'payment_intent.succeeded':
-        // TODO: update payment record
-        break;
-      default:
-        console.log(`Unhandled event type ${event.type}`);
+  async webhook(@Req() req: Request, @Headers('stripe-signature') signature: string) {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      throw new Error('STRIPE_WEBHOOK_SECRET is not configured');
     }
 
-    return res.json({ received: true });
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
+
+    let event: Stripe.Event;
+    try {
+      event = stripe.webhooks.constructEvent(
+        (req as any).rawBody as Buffer,
+        signature,
+        webhookSecret,
+      );
+    } catch (err) {
+      console.error('Webhook signature verification failed.', err.message);
+      return { statusCode: HttpStatus.BAD_REQUEST };
+    }
+
+    // Basic handling – extend as needed
+    switch (event.type) {
+      case 'payment_intent.succeeded':
+        await this.paymentService.handlePaymentSucceeded(event);
+        break;
+      default:
+        console.log(`Unhandled Stripe event type ${event.type}`);
+    }
+
+    return { statusCode: HttpStatus.OK };
   }
 }
