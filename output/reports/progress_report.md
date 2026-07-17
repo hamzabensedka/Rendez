@@ -1,30 +1,24 @@
-# Progress Report: Planity Clone
+# Progress Report
 ## Introduction
-The Planity Clone project aims to develop a mobile app that connects users with local businesses, allowing them to discover, book, and manage appointments.
+The Planity Clone project aims to connect users with local businesses, allowing them to discover, book, and manage appointments. This report provides an update on the progress of the project, focusing on the remaining scope of work.
 ## Remaining Scope
-The following features are still pending implementation or completion:
-### 1. Payment Integration
-* Description: Users can pay for services through the app using a payment gateway.
-* Status: Not implemented
-### 2. Provider Portal
-* Description: Businesses can manage their listings, appointments, and customer interactions through a provider portal.
-* Status: Partially implemented
-### 3. Reviews & Ratings
-* Description: Users can leave reviews and ratings for businesses.
-* Status: Not implemented
-### 4. Notifications
-* Description: Users receive notifications for appointment reminders, booking confirmations, and other important events.
-* Status: Not implemented
-### 5. Admin Dashboard
-* Description: Admins can manage the app, including business listings, user accounts, and analytics, through an admin dashboard.
-* Status: Partially implemented
-### 6. Background Jobs (BullMQ)
-* Description: Background jobs are used to handle tasks such as sending notifications and computing availability.
-* Status: Not implemented
-### 7. User Profile
-* Description: Users can view and edit their profile information, including name, email, and password.
-* Status: Partially implemented
+The following features are still partial or missing:
+* Payment Integration: The payment gateway is not yet integrated, and users cannot make payments through the app.
+* Provider Portal: The provider portal is not fully functional, and businesses cannot manage their listings, appointments, and customer interactions.
+* Reviews: The review system is not implemented, and users cannot leave reviews and ratings for businesses.
+* Notifications: The notification system is not fully functional, and users do not receive notifications for appointment reminders, booking confirmations, and other important events.
+* Admin Dashboard: The admin dashboard is not fully functional, and admins cannot manage business listings, user accounts, and analytics.
+* BullMQ: The background jobs system is not fully implemented, and tasks such as sending notifications and computing availability are not being handled efficiently.
+* User Profile: The user profile system is not fully functional, and users cannot view and edit their profile information.
 ## Completion Percentage
-Based on the remaining scope, the current completion percentage of the Planity Clone project is estimated to be around 60%.
+Based on the remaining scope of work, the project is approximately 60% complete.
 ## Next Steps
-The development team should prioritize the implementation of the remaining features, focusing on the payment integration, provider portal, reviews and ratings, notifications, admin dashboard, background jobs, and user profile.
+The development team will prioritize the remaining features and work on completing them. The next steps will include:
+* Integrating the payment gateway
+* Completing the provider portal
+* Implementing the review system
+* Completing the notification system
+* Finalizing the admin dashboard
+* Implementing the background jobs system
+* Completing the user profile system
+The team will provide regular updates on the progress of the project.
