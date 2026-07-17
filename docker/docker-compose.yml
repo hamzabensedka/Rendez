@@ -1,34 +1,61 @@
-version: '3.8'
+version: '3.9'
 
 services:
   api:
-    build: ./docker/api
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    env_file:
+      - .env
+      - .env.stripe
+    environment:
+      # Pass Stripe env vars from .env.stripe to the container
+      STRIPE_API_KEY: ${STRIPE_API_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
     ports:
       - "3000:3000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/postgres
-      - REDIS_URL=redis://redis:6379
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
     depends_on:
-      - db
+      - postgres
       - redis
-  db:
+    restart: unless-stopped
+
+  postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: planity
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-  stripe-webhook-listener:
-    image: myorg/api:${STRIPE_WEBHOOK_SECRET}
-    environment:
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
     restart: unless-stopped
+
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+
+  # Optional: BullMQ UI
+  bullmq-ui:
+    image: backgroundqueue/bull-board:latest
+    ports:
+      - "9001:9001"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    restart: unless-stopped
+
 volumes:
-  pgdata:
+  pg_data:
