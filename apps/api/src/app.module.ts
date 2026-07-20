@@ -1,82 +1,45 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { LoggerModule } from 'nestjs-pino';
-import { randomUUID } from 'crypto';
-import type { IncomingMessage, ServerResponse } from 'http';
-import { RedisModule } from './redis/redis.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bullmq';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
 import { BusinessesModule } from './businesses/businesses.module';
-import { ServicesModule } from './services/services.module';
-import { AvailabilityModule } from './availability/availability.module';
 import { AppointmentsModule } from './appointments/appointments.module';
+import { AvailabilityModule } from './availability/availability.module';
 import { FavoritesModule } from './favorites/favorites.module';
-import { PlacesModule } from './places/places.module';
-import { ServiceCategoriesModule } from './service-categories/service-categories.module';
-import { ConfigModule as AppConfigModule } from './config/config.module';
-import { PrismaModule } from './prisma/prisma.module';
+import { NotificationModule } from './notifications/notification.module';
+import { ConfigModule } from './config/config.module';
+import { Appointment } from './appointments/entities/appointment.entity';
+import { Business } from './businesses/entities/business.entity';
+import { Service } from './businesses/entities/service.entity';
+import { User } from './auth/entities/user.entity';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      ignoreEnvFile: false,
+    ConfigModule,
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      username: process.env.DB_USERNAME || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
+      database: process.env.DB_DATABASE || 'planity',
+      entities: [User, Business, Service, Appointment],
+      synchronize: process.env.NODE_ENV !== 'production',
     }),
-    LoggerModule.forRoot({
-      pinoHttp: {
-        level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-        transport:
-          process.env.NODE_ENV !== 'production'
-            ? {
-                target: 'pino-pretty',
-                options: { singleLine: true, colorize: true },
-              }
-            : undefined,
-        genReqId: (req: IncomingMessage & { requestId?: string }) => {
-          const id = randomUUID();
-          req.requestId = id;
-          return id;
-        },
-        customProps: (req: IncomingMessage & { requestId?: string }) => ({
-          requestId: req.requestId,
-        }),
-        serializers: {
-          req: (req: IncomingMessage & { id?: string }) => ({
-            id: req.id,
-            method: req.method,
-            url: req.url,
-          }),
-          res: (res: ServerResponse) => ({ statusCode: res.statusCode }),
-        },
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379', 10),
       },
     }),
-    RedisModule,
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000, // 1 minute
-        limit: 100, // 100 requests per minute
-      },
-    ]),
-    PrismaModule,
-    AppConfigModule,
     AuthModule,
-    UsersModule,
     BusinessesModule,
-    ServicesModule,
-    AvailabilityModule,
     AppointmentsModule,
+    AvailabilityModule,
     FavoritesModule,
-    PlacesModule,
-    ServiceCategoriesModule,
+    NotificationModule,
   ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
-  ],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
-
