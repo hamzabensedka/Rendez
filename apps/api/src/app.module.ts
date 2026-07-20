@@ -1,43 +1,23 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { BullModule } from '@nestjs/bullmq';
+import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
-import { BusinessesModule } from './businesses/businesses.module';
-import { AppointmentsModule } from './appointments/appointments.module';
+import { BusinessModule } from './businesses/businesses.module';
 import { AvailabilityModule } from './availability/availability.module';
+import { BookingModule } from './appointments/appointments.module';
+import { ReviewModule } from './reviews/reviews.module';
 import { FavoritesModule } from './favorites/favorites.module';
-import { NotificationModule } from './notifications/notification.module';
-import { ConfigModule } from './config/config.module';
-import { Appointment } from './appointments/entities/appointment.entity';
-import { Business } from './businesses/entities/business.entity';
-import { Service } from './businesses/entities/service.entity';
-import { User } from './auth/entities/user.entity';
+import { PaymentsModule } from './payment/payments.module';
 
 @Module({
   imports: [
-    ConfigModule,
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_DATABASE || 'planity',
-      entities: [User, Business, Service, Appointment],
-      synchronize: process.env.NODE_ENV !== 'production',
-    }),
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
-      },
-    }),
+    ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
-    BusinessesModule,
-    AppointmentsModule,
+    BusinessModule,
     AvailabilityModule,
+    BookingModule,
+    ReviewModule,
     FavoritesModule,
-    NotificationModule,
+    PaymentsModule,
   ],
   controllers: [],
   providers: [],
