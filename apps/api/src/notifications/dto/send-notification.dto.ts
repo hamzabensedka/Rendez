@@ -1,36 +1,37 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsArray } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsEmail, IsNumber, IsObject } from 'class-validator';
 import { NotificationChannel, NotificationType } from '../notification-channel.enum';
 
 export class SendNotificationDto {
-  @IsNotEmpty()
-  @IsString()
-  userId: string;
+  @IsEnum(NotificationChannel)
+  channel: NotificationChannel;
 
-  @IsNotEmpty()
   @IsEnum(NotificationType)
   type: NotificationType;
 
-  @IsArray()
-  @IsEnum(NotificationChannel, { each: true })
-  channels: NotificationChannel[];
-
-  @IsOptional()
-  @IsString()
-  email?: string;
+  @IsEmail()
+  email: string;
 
   @IsOptional()
   @IsString()
   pushToken?: string;
 
   @IsOptional()
-  data?: Record<string, any>;
+  @IsString()
+  phone?: string;
+
+  @IsNumber()
+  userId: number;
+
+  @IsObject()
+  data: Record<string, any>;
 }
 
 export class BookingNotificationData {
-  appointmentId: string;
+  customerName: string;
   businessName: string;
   serviceName: string;
-  dateTime: string;
-  customerName: string;
-  customerEmail: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  businessAddress?: string;
+  businessPhone?: string;
 }

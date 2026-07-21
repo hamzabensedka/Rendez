@@ -1,25 +1,48 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { BullModule } from '@nestjs/bullmq';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
-import { BusinessModule } from './businesses/businesses.module';
+import { BusinessesModule } from './businesses/businesses.module';
+import { AppointmentsModule } from './appointments/appointments.module';
 import { AvailabilityModule } from './availability/availability.module';
-import { BookingModule } from './appointments/appointments.module';
-import { ReviewModule } from './reviews/reviews.module';
 import { FavoritesModule } from './favorites/favorites.module';
-import { PaymentsModule } from './payment/payments.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { envValidationSchema } from './env.validation';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: envValidationSchema,
+    }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get<string>('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT', 6379),
+        },
+      }),
+      inject: [ConfigService],
+    }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
     AuthModule,
-    BusinessModule,
+    BusinessesModule,
+    AppointmentsModule,
     AvailabilityModule,
-    BookingModule,
-    ReviewModule,
     FavoritesModule,
-    PaymentsModule,
+    NotificationsModule,
   ],
-  controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
