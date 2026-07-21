@@ -1,73 +1,61 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Expo } from 'expo-server-sdk';
+import { ConfigService } from '@nestjs/config';
+import { PushData } from '../interfaces/notification.interface';
 
 export interface PushProvider {
-  send(token: string, title: string, body: string, data?: Record<string, any>): Promise<boolean>;
+  send(push: PushData): Promise<void>;
 }
 
 @Injectable()
 export class ExpoPushProvider implements PushProvider {
   private readonly logger = new Logger(ExpoPushProvider.name);
-  private readonly expo: Expo;
+  private readonly accessToken: string;
 
-  constructor() {
-    this.expo = new Expo();
+  constructor(private readonly configService: ConfigService) {
+    this.accessToken = this.configService.get<string>('EXPO_ACCESS_TOKEN') || '';
   }
 
-  async send(
-    token: string,
-    title: string,
-    body: string,
-    data?: Record<string, any>,
-  ): Promise<boolean> {
+  async send(push: PushData): Promise<void> {
+    if (!this.accessToken) {
+      this.logger.warn('EXPO_ACCESS_TOKEN not configured, skipping push notification');
+      return;
+    }
+
     try {
-      const isValidToken = Expo.isExponentPushToken(token);
-      
-      if (!isValidToken) {
-        this.logger.warn(`Invalid push token: ${token}`);
-        return false;
-      }
-
-      const messages = [
-        {
-          to: token,
-          sound: 'default',
-          title,
-          body,
-          data,
+      const response = await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
         },
-      ];
+        body: JSON.stringify({
+          to: push.token,
+          title: push.title,
+          body: push.body,
+          data: push.data,
+        }),
+      });
 
-      const chunks = this.expo.chunkPushNotifications(messages);
-      const tickets = [];
-
-      for (const chunk of chunks) {
-        try {
-          const ticketChunk = await this.expo.sendPushNotificationsAsync(chunk);
-          tickets.push(...ticketChunk);
-        } catch (error) {
-          this.logger.error(`Chunk send error: ${error}`);
-        }
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Expo API error: ${response.status} - ${error}`);
       }
 
-      const failureCount = tickets.filter((t) => t.status === 'error').length;
-      if (failureCount > 0) {
-        this.logger.warn(`${failureCount} push notifications failed`);
-        return false;
-      }
-
-      this.logger.log('Push notification sent successfully');
-      return true;
+      this.logger.log(`Push notification sent successfully to ${push.token}`);
     } catch (error) {
-      this.logger.error(`Push send error: ${error}`);
-      return false;
+      this.logger.error(`Failed to send push notification:`, error);
+      throw error;
     }
   }
 }
 
-export const PUSH_PROVIDER = 'PUSH_PROVIDER';
+@Injectable()
+export class StubPushProvider implements PushProvider {
+  private readonly logger = new Logger(StubPushProvider.name);
 
-export const ExpoPushProviderFactory = {
-  provide: PUSH_PROVIDER,
-  useClass: ExpoPushProvider,
-};
+  async send(push: PushData): Promise<void> {
+    this.logger.log(`[STUB] Push notification would be sent to ${push.token}`);
+    this.logger.log(`[STUB] Title: ${push.title}`);
+    this.logger.log(`[STUB] Body: ${push.body}`);
+  }
+}
