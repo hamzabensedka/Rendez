@@ -1,4 +1,13 @@
-import { IsEnum, IsOptional, IsString, IsEmail, IsNumber, IsObject } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsEmail,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { NotificationChannel, NotificationType } from '../notification-channel.enum';
 
 export class SendNotificationDto {
@@ -9,29 +18,55 @@ export class SendNotificationDto {
   type: NotificationType;
 
   @IsEmail()
-  email: string;
+  recipientEmail?: string;
+
+  @IsString()
+  recipientPushToken?: string;
+
+  @IsString()
+  recipientPhone?: string;
+
+  @IsString()
+  userId?: string;
 
   @IsOptional()
-  @IsString()
-  pushToken?: string;
+  @ValidateNested()
+  @Type(() => BookingData)
+  bookingData?: BookingData;
 
   @IsOptional()
-  @IsString()
-  phone?: string;
-
-  @IsNumber()
-  userId: number;
-
-  @IsObject()
-  data: Record<string, any>;
+  metadata?: Record<string, any>;
 }
 
-export class BookingNotificationData {
-  customerName: string;
+export class BookingData {
+  @IsString()
+  appointmentId: string;
+
+  @IsString()
   businessName: string;
+
+  @IsString()
   serviceName: string;
+
+  @IsString()
   appointmentDate: string;
+
+  @IsString()
   appointmentTime: string;
+
+  @IsOptional()
+  @IsString()
   businessAddress?: string;
-  businessPhone?: string;
+
+  @IsOptional()
+  @IsNumber()
+  price?: number;
+}
+
+export class QueueNotificationDto extends SendNotificationDto {
+  @IsString()
+  jobId: string;
+
+  @IsOptional()
+  attempts?: number;
 }
