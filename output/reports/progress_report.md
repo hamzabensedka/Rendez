@@ -1,16 +1,16 @@
 # Progress Report
 ## Introduction
-The Planity Clone project aims to connect users with local businesses, allowing them to discover, book, and manage appointments. This report provides an update on the project's progress, focusing on the remaining scope of work.
+The Planity Clone project aims to create a mobile app that connects users with local businesses, allowing them to discover, book, and manage appointments.
 ## Remaining Scope
-The following features are still pending implementation or completion:
-* Payment Integration: The payment gateway is not yet securely integrated, and users cannot make payments through the app.
-* Provider Portal: The provider portal is not fully functional, and businesses cannot manage their listings, appointments, and customer interactions.
-* Reviews: The review system is not implemented, and users cannot leave reviews and ratings for businesses.
-* Notifications: The notification system is not fully functional, and users do not receive notifications for appointment reminders, booking confirmations, and other important events.
-* Admin Dashboard: The admin dashboard is not fully functional, and admins cannot manage business listings, user accounts, and analytics.
-* Background Jobs (BullMQ): The background jobs system is not fully functional, and tasks such as sending notifications and computing availability are not handled efficiently and reliably.
-* User Profile: The user profile system is not fully functional, and users cannot view and edit their profile information.
+After reviewing the codebase and comparing it against the product specification, the following features are still partial or missing:
+* **Payment**: The payment gateway integration is incomplete, and users cannot make payments through the app.
+* **Provider Portal**: The provider portal for businesses to manage their listings and appointments is not fully implemented.
+* **Reviews**: The review and rating system for businesses is missing.
+* **Notifications**: The notification system for appointment reminders and booking confirmations is not fully implemented.
+* **Admin Dashboard**: The admin dashboard for managing business listings, user accounts, and analytics is incomplete.
+* **BullMQ (Background Jobs)**: The background job system for handling tasks such as sending notifications and computing availability is not fully implemented.
+* **User Profile**: The user profile feature for viewing and editing profile information is incomplete.
 ## Completion Percentage
-Based on the remaining scope of work, the project is approximately 60% complete.
+Based on the remaining scope, the project is approximately 60% complete.
 ## Next Steps
-The development team will focus on completing the remaining features, with a priority on the payment integration, provider portal, and review system. The team will also work on refining the existing features and ensuring that the app is stable and performant.
+To complete the project, the development team should focus on implementing the remaining features, including payment integration, provider portal, reviews, notifications, admin dashboard, BullMQ, and user profile.
