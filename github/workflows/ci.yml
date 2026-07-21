@@ -7,13 +7,13 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
     env:
-      # Stripe environment variables are injected from repository secrets
+      # Stripe secrets will be injected from repository secrets
       STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
-      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
@@ -27,12 +27,13 @@ jobs:
         run: pnpm lint
       - name: Test
         run: pnpm test
-      - name: Build Docker image
-        run: |
-          docker build -t planity-clone-api:${{ github.sha }} -f docker/api.Dockerfile .
-          docker tag planity-clone-api:${{ github.sha }} planity-clone-api:latest
-      - name: Push Docker image
+      - name: Build Docker images
+        run: docker compose build
+      - name: Build Expo iOS
+        run: npx expo build:ios
+      - name: Build Expo Android
+        run: npx expo build:android
+      - name: Deploy (if on main)
         if: github.ref == 'refs/heads/main'
         run: |
-          echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
-          docker push planity-clone-api:latest
+          echo "Deploy step would run here"

@@ -1,42 +1,48 @@
-# Docker Compose is OPTIONAL - Not required for development
-# We use Supabase for Postgres (cloud) and Upstash for Redis (cloud)
-# 
-# Only use this if you want to run Postgres/Redis locally instead of cloud services
-# 
-# To use: docker-compose up -d
-# To stop: docker-compose down
+version: '3.9'
 
 services:
-  postgres:
-    image: postgres:16
-    container_name: planity-postgres
+  api:
+    build:
+      context: ./docker/api
+      dockerfile: Dockerfile
+    container_name: planity-api
+    restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: planity
-      POSTGRES_PASSWORD: planity_dev
-      POSTGRES_DB: planity_dev
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/postgres?schema=public
+      - REDIS_URL=redis://redis:6379
+      - STRIPE_API_KEY=${STRIPE_API_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:15-alpine
+    container_name: planity-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U planity"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   redis:
-    image: redis:7
+    image: redis:7-alpine
     container_name: planity-redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+
+  # Other services (e.g., worker, redis-cli) can be added here
 
 volumes:
-  postgres_data:
-  redis_data:
+  pgdata:
