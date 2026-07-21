@@ -1,13 +1,4 @@
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsEmail,
-  IsArray,
-  ValidateNested,
-  IsNumber,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsObject } from 'class-validator';
 import { NotificationChannel, NotificationType } from '../notification-channel.enum';
 
 export class SendNotificationDto {
@@ -17,56 +8,18 @@ export class SendNotificationDto {
   @IsEnum(NotificationType)
   type: NotificationType;
 
-  @IsEmail()
+  @IsString()
+  @IsNotEmpty()
+  recipientId: string;
+
+  @IsOptional()
+  @IsString()
   recipientEmail?: string;
 
+  @IsOptional()
   @IsString()
   recipientPushToken?: string;
 
-  @IsString()
-  recipientPhone?: string;
-
-  @IsString()
-  userId?: string;
-
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => BookingData)
-  bookingData?: BookingData;
-
-  @IsOptional()
-  metadata?: Record<string, any>;
-}
-
-export class BookingData {
-  @IsString()
-  appointmentId: string;
-
-  @IsString()
-  businessName: string;
-
-  @IsString()
-  serviceName: string;
-
-  @IsString()
-  appointmentDate: string;
-
-  @IsString()
-  appointmentTime: string;
-
-  @IsOptional()
-  @IsString()
-  businessAddress?: string;
-
-  @IsOptional()
-  @IsNumber()
-  price?: number;
-}
-
-export class QueueNotificationDto extends SendNotificationDto {
-  @IsString()
-  jobId: string;
-
-  @IsOptional()
-  attempts?: number;
+  @IsObject()
+  data: Record<string, any>;
 }

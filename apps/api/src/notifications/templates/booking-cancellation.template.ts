@@ -1,7 +1,7 @@
 import { BookingNotificationData } from '../interfaces/notification.interface';
 
-export function getBookingConfirmationEmailTemplate(data: BookingNotificationData): { subject: string; html: string; text: string } {
-  const subject = `Booking Confirmed - ${data.businessName}`;
+export function getBookingCancellationEmailTemplate(data: BookingNotificationData): { subject: string; html: string; text: string } {
+  const subject = `Booking Cancelled - ${data.businessName}`;
   
   const html = `
 <!DOCTYPE html>
@@ -9,25 +9,24 @@ export function getBookingConfirmationEmailTemplate(data: BookingNotificationDat
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Booking Confirmation</title>
+  <title>Booking Cancellation</title>
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .header { background: #EF4444; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
     .content { background: #f9fafb; padding: 20px; border-radius: 0 0 8px 8px; }
     .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
     .detail-label { font-weight: bold; color: #6b7280; }
     .detail-value { color: #111827; }
     .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
-    .button { display: inline-block; background: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 15px; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>Booking Confirmed ✓</h1>
+    <h1>Booking Cancelled</h1>
   </div>
   <div class="content">
     <p>Hi ${data.userName},</p>
-    <p>Your appointment has been successfully booked. Here are the details:</p>
+    <p>Your appointment has been cancelled. Here are the details:</p>
     
     <div class="detail-row">
       <span class="detail-label">Business:</span>
@@ -45,20 +44,8 @@ export function getBookingConfirmationEmailTemplate(data: BookingNotificationDat
       <span class="detail-label">Time:</span>
       <span class="detail-value">${data.appointmentTime}</span>
     </div>
-    ${data.businessAddress ? `
-    <div class="detail-row">
-      <span class="detail-label">Address:</span>
-      <span class="detail-value">${data.businessAddress}</span>
-    </div>
-    ` : ''}
-    ${data.businessPhone ? `
-    <div class="detail-row">
-      <span class="detail-label">Phone:</span>
-      <span class="detail-value">${data.businessPhone}</span>
-    </div>
-    ` : ''}
     
-    <p style="margin-top: 20px;">Please arrive 5 minutes before your scheduled time. If you need to reschedule or cancel, please do so at least 24 hours in advance.</p>
+    <p style="margin-top: 20px;">We're sorry to see you go. If you'd like to rebook, please visit our app.</p>
     
     <p>Thank you for using Planity Clone!</p>
   </div>
@@ -69,22 +56,18 @@ export function getBookingConfirmationEmailTemplate(data: BookingNotificationDat
 </html>`;
 
   const text = `
-BOOKING CONFIRMED
+BOOKING CANCELLED
 
 Hi ${data.userName},
 
-Your appointment has been successfully booked. Here are the details:
+Your appointment has been cancelled. Here are the details:
 
 Business: ${data.businessName}
 Service: ${data.serviceName}
 Date: ${data.appointmentDate}
 Time: ${data.appointmentTime}
-${data.businessAddress ? `Address: ${data.businessAddress}
-` : ''}
-${data.businessPhone ? `Phone: ${data.businessPhone}
-` : ''}
 
-Please arrive 5 minutes before your scheduled time. If you need to reschedule or cancel, please do so at least 24 hours in advance.
+We're sorry to see you go. If you'd like to rebook, please visit our app.
 
 Thank you for using Planity Clone!
 `;

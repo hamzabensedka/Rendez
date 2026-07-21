@@ -1,16 +1,8 @@
-import { BookingNotificationData } from '../dto/send-notification.dto';
+import { BookingNotificationData } from '../interfaces/notification.interface';
 
-export interface EmailTemplate {
-  subject: string;
-  html: string;
-  text: string;
-}
-
-export function getBookingReminderTemplate(data: BookingNotificationData): EmailTemplate {
-  const { customerName, businessName, serviceName, appointmentDate, appointmentTime, businessAddress, businessPhone } = data;
-
-  const subject = `Reminder: ${serviceName} at ${businessName} tomorrow`;
-
+export function getBookingReminderEmailTemplate(data: BookingNotificationData): { subject: string; html: string; text: string } {
+  const subject = `Reminder - Your appointment tomorrow at ${data.businessName}`;
+  
   const html = `
 <!DOCTYPE html>
 <html>
@@ -21,12 +13,12 @@ export function getBookingReminderTemplate(data: BookingNotificationData): Email
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { background: #F59E0B; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-    .detail-row { margin: 10px 0; padding: 10px; background: white; border-radius: 4px; }
-    .label { font-weight: bold; color: #6b7280; font-size: 12px; text-transform: uppercase; }
-    .value { font-size: 16px; margin-top: 4px; }
-    .cta { display: inline-block; background: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 20px; }
+    .content { background: #f9fafb; padding: 20px; border-radius: 0 0 8px 8px; }
+    .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+    .detail-label { font-weight: bold; color: #6b7280; }
+    .detail-value { color: #111827; }
     .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
+    .button { display: inline-block; background: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 15px; }
   </style>
 </head>
 <body>
@@ -34,69 +26,67 @@ export function getBookingReminderTemplate(data: BookingNotificationData): Email
     <h1>⏰ Appointment Reminder</h1>
   </div>
   <div class="content">
-    <p>Hi ${customerName},</p>
+    <p>Hi ${data.userName},</p>
     <p>This is a friendly reminder about your upcoming appointment:</p>
     
     <div class="detail-row">
-      <div class="label">Business</div>
-      <div class="value">${businessName}</div>
+      <span class="detail-label">Business:</span>
+      <span class="detail-value">${data.businessName}</span>
     </div>
-    
     <div class="detail-row">
-      <div class="label">Service</div>
-      <div class="value">${serviceName}</div>
+      <span class="detail-label">Service:</span>
+      <span class="detail-value">${data.serviceName}</span>
     </div>
-    
     <div class="detail-row">
-      <div class="label">Date</div>
-      <div class="value">${appointmentDate}</div>
+      <span class="detail-label">Date:</span>
+      <span class="detail-value">${data.appointmentDate}</span>
     </div>
-    
     <div class="detail-row">
-      <div class="label">Time</div>
-      <div class="value">${appointmentTime}</div>
+      <span class="detail-label">Time:</span>
+      <span class="detail-value">${data.appointmentTime}</span>
     </div>
-    
-    ${businessAddress ? `
+    ${data.businessAddress ? `
     <div class="detail-row">
-      <div class="label">Address</div>
-      <div class="value">${businessAddress}</div>
+      <span class="detail-label">Address:</span>
+      <span class="detail-value">${data.businessAddress}</span>
+    </div>
+    ` : ''}
+    ${data.businessPhone ? `
+    <div class="detail-row">
+      <span class="detail-label">Phone:</span>
+      <span class="detail-value">${data.businessPhone}</span>
     </div>
     ` : ''}
     
-    ${businessPhone ? `
-    <div class="detail-row">
-      <div class="label">Phone</div>
-      <div class="value">${businessPhone}</div>
-    </div>
-    ` : ''}
+    <p style="margin-top: 20px;">Please remember to arrive 5 minutes early. If you need to make any changes, please contact the business directly.</p>
     
-    <p style="margin-top: 20px;">Please remember to arrive 5 minutes early. See you soon!</p>
+    <p>See you soon!</p>
   </div>
   <div class="footer">
-    <p>Thank you for using Planity Clone!</p>
+    <p>This is an automated message from Planity Clone. Please do not reply to this email.</p>
   </div>
 </body>
-</html>
-`;
+</html>`;
 
   const text = `
 APPOINTMENT REMINDER
 
-Hi ${customerName},
+Hi ${data.userName},
 
 This is a friendly reminder about your upcoming appointment:
 
-Business: ${businessName}
-Service: ${serviceName}
-Date: ${appointmentDate}
-Time: ${appointmentTime}
-${businessAddress ? `Address: ${businessAddress}\n` : ''}
-${businessPhone ? `Phone: ${businessPhone}\n` : ''}
+Business: ${data.businessName}
+Service: ${data.serviceName}
+Date: ${data.appointmentDate}
+Time: ${data.appointmentTime}
+${data.businessAddress ? `Address: ${data.businessAddress}
+` : ''}
+${data.businessPhone ? `Phone: ${data.businessPhone}
+` : ''}
 
-Please remember to arrive 5 minutes early. See you soon!
+Please remember to arrive 5 minutes early. If you need to make any changes, please contact the business directly.
 
-Thank you for using Planity Clone!
+See you soon!
 `;
 
   return { subject, html, text };

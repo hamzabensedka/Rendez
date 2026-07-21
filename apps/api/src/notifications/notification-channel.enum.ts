@@ -9,12 +9,4 @@ export enum NotificationType {
   BOOKING_REMINDER = 'booking_reminder',
   BOOKING_CANCELLATION = 'booking_cancellation',
   BOOKING_RESCHEDULE = 'booking_reschedule',
-  PAYMENT_RECEIVED = 'payment_received',
-  REVIEW_REQUEST = 'review_request',
-}
-
-export enum NotificationStatus {
-  PENDING = 'pending',
-  SENT = 'sent',
-  FAILED = 'failed',
 }
