@@ -1,13 +1,23 @@
 import axios from 'axios';
 
 const getReviews = async () => {
-  const response = await axios.get('/api/reviews');
-  return response.data;
+  try {
+    const response = await axios.get('/api/reviews');
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 };
 
-const submitReview = async (data) => {
-  const response = await axios.post('/api/reviews', data);
-  return response.data;
+const submitReview = async (review) => {
+  try {
+    const response = await axios.post('/api/reviews', review);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 };
 
 export { getReviews, submitReview };

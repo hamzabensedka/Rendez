@@ -2,24 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getReviews, submitReview } from '../api/reviews';
-import { Rating } from '../components/Rating';
-import { EmptyState } from '../components/EmptyState';
+import { Rating } from 'react-native-ratings';
+import { ExpoRouter } from 'expo-router';
+
+interface Review {
+  id: number;
+  rating: number;
+  comment: string;
+}
 
 const SalonReviews = () => {
   const [rating, setRating] = useState(0);
-  const [review, setReview] = useState('');
+  const [comment, setComment] = useState('');
   const { data: reviews, isLoading } = useQuery(['reviews'], getReviews);
   const { mutate: submitReviewMutation } = useMutation(submitReview);
 
-  const handle Submit = () => {
-    submitReviewMutation({ rating, review });
+  const handle_submit_review = async () => {
+    try {
+      await submitReviewMutation({ rating, comment });
+      setRating(0);
+      setComment('');
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   if (isLoading) return <Text>Loading...</Text>;
-
-  if (!reviews || reviews.length === 0) {
-    return <EmptyState message="No reviews yet" />;
-  }
 
   return (
     <View>
@@ -27,13 +35,13 @@ const SalonReviews = () => {
         data={reviews}
         renderItem={({ item }) => (
           <View>
-            <Text>{item.review}</Text>
             <Rating rating={item.rating} />
+            <Text>{item.comment}</Text>
           </View>
         )}
         keyExtractor={(item) => item.id.toString()}
       />
-      <TouchableOpacity onPress={handleSubmit}>
+      <TouchableOpacity onPress={handle_submit_review}>
         <Text>Submit Review</Text>
       </TouchableOpacity>
       <Rating
@@ -41,9 +49,9 @@ const SalonReviews = () => {
         onSelect={(rating) => setRating(rating)}
       />
       <TextInput
-        value={review}
-        onChangeText={(review) => setReview(review)}
-        placeholder="Write your review..."
+        value={comment}
+        onChangeText={(text) => setComment(text)}
+        placeholder='Write a comment...'
       />
     </View>
   );
