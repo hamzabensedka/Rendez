@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { NotificationsService } from './notifications.service';
-import { NotificationProcessor, NOTIFICATION_QUEUE } from './notification.processor';
-import { EmailService } from './email/email.service';
-import { PushService } from './push/push.service';
+import { NotificationService, NOTIFICATION_QUEUE } from './notification.service';
+import { NotificationProcessor } from './notification.processor';
+import { NotificationsController } from './notifications.controller';
+import { EMAIL_PROVIDER, EmailProvider } from './providers/email.provider';
+import { ResendProvider } from './providers/resend.provider';
+import { PUSH_PROVIDER, ExpoPushProvider } from './providers/push.provider';
 
 @Module({
   imports: [
@@ -16,19 +18,23 @@ import { PushService } from './push/push.service';
           delay: 1000,
         },
         removeOnComplete: 100,
-        removeOnFail: 1000,
+        removeOnFail: 50,
       },
     }),
   ],
+  controllers: [NotificationsController],
   providers: [
-    NotificationsService,
+    NotificationService,
     NotificationProcessor,
-    EmailService,
-    PushService,
+    {
+      provide: EMAIL_PROVIDER,
+      useClass: ResendProvider,
+    },
+    {
+      provide: PUSH_PROVIDER,
+      useClass: ExpoPushProvider,
+    },
   ],
-  exports: [
-    NotificationsService,
-    NOTIFICATION_QUEUE,
-  ],
+  exports: [NotificationService],
 })
 export class NotificationsModule {}

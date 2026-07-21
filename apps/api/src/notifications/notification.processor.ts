@@ -1,55 +1,49 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
-import { NotificationsService } from './notifications.service';
-import { NotificationChannel, NotificationType } from './notification-channel.enum';
-import { SendNotificationDto, BookingNotificationData } from './dto/send-notification.dto';
-
-export const NOTIFICATION_QUEUE = 'notifications';
-
-export interface NotificationJobData {
-  channel: NotificationChannel;
-  type: NotificationType;
-  email: string;
-  pushToken?: string;
-  userId: number;
-  data: BookingNotificationData;
-}
+import { NotificationService, NOTIFICATION_QUEUE } from './notification.service';
+import { SendNotificationDto } from './dto/send-notification.dto';
 
 @Processor(NOTIFICATION_QUEUE)
 export class NotificationProcessor extends WorkerHost {
   private readonly logger = new Logger(NotificationProcessor.name);
 
-  constructor(
-    private readonly notificationsService: NotificationsService,
-  ) {
+  constructor(private readonly notificationService: NotificationService) {
     super();
   }
 
-  async process(job: Job<NotificationJobData>): Promise<void> {
-    this.logger.log(`Processing notification job ${job.id} of type ${job.data.type}`);
+  async process(job: Job<SendNotificationDto>): Promise<boolean> {
+    this.logger.log(`Processing notification job ${job.id} (${job.name})`);
+    this.logger.debug(`Job data: ${JSON.stringify(job.data)}`);
 
-    const { channel, type, email, pushToken, userId, data } = job.data;
+    try {
+      const result = await this.notificationService.processNotification(job.data);
+      
+      if (result) {
+        this.logger.log(`Notification job ${job.id} completed successfully`);
+      } else {
+        this.logger.warn(`Notification job ${job.id} completed with issues`);
+      }
 
-    await this.notificationsService.sendNotification({
-      channel,
-      type,
-      email,
-      pushToken,
-      userId,
-      data,
-    });
-
-    this.logger.log(`Notification job ${job.id} completed successfully`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Notification job ${job.id} failed: ${error}`);
+      throw error;
+    }
   }
 
   @OnWorkerEvent('completed')
-  onCompleted(job: Job<NotificationJobData>) {
-    this.logger.log(`Job ${job.id} completed for user ${job.data.userId}`);
+  onCompleted(job: Job<SendNotificationDto>) {
+    this.logger.log(`Job ${job.id} completed`);
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job<NotificationJobData>, error: Error) {
-    this.logger.error(`Job ${job.id} failed: ${error.message}`);
+  onFailed(job: Job<SendNotificationDto> | undefined, error: Error) {
+    this.logger.error(`Job ${job?.id} failed: ${error.message}`);
+  }
+
+  @OnWorkerEvent('active')
+  onActive(job: Job<SendNotificationDto>) {
+    this.logger.debug(`Job ${job.id} is now active`);
   }
 }
