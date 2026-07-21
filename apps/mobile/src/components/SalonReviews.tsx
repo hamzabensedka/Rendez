@@ -1,87 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ExpoRouter } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
-import { Rating } from 'react-native-ratings';
-import { api } from '../../api';
-import { styles } from './styles';
-
-interface Review {
-  id: number;
-  rating: number;
-  comment: string;
-}
+import { getReviews, submitReview } from '../api/reviews';
+import { Rating } from '../components/Rating';
+import { EmptyState } from '../components/EmptyState';
 
 const SalonReviews = () => {
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
-  const { data, error, isLoading } = useQuery('reviews', api.getReviews);
-  const { mutate } = useMutation(api.submitReview);
+  const [review, setReview] = useState('');
+  const { data: reviews, isLoading } = useQuery(['reviews'], getReviews);
+  const { mutate: submitReviewMutation } = useMutation(submitReview);
 
-  useEffect(() => {
-    if (data) {
-      setReviews(data);
-    }
-  }, [data]);
-
-  const handleRating = (rating: number) => {
-    setRating(rating);
+  const handle Submit = () => {
+    submitReviewMutation({ rating, review });
   };
 
-  const handleCommentChange = (text: string) => {
-    setComment(text);
-  };
+  if (isLoading) return <Text>Loading...</Text>;
 
-  const handleSubmitReview = () => {
-    mutate({ rating, comment });
-  };
-
-  if (isLoading) {
-    return <Text>Loading...</Text>;
-  }
-
-  if (error) {
-    return <Text>Error: {error.message}</Text>;
+  if (!reviews || reviews.length === 0) {
+    return <EmptyState message="No reviews yet" />;
   }
 
   return (
-    <View style={styles.container}>
-      <Text>Reviews</Text>
+    <View>
       <FlatList
         data={reviews}
-        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View style={styles.review}>
-            <Rating
-              rating={item.rating}
-              type='custom'
-              fractions={1}
-              startingValue={item.rating}
-            />
-            <Text>{item.comment}</Text>
+          <View>
+            <Text>{item.review}</Text>
+            <Rating rating={item.rating} />
           </View>
         )}
+        keyExtractor={(item) => item.id.toString()}
       />
-      <View style={styles.inputContainer}>
-        <Rating
-          rating={rating}
-          type='custom'
-          fractions={1}
-          startingValue={rating}
-          onFinishRating={handleRating}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder='Write a comment...'
-          value={comment}
-          onChangeText={handleCommentChange}
-        />
-        <TouchableOpacity style={styles.button} onPress={handleSubmitReview}>
-          <Feather name='send' size={20} color='#fff' />
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity onPress={handleSubmit}>
+        <Text>Submit Review</Text>
+      </TouchableOpacity>
+      <Rating
+        rating={rating}
+        onSelect={(rating) => setRating(rating)}
+      />
+      <TextInput
+        value={review}
+        onChangeText={(review) => setReview(review)}
+        placeholder="Write your review..."
+      />
     </View>
   );
 };
