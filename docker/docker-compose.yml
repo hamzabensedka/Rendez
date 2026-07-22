@@ -1,61 +1,33 @@
-version: '3.9'
+version: '3.8'
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: docker/api.Dockerfile
-    env_file:
-      - .env
-      - .env.stripe
-    environment:
-      # Pass Stripe env vars from .env.stripe to the container
-      STRIPE_API_KEY: ${STRIPE_API_KEY}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
-      DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+    build: ./docker/api.Dockerfile
     ports:
       - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/postgres
+      - REDIS_URL=redis://redis:6379
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
     depends_on:
-      - postgres
+      - db
       - redis
-    restart: unless-stopped
 
-  postgres:
-    image: postgres:15-alpine
+  db:
+    image: postgres:15
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: planity
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
     volumes:
-      - pg_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-    restart: unless-stopped
+      - pgdata:/var/lib/postgresql/data
 
   redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
-
-  redis-insight:
-    image: redislabs/redisinsight:latest
-    ports:
-      - "8001:8001"
-    restart: unless-stopped
-
-  # Optional: BullMQ UI
-  bullmq-ui:
-    image: backgroundqueue/bull-board:latest
-    ports:
-      - "9001:9001"
-    environment:
-      - REDIS_URL=redis://redis:6379
-    restart: unless-stopped
+    image: redis:7
+    volumes:
+      - redisdata:/data
 
 volumes:
-  pg_data:
+  pgdata:
+  redisdata:
