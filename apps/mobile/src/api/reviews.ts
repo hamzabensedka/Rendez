@@ -1,23 +1,14 @@
-import axios from 'axios';
+import { fetchAPI } from '../utils/fetchAPI';
 
-const getReviews = async () => {
-  try {
-    const response = await axios.get('/api/reviews');
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
+export const fetchSalonReviews = async () => {
+  const response = await fetchAPI('reviews');
+  return response.json();
 };
 
-const submitReview = async (review) => {
-  try {
-    const response = await axios.post('/api/reviews', review);
-    return response.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
+export const submitReview = async (data: { rating: number; comment: string }) => {
+  const response = await fetchAPI('reviews', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return response.json();
 };
-
-export { getReviews, submitReview };
