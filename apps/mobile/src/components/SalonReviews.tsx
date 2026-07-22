@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getReviews, submitReview } from '../api/reviews';
-import { Rating } from 'react-native-ratings';
 import { ExpoRouter } from 'expo-router';
+import { fetchSalonReviews, submitReview } from '../api/reviews';
+import StarRating from 'react-native-star-rating';
 
 interface Review {
   id: number;
@@ -14,10 +14,10 @@ interface Review {
 const SalonReviews = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
-  const { data: reviews, isLoading } = useQuery(['reviews'], getReviews);
+  const { data: reviews, isLoading } = useQuery(['salonReviews'], fetchSalonReviews);
   const { mutate: submitReviewMutation } = useMutation(submitReview);
 
-  const handle_submit_review = async () => {
+  const handleSubmitReview = async () => {
     try {
       await submitReviewMutation({ rating, comment });
       setRating(0);
@@ -31,27 +31,33 @@ const SalonReviews = () => {
 
   return (
     <View>
+      <Text>Salon Reviews</Text>
       <FlatList
         data={reviews}
         renderItem={({ item }) => (
           <View>
-            <Rating rating={item.rating} />
             <Text>{item.comment}</Text>
+            <StarRating
+              rating={item.rating}
+              disabled={true}
+              starSize={20}
+            />
           </View>
         )}
         keyExtractor={(item) => item.id.toString()}
       />
-      <TouchableOpacity onPress={handle_submit_review}>
+      <TouchableOpacity onPress={handleSubmitReview}>
         <Text>Submit Review</Text>
       </TouchableOpacity>
-      <Rating
+      <StarRating
         rating={rating}
-        onSelect={(rating) => setRating(rating)}
+        onSelectRating={setRating}
+        starSize={20}
       />
       <TextInput
         value={comment}
-        onChangeText={(text) => setComment(text)}
-        placeholder='Write a comment...'
+        onChangeText={setComment}
+        placeholder='Comment'
       />
     </View>
   );
