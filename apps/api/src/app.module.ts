@@ -1,38 +1,29 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { BullModule } from '@nestjs/bullmq';
+import { PrismaModule } from '@nestjs-prisma/prisma.module';
+import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { BusinessesModule } from './businesses/businesses.module';
-import { AppointmentsModule } from './appointments/appointments.module';
 import { AvailabilityModule } from './availability/availability.module';
+import { BookingsModule } from './bookings/bookings.module';
+import { ReviewsModule } from './reviews/reviews.module';
 import { FavoritesModule } from './favorites/favorites.module';
-import { NotificationsModule } from './notifications/notifications.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { EnvValidation } from './env.validation';
-import { ConfigController } from './config/config.controller';
-import { ConfigModule as AppConfigModule } from './config/config.module';
+import { PaymentsWebhookModule } from './payments/payments.webhook.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      validate: EnvValidation.validate,
-    }),
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
-      },
-    }),
+    ConfigModule.forRoot(),
     PrismaModule,
+    UsersModule,
     AuthModule,
     BusinessesModule,
-    AppointmentsModule,
     AvailabilityModule,
+    BookingsModule,
+    ReviewsModule,
     FavoritesModule,
-    NotificationsModule,
-    AppConfigModule,
+    PaymentsWebhookModule,
   ],
-  controllers: [ConfigController],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
