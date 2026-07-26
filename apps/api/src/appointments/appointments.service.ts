@@ -1,145 +1,98 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Appointment } from './entities/appointment.entity';
+import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
-import { AvailabilityService } from '../availability/availability.service';
 import { NotificationService } from '../notifications/notification.service';
-import { BookingNotificationData } from '../notifications/dto/send-notification.dto';
+import { BookingNotificationData, NotificationChannel } from '../notifications/notification-channel.enum';
 
 @Injectable()
 export class AppointmentsService {
   private readonly logger = new Logger(AppointmentsService.name);
 
   constructor(
-    @InjectRepository(Appointment)
-    private readonly appointmentRepository: Repository<Appointment>,
-    private readonly availabilityService: AvailabilityService,
+    private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
   ) {}
 
-  async create(userId: string, createAppointmentDto: CreateAppointmentDto): Promise<Appointment> {
-    const isAvailable = await this.availabilityService.isSlotAvailable(
-      createAppointmentDto.businessId,
-      createAppointmentDto.serviceId,
-      new Date(createAppointmentDto.start),
-      new Date(createAppointmentDto.end),
-    );
-
-    if (!isAvailable) {
-      throw new BadRequestException('The selected time slot is not available');
-    }
-
-    const appointment = this.appointmentRepository.create({
-      ...createAppointmentDto,
-      userId,
-      status: 'confirmed',
+  async create(userId: string, dto: CreateAppointmentDto) {
+    const appointment = await this.prisma.appointment.create({
+      data: {
+        userId,
+        businessId: dto.businessId,
+        serviceId: dto.serviceId,
+        start: new Date(dto.start),
+        end: new Date(dto.end),
+        status: 'CONFIRMED',
+      },
+      include: {
+        user: true,
+        business: true,
+        service: true,
+      },
     });
 
-    const savedAppointment = await this.appointmentRepository.save(appointment);
-    this.logger.log(`Appointment created: ${savedAppointment.id}`);
+    this.logger.log(`Created appointment ${appointment.id} for user ${userId}`);
 
     // Send booking confirmation notification
-    await this.sendBookingConfirmationNotification(savedAppointment);
+    try {
+      const notificationData: BookingNotificationData = {
+        appointmentId: appointment.id,
+        businessName: appointment.business.name,
+        serviceName: appointment.service.name,
+        dateTime: appointment.start.toISOString(),
+        customerName: appointment.user.name || appointment.user.email,
+        customerEmail: appointment.user.email,
+      };
 
-    return savedAppointment;
-  }
+      await this.notificationService.sendBookingConfirmation(
+        notificationData,
+        [NotificationChannel.EMAIL],
+      );
 
-  async findAllByUser(userId: string): Promise<Appointment[]> {
-    return this.appointmentRepository.find({
-      where: { userId },
-      relations: ['business', 'service'],
-      order: { start: 'ASC' },
-    });
-  }
-
-  async findOne(id: string, userId: string): Promise<Appointment> {
-    const appointment = await this.appointmentRepository.findOne({
-      where: { id, userId },
-      relations: ['business', 'service'],
-    });
-
-    if (!appointment) {
-      throw new NotFoundException(`Appointment with ID ${id} not found`);
+      // Schedule booking reminder (24 hours before)
+      const reminderTime = appointment.start.getTime() - 24 * 60 * 60 * 1000;
+      const now = Date.now();
+      
+      if (reminderTime > now) {
+        await this.notificationService.sendBookingReminder(
+          notificationData,
+          [NotificationChannel.EMAIL],
+        );
+      }
+    } catch (error) {
+      this.logger.error('Failed to send booking confirmation notification', error);
     }
 
     return appointment;
   }
 
-  async cancel(id: string, userId: string, cancelDto: CancelAppointmentDto): Promise<Appointment> {
-    const appointment = await this.findOne(id, userId);
-
-    if (appointment.status === 'cancelled') {
-      throw new BadRequestException('Appointment is already cancelled');
-    }
-
-    appointment.status = 'cancelled';
-    appointment.cancellationReason = cancelDto.reason;
-
-    const updatedAppointment = await this.appointmentRepository.save(appointment);
-    this.logger.log(`Appointment cancelled: ${id}`);
-
-    return updatedAppointment;
+  async findAllByUser(userId: string) {
+    return this.prisma.appointment.findMany({
+      where: { userId },
+      include: {
+        business: true,
+        service: true,
+      },
+      orderBy: { start: 'asc' },
+    });
   }
 
-  async reschedule(
-    id: string,
-    userId: string,
-    newStart: Date,
-    newEnd: Date,
-  ): Promise<Appointment> {
-    const appointment = await this.findOne(id, userId);
+  async cancel(userId: string, appointmentId: string, dto: CancelAppointmentDto) {
+    const appointment = await this.prisma.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        status: 'CANCELLED',
+        cancelReason: dto.reason,
+      },
+      include: {
+        user: true,
+        business: true,
+        service: true,
+      },
+    });
 
-    const isAvailable = await this.availabilityService.isSlotAvailable(
-      appointment.businessId,
-      appointment.serviceId,
-      newStart,
-      newEnd,
-    );
+    this.logger.log(`Cancelled appointment ${appointmentId}`);
 
-    if (!isAvailable) {
-      throw new BadRequestException('The new time slot is not available');
-    }
-
-    appointment.start = newStart;
-    appointment.end = newEnd;
-
-    const updatedAppointment = await this.appointmentRepository.save(appointment);
-    this.logger.log(`Appointment rescheduled: ${id}`);
-
-    // Send reschedule notification
-    await this.sendBookingConfirmationNotification(updatedAppointment);
-
-    return updatedAppointment;
-  }
-
-  private async sendBookingConfirmationNotification(appointment: Appointment): Promise<void> {
-    try {
-      const notificationData: BookingNotificationData = {
-        appointmentId: appointment.id,
-        businessName: appointment.business?.name || 'the business',
-        serviceName: appointment.service?.name || 'your service',
-        dateTime: new Date(appointment.start).toLocaleString(),
-        customerName: 'Customer',
-        customerEmail: 'customer@example.com',
-      };
-
-      // In production, fetch user email and push token from User service
-      const userEmail = 'customer@example.com';
-      const pushToken = null; // Would come from user profile
-
-      await this.notificationService.sendBookingConfirmation(
-        appointment.userId,
-        userEmail,
-        pushToken,
-        notificationData,
-      );
-
-      this.logger.log(`Booking confirmation notification queued for appointment ${appointment.id}`);
-    } catch (error) {
-      this.logger.error(`Failed to send booking confirmation notification: ${error.message}`);
-      // Don't throw - notification failure shouldn't fail the booking
-    }
+    return appointment;
   }
 }

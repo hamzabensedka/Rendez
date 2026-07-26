@@ -1,93 +1,107 @@
-import { BookingNotificationData } from '../interfaces/notification.interface';
+import { BookingNotificationData } from '../notification-channel.enum';
+import { EmailTemplate, PushTemplate } from './booking-confirmation.template';
 
-export function getBookingReminderEmailTemplate(data: BookingNotificationData): { subject: string; html: string; text: string } {
-  const subject = `Reminder - Your appointment tomorrow at ${data.businessName}`;
-  
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Appointment Reminder</title>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #F59E0B; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-    .content { background: #f9fafb; padding: 20px; border-radius: 0 0 8px 8px; }
-    .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
-    .detail-label { font-weight: bold; color: #6b7280; }
-    .detail-value { color: #111827; }
-    .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
-    .button { display: inline-block; background: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 15px; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h1>⏰ Appointment Reminder</h1>
-  </div>
-  <div class="content">
-    <p>Hi ${data.userName},</p>
-    <p>This is a friendly reminder about your upcoming appointment:</p>
-    
-    <div class="detail-row">
-      <span class="detail-label">Business:</span>
-      <span class="detail-value">${data.businessName}</span>
-    </div>
-    <div class="detail-row">
-      <span class="detail-label">Service:</span>
-      <span class="detail-value">${data.serviceName}</span>
-    </div>
-    <div class="detail-row">
-      <span class="detail-label">Date:</span>
-      <span class="detail-value">${data.appointmentDate}</span>
-    </div>
-    <div class="detail-row">
-      <span class="detail-label">Time:</span>
-      <span class="detail-value">${data.appointmentTime}</span>
-    </div>
-    ${data.businessAddress ? `
-    <div class="detail-row">
-      <span class="detail-label">Address:</span>
-      <span class="detail-value">${data.businessAddress}</span>
-    </div>
-    ` : ''}
-    ${data.businessPhone ? `
-    <div class="detail-row">
-      <span class="detail-label">Phone:</span>
-      <span class="detail-value">${data.businessPhone}</span>
-    </div>
-    ` : ''}
-    
-    <p style="margin-top: 20px;">Please remember to arrive 5 minutes early. If you need to make any changes, please contact the business directly.</p>
-    
-    <p>See you soon!</p>
-  </div>
-  <div class="footer">
-    <p>This is an automated message from Planity Clone. Please do not reply to this email.</p>
-  </div>
-</body>
-</html>`;
+export function getBookingReminderEmailTemplate(data: BookingNotificationData): EmailTemplate {
+  const formattedDate = new Date(data.dateTime).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  const formattedTime = new Date(data.dateTime).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
-  const text = `
-APPOINTMENT REMINDER
+  return {
+    subject: `Reminder: ${data.serviceName} at ${data.businessName} Tomorrow`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: #F59E0B; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+            .detail-row { margin: 10px 0; padding: 10px; background: white; border-radius: 4px; }
+            .label { font-weight: bold; color: #6b7280; }
+            .footer { text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Appointment Reminder 🔔</h1>
+            </div>
+            <div class="content">
+              <p>Hi ${data.customerName},</p>
+              <p>This is a friendly reminder about your upcoming appointment:</p>
+              
+              <div class="detail-row">
+                <span class="label">Business:</span> ${data.businessName}
+              </div>
+              <div class="detail-row">
+                <span class="label">Service:</span> ${data.serviceName}
+              </div>
+              <div class="detail-row">
+                <span class="label">Date:</span> ${formattedDate}
+              </div>
+              <div class="detail-row">
+                <span class="label">Time:</span> ${formattedTime}
+              </div>
+              
+              <p>Please remember to:</p>
+              <ul>
+                <li>Arrive 5-10 minutes early</li>
+                <li>Bring any required items</li>
+              </ul>
+              <p>We look forward to seeing you!</p>
+            </div>
+            <div class="footer">
+              <p>Thank you for using Planity!</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+    text: `
+Appointment Reminder
 
-Hi ${data.userName},
+Hi ${data.customerName},
 
 This is a friendly reminder about your upcoming appointment:
 
 Business: ${data.businessName}
 Service: ${data.serviceName}
-Date: ${data.appointmentDate}
-Time: ${data.appointmentTime}
-${data.businessAddress ? `Address: ${data.businessAddress}
-` : ''}
-${data.businessPhone ? `Phone: ${data.businessPhone}
-` : ''}
+Date: ${formattedDate}
+Time: ${formattedTime}
 
-Please remember to arrive 5 minutes early. If you need to make any changes, please contact the business directly.
+Please remember to:
+- Arrive 5-10 minutes early
+- Bring any required items
 
-See you soon!
-`;
+We look forward to seeing you!
 
-  return { subject, html, text };
+Thank you for using Planity!
+    `,
+  };
+}
+
+export function getBookingReminderPushTemplate(data: BookingNotificationData): PushTemplate {
+  const tomorrow = new Date(data.dateTime);
+  const isTomorrow = tomorrow.getDate() === new Date(Date.now() + 86400000).getDate();
+  const timeString = new Date(data.dateTime).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return {
+    title: 'Appointment Reminder 🔔',
+    body: isTomorrow
+      ? `Your ${data.serviceName} appointment is tomorrow at ${timeString}`
+      : `Your ${data.serviceName} appointment is coming up at ${timeString}`,
+  };
 }

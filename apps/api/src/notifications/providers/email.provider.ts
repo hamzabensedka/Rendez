@@ -1,9 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { EmailData } from '../interfaces/notification.interface';
+
+export interface EmailOptions {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+}
 
 export interface EmailProvider {
-  send(email: EmailData): Promise<void>;
+  send(options: EmailOptions): Promise<void>;
 }
 
 @Injectable()
@@ -13,16 +19,11 @@ export class ResendEmailProvider implements EmailProvider {
   private readonly fromEmail: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.apiKey = this.configService.get<string>('RESEND_API_KEY') || '';
-    this.fromEmail = this.configService.get<string>('EMAIL_FROM') || 'noreply@planity-clone.com';
+    this.apiKey = this.configService.get<string>('RESEND_API_KEY', 're_test_key');
+    this.fromEmail = this.configService.get<string>('EMAIL_FROM', 'Planity <noreply@planity.com>');
   }
 
-  async send(email: EmailData): Promise<void> {
-    if (!this.apiKey) {
-      this.logger.warn('RESEND_API_KEY not configured, skipping email send');
-      return;
-    }
-
+  async send(options: EmailOptions): Promise<void> {
     try {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -32,10 +33,10 @@ export class ResendEmailProvider implements EmailProvider {
         },
         body: JSON.stringify({
           from: this.fromEmail,
-          to: email.to,
-          subject: email.subject,
-          html: email.html,
-          text: email.text,
+          to: options.to,
+          subject: options.subject,
+          html: options.html,
+          text: options.text,
         }),
       });
 
@@ -44,9 +45,9 @@ export class ResendEmailProvider implements EmailProvider {
         throw new Error(`Resend API error: ${response.status} - ${error}`);
       }
 
-      this.logger.log(`Email sent successfully to ${email.to}`);
+      this.logger.log(`Email sent successfully to ${options.to}`);
     } catch (error) {
-      this.logger.error(`Failed to send email to ${email.to}:`, error);
+      this.logger.error(`Failed to send email to ${options.to}`, error);
       throw error;
     }
   }
@@ -56,9 +57,10 @@ export class ResendEmailProvider implements EmailProvider {
 export class StubEmailProvider implements EmailProvider {
   private readonly logger = new Logger(StubEmailProvider.name);
 
-  async send(email: EmailData): Promise<void> {
-    this.logger.log(`[STUB] Email would be sent to ${email.to}`);
-    this.logger.log(`[STUB] Subject: ${email.subject}`);
-    this.logger.debug(`[STUB] Body: ${email.text?.substring(0, 100)}...`);
+  async send(options: EmailOptions): Promise<void> {
+    this.logger.log(`[STUB EMAIL] To: ${options.to}, Subject: ${options.subject}`);
+    this.logger.debug(`[STUB EMAIL] HTML Content: ${options.html.substring(0, 200)}...`);
   }
 }
+
+export const EMAIL_PROVIDER = 'EMAIL_PROVIDER';
