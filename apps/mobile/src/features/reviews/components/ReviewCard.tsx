@@ -1,19 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../../theme/ThemeContext';
-import { formatDistanceToNow } from 'date-fns';
+import { useTheme } from 'react-native-paper';
+import { formatRelative } from 'date-fns';
+
+interface ReviewUser {
+  id: string;
+  firstName: string;
+  lastName?: string;
+  avatarUrl?: string;
+}
 
 interface Review {
   id: string;
   rating: number;
   comment: string;
   createdAt: string;
-  user?: {
-    firstName?: string;
-    lastName?: string;
-    avatarUrl?: string;
-  };
+  user: ReviewUser;
 }
 
 interface ReviewCardProps {
@@ -21,32 +24,50 @@ interface ReviewCardProps {
 }
 
 export const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
-  const { theme } = useTheme();
-  const userDisplayName = review.user
-    ? `${review.user.firstName ?? ''} ${review.user.lastName ?? ''}`.trim() || 'Anonymous'
+  const { colors } = useTheme();
+
+  const initials = review.user
+    ? `${review.user.firstName.charAt(0)}${review.user.lastName?.charAt(0) || ''}`
+    : '?';
+
+  const displayName = review.user
+    ? `${review.user.firstName} ${review.user.lastName || ''}`.trim()
     : 'Anonymous';
 
+  const relativeTime = formatRelative(new Date(review.createdAt), new Date());
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]} accessibilityLabel={`Review by ${userDisplayName}`}>
+    <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.outlineVariant || colors.border }]} accessibilityRole="article" accessibilityLabel={`Review by ${displayName}, rated ${review.rating} out of 5`}>
       <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <View style={[styles.avatar, { backgroundColor: theme.colors.primaryLight }]}>
-            <Ionicons name="person" size={20} color={theme.colors.primary} />
-          </View>
-          <View>
-            <Text style={[styles.userName, { color: theme.colors.textPrimary }]}>{userDisplayName}</Text>
-            <Text style={[styles.date, { color: theme.colors.textSecondary }]}>
-              {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
-            </Text>
-          </View>
+        <View style={[styles.avatar, { backgroundColor: colors.primaryContainer || colors.primary }]}>
+          <Text style={[styles.avatarText, { color: colors.onPrimaryContainer || colors.onPrimary }]}>
+            {initials}
+          </Text>
         </View>
-        <View style={styles.ratingContainer}>
-          <Ionicons name="star" size={16} color={theme.colors.warning} />
-          <Text style={[styles.ratingText, { color: theme.colors.textPrimary }]}>{review.rating.toFixed(1)}</Text>
+        <View style={styles.userInfo}>
+          <Text style={[styles.userName, { color: colors.onSurface }]} numberOfLines={1}>
+            {displayName}
+          </Text>
+          <Text style={[styles.date, { color: colors.onSurfaceVariant || colors.secondary }]}>
+            {relativeTime}
+          </Text>
         </View>
       </View>
+      <View style={styles.ratingRow}>
+        {Array.from({ length: 5 }, (_, i) => (
+          <Ionicons
+            key={i}
+            name={i < review.rating ? 'star' : 'star-outline'}
+            size={16}
+            color={i < review.rating ? colors.warning || '#FFD700' : colors.border || '#D1D5DB'}
+            style={styles.starIcon}
+          />
+        ))}
+      </View>
       {review.comment ? (
-        <Text style={[styles.comment, { color: theme.colors.textSecondary }]}>{review.comment}</Text>
+        <Text style={[styles.comment, { color: colors.onSurface }]} numberOfLines={4}>
+          {review.comment}
+        </Text>
       ) : null}
     </View>
   );
@@ -61,14 +82,8 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
   },
   avatar: {
     width: 40,
@@ -77,22 +92,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  userInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
   userName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
   date: {
     fontSize: 12,
     marginTop: 2,
   },
-  ratingContainer: {
+  ratingRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    marginBottom: 8,
   },
-  ratingText: {
-    fontSize: 14,
-    fontWeight: '600',
+  starIcon: {
+    marginRight: 2,
   },
   comment: {
     fontSize: 14,

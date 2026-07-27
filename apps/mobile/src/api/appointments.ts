@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-const getUserAppointments = async () => {
-  const response = await axios.get('/api/appointments');
+const getProviderAppointments = async (providerId: number) => {
+  const response = await axios.get(`https://example.com/api/appointments?providerId=${providerId}`);
   return response.data;
 };
 
-export { getUserAppointments };
+export { getProviderAppointments };

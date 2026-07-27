@@ -8,6 +8,7 @@ interface StarRatingInputProps {
   onRatingChange: (rating: number) => void;
   size?: number;
   disabled?: boolean;
+  maxStars?: number;
 }
 
 export const StarRatingInput: React.FC<StarRatingInputProps> = ({
@@ -15,8 +16,9 @@ export const StarRatingInput: React.FC<StarRatingInputProps> = ({
   onRatingChange,
   size = 32,
   disabled = false,
+  maxStars = 5,
 }) => {
-  const { theme } = useTheme();
+  const { colors } = useTheme();
 
   const handlePress = useCallback(
     (star: number) => {
@@ -28,26 +30,29 @@ export const StarRatingInput: React.FC<StarRatingInputProps> = ({
   );
 
   return (
-    <View style={styles.container} accessibilityRole="adjustable" accessibilityLabel={`Rating: ${rating} out of 5 stars`} accessibilityValue={{ min: 0, max: 5, now: rating }}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <TouchableOpacity
-          key={star}
-          onPress={() => handleStarPress(star)}
-          disabled={disabled}
-          activeOpacity={0.7}
-          accessibilityLabel={`${star} star${star > 1 ? 's' : ''}`}
-          accessibilityRole="button"
-          accessibilityState={{ selected: star <= rating }}
-        >
-          <Animated.View>
+    <View style={styles.container} accessibilityRole="adjustable" accessibilityLabel={`Rating: ${rating} out of ${maxStars} stars`} accessibilityValue={{ min: 1, max: maxStars, now: rating }}>
+      {Array.from({ length: maxStars }, (_, index) => {
+        const starNumber = index + 1;
+        const filled = starNumber <= rating;
+        return (
+          <TouchableOpacity
+            key={starNumber}
+            onPress={() => handlePress(starNumber)}
+            disabled={disabled}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`${starNumber} star${starNumber > 1 ? 's' : ''}`}
+            accessibilityState={{ selected: filled }}
+            style={styles.starButton}
+          >
             <Ionicons
-              name={star <= rating ? 'star' : 'star-outline'}
+              name={filled ? 'star' : 'star-outline'}
               size={size}
-              color={star <= rating ? theme.colors.warning : theme.colors.border}
+              color={filled ? colors.warning || '#FFD700' : colors.border || '#D1D5DB'}
             />
-          </Animated.View>
-        </TouchableOpacity>
-      ))}
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 };
@@ -56,6 +61,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+  },
+  starButton: {
+    padding: 2,
   },
 });

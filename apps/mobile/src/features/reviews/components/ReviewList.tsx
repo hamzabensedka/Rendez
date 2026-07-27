@@ -1,7 +1,7 @@
-import React from 'react';
-import { FlatList, View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useCallback } from 'react';
+import { FlatList, View, Text, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { useTheme } from 'react-native-paper';
 import { ReviewCard } from './ReviewCard';
-import { useTheme } from '../../../theme/ThemeContext';
 
 interface Review {
   id: string;
@@ -9,7 +9,8 @@ interface Review {
   comment: string;
   createdAt: string;
   user?: {
-    firstName?: string;
+    id: string;
+    name: string;
     lastName?: string;
     avatarUrl?: string;
   };
@@ -18,42 +19,57 @@ interface Review {
 interface ReviewListProps {
   reviews: Review[];
   isLoading: boolean;
-  isError: boolean;
+  isRefreshing: boolean;
+  onRefresh: () => void;
   onEndReached: () => void;
   hasNextPage: boolean;
-  ListHeaderComponent?: React.ReactElement;
+  isFetchingNextPage: boolean;
+  emptyMessage?: string;
 }
 
 export const ReviewList: React.FC<ReviewListProps> = ({
   reviews,
   isLoading,
-  isError,
+  isRefreshing,
+  onRefresh,
   onEndReached,
   hasNextPage,
-  ListHeaderComponent,
+  isFetchingNextPage,
+  emptyMessage = 'No reviews yet. Be the first to leave a review!',
 }) => {
-  const { theme } = useTheme();
+  const { colors } = useTheme();
+
+  const renderItem = useCallback(
+    ({ item }: { item: Review }) => <ReviewCard review={item} />,
+    []
+  );
+
+  const keyExtractor = useCallback((item: Review) => item.id.toString(), []);
+
+  const renderFooter = useCallback(() => {
+    if (!isFetchingNextPage) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={colors.primary} />
+      </View>
+    );
+  }, [isFetchingNextPage, colors.primary]);
+
+  const renderEmpty = useCallback(() => {
+    if (isLoading) return null;
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={[styles.emptyText, { color: colors.onSurfaceVariant || colors.secondary }]}>
+          {emptyMessage}
+        </Text>
+      </View>
+    );
+  }, [isLoading, emptyMessage, colors.onSurfaceVariant, colors.secondary]);
 
   if (isLoading && reviews.length === 0) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
-  }
-
-  if (isError && reviews.length === 0) {
-    return (
-      <View style={styles.center}>
-        <Text style={[styles.errorText, { color: theme.colors.error }]}>Failed to load reviews.</Text>
-      </View>
-    );
-  }
-
-  if (!isLoading && reviews.length === 0) {
-    return (
-      <View style={styles.center}>
-        <Text style={[styles.emptyText, { color: theme.colors.textSecondary }]}>No reviews yet.</Text>
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -61,41 +77,54 @@ export const ReviewList: React.FC<ReviewListProps> = ({
   return (
     <FlatList
       data={reviews}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <ReviewCard review={item} />}
-      contentContainerStyle={styles.listContent}
-      ListHeaderComponent={ListHeaderComponent}
-      onEndReached={hasNextPage ? onEndReached : null}
-      onEndReachedThreshold={0.5}
-      ListFooterComponent={
-        isLoading && reviews.length > 0 ? (
-          <ActivityIndicator style={styles.footer} color={theme.colors.primary} />
-        ) : null
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      contentContainerStyle={reviews.length === 0 ? styles.emptyList : styles.list}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={onRefresh}
+          colors={[colors.primary]}
+          tintColor={colors.primary}
+        />
       }
+      onEndReached={hasNextPage ? onEndReached : undefined}
+      onEndReachedThreshold={0.3}
+      ListFooterComponent={renderFooter}
+      ListEmptyComponent={renderEmpty}
+      showsVerticalScrollIndicator={false}
     />
   );
 };
 
 const styles = StyleSheet.create({
-  center: {
+  centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 40,
   },
-  errorText: {
-    fontSize: 16,
-    fontWeight: '500',
+  listContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  emptyList: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
   },
   emptyText: {
     fontSize: 16,
-    fontWeight: '500',
+    textAlign: 'center',
+    lineHeight: 24,
   },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
-  footer: {
-    marginVertical: 16,
+  footerLoader: {
+    paddingVertical: 16,
+    alignItems: 'center',
   },
 });
