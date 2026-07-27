@@ -1,28 +1,33 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { reviewsApi } from '../api/reviewsApi';
-import { Alert } from 'react-native';
 
 interface SubmitReviewPayload {
-  businessId: string;
-  appointmentId?: string;
+  businessId: number;
+  appointmentId?: number;
   rating: number;
-  comment: string;
+  comment?: string;
 }
 
-export const useSubmitReview = (businessId: string) => {
+const submitReview = async (payload: SubmitReviewPayload) => {
+  const response = await fetch('/api/reviews', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to submit review');
+  }
+  return response.json();
+};
+
+export function useSubmitReview(businessId: number) {
   const queryClient = useQueryClient();
 
-  return useMutation(
-    (payload: SubmitReviewPayload) => reviewsApi.submitReview(payload),
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries(['reviews', businessId]);
-        queryClient.invalidateQueries(['business', businessId]);
-        Alert.alert('Success', 'Your review has been submitted.');
-      },
-      onError: (error: any) => {
-        Alert.alert('Error', error?.message || 'Failed to submit review.');
-      },
-    }
-  );
-};
+  return useMutation({
+    mutationFn: submitReview,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews', businessId] });
+      queryClient.invalidateQueries({ queryKey: ['business', businessId] });
+    },
+  });
+}
