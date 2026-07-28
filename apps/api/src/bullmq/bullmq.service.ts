@@ -1,76 +1,88 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { Queue, JobsOptions } from 'bullmq';
 import { NotificationJobData } from './jobs/notification.job';
 import { AvailabilityCacheJobData } from './jobs/availability-cache.job';
 import { ScanSimulationJobData } from './jobs/scan-simulation.job';
 
 @Injectable()
-export class BullMqService {
-  private readonly logger = new Logger(BullMqService.name);
+export class BullmqService {
+  private readonly logger = new Logger(BullmqService.name);
 
   constructor(
-    @InjectQueue('notifications') private readonly notificationQueue: Queue,
-    @InjectQueue('availability-cache') private readonly availabilityCacheQueue: Queue,
-    @InjectQueue('scan-simulation') private readonly scanSimulationQueue: Queue,
+    @InjectQueue('notifications')
+    private readonly notificationQueue: Queue<NotificationJobData>,
+    @InjectQueue('availability-cache')
+    private readonly availabilityQueue: Queue<AvailabilityCacheJobData>,
+    @InjectQueue('scan-simulation')
+    private readonly scanSimulationQueue: Queue<ScanSimulationJobData>,
   ) {}
 
-  async addNotificationJob(data: NotificationJobData): Promise<string> {
-    this.logger.log(`Adding notification job for user ${data.userId}`);
+  async addNotificationJob(
+    data: NotificationJobData,
+    opts?: JobsOptions,
+  ): Promise<string> {
     const job = await this.notificationQueue.add('send-notification', data, {
       attempts: 3,
-      backoff: { type: 'exponential', delay: 2000 },
+      backoff: { type: 'exponential', delay: 1000 },
+      ...opts,
     });
-    return job.id as string;
+    this.logger.log(`Notification job enqueued: ${job.id}`);
+    return job.id;
   }
 
-  async addAvailabilityCacheRefreshJob(data: AvailabilityCacheJobData): Promise<string> {
-    this.logger.log(`Adding availability cache refresh job for business ${data.businessId}`);
-    const job = await this.availabilityCacheQueue.add('refresh-availability-cache', data, {
+  async addAvailabilityCacheJob(
+    data: AvailabilityCacheJobData,
+    opts?: JobsOptions,
+  ): Promise<string> {
+    const job = await this.availabilityQueue.add('refresh-availability', data, {
       attempts: 2,
-      backoff: { type: 'fixed', delay: 5000 },
+      ...opts,
     });
-    return job.id as string;
+    this.logger.log(`Availability cache job enqueued: ${job.id}`);
+    return job.id;
   }
 
-  async addScanSimulationJob(data: ScanSimulationJobData): Promise<string> {
-    this.logger.log(`Adding scan simulation job for business ${data.businessId}`);
-    const job = await this.scanSimulationQueue.add('run-scan-simulation', data, {
+  async addScanSimulationJob(
+    data: ScanSimulationJobData,
+    opts?: JobsOptions,
+  ): Promise<string> {
+    const job = await this.scanSimulationQueue.add('simulate-scan', data, {
       attempts: 1,
-      removeOnComplete: 50,
+      ...opts,
     });
-    return job.id as string;
+    this.logger.log(`Scan simulation job enqueued: ${job.id}`);
+    return job.id;
   }
 
-  async getJobStatus(queueName: string, jobId: string) {
-    const queue = this.getQueueByName(queueName);
-    if (!queue) {
-      throw new Error(`Queue ${queueName} not found`);
-    }
-    const job = await queue.getJob(jobId);
-    if (!job) {
-      return null;
-    }
-    return {
-      id: job.id,
-      name: job.name,
-      status: await job.getState(),
-      progress: job.progress,
-      data: job.data,
-      failedReason: job.failedReason,
-    };
+  async getQueueMetrics(queueName: string): Promise<{
+    waiting: number;
+    active: number;
+    completed: number;
+    failed: number;
+    delayed: number;
+  }> {
+    const queue = this.resolveQueue(queueName);
+    const [waiting, active, completed, failed, delayed] = await Promise.all([
+      queue.getWaitingCount(),
+      queue.getActiveCount(),
+      queue.getCompletedCount(),
+      queue.getFailedCount(),
+      queue.getDelayedCount(),
+    ]);
+    return { waiting, active, completed, failed, delayed };
   }
 
-  private getQueueByName(name: string): Queue | undefined {
+  private resolveQueue(name: string): Queue {
     switch (name) {
       case 'notifications':
         return this.notificationQueue;
       case 'availability-cache':
-        return this.availabilityCacheQueue;
+        return this.availabilityQueue;
       case 'scan-simulation':
         return this.scanSimulationQueue;
       default:
-        return undefined;
+        throw new Error(`Unknown queue: ${name}`);
     }
   }
 }

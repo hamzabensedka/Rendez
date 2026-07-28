@@ -1,6 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
+import { Logger } from '@nestjs/common';
 import { NotificationJobData } from '../jobs/notification.job';
 
 @Processor('notifications')
@@ -8,67 +8,30 @@ export class NotificationProcessor extends WorkerHost {
   private readonly logger = new Logger(NotificationProcessor.name);
 
   async process(job: Job<NotificationJobData>): Promise<void> {
-    const { userId, type, title, body, metadata } = job.data;
+    const { userId, title, body, data } = job.data;
 
     this.logger.log(
-      `Processing notification job ${job.id}: ${type} for user ${userId}`,
+      `Processing notification job ${job.id} for user ${userId}: ${title}`,
     );
 
+    // Simulate push notification delivery
+    // In production, integrate with Expo Push API or Firebase Cloud Messaging
     try {
-      switch (type) {
-        case 'push':
-          await this.sendPushNotification(userId, title, body, metadata);
-          break;
-        case 'email':
-          await this.sendEmailNotification(userId, title, body, metadata);
-          break;
-        default:
-          throw new Error(`Unsupported notification type: ${type}`);
-      }
+      // Simulate async delivery delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      await job.updateProgress(100);
-      this.logger.log(`Notification job ${job.id} completed successfully`);
+      this.logger.log(
+        `Notification sent to user ${userId}: ${title} - ${body}`,
+      );
+
+      // Log success metrics
+      this.logger.debug(`Notification payload: ${JSON.stringify(data)}`);
     } catch (error) {
       this.logger.error(
-        `Notification job ${job.id} failed: ${(error as Error).message}`,
-        (error as Error).stack,
+        `Failed to send notification to user ${userId}: ${error.message}`,
+        error.stack,
       );
-      throw error;
+      throw error; // BullMQ will handle retry based on job options
     }
-  }
-
-  private async sendPushNotification(
-    userId: string,
-    title: string,
-    body: string,
-    metadata?: Record<string, unknown>,
-  ): Promise<void> {
-    // TODO: Integrate with Expo Push Notification service
-    // For now, simulate push notification sending
-    this.logger.log(
-      `Sending push notification to user ${userId}: ${title} - ${body}`,
-    );
-
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    this.logger.log(`Push notification sent to user ${userId}`);
-  }
-
-  private async sendEmailNotification(
-    userId: string,
-    title: string,
-    body: string,
-    metadata?: Record<string, unknown>,
-  ): Promise<void> {
-    // TODO: Integrate with email service (SendGrid, SES, etc.)
-    this.logger.log(
-      `Sending email notification to user ${userId}: ${title} - ${body}`,
-    );
-
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    this.logger.log(`Email notification sent to user ${userId}`);
   }
 }

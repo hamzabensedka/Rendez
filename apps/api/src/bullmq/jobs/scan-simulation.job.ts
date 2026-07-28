@@ -1,6 +1,5 @@
 export interface ScanSimulationJobData {
   businessId: string;
-  scanType: 'check-in' | 'qr-validation';
-  appointmentId?: string;
-  metadata?: Record<string, unknown>;
+  scanType: 'qr' | 'nfc' | 'barcode';
+  parameters?: Record<string, unknown>;
 }
