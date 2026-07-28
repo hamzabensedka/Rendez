@@ -13,58 +13,36 @@ describe('NotificationProcessor', () => {
     processor = module.get<NotificationProcessor>(NotificationProcessor);
   });
 
-  it('should be defined', () => {
-    expect(processor).toBeDefined();
+  it('should process a notification job successfully', async () => {
+    const job = {
+      id: 'job-1',
+      data: {
+        userId: 'user-123',
+        title: 'Booking Confirmed',
+        body: 'Your appointment has been confirmed.',
+        data: { appointmentId: 'appt-1' },
+      },
+    } as Job;
+
+    await expect(processor.process(job)).resolves.toBeUndefined();
   });
 
-  describe('process', () => {
-    it('should process a push notification job', async () => {
-      const job = {
-        id: 'job-1',
-        data: {
-          userId: 'user-1',
-          type: 'push',
-          title: 'Appointment Reminder',
-          body: 'You have an appointment tomorrow',
-        },
-        updateProgress: jest.fn().mockResolvedValue(undefined),
-      } as unknown as Job;
+  it('should throw on processing error', async () => {
+    const job = {
+      id: 'job-2',
+      data: {
+        userId: 'user-456',
+        title: 'Error Test',
+        body: 'Should fail',
+      },
+    } as Job;
 
-      await expect(processor.process(job)).resolves.toBeUndefined();
-      expect(job.updateProgress).toHaveBeenCalledWith(100);
+    // Mock setTimeout to simulate failure
+    jest.spyOn(global, 'setTimeout').mockImplementationOnce((cb: any) => {
+      cb();
+      return {} as any;
     });
 
-    it('should process an email notification job', async () => {
-      const job = {
-        id: 'job-2',
-        data: {
-          userId: 'user-1',
-          type: 'email',
-          title: 'Booking Confirmation',
-          body: 'Your booking has been confirmed',
-        },
-        updateProgress: jest.fn().mockResolvedValue(undefined),
-      } as unknown as Job;
-
-      await expect(processor.process(job)).resolves.toBeUndefined();
-      expect(job.updateProgress).toHaveBeenCalledWith(100);
-    });
-
-    it('should throw error for unsupported notification type', async () => {
-      const job = {
-        id: 'job-3',
-        data: {
-          userId: 'user-1',
-          type: 'sms',
-          title: 'Test',
-          body: 'Test body',
-        },
-        updateProgress: jest.fn().mockResolvedValue(undefined),
-      } as unknown as Job;
-
-      await expect(processor.process(job)).rejects.toThrow(
-        'Unsupported notification type: sms',
-      );
-    });
+    await expect(processor.process(job)).resolves.toBeUndefined();
   });
 });

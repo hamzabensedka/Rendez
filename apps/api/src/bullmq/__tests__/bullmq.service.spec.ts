@@ -1,132 +1,120 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { BullmqService } from '../bullmq.service';
 import { getQueueToken } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { BullMqService } from '../bullmq.service';
 
-describe('BullMqService', () => {
-  let service: BullMqService;
+describe('BullmqService', () => {
+  let service: BullmqService;
   let notificationQueue: jest.Mocked<Queue>;
-  let availabilityCacheQueue: jest.Mocked<Queue>;
+  let availabilityQueue: jest.Mocked<Queue>;
   let scanSimulationQueue: jest.Mocked<Queue>;
 
+  const mockQueue = {
+    add: jest.fn(),
+    getWaitingCount: jest.fn().mockResolvedValue(0),
+    getActiveCount: jest.fn().mockResolvedValue(0),
+    getCompletedCount: jest.fn().mockResolvedValue(0),
+    getFailedCount: jest.fn().mockResolvedValue(0),
+    getDelayedCount: jest.fn().mockResolvedValue(0),
+  };
+
   beforeEach(async () => {
-    notificationQueue = {
-      add: jest.fn().mockResolvedValue({ id: 'job-1' }),
-      getJob: jest.fn().mockResolvedValue({
-        id: 'job-1',
-        name: 'send-notification',
-        getState: jest.fn().mockResolvedValue('completed'),
-        progress: 100,
-        data: { userId: 'user-1', type: 'push', title: 'Test', body: 'Test body' },
-        failedReason: null,
-      }),
-    } as any;
-
-    availabilityCacheQueue = {
-      add: jest.fn().mockResolvedValue({ id: 'job-2' }),
-      getJob: jest.fn().mockResolvedValue(null),
-    } as any;
-
-    scanSimulationQueue = {
-      add: jest.fn().mockResolvedValue({ id: 'job-3' }),
-      getJob: jest.fn().mockResolvedValue(null),
-    } as any;
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        BullMqService,
+        BullmqService,
         {
           provide: getQueueToken('notifications'),
-          useValue: notificationQueue,
+          useValue: mockQueue,
         },
         {
           provide: getQueueToken('availability-cache'),
-          useValue: availabilityCacheQueue,
+          useValue: mockQueue,
         },
         {
           provide: getQueueToken('scan-simulation'),
-          useValue: scanSimulationQueue,
+          useValue: mockQueue,
         },
       ],
     }).compile();
 
-    service = module.get<BullMqService>(BullMqService);
+    service = module.get<BullmqService>(BullmqService);
+    notificationQueue = module.get(getQueueToken('notifications'));
+    availabilityQueue = module.get(getQueueToken('availability-cache'));
+    scanSimulationQueue = module.get(getQueueToken('scan-simulation'));
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   describe('addNotificationJob', () => {
     it('should add a notification job to the queue', async () => {
       const data = {
-        userId: 'user-1',
-        type: 'push' as const,
-        title: 'Test',
-        body: 'Test body',
+        userId: 'user-123',
+        title: 'Booking Confirmed',
+        body: 'Your appointment has been confirmed.',
       };
+      mockQueue.add.mockResolvedValue({ id: 'job-1' });
 
       const jobId = await service.addNotificationJob(data);
 
-      expect(notificationQueue.add).toHaveBeenCalledWith('send-notification', data, expect.any(Object));
       expect(jobId).toBe('job-1');
+      expect(mockQueue.add).toHaveBeenCalledWith('send-notification', data, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 1000 },
+      });
     });
   });
 
-  describe('addAvailabilityCacheRefreshJob', () => {
-    it('should add an availability cache refresh job', async () => {
-      const data = {
-        businessId: 'biz-1',
-        forceRefresh: true,
-      };
+  describe('addAvailabilityCacheJob', () => {
+    it('should add an availability cache job to the queue', async () => {
+      const data = { businessId: 'biz-456', date: '2025-01-15' };
+      mockQueue.add.mockResolvedValue({ id: 'job-2' });
 
-      const jobId = await service.addAvailabilityCacheRefreshJob(data);
+      const jobId = await service.addAvailabilityCacheJob(data);
 
-      expect(availabilityCacheQueue.add).toHaveBeenCalledWith('refresh-availability-cache', data, expect.any(Object));
       expect(jobId).toBe('job-2');
+      expect(mockQueue.add).toHaveBeenCalledWith('refresh-availability', data, {
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 2000 },
+      });
     });
   });
 
   describe('addScanSimulationJob', () => {
-    it('should add a scan simulation job', async () => {
+    it('should add a scan simulation job to the queue', async () => {
       const data = {
-        businessId: 'biz-1',
-        scanType: 'checkin' as const,
+        businessId: 'biz-789',
+        scanType: 'qr',
+        parameters: { tableId: 't1' },
       };
+      mockQueue.add.mockResolvedValue({ id: 'job-3' });
 
       const jobId = await service.addScanSimulationJob(data);
 
-      expect(scanSimulationQueue.add).toHaveBeenCalledWith('run-scan-simulation', data, expect.any(Object));
       expect(jobId).toBe('job-3');
+      expect(mockQueue.add).toHaveBeenCalledWith('simulate-scan', data, {
+        attempts: 1,
+      });
     });
   });
 
-  describe('getJobStatus', () => {
-    it('should return job status for a valid queue and job', async () => {
-      const status = await service.getJobStatus('notifications', 'job-1');
+  describe('getQueueMetrics', () => {
+    it('should return metrics for a given queue', async () => {
+      const metrics = await service.getQueueMetrics('notifications');
 
-      expect(notificationQueue.getJob).toHaveBeenCalledWith('job-1');
-      expect(status).toEqual({
-        id: 'job-1',
-        name: 'send-notification',
-        status: 'completed',
-        progress: 100,
-        data: { userId: 'user-1', type: 'push', title: 'Test', body: 'Test body' },
-        failedReason: null,
+      expect(metrics).toEqual({
+        waiting: 0,
+        active: 0,
+        completed: 0,
+        failed: 0,
+        delayed: 0,
       });
     });
 
-    it('should return null if job not found', async () => {
-      notificationQueue.getJob.mockResolvedValueOnce(null);
-
-      const status = await service.getJobStatus('notifications', 'non-existent');
-
-      expect(status).toBeNull();
-    });
-
-    it('should throw error for unknown queue', async () => {
-      await expect(service.getJobStatus('unknown-queue', 'job-1')).rejects.toThrow(
-        'Queue unknown-queue not found',
+    it('should throw for unknown queue name', async () => {
+      await expect(service.getQueueMetrics('unknown')).rejects.toThrow(
+        'Unknown queue: unknown',
       );
     });
   });

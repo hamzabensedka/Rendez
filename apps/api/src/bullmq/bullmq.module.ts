@@ -1,10 +1,10 @@
 import { Module, Global } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { BullmqService } from './bullmq.service';
 import { NotificationProcessor } from './processors/notification.processor';
 import { AvailabilityProcessor } from './processors/availability.processor';
 import { ScanSimulationProcessor } from './processors/scan-simulation.processor';
-import { BullMqService } from './bullmq.service';
 
 @Global()
 @Module({
@@ -16,7 +16,7 @@ import { BullMqService } from './bullmq.service';
         connection: {
           host: configService.get<string>('REDIS_HOST', 'localhost'),
           port: configService.get<number>('REDIS_PORT', 6379),
-          password: configService.get<string>('REDIS_PASSWORD') || undefined,
+          password: configService.get<string>('REDIS_PASSWORD', ''),
           db: configService.get<number>('REDIS_DB', 0),
         },
         defaultJobOptions: {
@@ -37,11 +37,11 @@ import { BullMqService } from './bullmq.service';
     ),
   ],
   providers: [
-    NotificationService,
+    BullmqService,
+    NotificationProcessor,
     AvailabilityProcessor,
     ScanSimulationProcessor,
-    BullMqService,
   ],
-  exports: [BullMqService, BullModule],
+  exports: [BullmqService],
 })
-export class BullMqModule {}
+export class BullmqModule {}
