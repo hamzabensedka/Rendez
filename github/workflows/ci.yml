@@ -2,18 +2,32 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
-  ci:
+  build:
     runs-on: ubuntu-latest
-    env:
-      # Stripe secrets will be injected from repository secrets
-      STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
-      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
-      STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: planity
+        ports: [5432:5432]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports: [6379:6379]
+
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
@@ -21,19 +35,38 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+      - name: Install pnpm
+        run: npm i -r -g pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Lint
         run: pnpm lint
       - name: Test
         run: pnpm test
-      - name: Build Docker images
-        run: docker compose build
-      - name: Build Expo iOS
-        run: npx expo build:ios
-      - name: Build Expo Android
-        run: npx expo build:android
-      - name: Deploy (if on main)
-        if: github.ref == 'refs/heads/main'
+      - name: Build
+        run: pnpm build
+      - name: Set Stripe env file
         run: |
-          echo "Deploy step would run here"
+          cat <<EOF > stripe.env
+          STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_API_KEY=${{ secrets.STRIPE_API_KEY }}
+          STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+          EOF
+        env:
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+          STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+      - name: Docker Compose Up
+        run: docker compose -f docker/docker-compose.yml up -d
+        env_file: stripe.env
+      - name: Run migrations
+        run: pnpm prisma:migrate
+        env_file: stripe.env
+      - name: Run tests
+        run: pnpm test
+        env_file: stripe.env
+      - name: Build Docker images
+        run: |
+          docker build -t planity-api:latest -f docker/api.Dockerfile .
+          docker build -t planity-mobile:latest -f docker/mobile.Dockerfile .
+        env_file: stripe.env
