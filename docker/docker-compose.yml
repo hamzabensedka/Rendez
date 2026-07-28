@@ -2,21 +2,19 @@ version: '3.8'
 
 services:
   api:
-    build: ./api
+    build: ./docker/api
     ports:
-      - "3000:3000"
+      - 3000:3000
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/planity
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
-      - STRIPE_API_KEY=${STRIPE_API_KEY}
-      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
-    volumes:
-      - ./apps/api/src:/app/src
+      - STRIPE_WEBHOOK_URL=${STRIPE_WEBHOOK_URL}
     depends_on:
       - db
       - redis
+    restart: unless-stopped
 
   db:
     image: postgres:15
@@ -24,15 +22,31 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: planity
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
 
   redis:
     image: redis:7
     ports:
-      - "6379:6379"
+      - 6379:6379
+    volumes:
+      - redisdata:/data
+
+  worker:
+    build: ./docker/worker
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - STRIPE_WEBHOOK_URL=${STRIPE_WEBHOOK_URL}
+    depends_on:
+      - api
+      - redis
+    restart: unless-stopped
 
 volumes:
   pgdata:
+  redisdata:
