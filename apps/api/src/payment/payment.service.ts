@@ -1,36 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { Stripe } from 'stripe';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Payment } from './entities/payment.entity';
+import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
+import { StripeService } from 'nestjs-stripe';
 
 @Injectable()
 export class PaymentService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @InjectRepository(Payment)
+    private readonly paymentRepository: Repository<Payment>,
+    private readonly stripeService: StripeService,
+  ) {}
 
-  async createPaymentIntent(amount: number) {
-    const stripe = new Stripe('YOUR_STRIPE_SECRET_KEY', {
-      apiVersion: '2022-11-15',
-    });
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount,
+  async createPaymentIntent(createPaymentIntentDto: CreatePaymentIntentDto) {
+    const paymentIntent = await this.stripeService.paymentIntents.create({
+      amount: createPaymentIntentDto.amount,
       currency: 'usd',
       payment_method_types: ['card'],
     });
     return paymentIntent;
-  }
-
-  async handleWebhook(event: any) {
-    const stripe = new Stripe('YOUR_STRIPE_SECRET_KEY', {
-      apiVersion: '2022-11-15',
-    });
-    const constructedEvent = stripe.webhooks.constructEvent(
-      event.raw,
-      event.sig,
-      'YOUR_STRIPE_WEBHOOK_SECRET'
-    );
-    if (constructedEvent.type === 'payment_intent.succeeded') {
-      // Handle successful payment intent
-    } else if (constructedEvent.type === 'payment_intent.payment_failed') {
-      // Handle failed payment intent
-    }
   }
 }
