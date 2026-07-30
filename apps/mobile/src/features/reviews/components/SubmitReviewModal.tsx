@@ -1,27 +1,27 @@
 import React, { useState, useCallback } from 'react';
 import {
-  Modal,
   View,
   Text,
+  Modal,
   TextInput,
-  TouchableOpacity,
   StyleSheet,
+  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { useTheme } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '../../../shared/theme/ThemeContext';
 import { StarRatingInput } from './StarRatingInput';
 import { useSubmitReview } from '../hooks/useSubmitReview';
 
 interface SubmitReviewModalProps {
   visible: boolean;
   onClose: () => void;
-  businessId: number;
-  appointmentId?: number;
-  onSubmitted: () => void;
+  businessId: string;
+  appointmentId?: string;
+  onSubmitted?: () => void;
 }
 
 export const SubmitReviewModal: React.FC<SubmitReviewModalProps> = ({
@@ -34,122 +34,120 @@ export const SubmitReviewModal: React.FC<SubmitReviewModalProps> = ({
   const { colors } = useTheme();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+  const { submitReview, isSubmitting } = useSubmitReview();
 
-  const { mutate: submitReview, isPending } = useMutation(
-    async () => {
-      const response = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          businessId,
-          appointmentId,
-          rating,
-          comment: comment.trim(),
-        }),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to submit review');
-      }
-      return response.json();
-    },
-    {
-      onSuccess: () => {
-        Alert.alert('Success', 'Your review has been submitted.');
-        setRating(0);
-        setComment('');
-        onSubmitted();
-        onClose();
-      },
-      onError: (error: Error) => {
-        Alert.alert('Error', error.message || 'Failed to submit review. Please try again.');
-      },
-    }
-  );
-
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (rating === 0) {
       Alert.alert('Rating required', 'Please select a star rating before submitting.');
       return;
     }
-    submitReview();
-  }, [rating, submitReview]);
+
+    try {
+      await submitReview({
+        businessId,
+        appointmentId,
+        rating,
+        comment: comment.trim() || undefined,
+      });
+      setRating(0);
+      setComment('');
+      onSubmitted?.();
+      onClose();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to submit review. Please try again.');
+    }
+  }, [rating, comment, businessId, appointmentId, submitReview, onSubmitted, onClose]);
 
   const handleClose = useCallback(() => {
-    if (!isPending) {
-      onClose();
-    }
-  }, [isPending, onClose]);
+    setRating(0);
+    setComment('');
+    onClose();
+  }, [onClose]);
+
+  const isValid = rating > 0;
 
   return (
     <Modal
       visible={visible}
       animationType="slide"
-      transparent
+      presentationStyle="pageSheet"
       onRequestClose={handleClose}
-      statusBarTranslucent
+      accessibilityViewIsModal
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.overlay}
+        style={[styles.container, { backgroundColor: colors.background }]}
       >
-        <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.onSurface }]}>Write a Review</Text>
-            <TouchableOpacity onPress={handleClose} disabled={isPending} accessibilityLabel="Close" accessibilityRole="button">
-              <Ionicons name="close" size={28} color={colors.onSurfaceVariant || colors.secondary} />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleClose} accessibilityRole="button" accessibilityLabel="Close review form">
+            <Ionicons name="close" size={28} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: colors.text }]}>Write a Review</Text>
+          <View style={{ width: 28 }} />
+        </View>
 
-          <View style={styles.ratingSection}>
-            <Text style={[styles.label, { color: colors.onSurface }]}>Your Rating</Text>
-            <StarRatingInput
-              rating={rating}
-              onRatingChange={setRating}
-              size={40}
-              disabled={isPending}
-            />
+        <View style={styles.content}>
+          <Text style={[styles.label, { color: colors.text }]}>Your Rating</Text>
+          <View style={styles.starContainer}>
+            <StarRatingInput rating={rating} onRatingChange={setRating} size={40} />
           </View>
+          <Text style={[styles.ratingHint, { color: colors.textSecondary }]}>
+            {rating === 0
+              ? 'Tap a star to rate'
+              : rating === 5
+              ? 'Excellent!'
+              : rating === 4
+              ? 'Very good'
+              : rating === 3
+              ? 'Good'
+              : rating === 2
+              ? 'Fair'
+              : 'Poor'}
+          </Text>
 
-          <View style={styles.commentSection}>
-            <Text style={[styles.label, { color: colors.onSurface }]}>Your Review (optional)</Text>
-            <TextInput
-              style={[
-                styles.textInput,
-                {
-                  backgroundColor: colors.background,
-                  color: colors.text,
-                  borderColor: colors.outlineVariant || colors.border,
-                },
-              ]}
-              placeholder="Share your experience..."
-              placeholderTextColor={colors.onSurfaceVariant || colors.placeholder}
-              value={comment}
-              onChangeText={setComment}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-              editable={!isPending}
-              maxLength={500}
-              accessibilityLabel="Review comment"
-            />
-            <Text style={[styles.charCount, { color: colors.onSurfaceVariant }]}>
-              {comment.length}/500
-            </Text>
-          </View>
+          <Text style={[styles.label, { color: colors.textSecondary, marginTop: 24 }]}>
+            Your Review (optional)
+          </Text>
+          <TextInput
+            style={[
+              styles.textInput,
+              {
+                color: colors.text,
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+            placeholder="Share your experience..."
+            placeholderTextColor={colors.textSecondary}
+            value={comment}
+            onChangeText={setComment}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+            maxLength={1000}
+            accessibilityLabel="Review comment"
+          />
+          <Text style={[styles.charCount, { color: colors.textSecondary }]}>
+            {comment.length}/1000
+          </Text>
+        </View>
 
+        <View style={[styles.footer, { borderTopColor: colors.border }]}>
           <TouchableOpacity
-            style={[styles.submitButton, { backgroundColor: colors.primary, opacity: isPending || rating === 0 ? 0.6 : 1 }]}
+            style={[
+              styles.submitButton,
+              { backgroundColor: isValid ? colors.primary : colors.borderLight },
+            ]}
             onPress={handleSubmit}
-            disabled={isPending || rating === 0}
+            disabled={!isValid || isSubmitting}
             accessibilityRole="button"
             accessibilityLabel="Submit review"
-            accessibilityState={{ disabled: isPending || rating === 0 }}
+            accessibilityState={{ disabled: !isValid || isSubmitting }}
           >
-            {isPending ? (
-              <ActivityIndicator size="small" color={colors.onPrimary} />
+            {isSubmitting ? (
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={[styles.submitButtonText, { color: colors.onPrimary }]}>Submit Review</Text>
+              <Text style={styles.submitText}>Submit Review</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -159,60 +157,66 @@ export const SubmitReviewModal: React.FC<SubmitReviewModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  overlay: {
+  container: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContainer: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 24,
-    paddingBottom: 40,
-    maxHeight: '80%',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '600',
   },
-  ratingSection: {
-    alignItems: 'center',
-    marginBottom: 24,
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
+    fontSize: 15,
+    fontWeight: '500',
+    marginBottom: 8,
   },
-  commentSection: {
-    marginBottom: 24,
+  starContainer: {
+    alignItems: 'center',
+    paddingVertical: 12,
   },
-  inputText: {
+  ratingHint: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  input: {
     borderWidth: 1,
     borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    minHeight: 100,
+    padding: 12,
+    fontSize: 15,
+    minHeight: 120,
+    lineHeight: 22,
   },
   charCount: {
     fontSize: 12,
     textAlign: 'right',
     marginTop: 4,
   },
+  footer: {
+    padding: 16,
+    borderTopWidth: 1,
+  },
   submitButton: {
-    borderRadius: 12,
     paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  submitButtonText: {
-    fontSize: 18,
+  submitText: {
+    color: '#FFFFFF',
+    fontSize: 16,
     fontWeight: '600',
   },
 });

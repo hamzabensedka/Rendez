@@ -7,16 +7,16 @@ interface StarRatingInputProps {
   rating: number;
   onRatingChange: (rating: number) => void;
   size?: number;
-  disabled?: boolean;
   maxStars?: number;
+  disabled?: boolean;
 }
 
 export const StarRatingInput: React.FC<StarRatingInputProps> = ({
   rating,
   onRatingChange,
   size = 32,
-  disabled = false,
   maxStars = 5,
+  disabled = false,
 }) => {
   const { colors } = useTheme();
 
@@ -30,7 +30,7 @@ export const StarRatingInput: React.FC<StarRatingInputProps> = ({
   );
 
   return (
-    <View style={styles.container} accessibilityRole="adjustable" accessibilityLabel={`Rating: ${rating} out of ${maxStars} stars`} accessibilityValue={{ min: 1, max: maxStars, now: rating }}>
+    <View style={styles.container} accessibilityRole="adjustable" accessibilityLabel={`Rating: ${rating} out of ${maxStars} stars`} accessibilityValue={{ min: 0, max: maxStars, now: rating }}>
       {Array.from({ length: maxStars }, (_, index) => {
         const starNumber = index + 1;
         const filled = starNumber <= rating;
@@ -39,7 +39,6 @@ export const StarRatingInput: React.FC<StarRatingInputProps> = ({
             key={starNumber}
             onPress={() => handlePress(starNumber)}
             disabled={disabled}
-            activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel={`${starNumber} star${starNumber > 1 ? 's' : ''}`}
             accessibilityState={{ selected: filled }}
@@ -48,7 +47,7 @@ export const StarRatingInput: React.FC<StarRatingInputProps> = ({
             <Ionicons
               name={filled ? 'star' : 'star-outline'}
               size={size}
-              color={filled ? colors.warning || '#FFD700' : colors.border || '#D1D5DB'}
+              color={filled ? colors.warning : colors.border}
             />
           </TouchableOpacity>
         );
@@ -61,6 +60,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
   },
   starButton: {
     padding: 2,

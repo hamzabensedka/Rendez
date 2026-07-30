@@ -1,22 +1,16 @@
 import { Stack } from 'expo-router';
-import { useAuth } from '../../src/hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
 import { Redirect } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
 
 export default function ProviderLayout() {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
+    return null;
   }
 
-  // Role gate: only allow provider or admin roles
-  if (!user || (user.role !== 'provider' && user.role !== 'admin')) {
-    return <Redirect href="/(auth)/login" />;
+  if (!user || user.role !== 'provider') {
+    return <Redirect href="/(tabs)" />;
   }
 
   return (
@@ -26,24 +20,11 @@ export default function ProviderLayout() {
         animation: 'slide_from_right',
       }}
     >
-      <Stack.Screen name="index" />
-      <Stack.Screen
-        name="appointment/[id]"
-        options={{
-          headerShown: true,
-          headerTitle: 'Appointment Details',
-          headerBackTitle: 'Dashboard',
-        }}
-      />
-      <Stack.Screen
-        name="service/[id]"
-        options={{
-          headerShown: true,
-          headerTitle: 'Edit Service',
-          headerBackTitle: 'Services',
-          presentation: 'modal',
-        }}
-      />
+      <Stack.Screen name="dashboard" />
+      <Stack.Screen name="appointments" />
+      <Stack.Screen name="services" />
+      <Stack.Screen name="availability" />
+      <Stack.Screen name="profile" />
     </Stack>
   );
 }
