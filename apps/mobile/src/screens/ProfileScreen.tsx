@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { patchProfile } from '../api/profile';
-import { ExpoRouter } from 'expo-router';
+import { patchProfile } from '../api';
 
 const ProfileScreen = () => {
   const [name, setName] = useState('');
@@ -10,10 +9,10 @@ const ProfileScreen = () => {
   const [avatar, setAvatar] = useState('');
   const queryClient = useQueryClient();
 
-  const handleUpdateProfile = async () => {
+  const handleEditProfile = async () => {
     try {
       await patchProfile({ name, phone, avatar });
-      await queryClient.invalidateQueries('profile');
+      queryClient.invalidateQueries('profile');
     } catch (error) {
       console.error(error);
     }
@@ -24,20 +23,20 @@ const ProfileScreen = () => {
       <Text>Profile</Text>
       <TextInput
         value={name}
-        onChangeText={setName}
+        onChangeText={(text) => setName(text)}
         placeholder='Name'
       />
       <TextInput
         value={phone}
-        onChangeText={setPhone}
+        onChangeText={(text) => setPhone(text)}
         placeholder='Phone'
       />
       <TextInput
         value={avatar}
-        onChangeText={setAvatar}
+        onChangeText={(text) => setAvatar(text)}
         placeholder='Avatar'
       />
-      <Button title='Update Profile' onPress={handleUpdateProfile} />
+      <Button title='Edit Profile' onPress={handleEditProfile} />
     </View>
   );
 };

@@ -1,93 +1,47 @@
-/**
- * Shared payment types for Planity Clone
- * Used across frontend and backend for consistent payment status handling
- */
-
 export enum PaymentStatus {
-  PENDING = 'PENDING',
-  PROCESSING = 'PROCESSING',
-  REQUIRES_ACTION = 'REQUIRES_ACTION',
-  SUCCEEDED = 'SUCCEEDED',
-  FAILED = 'FAILED',
-  CANCELED = 'CANCELED',
-  REFUNDED = 'REFUNDED',
-}
-
-export interface PaymentIntent {
-  id: string;
-  bookingId: string;
-  amount: number;
-  currency: string;
-  status: PaymentStatus;
-  clientSecret: string | null;
-  createdAt: string;
-  updatedAt: string;
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  REFUNDED = 'refunded',
+  CANCELLED = 'cancelled',
 }
 
 export interface PaymentMethod {
   id: string;
-  type: 'card' | 'sepa_debit' | 'ideal' | 'bancontact';
-  last4: string;
+  userId: string;
+  type: 'card' | 'wallet';
+  lastFour: string;
   brand: string;
-  expMonth: number;
-  expYear: number;
+  expiryMonth: number;
+  expiryYear: number;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface PaymentConfirmation {
-  paymentIntentId: string;
-  bookingId: string;
+export interface PaymentTransaction {
+  id: string;
+  appointmentId: string;
+  userId: string;
+  amount: number;
+  currency: string;
   status: PaymentStatus;
-  transactionId: string;
-  receiptUrl: string | null;
-  errorMessage: string | null;
-  requiresAction: boolean;
-  clientSecret: string | null;
+  paymentMethodId: string;
+  receiptUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PaymentReceipt {
   transactionId: string;
-  bookingId: string;
+  appointmentId: string;
   amount: number;
   currency: string;
   status: PaymentStatus;
-  date: string;
-  businessName: string;
-  serviceName: string;
-  paymentMethod: Pick<PaymentMethod, 'last4' | 'brand'>;
-}
-
-export interface CreatePaymentIntentRequest {
-  bookingId: string;
-  amount?: number;
-  currency?: string;
-}
-
-export interface ConfirmPaymentRequest {
-  paymentIntentId: string;
-  bookingId: string;
+  paidAt: string;
   paymentMethod: {
-    card: {
-      number: string;
-      expMonth: number;
-      expYear: number;
-      cvc: string;
-    };
-    billingDetails: {
-      name: string;
-      email?: string;
-      address?: {
-        line1: string;
-        city: string;
-        postalCode: string;
-        country: string;
-      };
-    };
+    brand: string;
+    lastFour: string;
   };
-}
-
-export interface PaymentError {
-  code: string;
-  message: string;
-  declineCode?: string;
-  paymentIntentId?: string;
 }
