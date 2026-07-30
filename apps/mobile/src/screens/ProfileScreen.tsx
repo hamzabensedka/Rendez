@@ -1,42 +1,45 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button } from 'react-native';
-import { useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { patchProfile } from '../api';
+import { ExpoRouter } from 'expo-router';
 
 const ProfileScreen = () => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [avatar, setAvatar] = useState('');
   const queryClient = useQueryClient();
-
-  const handleEditProfile = async () => {
-    try {
-      await patchProfile({ name, phone, avatar });
-      queryClient.invalidateQueries('profile');
-    } catch (error) {
-      console.error(error);
+  const { mutate } = useMutation(
+    'update-profile',
+    async (newProfile) => patchProfile(newProfile),
+    {
+      onSuccess: () => queryClient.invalidateQueries('profile'),
     }
+  );
+
+  const handleUpdateProfile = () => {
+    mutate({ name, phone, avatar });
   };
 
   return (
     <View>
       <Text>Profile</Text>
       <TextInput
+        placeholder='Name'
         value={name}
         onChangeText={(text) => setName(text)}
-        placeholder='Name'
       />
       <TextInput
+        placeholder='Phone'
         value={phone}
         onChangeText={(text) => setPhone(text)}
-        placeholder='Phone'
       />
       <TextInput
+        placeholder='Avatar'
         value={avatar}
         onChangeText={(text) => setAvatar(text)}
-        placeholder='Avatar'
       />
-      <Button title='Edit Profile' onPress={handleEditProfile} />
+      <Button title='Update Profile' onPress={handleUpdateProfile} />
     </View>
   );
 };

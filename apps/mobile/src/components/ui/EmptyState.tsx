@@ -1,62 +1,69 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Button from './Button';
 
 interface EmptyStateProps {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon?: string;
   title: string;
-  description: string;
+  message: string;
   actionLabel?: string;
   onAction?: () => void;
 }
 
-export default function EmptyState({
-  icon,
+const EmptyState: React.FC<EmptyStateProps> = ({
+  icon = 'information-circle-outline',
   title,
-  description,
+  message,
   actionLabel,
   onAction,
-}: EmptyStateProps) {
+}) => {
   return (
     <View style={styles.container}>
-      <Ionicons name={icon} size={64} color="#D1D5DB" />
+      <Ionicons name={icon as any} size={64} color="#D1D5DB" />
       <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
+      <Text style={styles.message}>{message}</Text>
       {actionLabel && onAction && (
-        <View style={styles.actionWrapper}>
-          <Button
-            title={actionLabel}
-            onPress={onAction}
-            variant="outline"
-            size="md"
-          />
-        </View>
+        <TouchableOpacity style={styles.actionButton} onPress={onAction} activeOpacity={0.8}>
+          <Text style={styles.actionButtonText}>{actionLabel}</Text>
+        </TouchableOpacity>
       )}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
-    padding: 32,
-    gap: 12,
+    alignItems: 'center',
+    padding: 24,
   },
   title: {
     fontSize: 18,
     fontWeight: '600',
     color: '#374151',
+    marginTop: 16,
     textAlign: 'center',
   },
-  description: {
+  message: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#6B7280',
+    marginTop: 8,
     textAlign: 'center',
     lineHeight: 20,
   },
-  actionWrapper: {
-    marginTop: 8,
+  actionButton: {
+    marginTop: 24,
+    backgroundColor: '#4F46E5',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
+
+export default EmptyState;

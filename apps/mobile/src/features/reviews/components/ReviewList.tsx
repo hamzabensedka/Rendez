@@ -1,7 +1,7 @@
-import React, { useCallback } from 'react';
-import { FlatList, View, Text, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
-import { useTheme } from 'react-native-paper';
-import { ReviewCard } from './ReviewCard';
+import React from 'react';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
+import ReviewCard from './ReviewCard';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface Review {
   id: string;
@@ -10,66 +10,66 @@ interface Review {
   createdAt: string;
   user?: {
     id: string;
-    name: string;
+    firstName?: string;
     lastName?: string;
     avatarUrl?: string;
+  };
+  business?: {
+    id: string;
+    name: string;
   };
 }
 
 interface ReviewListProps {
   reviews: Review[];
   isLoading: boolean;
-  isRefreshing: boolean;
+  isError: boolean;
+  error?: Error | null;
   onRefresh: () => void;
-  onEndReached: () => void;
-  hasNextPage: boolean;
-  isFetchingNextPage: boolean;
+  isRefreshing: boolean;
   emptyMessage?: string;
 }
 
-export const ReviewList: React.FC<ReviewListProps> = ({
+const ReviewList: React.FC<ReviewListProps> = ({
   reviews,
   isLoading,
-  isRefreshing,
+  isError,
+  error,
   onRefresh,
-  onEndReached,
-  hasNextPage,
-  isFetchingNextPage,
-  emptyMessage = 'No reviews yet. Be the first to leave a review!',
+  isRefreshing,
+  emptyMessage = 'Aucun avis pour le moment',
 }) => {
-  const { colors } = useTheme();
-
-  const renderItem = useCallback(
-    ({ item }: { item: Review }) => <ReviewCard review={item} />,
-    []
-  );
-
-  const keyExtractor = useCallback((item: Review) => item.id.toString(), []);
-
-  const renderFooter = useCallback(() => {
-    if (!isFetchingNextPage) return null;
-    return (
-      <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color={colors.primary} />
-      </View>
-    );
-  }, [isFetchingNextPage, colors.primary]);
-
-  const renderEmpty = useCallback(() => {
-    if (isLoading) return null;
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={[styles.emptyText, { color: colors.onSurfaceVariant || colors.secondary }]}>
-          {emptyMessage}
-        </Text>
-      </View>
-    );
-  }, [isLoading, emptyMessage, colors.onSurfaceVariant, colors.secondary]);
-
   if (isLoading && reviews.length === 0) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color="#4F46E5" />
+        <Text style={styles.loadingText}>Chargement des avis...</Text>
+      </View>
+    );
+  }
+
+  if (isError && reviews.length === 0) {
+    return (
+      <View style={styles.centered}>
+        <EmptyState
+          icon="alert-circle-outline"
+          title="Erreur de chargement"
+          message={error?.message || 'Impossible de charger les avis. Veuillez réessayer.'}
+          actionLabel="Réessayer"
+          onAction={onRefresh}
+        />
+      </View>
+    );
+  }
+
+  if (reviews.length === 0) {
+    return (
+      <View style={styles.centered}>
+        <EmptyState
+          icon="star-outline"
+          title="Aucun avis"
+          message={emptyMessage}
+        />
       </View>
     );
   }
@@ -77,22 +77,13 @@ export const ReviewList: React.FC<ReviewListProps> = ({
   return (
     <FlatList
       data={reviews}
-      renderItem={renderItem}
-      keyExtractor={keyExtractor}
-      contentContainerStyle={reviews.length === 0 ? styles.emptyList : styles.list}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={onRefresh}
-          colors={[colors.primary]}
-          tintColor={colors.primary}
-        />
-      }
-      onEndReached={hasNextPage ? onEndReached : undefined}
-      onEndReachedThreshold={0.3}
-      ListFooterComponent={renderFooter}
-      ListEmptyComponent={renderEmpty}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={({ item }) => <ReviewCard review={item} />}
+      contentContainerStyle={styles.listContent}
+      onRefresh={onRefresh}
+      refreshing={isRefreshing}
       showsVerticalScrollIndicator={false}
+      ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
     />
   );
 };
@@ -102,29 +93,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#6B7280',
   },
   listContent: {
     padding: 16,
     paddingBottom: 32,
   },
-  emptyList: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  emptyText: {
-    fontSize: 16,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  footerLoader: {
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
 });
+
+export default ReviewList;

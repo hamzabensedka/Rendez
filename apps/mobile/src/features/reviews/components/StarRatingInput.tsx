@@ -1,7 +1,13 @@
-import React, { useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../../theme/ThemeContext';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 interface StarRatingInputProps {
   rating: number;
@@ -11,44 +17,67 @@ interface StarRatingInputProps {
   disabled?: boolean;
 }
 
-export const StarRatingInput: React.FC<StarRatingInputProps> = ({
+const AnimatedIcon = Animated.createAnimatedComponent(Ionicons);
+
+const StarRatingInput: React.FC<StarRatingInputProps> = ({
   rating,
   onRatingChange,
   size = 32,
   maxStars = 5,
   disabled = false,
 }) => {
-  const { colors } = useTheme();
+  const [hoveredStar, setHoveredStar] = useState<number>(0);
+  const starScales = Array.from({ length: maxStars }, () => useSharedValue(1));
 
   const handlePress = useCallback(
-    (star: number) => {
-      if (!disabled) {
-        onRatingChange(star);
+    (starIndex: number) => {
+      if (disabled) return;
+      const newRating = starIndex + 1;
+      onRatingChange(newRating === rating ? 0 : newRating);
+
+      // Animate all stars up to the pressed one
+      for (let i = 0; i <= starIndex; i++) {
+        scales[i].value = withSpring(1.3, { damping: 10, stiffness: 200 }, () => {
+          scales[i].value = withSpring(1);
+        });
       }
     },
-    [disabled, onRatingChange]
+    [rating, onRatingChange, disabled, scales]
+  );
+
+  const animatedStyles = scales.map((scale) =>
+    useAnimatedStyle(() => ({
+      transform: [{ scale: scale.value }],
+    }))
   );
 
   return (
-    <View style={styles.container} accessibilityRole="adjustable" accessibilityLabel={`Rating: ${rating} out of ${maxStars} stars`} accessibilityValue={{ min: 0, max: maxStars, now: rating }}>
+    <View style={styles.container}>
       {Array.from({ length: maxStars }, (_, index) => {
-        const starNumber = index + 1;
-        const filled = starNumber <= rating;
+        const filled =
+          disabled
+            ? index < rating
+            : index < (hoveredStar || rating);
+
         return (
           <TouchableOpacity
-            key={starNumber}
-            onPress={() => handlePress(starNumber)}
+            key={index}
+            onPress={() => handlePress(index)}
+            onPressIn={() => !disabled && setHoveredStar(index + 1)}
+            onPressOut={() => !disabled && setHoveredStar(0)}
             disabled={disabled}
+            activeOpacity={0.7}
+            accessibilityLabel={`${index + 1} star${index > 0 ? 's' : ''}`}
             accessibilityRole="button"
-            accessibilityLabel={`${starNumber} star${starNumber > 1 ? 's' : ''}`}
-            accessibilityState={{ selected: filled }}
-            style={styles.starButton}
+            accessibilityState={{ selected: index < rating }}
           >
-            <Ionicons
-              name={filled ? 'star' : 'star-outline'}
-              size={size}
-              color={filled ? colors.warning : colors.border}
-            />
+            <AnimatedStar style={animatedStyles[index]}>
+              <Ionicons
+                name={filled ? 'star' : 'star-outline'}
+                size={size}
+                color={filled ? '#FFD700' : '#D1D5DB'}
+              />
+            </AnimatedStar>
           </TouchableOpacity>
         );
       })}
@@ -62,7 +91,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  starButton: {
-    padding: 2,
-  },
 });
+
+export default StarRatingInput;
