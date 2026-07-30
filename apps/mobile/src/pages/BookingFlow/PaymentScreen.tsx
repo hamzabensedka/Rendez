@@ -1,42 +1,38 @@
 import React, { useState } from 'react';
 import { View, Text, Button } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { paymentApi } from '../api';
-import { PaymentStatus } from '../types';
+import { PaymentStatus } from '../shared/types';
+import { paymentApi } from '../api/paymentApi';
 import { useNavigation } from '@react-navigation/native';
 
 const PaymentScreen = () => {
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(PaymentStatus.IDLE);
   const queryClient = useQueryClient();
   const navigation = useNavigation();
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(PaymentStatus.pending);
-  const [error, setError] = useState(null);
 
   const handlePayment = async () => {
     try {
-      const response = await paymentApi.makePayment();
-      setPaymentStatus(response.status);
-      if (response.status === PaymentStatus.success) {
-        navigation.navigate('Receipt');
-      }
+      const paymentResponse = await paymentApi.makePayment();
+      setPaymentStatus(PaymentStatus.SUCCESS);
+      // Update booking status
+      await queryClient.invalidateQueries('booking');
+      navigation.navigate('BookingConfirmation');
     } catch (error) {
-      setError(error);
+      setPaymentStatus(PaymentStatus.FAILURE);
     }
   };
 
   return (
     <View>
       <Text>Payment Screen</Text>
-      {paymentStatus === PaymentStatus.pending && (
-        <Button title="Make Payment" onPress={handlePayment} />
+      {paymentStatus === PaymentStatus.IDLE && (
+        <Button title='Make Payment' onPress={handlePayment} />
       )}
-      {paymentStatus === PaymentStatus.success && (
+      {paymentStatus === PaymentStatus.SUCCESS && (
         <Text>Payment successful!</Text>
       )}
-      {paymentStatus === PaymentStatus.failure && (
+      {paymentStatus === PaymentStatus.FAILURE && (
         <Text>Payment failed.</Text>
-      )}
-      {error && (
-        <Text>Error: {error.message}</Text>
       )}
     </View>
   );

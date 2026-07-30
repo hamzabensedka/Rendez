@@ -1,133 +1,134 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../../shared/ThemeContext';
-import { Review } from '../types';
-import { formatRelativeTime } from '../../../shared/utils/date';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  user?: {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    avatarUrl?: string;
+  };
+  businessId: string;
+}
 
 interface ReviewCardProps {
   review: Review;
 }
 
-export const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
-  const { colors } = useTheme();
+const ReviewCard: React.FC<ReviewCardProps> = ({ review }) => {
+  const userDisplayName = review.user
+    ? `${review.user.firstName || ''} ${review.user.lastName || ''}`.trim() || 'Utilisateur anonyme'
+    : 'Utilisateur anonyme';
 
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, index) => (
-      <Ionicons
-        key={index}
-        name={index < rating ? 'star' : 'star-outline'}
-        size={14}
-        color={index < rating ? '#F59E0B' : colors.borderLight}
-        style={styles.starIcon}
-      />
-    ));
-  };
+  const formattedDate = (() => {
+    try {
+      return formatDistanceToNow(new Date(review.createdAt), {
+        addSuffix: true,
+        locale: fr,
+      });
+    } catch {
+      return '';
+    }
+  })();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]} accessibilityRole="article" accessibilityLabel={`Review by ${review.user?.name || 'Anonymous'}, rated ${review.rating} out of 5`}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.userInfo}>
-          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-            <Text style={styles.avatarText}>
-              {(review.user?.name || 'A').charAt(0).toUpperCase()}
-            </Text>
+          <View style={styles.avatar}>
+            <Ionicons name="person-circle" size={40} color="#6B7280" />
           </View>
-          <View>
-            <Text style={[styles.userName, { color: colors.text }]}>
-              {review.user?.name || 'Anonymous'}
-            </Text>
-            <Text style={[styles.date, { color: colors.textSecondary }]}>
-              {formatRelativeDate(review.createdAt)}
-            </Text>
+          <View style={styles.userDetails}>
+            <Text style={styles.userName}>{userDisplayName}</Text>
+            <Text style={styles.date}>{formattedDate}</Text>
           </View>
         </View>
         <View style={styles.ratingContainer}>
-          {renderStars(review.rating)}
+          <Ionicons name="star" size={16} color="#FFD700" />
+          <Text style={styles.ratingText}>{review.rating}/5</Text>
         </View>
       </View>
       {review.comment ? (
-        <Text style={[styles.comment, { color: colors.text }]}>
+        <Text style={styles.comment} numberOfLines={4}>
           {review.comment}
         </Text>
-      ) : null}
-      {review.response ? (
-        <View style={[styles.responseContainer, { backgroundColor: colors.background, borderLeftColor: colors.primary }]}>
-          <Text style={[styles.responseLabel, { color: colors.primary }]}>
-            Business response:
-          </Text>
-          <Text style={[styles.responseText, { color: colors.textSecondary }]}>
-            {review.response}
-          </Text>
-        </View>
-      ) : null}
+      ) : (
+        <Text style={styles.noComment}>Aucun commentaire laissé</Text>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    borderWidth: 1,
+    padding: 16,
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    flex: 1,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginRight: 12,
   },
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+  userDetails: {
+    flex: 1,
   },
   userName: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
+    color: '#1F2937',
   },
   date: {
-    fontSize: 13,
+    fontSize: 12,
+    color: '#9CA3AF',
     marginTop: 2,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
-  starIcon: {
-    marginLeft: 2,
+  ratingText: {
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#92400E',
   },
   comment: {
-    fontSize: 15,
-    lineHeight: 22,
-    marginTop: 8,
-  },
-  responseContainer: {
-    marginTop: 12,
-    padding: 12,
-    borderRadius: 8,
-    borderLeftWidth: 3,
-  },
-  responseLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  responseText: {
     fontSize: 14,
+    color: '#4B5563',
     lineHeight: 20,
   },
+  noComment: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+  },
 });
+
+export default ReviewCard;

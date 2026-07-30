@@ -1,78 +1,56 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { useRoute } from 'expo-router';
-import { Auth } from '../auth';
-import { Appointment } from '../appointments';
-import { Business } from '../businesses';
+import { useAuth } from '../auth/auth.context';
+import { useNavigation } from '@react-navigation/native';
+import { ExpoRouter } from 'expo-router';
+import { ReanimatedView } from 'react-native-reanimated';
 
 const ProviderPortal = () => {
-  const route = useRoute();
-  const { data: user } = Auth.useUser();
-  const { data: appointments } = useQuery(['appointments'], () => Appointment.getAppointmentsForProvider(user.id));
-  const { data: business } = useQuery(['business'], () => Business.getBusinessForProvider(user.id));
+  const { user } = useAuth();
+  const navigation = useNavigation();
+  const { data, error, isLoading } = useQuery(
+    ['provider-portal', user.id],
+    async () => {
+      const response = await fetch(`https://api.example.com/providers/${user.id}`);
+      return response.json();
+    }
+  );
 
-  if (!user || !appointments || !business) return <Text>Loading...</Text>;
+  if (isLoading) return <Text>Loading...</Text>;
+  if (error) return <Text>Error: {error.message}</Text>;
 
   return (
-    <View style={styles.container}>
+    <ReanimatedView style={styles.container}>
       <Text>Provider Portal</Text>
-      <Text>Dashboard Summary</Text>
-      <View style={styles.summaryContainer}>
-        <Text>Total Appointments: {appointments.length}</Text>
-        <Text>Total Revenue: ${business.revenue}</Text>
-      </View>
-      <Text>Today's Appointments</Text>
-      <View style={styles.appointmentsContainer}>
-        {appointments.map((appointment) => (
-          <View key={appointment.id} style={styles.appointmentContainer}>
-            <Text>{appointment.serviceName}</Text>
-            <Text>{appointment.startTime}</Text>
-          </View>
-        ))}
-      </View>
-      <Text>Quick Service Edit</Text>
-      <View style={styles.serviceContainer}>
-        {business.services.map((service) => (
-          <View key={service.id} style={styles.serviceItemContainer}>
-            <Text>{service.name}</Text>
-            <Text>${service.price}</Text>
-          </View>
-        ))}
-      </View>
-    </View>
+      <Text>Welcome, {user.name}</Text>
+      <ExpoRouter
+        initialRoute={{ name: 'dashboard' }}
+        routes={[
+          {
+            name: 'dashboard',
+            component: <DashboardSummary />,
+            initialRoute: true,
+          },
+          {
+            name: 'today-appointments',
+            component: <TodaysAppointments />,
+          },
+          {
+            name: 'quick-service-edit',
+            component: <QuickServiceEdit />,
+          },
+        ]}
+      />
+    </ReanimatedView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-  },
-  summaryContainer: {
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    marginBottom: 20,
-  },
-  appointmentsContainer: {
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    marginBottom: 20,
-  },
-  appointmentContainer: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-  },
-  serviceContainer: {
-    backgroundColor: '#f0f0f0',
-    padding: 10,
-    marginBottom: 20,
-  },
-  serviceItemContainer: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
