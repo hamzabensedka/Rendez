@@ -1,233 +1,115 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
+  StyleSheet,
+  type ViewStyle,
 } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
-import Animated, {
-  FadeInRight,
-  Layout,
-} from 'react-native-reanimated';
-import { apiClient } from '@/lib/api-client';
-import { colors, spacing, typography } from '@/theme';
-
-interface PaymentMethod {
-  id: string;
-  type: 'card' | 'wallet';
-  lastFour?: string;
-  brand?: string;
-  isDefault: boolean;
-}
+import type { PaymentMethodType } from '@plan/plan-shared';
 
 interface PaymentMethodSelectorProps {
-  selectedMethodId: string | null;
-  onSelect: (id: string) => void;
-  disabled?: boolean;
+  selectedMethod: PaymentMethodType;
+  onSelect: (method: PaymentMethodType) => void;
+  style?: ViewStyle;
 }
 
+const PAYMENT_METHODS: {
+  type: PaymentMethodType;
+  label: string;
+  icon: string;
+}[] = [
+  { type: 'credit', label: 'Credit Card', icon: '💳' },
+  { type: 'apple_pay', label: 'Apple Pay', icon: '🍎' },
+  { type: 'google_pay', label: 'Google Pay', icon: '🤖' },
+  { type: 'paypal', label: 'PayPal', icon: '🅿️' },
+];
+
+/**
+ * Payment method selector component.
+ * Displays available payment methods and allows selection.
+ */
 export function PaymentMethodSelector({
-  selectedMethodId,
+  selectedMethod,
   onSelect,
-  disabled = false,
+  style,
 }: PaymentMethodSelectorProps) {
-  const {
-    data: methods,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery<PaymentMethod[]>({
-    queryKey: ['payment-methods'],
-    queryFn: async () => {
-      const response = await apiClient.get('/payments/methods');
-      return response.data;
-    },
-  });
-
-  const sortedMethods = useMemo(() => {
-    if (!methods) return [];
-    return [...methods].sort((a, b) => (a.isDefault ? -1 : 1));
-  }, [methods]);
-
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="small" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading payment methods...</Text>
-      </View>
-    );
-  }
-
-  if (error || !methods) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Failed to load payment methods.</Text>
-        <TouchableOpacity onPress={() => refetch()} style={styles.retryButton}>
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  if (methods.length === 0) {
-    return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No saved payment methods.</Text>
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>+ Add Payment Method</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Payment Method</Text>
-      {sortedMethods.map((method, index) => (
-        <Animated.View
-          key={method.id}
-          entering={FadeInRight(200).delay(index * 50)}
-          layout={Layout.springify()}
-        >
-          <TouchableOpacity
-            style={[
-              styles.methodCard,
-              selectedMethodId === method.id && styles.methodCardSelected,
-              disabled && styles.methodCardDisabled,
-            ]}
-            onPress={() => onSelect(method.id)}
-            disabled={disabled}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: selectedMethodId === method.id }}
-            accessibilityLabel={`${method.brand || 'Card'} ending in ${method.lastFour || '****'}`}
-          >
-            <View style={styles.radioOuter}>
-              {selectedMethodId === method.id && <View style={styles.radioInner} />}
-            </View>
-            <View style={styles.methodInfo}>
-              <Text style={styles.methodName}>
-                {method.brand ? `${method.brand} ` : ''}•••• {method.lastFour || '****'}
+    <View style={[styles.container, style]}>
+      <Text style={styles.title}>Payment Method</Text>
+      <View style={styles.methodsContainer}>
+        {PAYMENT_METHODS.map((method) => {
+          const isSelected = selectedMethod === method.type;
+          return (
+            <TouchableOpacity
+              key={method.type}
+              style={[
+                styles.methodItem,
+                isSelected && styles.methodItemSelected,
+              ]}
+              onPress={() => onSelect(method.type)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: isSelected }}
+              accessibilityLabel={`Pay with ${method.label}`}
+            >
+              <Text style={styles.methodIcon}>{method.icon}</Text>
+              <Text
+                style={[
+                  styles.methodLabel,
+                  isSelected && styles.methodLabelSelected,
+                ]}
+              >
+                {method.label}
               </Text>
-              {method.isDefault && <Text style={styles.defaultBadge}>Default</Text>}
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
-      ))}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: spacing.lg,
+    padding: 16,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginBottom: spacing.md,
-  },
-  methodCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  methodCardSelected: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primaryLight,
-  },
-  methodCardDisabled: {
-    opacity: 0.6,
-  },
-  radioOuter: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
-  },
-  radioInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.primary,
-  },
-  methodInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  methodName: {
+  title: {
     fontSize: 16,
-    fontWeight: '500',
-    color: colors.textPrimary,
-  },
-  defaultBadge: {
-    fontSize: 12,
     fontWeight: '600',
-    color: colors.primary,
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: 8,
-    overflow: 'hidden',
+    color: '#1a1a2e',
+    marginBottom: 12,
   },
-  loadingContainer: {
+  methodsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  methodItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  loadingText: {
-    color: colors.textSecondary,
-    fontSize: 15,
-  },
-  errorContainer: {
-    alignItems: 'center',
-    padding: spacing.lg,
-  },
-  errorText: {
-    color: colors.error,
-    marginBottom: spacing.sm,
-  },
-  retryButton: {
-    padding: spacing.sm,
-  },
-  retryText: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    padding: spacing.lg,
-    backgroundColor: colors.surface,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+    backgroundColor: '#ffffff',
+    minWidth: '45%',
   },
-  emptyText: {
-    color: colors.textSecondary,
-    marginBottom: spacing.md,
+  methodItemSelected: {
+    borderColor: '#6c63ff',
+    backgroundColor: '#f0efff',
   },
-  addButton: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 8,
+  methodIcon: {
+    fontSize: 20,
+    marginRight: 8,
   },
-  addButtonText: {
-    color: colors.primary,
+  methodLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  methodLabelSelected: {
+    color: '#6c63ff',
     fontWeight: '600',
   },
 });

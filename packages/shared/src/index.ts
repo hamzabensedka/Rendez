@@ -1,9 +1,4 @@
-// Types
-export * from './types';
-
-// Constants
-export * from './constants';
-
-// Utils
-export * from './utils';
-
+export * from './types/payment';
+export * from './types/appointment';
+export * from './types/business';
+export * from './types/user';
