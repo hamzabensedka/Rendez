@@ -1,19 +1,33 @@
-import { Controller, Post, Body, HttpStatus, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { PaymentService } from './payment.service';
-import { StripeService } from 'nestjs-stripe';
-import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
+import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 @Controller('payments')
 export class PaymentController {
-  constructor(private readonly paymentService: PaymentService, private readonly stripeService: StripeService) {}
+  constructor(private readonly paymentService: PaymentService) {}
 
-  @Post('create-payment-intent')
-  async createPaymentIntent(@Body() createPaymentIntentDto: CreatePaymentIntentDto) {
-    try {
-      const paymentIntent = await this.paymentService.createPaymentIntent(createPaymentIntentDto);
-      return paymentIntent;
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
+  @Post('checkout')
+  @UseGuards(JwtAuthGuard)
+  async createCheckout(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateCheckoutSessionDto,
+  ) {
+    return this.paymentService.createCheckoutSession(user.id, dto);
+  }
+
+  @Get('status/:appointmentId')
+  @UseGuards(JwtAuthGuard)
+  async getStatus(@Param('appointmentId') appointmentId: string) {
+    return this.paymentService.getPaymentStatus(appointmentId);
   }
 }
