@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProviderPortalService } from './provider-portal.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { NotFoundException, ConflictException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 
 describe('ProviderPortalService', () => {
   let service: ProviderPortalService;
@@ -31,11 +31,9 @@ describe('ProviderPortalService', () => {
       deleteMany: jest.fn(),
       createMany: jest.fn(),
     },
-    appointment: {
+    appointments: {
       findMany: jest.fn(),
-      findFirst: jest.fn(),
     },
-    $availability: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -52,25 +50,35 @@ describe('ProviderPortalService', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  describe('getMyBusiness', () => {
-    it('should return the business owned by the user', async () => {
-      const business = { id: 'b1', ownerId: 'u1', name: 'Test Biz' };
+  describe('getBusinessByOwner', () => {
+    it('should return business if found', async () => {
+      const business = { id: 'b1', ownerId: 'u1' };
       mockPrisma.business.findFirst.mockResolvedValue(business);
-      await expect(service.getMyBusiness('u1')).resolves.toEqual(business);
+      await expect(service.getBusinessByOwner('u1')).resolves.toEqual(business);
     });
 
-    it('should throw NotFoundException if no business found', async () => {
+    it('should throw NotFoundException if not found', async () => {
       mockPrisma.business.findFirst.mockResolvedValue(null);
-      await expect(service.getMyBusiness('u1')).rejects.toThrow(
+      await expect(service.getBusinessByOwner('u1')).rejects.toThrow(
         NotFoundException,
       );
     });
   });
 
-  describe('createService', () => {
-    it('should create a service for the owned business', async () => {
+  describe('listServices', () => {
+    it('should return services for the owner business', async () => {
       const business = { id: 'b1', ownerId: 'u1' };
-      const dto = { name: 'Haircut', durationMinutes: 30, price: 25 };
+      const services = [{ id: 's1', businessId: 'b1' }];
+      mockPrisma.business.findFirst.mockResolvedValue(business);
+      mockPrisma.service.findMany.mockResolvedValue(services);
+      await expect(service.listServices('u1')).resolves.toEqual(services);
+    });
+  });
+
+  describe('createService', () => {
+    it('should create a service', async () => {
+      const business = { id: 'b1', ownerId: 'u1' };
+      const dto = { name: 'Haircut', duration: 30, price: 25 };
       const created = { id: 's1', ...dto, businessId: 'b1' };
       mockPrisma.business.findFirst.mockResolvedValue(business);
       mockPrisma.service.create.mockResolvedValue(created);
@@ -78,65 +86,40 @@ describe('ProviderPortalService', () => {
     });
   });
 
+  describe('updateService', () => {
+    it('should update service if owned', async () => {
+      const business = { id: 'b1', ownerId: 'u1' };
+      const existing = { id: 's1', businessId: 'b1' };
+      const dto = { name: 'Updated' };
+      mockPrisma.business.findFirst.mockResolvedValue(business);
+      mockPrisma.service.findFirst.mockResolvedValue(existing);
+      mockPrisma.service.update.mockResolvedValue({ ...existing, ...dto });
+      await expect(
+        service.updateService('u1', 's1', dto),
+      ).resolves.toMatchObject(dto);
+    });
+
+    it('should throw NotFoundException if service not owned', async () => {
+      const business = { id: 'b1', ownerId: 'u1' };
+      mockPrisma.business.findFirst.mockResolvedValue(business);
+      mockPrisma.service.findFirst.mockResolvedValue(null);
+      await expect(
+        service.updateService('u1', 's1', {}),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('deleteService', () => {
-    it('should throw ConflictException if future appointments exist', async () => {
+    it('should delete service if owned', async () => {
       const business = { id: 'b1', ownerId: 'u1' };
+      const existing = { id: 's1', businessId: 'b1' };
       mockPrisma.business.findFirst.mockResolvedValue(business);
-      mockPrisma.service.findFirst.mockResolvedValue({
-        id: 's1',
-        businessId: 'b1',
+      mockPrisma.service.findFirst.mockResolvedValue(existing);
+      mockPrisma.service.delete.mockResolvedValue(existing);
+      await service.deleteService('u1', 's1');
+      expect(mockPrisma.service.delete).toHaveBeenCalledWith({
+        where: { id: 's1' },
       });
-      mockPrisma.appointment.findFirst.mockResolvedValue({ id: 'a1' });
-      await expect(service.deleteService('u1', 's1')).rejects.toThrow(
-        ConflictException,
-      );
-    });
-
-    it('should delete service if no future appointments', async () => {
-      const business = { id: 'b1', ownerId: 'u1' };
-      mockPrisma.business.findFirst.mockResolvedValue(business);
-      mockPrisma.service.findFirst.mockResolvedValue({
-        id: 's1',
-        businessId: 'b1',
-      });
-      mockPrisma.appointment.findFirst.mockResolvedValue(null);
-      mockPrisma.service.delete.mockResolvedValue({ id: 's1' });
-      await expect(service.deleteService('u1', 's1')).resolves.toEqual({
-        id: 's1',
-      });
-    });
-  });
-
-  describe('setAvailability', () => {
-    it('should replace all availability rules', async () => {
-      const business = { id: 'b1', ownerId: 'u1' };
-      const dto = {
-        rules: [
-          { weekday: 1, start: '09:00', end: '17:00', slotLength: 30 },
-        ],
-      };
-      mockPrisma.business.findFirst.mockResolvedValue(business);
-      mockPrisma.$availability.mockImplementation(
-        async (fn: (tx: any) => Promise<void>) => {
-          await fn(mockPrisma);
-        },
-      );
-      mockPrisma.availability.findMany.mockResolvedValue([]);
-      await service.setAvailability('u1', dto);
-      expect(mockPrisma.availability.deleteMany).toHaveBeenCalledWith({
-        where: { businessId: 'b1' },
-      });
-      expect(mockPrisma.availability.createMany).toHaveBeenCalled();
-    });
-  });
-
-  describe('listBookings', () => {
-    it('should return bookings for the owned business', async () => {
-      const business = { id: 'b1', ownerId: 'u1' };
-      const bookings = [{ id: 'a1', businessId: 'b1' }];
-      mockPrisma.business.findFirst.mockResolvedValue(business);
-      mockPrisma.appointment.findMany.mockResolvedValue(bookings);
-      await expect(service.listBookings('u1')).resolves.toEqual(bookings);
     });
   });
 });

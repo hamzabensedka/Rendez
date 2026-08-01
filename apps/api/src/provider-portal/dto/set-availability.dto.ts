@@ -1,19 +1,19 @@
+import { Type } from 'class-transformer';
 import {
   IsArray,
-  ValidateNested,
   IsInt,
-  Min,
-  Max,
   IsString,
   Matches,
+  Min,
+  Max,
+  ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
-export class AvailabilityRuleDto {
+class AvailabilityRule {
   @IsInt()
   @Min(0)
   @Max(6)
-  weekday: number; // 0=Sunday, 6=Saturday
+  weekday: number; // 0 = Sunday, 6 = Saturday
 
   @IsString()
   @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
@@ -21,7 +21,7 @@ export class AvailabilityRuleDto {
 
   @IsString()
   @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
-  end: string; // HH:mm
+  end: string;
 
   @IsInt()
   @Min(5)
@@ -31,6 +31,6 @@ export class AvailabilityRuleDto {
 export class SetAvailabilityDto {
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => AvailabilityRuleDto)
-  rules: AvailabilityRuleDto[];
+  @Type(() => AvailabilityRule)
+  rules: AvailabilityRule[];
 }

@@ -1,16 +1,14 @@
-import { IsString, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsEmail, IsOptional } from 'class-validator';
 
 export class CreateStaffDto {
   @IsString()
-  @MaxLength(200)
   name: string;
 
-  @IsString()
+  @IsEmail()
   @IsOptional()
-  @MaxLength(500)
-  bio?: string;
+  email?: string;
 
   @IsString()
   @IsOptional()
-  avatarUrl?: string;
+  phone?: string;
 }

@@ -1,34 +1,23 @@
-import { IsString, IsOptional, IsNumber, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsUrl } from 'class-validator';
 
-export class UpdateBusinessDto {
+export class UpdateProfileDto {
   @IsString()
   @IsOptional()
-  @MaxLength(200)
   name?: string;
 
   @IsString()
   @IsOptional()
-  @MaxLength(2000)
   description?: string;
 
   @IsString()
   @IsOptional()
-  @MaxLength(500)
   address?: string;
 
   @IsString()
   @IsOptional()
   phone?: string;
 
-  @IsNumber()
+  @IsUrl()
   @IsOptional()
-  latitude?: number;
-
-  @IsNumber()
-  @IsOptional()
-  longitude?: number;
-
-  @IsString()
-  @IsOptional()
-  categoryId?: string;
+  website?: string;
 }
