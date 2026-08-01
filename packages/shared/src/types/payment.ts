@@ -1,47 +1,49 @@
-export enum PaymentStatus {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  REFUNDED = 'refunded',
-  CANCELLED = 'cancelled',
+/**
+ * Payment-related shared types for Planity Clone.
+ * Used by both frontend and backend to ensure consistency.
+ */
+
+// Represents the status of a payment
+export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'cancelled';
+
+// Represents a payment method
+export type PaymentMethodType = 'card' | 'apple_pay' | 'google_pay' | 'paypal';
+
+// Payment request sent to the API
+export interface PaymentRequest {
+  appointmentId: string;
+  amount: number;
+  currency: string;
+  method: PaymentMethodType;
+  // Optional token from payment provider (e.g., Stripe)
+  paymentToken?: string;
 }
 
-export interface PaymentMethod {
-  id: string;
-  userId: string;
-  type: 'card' | 'wallet';
-  lastFour: string;
-  brand: string;
-  expiryMonth: number;
-  expiryYear: number;
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface PaymentTransaction {
+// Payment response from the API
+export interface PaymentResponse {
   id: string;
   appointmentId: string;
-  userId: string;
   amount: number;
   currency: string;
   status: PaymentStatus;
-  paymentMethodId: string;
+  method: PaymentMethodType;
+  transactionId?: string;
   receiptUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
 
+// Payment receipt details
 export interface PaymentReceipt {
-  transactionId: string;
+  paymentId: string;
   appointmentId: string;
+  businessName: string;
+  serviceName: string;
+  date: string;
   amount: number;
   currency: string;
+  method: PaymentMethodType;
   status: PaymentStatus;
+  transactionId?: string;
   paidAt: string;
-  paymentMethod: {
-    brand: string;
-    lastFour: string;
-  };
 }
