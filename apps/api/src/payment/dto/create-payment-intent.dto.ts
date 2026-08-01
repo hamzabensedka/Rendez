@@ -1,6 +1,11 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { IsUUID, IsOptional, IsString, IsIn } from 'class-validator';
 
 export class CreatePaymentIntentDto {
-  @ApiProperty()
-  amount: number;
+  @IsUUID()
+  appointmentId: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['eur', 'usd', 'gbp'])
+  currency?: string = 'eur';
 }

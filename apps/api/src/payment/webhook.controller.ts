@@ -1,26 +1,29 @@
-import { Controller, Post, Body, HttpStatus, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Req,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  RawBodyRequest,
+} from '@nestjs/common';
+import { Request } from 'express';
 import { PaymentService } from './payment.service';
-import { StripeService } from 'nestjs-stripe';
-import { WebhookDto } from './dto/webhook.dto';
 
-@Controller('payments/webhook')
+@Controller('payments')
 export class WebhookController {
-  constructor(private readonly paymentService: PaymentService, private readonly stripeService: StripeService) {}
+  constructor(private readonly paymentService: PaymentService) {}
 
-  @Post()
-  async handleWebhook(@Body() webhookDto: WebhookDto) {
-    try {
-      const event = await this.stripeService.webhooks.constructEvent(
-        webhookDto.raw,
-        webhookDto.signature,
-        'whsec_123',
-      );
-      if (event.type === 'payment_intent.succeeded') {
-        const paymentIntent = event.data.object;
-        await this.paymentService.handlePaymentIntentSucceeded(paymentIntent);
-      }
-    } catch (error) {
-      throw new BadRequestException(error.message);
+  @Post('webhook')
+  @HttpCode(HttpStatus.OK)
+  async handleWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('stripe-signature') signature: string,
+  ) {
+    const rawBody = req.rawBody;
+    if (!rawBody) {
+      throw new Error('Missing raw body for webhook verification');
     }
+    return this.paymentService.handleWebhookEvent(rawBody, signature);
   }
 }

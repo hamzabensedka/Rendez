@@ -1,21 +1,15 @@
 import { Module } from '@nestjs/common';
-import { PaymentController } from './payment.controller';
+import { ConfigModule } from '@nestjs/config';
 import { PaymentService } from './payment.service';
-import { StripeModule } from 'nestjs-stripe';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { PaymentController } from './payment.controller';
+import { WebhookController } from './webhook.controller';
+import { PrismaModule } from '../prisma/prisma.module';
+import { BullmqModule } from '../bullmq/bullmq.module';
 
 @Module({
-  imports: [
-    StripeModule.forRootAsync({
-      useFactory: (configService: ConfigService) => ({
-        apiKey: configService.get('STRIPE_SECRET_KEY'),
-        apiVersion: '2022-11-15',
-      }),
-      inject: [ConfigService],
-    }),
-    ConfigModule,
-  ],
-  controllers: [PaymentController],
+  imports: [ConfigModule, PrismaModule, BullmqModule],
+  controllers: [PaymentController, WebhookController],
   providers: [PaymentService],
+  exports: [PaymentService],
 })
 export class PaymentModule {}
