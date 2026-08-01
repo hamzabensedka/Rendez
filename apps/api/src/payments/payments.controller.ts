@@ -1,41 +1,48 @@
-import { Controller, Post, Req, Res, HttpCode, HttpStatus } from '@nestjs/common';
-import { Request, Response } from 'express';
-import { PaymentsService } from './payments.service';
-import Stripe from 'stripe';
+import { Controller, Post, Headers, Req, Res, HttpCode } from '@nestjs/common';
+import { Stripe } from 'stripe';
+import { ConfigService } from '@nestjs/config';
 
-@Controller('payments')
-export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+export type StripeWebhookEvent = 
+  | 'checkout.session.completed'
+  | 'payment_intent.succeeded'
+  | 'payment_intent.payment_failed';
 
-  @Post('webhook')
-  @HttpCode(HttpStatus.OK)
-  async handleWebhook(@Req() req: Request, @Res() res: Response) {
-    const payload = req['rawBody'] as Buffer;
-    const sig = req.headers['stripe-signature'] as string;
+@Controller('payments/webhook')
+export class PaymentsWebhookController {
+  private readonly stripe: Stripe;
 
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2023-10-16',
-    });
+  constructor(private readonly configService: ConfigService) {
+    const secret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
+    this.stripe = new Stripe(secret, { apiVersion: '2023-10-16' });
+  }
 
-    let event: Stripe.Event;
+  @Post()
+  @HttpCode(200)
+  async handleWebhook(
+    @Headers('stripe-signature') signature: string,
+    @Req() req,
+    @Res() res,
+  ) {
+    // Stripe requires the raw request body for signature verification
+    const rawBody = req['rawBody'] as string;
 
-    try {
-      event = stripe.webhooks.constructEvent(
-        payload,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET,
-      );
-    } catch (err) {
-      console.error(`Webhook signature validation failed.`, err.message);
-      return res.status(HttpStatus.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
-    }
+    const event = this.stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
+      this.configService.get<string>('STRIPE_WEBHOOK_SECRET'),
+    );
 
     // Handle the event
     switch (event.type) {
-      case 'payment_intent.succeeded':
-        await this.paymentsService.handlePaymentSucceeded(event.data.object as Stripe.PaymentIntent);
+      case 'checkout.session.completed':
+        // TODO: fulfill order, update appointment status, etc.
         break;
-      // Add other event handlers as needed
+      case 'payment_intent.succeeded':
+        // TODO: mark payment as succeeded
+        break;
+      case 'payment_intent.payment_failed':
+        // TODO: mark payment as failed
+        break;
       default:
         console.log(`Unhandled event type ${event.type}`);
     }

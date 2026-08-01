@@ -1,53 +1,53 @@
-import { Controller, Post, Req, Res, Headers } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Controller, Post, Headers, Req, Res, HttpCode, HttpStatus } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
-});
+import { Request, Response } from 'express';
 
 @Controller('payments/webhook')
 export class PaymentsWebhookController {
+  private stripe: Stripe;
+  private webhookSecret: string;
+
+  constructor(private configService: ConfigService) {
+    this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY'), {
+      apiVersion: '2023-10-16',
+    });
+    this.webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
+  }
+
   @Post()
+  @HttpCode(200)
   async handleWebhook(@Req() req: Request, @Res() res: Response) {
-    const signature = req.headers['stripe-signature'] as string;
+    const sig = req.headers['stripe-signature'] as string;
+
+    // Construct event – note that stripe expects the raw request body for signature verification.
+    // In NestJS the body is parsed, so we need to access the raw buffer.
+    // For simplicity, we assume the raw body is available via `req['rawBody']` if a raw-body
+    // interceptor is attached, otherwise we fall back to `JSON.stringify(req.body)`.
+    const rawBody = (req as any).rawBody || Buffer.from(JSON.stringify(req.body));
     let event: Stripe.Event;
 
-    // The raw body is needed for signature verification
-    const rawBodyBuffer = Buffer.from(req['rawBody']);
-
     try {
-      event = stripe.webhooks.constructEvent(
-        rawBodyBuffer,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET!,
+      event = this.stripe.webhooks.constructEvent(
+        rawBody,
+        sig,
+        this.webhookSecret,
       );
     } catch (err) {
-      return res.status(400).send(`Webhook signature verification failed: ${err.message}`);
+      console.error('Webhook signature verification failed:', err.message);
+      return res.status(HttpStatus.BAD_REQUEST).send(`Webhook Error: ${err.message}`);
     }
 
-    // ------------------------------------------------------------
     // Handle the event
-    // ------------------------------------------------------------
     switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const appointmentId = session.metadata?.appointmentId;
-        if (appointmentId) {
-          // TODO: update appointment status to 'paid' in DB
-        }
+      case 'checkout.session.completed':
+        // TODO: update order status, send confirmation email, etc.
         break;
-      }
-      case 'payment_intent.succeeded': {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        // TODO: any additional payment-specific logic
-        break;
-      }
+      // Add other event types as needed
       default:
         console.log(`Unhandled event type ${event.type}`);
     }
 
-    // Respond with 200 to acknowledge receipt of the webhook
     return res.json({ received: true });
   }
 }
