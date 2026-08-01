@@ -9,23 +9,23 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class AvailabilityRuleDto {
+class AvailabilityRuleDto {
   @IsInt()
   @Min(0)
   @Max(6)
-  weekday: number; // 0=Sunday, 6=Saturday
+  weekday: number;
 
   @IsString()
   @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
-  start: string; // HH:mm
+  start: string;
 
   @IsString()
   @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
-  end: string; // HH:mm
+  end: string;
 
   @IsInt()
   @Min(5)
-  slotLength: number; // minutes
+  slotLength: number;
 }
 
 export class SetAvailabilityDto {

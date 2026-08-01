@@ -9,17 +9,24 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { CreateStaffDto } from './dto/create-staff.dto';
 import { UpdateStaffDto } from './dto/update-staff.dto';
+import { UpdateBusinessProfileDto } from './dto/update-business-profile.dto';
 import { SetAvailabilityDto } from './dto/set-availability.dto';
-import { UpdateBusinessDto } from './dto/update-business.dto';
+import { AppointmentsQueryDto } from './dto/appointments-query.dto';
 
 @Injectable()
 export class ProviderPortalService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ─── Business helpers ────────────────────────────────────────────
-  private async getOwnedBusinessOrFail(ownerId: string) {
+  // ── Business Profile ──
+  async getBusinessByOwner(ownerId: string) {
     const business = await this.prisma.business.findFirst({
       where: { ownerId },
+      include: {
+        category: true,
+        services: true,
+        staff: true,
+        availability: true,
+      },
     });
     if (!business) {
       throw new NotFoundException('No business found for this provider');
@@ -27,44 +34,37 @@ export class ProviderPortalService {
     return business;
   }
 
-  private async verifyServiceOwnership(ownerId: string, serviceId: string) {
-    const business = await this.getOwnedBusinessOrFail(ownerId);
-    const service = await this.prisma.service.findFirst({
-      where: { id: serviceId, businessId: business.id },
+  async updateBusinessProfile(ownerId: string, dto: UpdateBusinessProfileDto) {
+    const business = await this.prisma.business.findFirst({
+      where: { ownerId },
     });
-    if (!service) {
-      throw new NotFoundException('Service not found');
+    if (!business) {
+      throw new NotFoundException('No business found for this provider');
     }
-    return { business, service };
-  }
-
-  private async verifyStaffOwnership(ownerId: string, staffId: string) {
-    const business = await this.getOwnedBusinessOrFail(ownerId);
-    const staff = await this.prisma.staff.findFirst({
-      where: { id: staffId, businessId: business.id },
-    });
-    if (!staff) {
-      throw new NotFoundException('Staff member not found');
-    }
-    return { business, staff };
-  }
-
-  // ─── Business Profile ────────────────────────────────────────────
-  async getMyBusiness(ownerId: string) {
-    return this.getOwnedBusinessOrFail(ownerId);
-  }
-
-  async updateBusiness(ownerId: string, dto: UpdateBusinessDto) {
-    const business = await this.getOwnedBusinessOrFail(ownerId);
     return this.prisma.business.update({
       where: { id: business.id },
-      data: dto,
+      data: {
+        name: dto.name,
+        description: dto.description,
+        address: dto.address,
+        phone: dto.phone,
+        website: dto.website,
+        categoryId: dto.categoryId,
+        ...(dto.latitude !== undefined &&
+          dto.longitude !== undefined && {
+            location: {
+              set: {
+                coordinates: [dto.longitude, dto.latitude],
+              },
+            },
+          }),
+      },
     });
   }
 
-  // ─── Services CRUD ───────────────────────────────────────────────
+  // ── Services ──
   async listServices(ownerId: string) {
-    const business = await this.getOwnedBusinessOrFail(ownerId);
+    const business = await this.getBusinessByOwner(ownerId);
     return this.prisma.service.findMany({
       where: { businessId: business.id },
       orderBy: { createdAt: 'asc' },
@@ -72,11 +72,15 @@ export class ProviderPortalService {
   }
 
   async createService(ownerId: string, dto: CreateServiceDto) {
-    const business = await this.getOwnedBusinessOrFail(ownerId);
+    const business = await this.getBusinessByOwner(ownerId);
     return this.prisma.service.create({
       data: {
-        ...dto,
         businessId: business.id,
+        name: dto.name,
+        description: dto.description,
+        duration: dto.duration,
+        price: dto.price,
+        categoryId: dto.categoryId,
       },
     });
   }
@@ -86,34 +90,53 @@ export class ProviderPortalService {
     serviceId: string,
     dto: UpdateServiceDto,
   ) {
-    await this.verifyServiceOwnership(ownerId, serviceId);
+    await this.ensureServiceBelongsToOwner(ownerId, serviceId);
     return this.prisma.service.update({
       where: { id: serviceId },
-      data: dto,
+      data: {
+        name: dto.name,
+        description: dto.description,
+        duration: dto.duration,
+        price: dto.price,
+        categoryId: dto.categoryId,
+      },
     });
   }
 
   async deleteService(ownerId: string, serviceId: string) {
-    await this.verifyServiceOwnership(ownerId, serviceId);
-    // Check for future appointments using this service
-    const futureAppointments = await this.prisma.appointment.findFirst({
+    await this.ensureServiceBelongsToOwner(ownerId, serviceId);
+    // Prevent deletion if service has future appointments
+    const futureAppointments = await this.prisma.appointment.count({
       where: {
         serviceId,
         start: { gte: new Date() },
         status: { not: 'CANCELLED' },
       },
     });
-    if (futureAppointments) {
+    if (futureAppointments > 0) {
       throw new ConflictException(
         'Cannot delete service with upcoming appointments',
       );
     }
-    return this.prisma.service.delete({ where: { id: serviceId } });
+    await this.prisma.service.delete({ where: { id: serviceId } });
   }
 
-  // ─── Staff CRUD ──────────────────────────────────────────────────
+  private async assertServiceBelongsToOwner(
+    ownerId: string,
+    serviceId: string,
+  ) {
+    const business = await this.getBusinessByOwner(ownerId);
+    const service = await this.prisma.service.findUnique({
+      where: { id: serviceId },
+    });
+    if (!service || service.businessId !== business.id) {
+      throw new ForbiddenException('Service does not belong to your business');
+    }
+  }
+
+  // ── Staff ──
   async listStaff(ownerId: string) {
-    const business = await this.getOwnedBusinessOrFail(ownerId);
+    const business = await this.getBusinessByOwner(ownerId);
     return this.prisma.staff.findMany({
       where: { businessId: business.id },
       orderBy: { createdAt: 'asc' },
@@ -121,48 +144,66 @@ export class ProviderPortalService {
   }
 
   async createStaff(ownerId: string, dto: CreateStaffDto) {
-    const business = await this.getOwnedBusinessOrFail(ownerId);
+    const business = await this.getBusinessByOwner(ownerId);
     return this.prisma.staff.create({
       data: {
-        ...dto,
         businessId: business.id,
+        name: dto.name,
+        email: dto.email,
+        phone: dto.phone,
+        role: dto.role,
+        color: dto.color,
       },
     });
   }
 
-  async updateStaff(
-    ownerId: string,
-    staffId: string,
-    dto: UpdateStaffDto,
-  ) {
-    await this.verifyStaffOwnership(ownerId, staffId);
+  async updateStaff(ownerId: string, staffId: string, dto: UpdateStaffDto) {
+    await this.assertStaffBelongsToOwner(ownerId, staffId);
     return this.prisma.staff.update({
       where: { id: staffId },
-      data: dto,
+      data: {
+        name: dto.name,
+        email: dto.email,
+        phone: dto.phone,
+        role: dto.role,
+        color: dto.color,
+      },
     });
   }
 
   async deleteStaff(ownerId: string, staffId: string) {
-    await this.verifyStaffOwnership(ownerId, staffId);
-    // Check for future appointments assigned to this staff
-    const futureAppointments = await this.prisma.appointment.findFirst({
+    await this.assertStaffBelongsToOwner(ownerId, staffId);
+    // Prevent deletion if staff has future appointments
+    const futureAppointments = await this.prisma.appointment.count({
       where: {
         staffId,
         start: { gte: new Date() },
         status: { not: 'CANCELLED' },
       },
     });
-    if (futureAppointments) {
+    if (futureAppointments > 0) {
       throw new ConflictException(
-        'Cannot delete staff member with upcoming appointments',
+        'Cannot delete staff member with future appointments',
       );
     }
-    return this.prisma.staff.delete({ where: { id: staffId } });
+    await this.prisma.staff.delete({ where: { id: staffId } });
   }
 
-  // ─── Availability Rules ──────────────────────────────────────────
+  private async assertStaffBelongsToOwner(ownerId: string, staffId: string) {
+    const business = await this.getBusinessByOwner(ownerId);
+    const staff = await this.prisma.staff.findUnique({
+      where: { id: staffId },
+    });
+    if (!staff || staff.businessId !== business.id) {
+      throw new ForbiddenException(
+        'Staff member not found in your business',
+      );
+    }
+  }
+
+  // ── Availability ──
   async getAvailability(ownerId: string) {
-    const business = await this.getOwnedBusinessOrFail(ownerId);
+    const business = await this.getBusinessByOwner(ownerId);
     return this.prisma.availability.findMany({
       where: { businessId: business.id },
       orderBy: [{ weekday: 'asc' }, { start: 'asc' }],
@@ -170,15 +211,14 @@ export class ProviderPortalService {
   }
 
   async setAvailability(ownerId: string, dto: SetAvailabilityDto) {
-    const business = await this.getOwnedBusinessOrFail(ownerId);
+    const business = await this.getBusinessByOwner(ownerId);
 
-    // Replace all availability rules for the business in a transaction
+    // Replace entire availability for the business in a transaction
     await this.prisma.$transaction(async (tx) => {
-      // Delete existing rules
+      // Delete existing
       await tx.availability.deleteMany({
         where: { businessId: business.id },
       });
-
       // Insert new rules
       if (dto.rules && dto.rules.length > 0) {
         await tx.availability.createMany({
@@ -199,26 +239,28 @@ export class ProviderPortalService {
     });
   }
 
-  // ─── Bookings ────────────────────────────────────────────────────
-  async listBookings(ownerId: string) {
-    const business = await this.getOwnedBusinessOrFail(ownerId);
-    return this.prisma.appointment.findMany({
-      where: { businessId: business.id },
-      include: {
-        user: {
-          select: { id: true, email: true, firstName: true, lastName: true },
-        },
-        service: true,
-        staff: true,
-      },
-      orderBy: { start: 'desc' },
-    });
-  }
+  // ── Appointments ──
+  async getAppointments(ownerId: string, query: AppointmentsQueryDto) {
+    const business = await this.getBusinessByOwner(ownerId);
+    const where: any = { businessId: business.id };
 
-  async getBooking(ownerId: string, bookingId: string) {
-    const business = await this.getOwnedBusinessOrFail(ownerId);
-    const booking = await this.prisma.appointment.findFirst({
-      where: { id: bookingId, businessId: business.id },
+    if (query.status) {
+      where.status = query.status;
+    }
+    if (query.from || query.to) {
+      where.start = {};
+      if (query.from) where.start.gte = new Date(query.from);
+      if (query.to) where.start.lte = new Date(query.to);
+    }
+    if (query.staffId) {
+      where.staffId = query.staffId;
+    }
+    if (query.serviceId) {
+      where.serviceId = query.serviceId;
+    }
+
+    return this.prisma.appointment.findMany({
+      where,
       include: {
         user: {
           select: { id: true, email: true, firstName: true, lastName: true },
@@ -226,10 +268,9 @@ export class ProviderPortalService {
         service: true,
         staff: true,
       },
+      orderBy: { start: query.orderByStart || 'asc' },
+      skip: query.skip,
+      take: query.take || 50,
     });
-    if (!booking) {
-      throw new NotFoundException('Booking not found');
-    }
-    return booking;
   }
 }

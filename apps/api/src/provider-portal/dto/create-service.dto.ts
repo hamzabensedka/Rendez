@@ -1,8 +1,10 @@
 import {
   IsString,
-  IsNumber,
-  IsOptional,
+  IsInt,
   IsPositive,
+  IsOptional,
+  IsUUID,
+  Min,
   MaxLength,
 } from 'class-validator';
 
@@ -11,16 +13,19 @@ export class CreateServiceDto {
   @MaxLength(200)
   name: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   @MaxLength(1000)
   description?: string;
 
-  @IsNumber()
-  @IsPositive()
+  @IsInt()
+  @Min(5)
   duration: number; // in minutes
 
-  @IsNumber()
   @IsPositive()
   price: number;
+
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
 }

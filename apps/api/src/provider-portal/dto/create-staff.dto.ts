@@ -1,16 +1,30 @@
-import { IsString, IsOptional, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  MaxLength,
+  IsHexColor,
+} from 'class-validator';
 
 export class CreateStaffDto {
   @IsString()
-  @MaxLength(200)
+  @MaxLength(150)
   name: string;
 
-  @IsString()
-  @IsOptional()
-  @MaxLength(500)
-  bio?: string;
+  @IsEmail()
+  email: string;
 
-  @IsString()
   @IsOptional()
-  avatarUrl?: string;
+  @IsString()
+  @MaxLength(30)
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  role?: string;
+
+  @IsOptional()
+  @IsHexColor()
+  color?: string;
 }

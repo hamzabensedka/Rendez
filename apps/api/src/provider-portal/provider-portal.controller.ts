@@ -2,12 +2,15 @@ import {
   Controller,
   Get,
   Post,
-  Put,
+  Patch,
   Delete,
   Body,
   Param,
-  ParseUUIDPipe,
+  Query,
   UseGuards,
+  HttpCode,
+  HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -19,8 +22,9 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { CreateStaffDto } from './dto/create-staff.dto';
 import { UpdateStaffDto } from './dto/update-staff.dto';
+import { UpdateBusinessProfileDto } from './dto/update-business-profile.dto';
 import { SetAvailabilityDto } from './dto/set-availability.dto';
-import { UpdateBusinessDto } from './dto/update-business.dto';
+import { AppointmentsQueryDto } from './dto/appointments-query.dto';
 
 @Controller('provider')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -28,27 +32,28 @@ import { UpdateBusinessDto } from './dto/update-business.dto';
 export class ProviderPortalController {
   constructor(private readonly providerPortalService: ProviderPortalService) {}
 
-  // ─── Business Profile ────────────────────────────────────────────
+  // ── Business Profile ──
   @Get('business')
   async getMyBusiness(@CurrentUser() user: AuthenticatedUser) {
     return this.providerPortalService.getBusinessByOwner(user.userId);
   }
 
   @Put('business')
-  async updateMyBusiness(
+  async updateBusinessProfile(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: UpdateBusinessDto,
+    @Body() dto: UpdateBusinessProfileDto,
   ) {
-    return this.providerPortalService.updateBusiness(user.userId, dto);
+    return this.providerPortalService.updateBusinessProfile(user.userId, dto);
   }
 
-  // ─── Services ────────────────────────────────────────────────────
+  // ── Services CRUD ──
   @Get('services')
   async listServices(@CurrentUser() user: AuthenticatedUser) {
     return this.providerPortalService.listServices(user.userId);
   }
 
   @Post('services')
+  @HttpCode(HttpStatus.CREATED)
   async createService(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateServiceDto,
@@ -66,20 +71,22 @@ export class ProviderPortalController {
   }
 
   @Delete('services/:serviceId')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async deleteService(
     @CurrentUser() user: AuthenticatedUser,
     @Param('serviceId', ParseUUIDPipe) serviceId: string,
   ) {
-    return this.providerPortalService.deleteService(user.userId, serviceId);
+    await this.providerPortalService.deleteService(user.userId, serviceId);
   }
 
-  // ─── Staff ───────────────────────────────────────────────────────
+  // ── Staff CRUD ──
   @Get('staff')
   async listStaff(@CurrentUser() user: AuthenticatedUser) {
     return this.providerPortalService.listStaff(user.userId);
   }
 
   @Post('staff')
+  @HttpCode(HttpStatus.CREATED)
   async createStaff(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateStaffDto,
@@ -97,14 +104,15 @@ export class ProviderPortalController {
   }
 
   @Delete('staff/:staffId')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async deleteStaff(
     @CurrentUser() user: AuthenticatedUser,
     @Param('staffId', ParseUUIDPipe) staffId: string,
   ) {
-    return this.providerPortalService.deleteStaff(user.userId, staffId);
+    await this.providerPortalService.deleteStaff(user.userId, staffId);
   }
 
-  // ─── Availability Rules ──────────────────────────────────────────
+  // ── Availability Rules ──
   @Get('availability')
   async getAvailability(@CurrentUser() user: AuthenticatedUser) {
     return this.providerPortalService.getAvailability(user.userId);
@@ -118,19 +126,12 @@ export class ProviderPortalController {
     return this.providerPortalService.setAvailability(user.userId, dto);
   }
 
-  // ─── Bookings ────────────────────────────────────────────────────
-  @Get('bookings')
-  async listBookings(
+  // ── Appointments ──
+  @Get('appointments')
+  async getAppointments(
     @CurrentUser() user: AuthenticatedUser,
+    @Query() query: AppointmentsQueryDto,
   ) {
-    return this.providerPortalService.listBookings(user.userId);
-  }
-
-  @Get('bookings/:bookingId')
-  async getBooking(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('bookingId', ParseUUIDPipe) bookingId: string,
-  ) {
-    return this.providerPortalService.getBooking(user.userId, bookingId);
+    return this.providerPortalService.getAppointments(user.userId, query);
   }
 }
