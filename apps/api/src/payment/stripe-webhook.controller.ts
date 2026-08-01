@@ -1,42 +1,73 @@
-import { Controller, Post, Req, Res, HttpCode } from '@nestjs/common';
-import { Request, Response } from 'express';
-import Stripe from 'stripe';
+import {
+  Controller,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  Post,
+  RawBodyRequest,
+  Req,
+} from '@nestjs/common';
+import { Request } from 'express';
+import { StripeService } from './stripe.service';
+import { PaymentService } from './payment.service';
 
-@Controller('webhook')
+@Controller('payments/webhook')
 export class StripeWebhookController {
-  private stripe: Stripe;
+  private readonly logger = new Logger(StripeWebhookController.name);
 
-  constructor() {
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      throw new Error('STRIPE_WEBHOOK_SECRET is not defined');
-    }
-    this.stripe = new Stripe(process.env.STRIPE_SECRET, { apiVersion: '2023-10-16' });
-  }
+  constructor(
+    private readonly stripeService: StripeService,
+    private readonly paymentService: PaymentService,
+  ) {}
 
+  /**
+   * Stripe webhook endpoint.
+   * Receives raw body for signature verification.
+   */
   @Post()
-  @HttpCode(200)
-  async handle(@Req() req: any, @Res() res: Response) {
-    const sig = req.headers['stripe-signature'] as string;
+  @HttpCode(HttpStatus.OK)
+  async handleWebhook(
+    @Req() req: RawBodyRequest<Request>,
+    @Headers('stripe-signature') signature: string,
+  ): Promise<{ received: boolean }> {
+    if (!signature) {
+      this.logger.warn('Missing stripe-signature header');
+      return { received: false };
+    }
 
-    let event: Stripe.Event;
     try {
-      // req['rawBody'] contains the raw request buffer for signature verification
-      event = this.stripe.webhooks.constructEvent(req['rawBody'] as Buffer, sig, webhookSecret);
-    } catch (err) {
-      return res.status(400).send(`Webhook signature verification failed: ${err.message}`);
-    }
+      const event = this.stripeService.constructWebhookEvent(
+        req.rawBody!,
+        signature,
+      );
 
-    // Handle the event
-    switch (event.type) {
-      case 'checkout.session.completed':
-        // TODO: update appointment payment status, fulfill order, etc.
-        break;
-      default:
-        console.log(`Unhandled event type ${event.type}`);
-    }
+      this.logger.log(`Webhook received: ${event.type}`);
 
-    // Return a response to acknowledge receipt of the event
-    return res.json({ received: true });
+      switch (event.type) {
+        case 'checkout.session.completed':
+          await this.paymentService.handleCheckoutCompleted(event);
+          break;
+
+        case 'checkout.session.expired':
+          // Handle expired checkout sessions
+          this.logger.log(
+            `Checkout session expired: ${event.data.object.id}`,
+          );
+          break;
+
+        case 'payment_intent.payment_failed':
+          await this.paymentService.handlePaymentFailed(event);
+          break;
+
+        default:
+          this.logger.log(`Unhandled event type: ${event.type}`);
+      }
+
+      return { received: true };
+    } catch (error) {
+      this.logger.error('Webhook error', error);
+      return { received: false };
+    }
   }
 }
