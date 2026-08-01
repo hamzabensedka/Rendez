@@ -2,15 +2,17 @@ version: '3.8'
 
 services:
   api:
-    build: ./docker/api
+    build:
+      context: ./apps/api
+      dockerfile: api.Dockerfile
     ports:
-      - 3000:3000
+      - "3000:3000"
     environment:
+      - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
-      - STRIPE_WEBHOOK_URL=${STRIPE_WEBHOOK_URL}
     depends_on:
       - db
       - redis
@@ -19,34 +21,20 @@ services:
   db:
     image: postgres:15
     environment:
+      POSTGRES_DB: planity
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: planity
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - 5432:5432
+      - "5432:5432"
 
   redis:
     image: redis:7
     ports:
-      - 6379:6379
-    volumes:
-      - redisdata:/data
+      - "6379:6379"
 
-  worker:
-    build: ./docker/worker
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
-      - STRIPE_WEBHOOK_URL=${STRIPE_WEBHOOK_URL}
-    depends_on:
-      - api
-      - redis
-    restart: unless-stopped
+  # Additional services (bullmq, etc.) can be added here
 
 volumes:
   pgdata:
-  redisdata:
