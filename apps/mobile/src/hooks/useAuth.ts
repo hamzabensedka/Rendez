@@ -1,38 +1,38 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getCurrentUser } from '../api/auth.service';
 
 export interface User {
   id: string;
-  email: string;
   name: string;
+  email: string;
   role: 'user' | 'provider' | 'admin';
 }
 
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  isLoading: boolean;
-  setUser: (user: User | null) => void;
-  setToken: (token: string | null) => void;
-  setLoading: (loading: boolean) => void;
-  logout: () => void;
-}
+export function useAuth() {
+  const queryClient = useQueryClient();
 
-export const useAuth = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      token: null,
-      isLoading: false,
-      setUser: (user) => set({ user }),
-      setToken: (token) => set({ token }),
-      setLoading: (isLoading) => set({ isLoading }),
-      logout: () => set({ user: null, token: null }),
-    }),
-    {
-      name: 'auth-storage',
-      storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
-);
+  const { data: user, isLoading, error } = useQuery<User | null>({
+    queryKey: ['current-user'],
+    queryFn: getCurrentUser,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  const isProvider = user?.role === 'provider' || user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
+
+  const logout = useCallback(async () => {
+    queryClient.setQueryData(['current-user'], null);
+    queryClient.invalidateQueries();
+  }, [queryClient]);
+
+  return {
+    user,
+    isLoading,
+    error,
+    isProvider,
+    isAdmin,
+    logout,
+  };
+}
