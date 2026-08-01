@@ -1,39 +1,34 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { useQueryClient } from '@tanstack/react-query';
+import { usePayment } from '../hooks/usePayment';
+import { PaymentStatus } from '../types/PaymentStatus';
 import { ExpoRouter } from 'expo-router';
-import { PaymentStatus } from '../../shared/types';
-import { paymentApi } from '../../api/paymentApi';
+import { useQueryClient } from 'tanstack-react-query';
 
 const PaymentStep = () => {
+  const { mutate: makePayment } = usePayment();
   const queryClient = useQueryClient();
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(PaymentStatus.Pending);
-  const [error, setError] = useState(null);
 
   const handlePayment = async () => {
     try {
-      const paymentResponse = await paymentApi.makePayment();
-      setPaymentStatus(PaymentStatus.Success);
+      const paymentResponse = await makePayment();
+      if (paymentResponse.status === PaymentStatus.SUCCESS) {
+        queryClient.invalidateQueries('bookings');
+        ExpoRouter.navigate('BookingConfirmation');
+      } else {
+        console.error('Payment failed');
+      }
     } catch (error) {
-      setError(error);
-      setPaymentStatus(PaymentStatus.Failure);
+      console.error('Error making payment:', error);
     }
   };
 
   return (
     <View>
       <Text>Payment Step</Text>
-      {paymentStatus === PaymentStatus.Pending && (
-        <TouchableOpacity onPress={handlePayment}>
-          <Text>Make Payment</Text>
-        </TouchableOpacity>
-      )}
-      {paymentStatus === PaymentStatus.Success && (
-        <Text>Payment Successful!</Text>
-      )}
-      {paymentStatus === PaymentStatus.Failure && (
-        <Text>Payment Failed: {error.message}</Text>
-      )}
+      <TouchableOpacity onPress={handlePayment}>
+        <Text>Make Payment</Text>
+      </TouchableOpacity>
     </View>
   );
 };
