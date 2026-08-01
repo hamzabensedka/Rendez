@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
-import { useAuth } from '@/providers/auth-provider';
+import { useAuth } from '@/hooks/useAuth';
 import { Redirect } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 
 export default function ProviderLayout() {
   const { user, isLoading } = useAuth();
@@ -14,9 +14,9 @@ export default function ProviderLayout() {
     );
   }
 
-  // Gate: only users with provider role can access these screens
+  // Gate: only allow provider role users
   if (!user || user.role !== 'provider') {
-    return <Redirect href="/(app)" />;
+    return <Redirect href="/(auth)/login" />;
   }
 
   return (
@@ -28,10 +28,19 @@ export default function ProviderLayout() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen
-        name="service-edit"
+        name="appointment/[id]"
         options={{
+          headerShown: true,
+          headerTitle: 'Appointment Details',
           presentation: 'modal',
-          animation: 'slide_from_bottom',
+        }}
+      />
+      <Stack.Screen
+        name="service/[id]"
+        options={{
+          headerShown: true,
+          headerTitle: 'Edit Service',
+          presentation: 'modal',
         }}
       />
     </Stack>

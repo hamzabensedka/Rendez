@@ -1,7 +1,13 @@
 import { create } from 'zustand';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import type { User } from '@/types';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'user' | 'provider' | 'admin';
+}
 
 interface AuthState {
   user: User | null;
@@ -9,41 +15,24 @@ interface AuthState {
   isLoading: boolean;
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
+  setLoading: (loading: boolean) => void;
   logout: () => void;
 }
 
-const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  token: null,
-  isLoading: true,
-  setUser: (user) => set({ user, isLoading: false }),
-  setToken: (token) => set({ token }),
-  logout: () => set({ user: null, token: null }),
-}));
-
-export function useAuth() {
-  const { user, token, isLoading, setUser, setToken, logout } = useAuthStore();
-
-  const { data: session } = useQuery({
-    queryKey: ['session'],
-    queryFn: () => api.get('/auth/me').then((r) => r.data),
-    enabled: !!token,
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (session?.user) {
-      setUser(session.user);
+export const useAuth = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      isLoading: false,
+      setUser: (user) => set({ user }),
+      setToken: (token) => set({ token }),
+      setLoading: (isLoading) => set({ isLoading }),
+      logout: () => set({ user: null, token: null }),
+    }),
+    {
+      name: 'auth-storage',
+      storage: createJSONStorage(() => AsyncStorage),
     }
-  }, [session]);
-
-  return {
-    user,
-    token,
-    isLoading,
-    setUser,
-    setToken,
-    logout,
-    isProvider: user?.role === 'provider',
-  };
-}
+  )
+);

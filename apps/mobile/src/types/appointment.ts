@@ -1,10 +1,10 @@
 export interface Appointment {
   id: string;
-  businessId: string;
+  clientName: string;
   clientId: string;
-  clientName?: string;
-  serviceId: string;
   serviceName: string;
+  serviceId: string;
+  businessId: string;
   startTime: string;
   endTime: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
