@@ -1,16 +1,54 @@
-export type PaymentStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'refunded';
+/**
+ * Payment statuses aligned with the payment gateway lifecycle.
+ */
+export type PaymentStatus =
+  | 'pending'
+  | 'processing'
+  | 'succeeded'
+  | 'failed'
+  | 'refunded'
+  | 'cancelled';
 
-export type PaymentMethod = 'card' | 'wallet' | 'bank_transfer';
+/**
+ * Supported payment methods.
+ */
+export type PaymentMethod =
+  | 'card'
+  | 'wallet'
+  | 'bank_transfer'
+  | 'cash';
 
-export interface Payment {
+/**
+ * Represents a payment transaction.
+ */
+export interface PaymentTransaction {
   id: string;
-  appointmentId: string;
+  bookingId: string;
+  userId: string;
   amount: number;
   currency: string;
   status: PaymentStatus;
   method: PaymentMethod;
-  transactionId?: string;
   receiptUrl?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * Request payload to initiate a payment.
+ */
+export interface InitiatePaymentRequest {
+  bookingId: string;
+  method: PaymentMethod;
+  amount: number;
+  currency: string;
+}
+
+/**
+ * Response after initiating a payment.
+ */
+export interface InitiatePaymentResponse {
+  transactionId: string;
+  status: PaymentStatus;
+  receiptUrl?: string;
 }

@@ -1,165 +1,154 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { TextInput } from '@/components/ui/TextInput';
-import { Spinner } from '@/components/ui/Spinner';
-import { PaymentStatus } from '@planity/shared/types';
-import { api } from '@/lib/api';
-import { formatCurrency } from '@/utils/format';
+import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated';
+import { Button } from '@planity/ui/Button';
+import { Card } from '@planity/ui/Card';
+import { Typography } from '@planity/ui/Typography';
+import { Spacer } from '@planity/ui/Spacer';
+import { useTheme } from '@planity/ui/ThemeProvider';
+import { PaymentStatus, PaymentMethod } from '@planity/shared/types/payment';
+import { apiClient } from '../../lib/api-client';
+import { useAuth } from '../../hooks/useAuth';
 
 interface PaymentStepProps {
   appointmentId: string;
   amount: number;
-  onSuccess: (paymentId: string) => void;
+  currency: string;
+  onSuccess: (transactionId: string) => void;
   onBack: () => void;
 }
 
-interface CardDetails {
-  number: string;
-  expiry: string;
-  cvc: string;
-}
-
 interface PaymentResponse {
-  id: string;
+  transactionId: string;
   status: PaymentStatus;
-  receiptUrl: string;
+  receiptUrl?: string;
 }
 
-const INITIAL_CARD: CardDetails = {
-  number: '',
-  expiry: '',
-  cvc: '',
-};
-
-export function PaymentStep({ appointmentId, amount, onSuccess, onBack }: PaymentStepProps) {
-  const [card, setCard] = useState<CardDetails>(INITIAL_CARD);
-  const [errors, setErrors] = useState<Partial<CardDetails>>({});
+export function PaymentStep({
+  bookingId,
+  amount,
+  currency,
+  onSuccess,
+  onBack,
+}: PaymentStepProps) {
+  const { colors, spacing } = useTheme();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('card');
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
-  const paymentMutation = useMutation<PaymentResponse, Error, { appointmentId: string; card: CardDetails }>({
-    mutationFn: async ({ appointmentId, card }) => {
-      const response = await api.post(`/appointments/${appointmentId}/pay`, {
-        cardNumber: card.number.replace(/\s/g, ''),
-        expiryMonth: card.expiry.split('/')[0],
-        expiryYear: card.expiry.split('/')[1],
-        cvc: card.cvc,
+  const paymentMutation = useMutation<PaymentResponse, Error, { bookingId: string; method: PaymentMethod }>({
+    mutationFn: async (payload) => {
+      const response = await apiPayment.post('/payments/process', {
+        bookingId: payload.bookingId,
+        method: payload.method,
+        amount,
+        currency,
       });
       return response.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['appointments'] });
-      queryClient.invalidateQueries({ queryKey: ['appointment', appointmentId] });
-      onSuccess(data.id);
+      if (data.status === 'succeeded') {
+        queryClient.invalidateQueries({ queryKey: ['appointments'] });
+        queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
+        onSuccess(data.transactionId);
+      } else if (data.status === 'failed') {
+        setPaymentError('Payment failed. Please try again.');
+      }
     },
     onError: (error) => {
-      Alert.alert('Payment Failed', error.message || 'Please check your card details and try again.');
+      setPaymentError(error.message || 'An unexpected error occurred.');
     },
   });
 
-  const validateCard = useCallback((): boolean => {
-    const newErrors: Partial<CardDetails> = {};
-
-    if (!card.number || card.number.replace(/\s/g, '').length < 16) {
-      newErrors.number = 'Enter a valid card number';
+  const handlePay = () => {
+    if (!user) {
+      Alert.alert('Authentication required', 'Please log in to complete payment.');
+      return;
     }
-    if (!card.expiry || !/^\d{2}\/\d{2}$/.test(card.expiry)) {
-      newErrors.expiry = 'Enter a valid expiry (MM/YY)';
-    } else {
-      const [month, year] = card.expiry.split('/').map(Number);
-      const now = new Date();
-      const currentYear = now.getFullYear() % 100;
-      const currentMonth = now.getMonth() + 1;
-      if (year < currentYear || (year === currentYear && month < currentMonth)) {
-        newErrors.expiry = 'Card is expired';
-      }
-    }
-    if (!card.cvc || card.cvc.length < 3) {
-      newErrors.cvc = 'Enter a valid CVC';
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [card]);
-
-  const handleSubmit = useCallback(() => {
-    if (!validate()) return;
-    paymentMutation.mutate({ appointmentId, card });
-  }, [validate, paymentMutation, appointmentId, card]);
-
-  const formatCardNumber = (text: string) => {
-    const digits = text.replace(/\D/g, '').slice(0, 16);
-    return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+    setPaymentError(null);
+    paymentMutation.mutate({ bookingId, method: selectedMethod });
   };
 
-  const formatExpiry = (text: string) => {
-    const digits = text.replace(/\D/g, '').slice(0, 4);
-    if (digits.length >= 2) {
-      return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    }
-    return digits;
-  };
+  const paymentMethods: { method: PaymentMethod; label: string }[] = [
+    { method: 'card', label: 'Credit/Debit Card' },
+    { method: 'wallet', label: 'Digital Wallet' },
+    { method: 'bank_transfer', label: 'Bank Transfer' },
+  ];
 
   return (
-    <Animated.View entering={FadeInDown} exiting={FadeOutUp} style={styles.container}>
-      <Card style={styles.card}>
-        <Text variant="h2" style={styles.title}>Payment Details</Text>
-        <Text variant="body" style={styles.amount}>
-          Total: {formatCurrency(amount)}
-        </Text>
+    <Animated.View entering={FadeInDown} exiting={FadeOutDown} style={styles.container}>
+      <Card padding={spacing.lg}>
+        <Typography variant="h2" style={styles.title}>
+          Payment
+        </Typography>
+        <Spacer height={spacing.md} />
 
-        <View style={styles.field}>
-          <Text variant="label" style={styles.label}>Card Number</Text>
-          <TextInput
-            value={card.number}
-            onChangeText={(t) => setCard((c) => ({ ...c, number: formatCardNumber(t) }))}
-            placeholder="1234 5678 9012 3456"
-            keyboardType="numeric"
-            maxLength={19}
-            error={errors.number}
-            testID="card-number-input"
-          />
-        </View>
+        <Typography variant="body" color={colors.textSecondary}>
+          Booking #{bookingId}
+        </Typography>
+        <Spacer height={spacing.sm} />
+        <Typography variant="h1" style={{ color: colors.primary }}>
+          {new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)}
+        </Typography>
+        <Spacer height={spacing.lg} />
 
-        <View style={styles.row}>
-          <View style={styles.halfField}>
-            <Text variant="label" style={styles.label}>Expiry</Text>
-            <TextInput
-              value={card.expiry}
-              onChangeText={(t) => setCard((c) => ({ ...c, expiry: formatExpiry(t) }))}
-              placeholder="MM/YY"
-              keyboardType="numeric"
-              maxLength={5}
-              error={errors.expiry}
-              status="expiry-input"
-            />
-          </View>
-          <View style={styles.halfField}>
-            <Text variant="label" style={styles.label}>CVC</Text>
-            <TextInput
-              value={card.cvc}
-              onChangeText={(t) => setCard((c) => ({ ...c, cvc: t.replace(/\D/g, '').slice(0, 4) }))}
-              placeholder="123"
-              keyboardType="numeric"
-              maxLength={4}
-              secureTextEntry
-              error={errors.cvc}
-              status="cvc-input"
-            />
-          </View>
-        </View>
+        <Typography variant="subtitle1" style={styles.sectionTitle}>
+          Select payment method
+        </Typography>
+        <Spacer height={spacing.sm} />
 
-        <View style={styles.actions}>
-          <Button variant="outline" onPress={onBack} disabled={paymentMutation.isPending}>
-            Back
-          </Button>
-          <Button onPress={handleSubmit} disabled={paymentMutation.isPending}>
-            {paymentMutation.isPending ? <Spinner size="small" color="white" /> : `Pay ${formatCurrency(amount)}`}
-          </Button>
-        </View>
+        {paymentMethods.map((pm) => (
+          <Card
+            key={pm.method}
+            onPress={() => setSelectedMethod(pm.method)}
+            variant={selectedMethod === pm.method ? 'elevated' : 'outlined'}
+            style={[
+              styles.methodCard,
+              selectedMethod === pm.method && {
+                borderColor: colors.primary,
+                borderWidth: 2,
+              },
+            ]}
+            padding={spacing.md}
+          >
+            <Typography variant="body" style={{ fontWeight: selectedMethod === pm.method ? '600' : '400' }}>
+              {pm.label}
+            </Typography>
+          </Card>
+        ))}
+
+        <Spacer height={spacing.lg} />
+
+        {paymentError && (
+          <Animated.View entering={FadeInDown} style={[styles.errorContainer, { backgroundColor: colors.errorLight }]}>
+            <Typography variant="body2" color={colors.error}>
+              {paymentError}
+            </Typography>
+          </Animated.View>
+        )}
+
+        <Spacer height={spacing.md} />
+
+        <Button
+          title={paymentMutation.isPending ? 'Processing...' : `Pay ${new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)}`}
+          onPress={handlePay}
+          disabled={paymentMutation.isPending}
+          loading={paymentMutation.isPending}
+          fullWidth
+        />
+
+        <Spacer height={spacing.sm} />
+
+        <Button
+          title="Back"
+          variant="text"
+          onPress={onBack}
+          disabled={paymentMutation.isPending}
+          fullWidth
+        />
       </Card>
     </Animated.View>
   );
@@ -170,33 +159,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  card: {
-    padding: 20,
-  },
   title: {
     marginBottom: 8,
   },
-  amount: {
-    marginBottom: 24,
-    fontWeight: '600',
+  sectionTitle: {
+    marginBottom: 4,
   },
-  field: {
-    marginBottom: 16,
+  methodCard: {
+    marginBottom: 8,
   },
-  label: {
-    marginBottom: 6,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-  halfField: {
-    flex: 1,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
+  errorContainer: {
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
   },
 });
