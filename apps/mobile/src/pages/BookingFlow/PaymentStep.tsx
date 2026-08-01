@@ -1,21 +1,20 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { ExpoRouter } from 'expo-router';
-import { PaymentStatus } from '../../shared/types';
-import { paymentApi } from '../../api/paymentApi';
+import { PaymentStatus } from '../../../../shared/types';
+import { paymentApi } from '../../../api';
+import { useNavigation } from '@react-navigation/native';
 
 const PaymentStep = () => {
   const queryClient = useQueryClient();
+  const navigation = useNavigation();
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(PaymentStatus.Pending);
-  const [error, setError] = useState(null);
 
   const handlePayment = async () => {
     try {
       const paymentResponse = await paymentApi.makePayment();
       setPaymentStatus(PaymentStatus.Success);
     } catch (error) {
-      setError(error);
       setPaymentStatus(PaymentStatus.Failure);
     }
   };
@@ -29,10 +28,10 @@ const PaymentStep = () => {
         </TouchableOpacity>
       )}
       {paymentStatus === PaymentStatus.Success && (
-        <Text>Payment Successful!</Text>
+        <Text>Payment Successful</Text>
       )}
       {paymentStatus === PaymentStatus.Failure && (
-        <Text>Payment Failed: {error.message}</Text>
+        <Text>Payment Failed</Text>
       )}
     </View>
   );
