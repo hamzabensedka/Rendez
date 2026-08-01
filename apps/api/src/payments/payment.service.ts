@@ -1,9 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import Stripe from 'stripe';
 
 @Injectable()
 export class PaymentService {
-  async handlePaymentSucceeded(event: any) {
-    // TODO: implement payment success logic (e.g., update DB, send notification)
-    console.log('Payment succeeded:', event.data.object.id);
+  private readonly logger = new Logger(PaymentService.name);
+
+  constructor() {}
+
+  async handleCheckoutSession(session: Stripe.Checkout.Session) {
+    this.logger.log(`Processing checkout session ${session.id}`, 'PaymentService');
+    // TODO: Update appointment payment status, send confirmation, etc.
   }
 }
