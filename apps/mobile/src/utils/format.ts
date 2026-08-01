@@ -1,13 +1,9 @@
-export function formatCurrency(amount: number, currency = 'EUR'): string {
-  return new Intl.NumberFormat('fr-FR', {
+/**
+ * Formats a number as currency (EUR by default).
+ */
+export function formatCurrency(amount: number, currency = 'EUR', locale = 'en-IE'): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
   }).format(amount);
-}
-
-export function formatDate(date: string | Date): string {
-  return new Intl.DateTimeFormat('fr-FR', {
-    dateStyle: 'long',
-    timeStyle: 'short',
-  }).format(new Date(date));
 }
