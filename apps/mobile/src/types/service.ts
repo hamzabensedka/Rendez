@@ -1,11 +1,12 @@
 export interface Service {
   id: string;
-  businessId: string;
   name: string;
   description?: string;
-  duration: number;
+  durationMinutes: number;
   price: number;
+  category?: string;
   isActive: boolean;
+  businessId: string;
   createdAt: string;
   updatedAt: string;
 }
