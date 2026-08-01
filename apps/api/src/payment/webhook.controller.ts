@@ -1,26 +1,26 @@
-import { Controller, Post, Body, HttpStatus, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Req,
+  Headers,
+  RawBodyRequest,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { Request } from 'express';
 import { PaymentService } from './payment.service';
-import { StripeService } from 'nestjs-stripe';
-import { WebhookDto } from './dto/webhook.dto';
 
 @Controller('payments/webhook')
 export class WebhookController {
-  constructor(private readonly paymentService: PaymentService, private readonly stripeService: StripeService) {}
+  constructor(private readonly paymentService: PaymentService) {}
 
   @Post()
-  async handleWebhook(@Body() webhookDto: WebhookDto) {
-    try {
-      const event = await this.stripeService.webhooks.constructEvent(
-        webhookDto.raw,
-        webhookDto.signature,
-        'whsec_123',
-      );
-      if (event.type === 'payment_intent.succeeded') {
-        const paymentIntent = event.data.object;
-        await this.paymentService.handlePaymentIntentSucceeded(paymentIntent);
-      }
-    } catch (error) {
-      throw new BadRequestException(error.message);
-    }
+  @HttpCode(HttpStatus.OK)
+  async handleWebhook(
+    @Headers('stripe-signature') signature: string,
+    @Req() req: RawBodyRequest<Request>,
+  ) {
+    const rawBody = req.rawBody ?? Buffer.from(JSON.stringify(req.body));
+    return this.paymentService.handleWebhook(signature, rawBody);
   }
 }
