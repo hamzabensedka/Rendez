@@ -1,13 +1,9 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { RedisService } from '../redis/redis.service';
-
-@Injectable()
-export class NotificationJob {
-  constructor(private readonly prismaService: PrismaService, private readonly redisService: RedisService) {}
-
-  async execute(data: any) {
-    // Process notification job logic here
-    console.log('Notification job executed successfully');
-  }
+export interface NotificationJobData {
+  userId: string;
+  type: 'booking_confirmation' | 'booking_reminder' | 'booking_cancellation' | 'review_request' | 'general';
+  payload: {
+    title: string;
+    body: string;
+    data?: Record<string, unknown>;
+  };
 }

@@ -1,13 +1,4 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { RedisService } from '../redis/redis.service';
-
-@Injectable()
-export class ScanSimulationJob {
-  constructor(private readonly prismaService: PrismaService, private readonly redisService: RedisService) {}
-
-  async execute(data: any) {
-    // Process scan simulation job logic here
-    console.log('Scan simulation job executed successfully');
-  }
+export interface ScanSimulationJobData {
+  businessId: string;
+  scanType: 'availability_check' | 'conflict_detection' | 'slot_optimization';
 }

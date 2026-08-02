@@ -1,37 +1,30 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
+import { QUEUE_NAMES } from '../bullmq.module';
 import { NotificationJobData } from '../jobs/notification.job';
 
-@Processor('notifications')
+@Processor(QUEUE_NAMES.NOTIFICATION)
 export class NotificationProcessor extends WorkerHost {
   private readonly logger = new Logger(NotificationProcessor.name);
 
   async process(job: Job<NotificationJobData>): Promise<void> {
-    const { userId, title, body, data } = job.data;
+    this.logger.log(`Processing notification job ${job.id} for user ${job.data.userId}`);
 
-    this.logger.log(
-      `Processing notification job ${job.id} for user ${userId}: ${title}`,
-    );
+    const { userId, type, payload } = job.data;
 
-    // Simulate push notification delivery
-    // In production, integrate with Expo Push API or Firebase Cloud Messaging
-    try {
-      // Simulate async delivery delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    // Simulate push notification sending
+    this.logger.log(`Sending ${type} notification to user ${userId}: ${JSON.stringify(payload)}`);
 
-      this.logger.log(
-        `Notification sent to user ${userId}: ${title} - ${body}`,
-      );
+    // In production, this would call Expo Push API, Firebase, or email service
+    await this.simulateSend(userId, type, payload);
 
-      // Log success metrics
-      this.logger.debug(`Notification payload: ${JSON.stringify(data)}`);
-    } catch (error) {
-      this.logger.error(
-        `Failed to send notification to user ${userId}: ${error.message}`,
-        error.stack,
-      );
-      throw error; // BullMQ will handle retry based on job options
-    }
+    this.logger.log(`Notification job ${job.id} completed successfully`);
+  }
+
+  private async simulateSend(userId: string, type: string, payload: Record<string, unknown>): Promise<void> {
+    // Simulate async delivery delay
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    this.logger.debug(`Simulated delivery to ${userId}: ${type} - ${JSON.stringify(payload)}`);
   }
 }

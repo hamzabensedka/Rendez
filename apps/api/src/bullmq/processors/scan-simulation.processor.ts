@@ -1,32 +1,27 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
+import { QUEUE_NAMES } from '../bullmq.module';
 import { ScanSimulationJobData } from '../jobs/scan-simulation.job';
 
-@Processor('scan-simulation')
+@Processor(QUEUE_NAMES.SCAN_SIMULATION)
 export class ScanSimulationProcessor extends WorkerHost {
   private readonly logger = new Logger(ScanSimulationProcessor.name);
 
   async process(job: Job<ScanSimulationJobData>): Promise<void> {
-    const { businessId, scanType, parameters } = job.data;
+    this.logger.log(`Processing scan simulation for business ${job.data.businessId}`);
 
-    this.logger.log(
-      `Processing scan simulation for business ${businessId}: ${scanType}`,
-    );
+    const { businessId, scanType } = job.data;
 
-    try {
-      // Simulate scan processing (e.g., QR code scan, NFC tap)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Simulate scan execution
+    await this.simulateScan(businessId, scanType);
 
-      this.logger.log(
-        `Scan simulation completed for business ${businessId} with params: ${JSON.stringify(parameters)}`,
-      );
-    } catch (error) {
-      this.logger.error(
-        `Scan simulation failed for business ${businessId}: ${error.message}`,
-        error.stack,
-      );
-      throw error;
-    }
+    this.logger.log(`Scan simulation completed for business ${businessId}`);
+  }
+
+  private async simulateScan(businessId: string, scanType: string): Promise<void> {
+    // Simulate scan processing delay
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    this.logger.debug(`Simulated ${scanType} scan for business ${businessId}`);
   }
 }
