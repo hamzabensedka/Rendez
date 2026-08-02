@@ -1,43 +1,44 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { ScanSimulationJobData } from '../jobs/scan-simulation.job';
+import { Job } from 'bullmq';
+import {
+  ScanSimulationJobData,
+  SCAN_SIMULATION_JOB_NAME,
+} from '../jobs/scan-simulation.job';
 
 @Processor('scan-simulation')
 export class ScanSimulationProcessor extends WorkerHost {
   private readonly logger = new Logger(ScanSimulationProcessor.name);
 
-  async process(job: Job<ScanSimulationJobData>): Promise<void> {
-    const { businessId, scanType, parameters } = job.data;
+  async process(job: Job<ScanSimulationJobData, void, string>): Promise<void> {
+    const { businessId, userId, scanType, parameters } = job.data;
 
-    this.logger.log(`Processing scan simulation job ${job.id} for business ${businessId} (type: ${scanType})`);
+    this.logger.log(
+      `Processing scan simulation job ${job.id} - type: ${scanType}, business: ${businessId || 'all'}, user: ${userId || 'all'}`,
+    );
 
     try {
-      // Simulate scan processing
-      await this.runScanSimulation(businessId, scanType, parameters);
+      // Simulate scan operation with variable duration
+      const duration = scanType === 'full' ? 500 : 200;
+      await new Promise((resolve) => setTimeout(resolve, duration));
 
-      this.logger.log(`Scan simulation completed for business ${businessId}`);
+      // Simulate scan results
+      const results = {
+        scanned: Math.floor(Math.random() * 100) + 1,
+        matched: Math.floor(Math.random() * 20),
+        scanType,
+        parameters: parameters || {},
+      };
+
+      this.logger.log(
+        `Scan simulation job ${job.id} completed with results: ${JSON.stringify(results)}`,
+      );
     } catch (error) {
       this.logger.error(
-        `Scan simulation failed for business ${businessId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error instanceof Error ? error.stack : undefined,
+        `Failed to process scan simulation job ${job.id}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
       throw error;
     }
-  }
-
-  private async runScanSimulation(
-    businessId: string,
-    scanType: string,
-    parameters?: Record<string, unknown>,
-  ): Promise<void> {
-    // Simulate scan processing time
-    const processingTime = parameters?.durationMs
-      ? (parameters.durationMs as number)
-      : 500;
-
-    await new Promise((resolve) => setTimeout(resolve, processingTime));
-
-    this.logger.debug(`Scan simulation completed for business ${businessId} (type: ${scanType})`);
   }
 }

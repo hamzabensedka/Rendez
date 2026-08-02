@@ -1,41 +1,61 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { NotificationJobData } from '../jobs/notification.job';
+import { Job } from 'bullmq';
+import { NotificationJobData, NOTIFICATION_JOB_NAME } from '../jobs/notification.job';
 
 @Processor('notification')
 export class NotificationProcessor extends WorkerHost {
   private readonly logger = new Logger(NotificationProcessor.name);
 
-  async process(job: Job<NotificationJobData>): Promise<void> {
-    const { userId, type, title, body, data } = job.data;
+  async process(job: Job<NotificationJobData, void, string>): Promise<void> {
+    const { userId, type, payload, channels } = job.data;
 
-    this.logger.log(`Processing notification job ${job.id} for user ${userId} (type: ${type})`);
+    this.logger.log(
+      `Processing notification job ${job.id} for user ${userId}, type: ${type}`,
+    );
 
     try {
-      // Simulate push notification sending
-      // In production, this would integrate with Expo Push API, Firebase, or similar
-      await this.sendPushNotification(userId, title, body, data);
+      // Simulate notification sending
+      const sendChannels = channels || ['push', 'email'];
 
-      this.logger.log(`Successfully sent ${type} notification to user ${userId}`);
+      for (const channel of sendChannels) {
+        await this.sendViaChannel(channel, userId, type, payload);
+      }
+
+      this.logger.log(
+        `Notification job ${job.id} completed successfully for user ${userId}`,
+      );
     } catch (error) {
       this.logger.error(
-        `Failed to send notification to user ${userId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error instanceof Error ? error.stack : undefined,
+        `Failed to process notification job ${job.id}: ${(error as Error).message}`,
+        (error as Error).stack,
       );
-      throw error; // Let BullMQ handle retries
+      throw error;
     }
   }
 
-  private async sendPushNotification(
+  private async sendViaChannel(
+    channel: 'push' | 'email',
     userId: string,
-    title: string,
-    body: string,
-    data?: Record<string, unknown>,
+    type: string,
+    payload: Record<string, unknown>,
   ): Promise<void> {
-    // Simulate async push notification delivery
-    // In production: fetch user's Expo push tokens from DB and call Expo Push API
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    this.logger.debug(`Push notification delivered to user ${userId}: ${title}`);
+    // Simulate async sending with a small delay
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    switch (channel) {
+      case 'push':
+        this.logger.debug(
+          `[PUSH] Sending ${type} notification to user ${userId} with payload: ${JSON.stringify(payload)}`,
+        );
+        break;
+      case 'email':
+        this.logger.debug(
+          `[EMAIL] Sending ${type} notification to user ${userId} with payload: ${JSON.stringify(payload)}`,
+        );
+        break;
+      default:
+        this.logger.warn(`Unknown notification channel: ${channel}`);
+    }
   }
 }

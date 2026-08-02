@@ -1,7 +1,8 @@
 export interface NotificationJobData {
   userId: string;
-  type: 'booking_confirmation' | 'reminder' | 'cancellation' | 'reschedule' | 'review_request';
-  title: string;
-  body: string;
-  data?: Record<string, unknown>;
+  type: 'booking_confirmation' | 'booking_reminder' | 'booking_cancellation' | 'booking_reschedule' | 'review_request';
+  payload: Record<string, unknown>;
+  channels?: ('push' | 'email')[];
 }
+
+export const NOTIFICATION_JOB_NAME = 'send-notification';
