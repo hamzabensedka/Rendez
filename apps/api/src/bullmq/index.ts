@@ -1,4 +1,4 @@
-export { BullmqModule } from './bullmq.module';
+export { BullmqModule, QUEUE_NAMES } from './bullmq.module';
 export { BullmqService } from './bullmq.service';
 export { NotificationProcessor } from './processors/notification.processor';
 export { AvailabilityProcessor } from './processors/availability.processor';
