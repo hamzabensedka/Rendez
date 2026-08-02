@@ -1,63 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ExpoRouter } from 'expo-router';
-import { fetchSalonReviews, submitReview } from '../api/reviews';
+import { getSalonReviews, submitReview } from '../api/reviews';
 import StarRating from 'react-native-star-rating';
-
-interface Review {
-  id: number;
-  rating: number;
-  comment: string;
-}
 
 const SalonReviews = () => {
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
-  const { data: reviews, isLoading } = useQuery(['salonReviews'], fetchSalonReviews);
-  const { mutate: submitReviewMutation } = useMutation(submitReview);
+  const [review, setReview] = useState('');
+  const { data, error, isLoading } = useQuery(['salonReviews'], getSalonReviews);
+  const { mutate } = useMutation(['submitReview'], submitReview);
 
-  const handleSubmitReview = async () => {
-    try {
-      await submitReviewMutation({ rating, comment });
-      setRating(0);
-      setComment('');
-    } catch (error) {
-      console.error(error);
-    }
+  const handleReviewSubmit = () => {
+    mutate({ rating, review });
   };
 
   if (isLoading) return <Text>Loading...</Text>;
+  if (error) return <Text>Error: {error.message}</Text>;
 
   return (
     <View>
-      <Text>Salon Reviews</Text>
       <FlatList
-        data={reviews}
+        data={data}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View>
-            <Text>{item.comment}</Text>
+            <Text>{item.review}</Text>
             <StarRating
-              rating={item.rating}
               disabled={true}
-              starSize={20}
+              maxStars={5}
+              rating={item.rating}
+              fullStarColor='#ffd700'
             />
           </View>
         )}
-        keyExtractor={(item) => item.id.toString()}
       />
-      <TouchableOpacity onPress={handleSubmitReview}>
+      <TouchableOpacity onPress={handleReviewSubmit}>
         <Text>Submit Review</Text>
       </TouchableOpacity>
       <StarRating
+        maxStars={5}
         rating={rating}
-        onSelectRating={setRating}
-        starSize={20}
+        selectedStar={(rating) => setRating(rating)}
+        fullStarColor='#ffd700'
       />
       <TextInput
-        value={comment}
-        onChangeText={setComment}
-        placeholder='Comment'
+        placeholder='Write your review...'
+        value={review}
+        onChangeText={(text) => setReview(text)}
       />
     </View>
   );
