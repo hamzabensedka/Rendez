@@ -1,22 +1,20 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
-import { GetReviewQueryDto } from './dto/review-query.dto';
+import { ReviewsQueryDto } from './dto/reviews-query.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ReviewsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateReviewDto) {
-    // Verify the appointment exists and belongs to the user
     const appointment = await this.prisma.appointment.findUnique({
       where: { id: dto.appointmentId },
-      include: { business: true },
     });
 
     if (!appointment) {
@@ -24,30 +22,29 @@ export class ReviewsService {
     }
 
     if (appointment.userId !== userId) {
-      throw new ForbiddenException('You can only review your own appointments');
+      throw new BadRequestException('You can only review your own appointments');
     }
 
     if (appointment.status !== 'COMPLETED') {
       throw new BadRequestException('You can only review completed appointments');
     }
 
-    // Check for duplicate review
-    const existing = await this.prisma.review.findUnique({
+    const existingReview = await this.prisma.review.findUnique({
       where: { appointmentId: dto.appointmentId },
     });
 
-    if (existing) {
-      throw new BadRequestException('You have already reviewed this appointment');
+    if (existingReview) {
+      throw new BadRequestException('Review already exists for this appointment');
     }
 
     const review = await this.prisma.review.create({
       data: {
-        rating: dto.rating,
-        comment: dto.comment,
+        appointmentId: dto.appointmentId,
         userId,
         businessId: appointment.businessId,
-        appointmentId: dto.appointmentId,
-        isFlagged: this.containsFlaggedContent(dto.comment),
+        rating: dto.rating,
+        comment: dto.comment,
+        status: 'PUBLISHED',
       },
       include: {
         user: {
@@ -61,20 +58,17 @@ export class ReviewsService {
       },
     });
 
-    // Update business aggregate rating
-    await this.updateBusinessRating(appointment.businessId);
-
     return review;
   }
 
-  async findByBusiness(businessId: string, query: GetReviewQueryDto) {
+  async findByBusiness(businessId: string, query: ReviewsQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
-    const where: any = {
+    const where: Prisma.ReviewWhereInput = {
       businessId,
-      isFlagged: false, // Exclude flagged reviews from public listing
+      status: 'PUBLISHED',
     };
 
     if (query.rating) {
@@ -112,58 +106,37 @@ export class ReviewsService {
     };
   }
 
-  async findOne(id: string) {
-    const review = await this.prisma.review.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatarUrl: true,
-          },
-        },
-        business: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    if (!review) {
-      throw new NotFoundException('Review not found');
-    }
-
-    return review;
-  }
-
   async getStats(businessId: string) {
     const business = await this.prisma.business.findUnique({
       where: { id: businessId },
-      select: {
-        id: true,
-        avgRating: true,
-        reviewCount: true,
-      },
     });
 
     if (!business) {
       throw new NotFoundException('Business not found');
     }
 
-    const distribution = await this.prisma.review.groupBy({
+    const aggregations = await this.prisma.review.groupBy({
       by: ['rating'],
       where: {
         businessId,
-        isFlagged: false,
+        status: 'PUBLISHED',
       },
       _count: { rating: true },
     });
 
-    const ratingDistribution: Record<number, number> = {
+    const totalReviews = aggregations.reduce(
+      (sum, item) => sum + item._count.rating,
+      0,
+    );
+
+    const ratingSum = aggregations.reduce(
+      (sum, item) => sum + item.rating * item._count.rating,
+      0,
+    );
+
+    const averageRating = totalReviews > 0 ? ratingSum / totalReviews : 0;
+
+    const distribution: Record<number, number> = {
       1: 0,
       2: 0,
       3: 0,
@@ -171,47 +144,57 @@ export class ReviewsService {
       5: 0,
     };
 
-    distribution.forEach((item) => {
-      ratingDistribution[item.rating] = item._count.rating;
+    aggregations.forEach((item) => {
+      distribution[item.rating] = item._count.rating;
     });
 
     return {
-      businessId: business.id,
-      averageRating: business.avgRating,
-      totalReviews: business.reviewCount,
-      ratingDistribution,
+      businessId,
+      averageRating: Math.round(averageRating * 100) / 100,
+      totalReviews,
+      distribution,
     };
   }
 
-  private async updateAggregateRating(businessId: string) {
-    const result = await this.prisma.review.aggregate({
-      where: {
-        businessId,
-        isFlagged: false,
-      },
-      _avg: { rating: true },
-      _count: { rating: true },
+  async flagReview(reviewId: string, reason: string) {
+    const review = await this.prisma.review.findUnique({
+      where: { id: reviewId },
     });
 
-    await this.prisma.business.update({
-      where: { id: businessId },
+    if (!review) {
+      throw new NotFoundException('Review not found');
+    }
+
+    return this.prisma.review.update({
+      where: { id: reviewId },
       data: {
-        avgRating: result._avg.rating ?? 0,
-        reviewCount: result._count.rating ?? 0,
+        status: 'FLAGGED',
+        moderationReason: reason,
       },
     });
   }
 
-  private containsFlagContent(comment?: string): boolean {
-    if (!comment) return false;
-    const flaggedPatterns = [
-      'spam',
-      'fake',
-      'scam',
-      'http://',
-      'https://',
-    ];
-    const lowerComment = comment.toLowerCase();
-    return flaggedPatterns.some((pattern) => lowerComment.includes(pattern));
+  async moderateReview(reviewId: string, action: 'APPROVE' | 'REJECT') {
+    const review = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+    });
+
+    if (!review) {
+      throw new NotFoundException('Review not found');
+    }
+
+    if (review.status !== 'FLAGGED') {
+      throw new BadRequestException('Only flagged reviews can be moderated');
+    }
+
+    const newStatus = action === 'APPROVE' ? 'PUBLISHED' : 'REJECTED';
+
+    return this.prisma.review.update({
+      where: { id: reviewId },
+      data: {
+        status: newStatus,
+        moderationReason: null,
+      },
+    });
   }
 }
