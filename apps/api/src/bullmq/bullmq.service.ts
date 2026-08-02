@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { QUEUE_NAMES } from './bullmq.module';
+import { Queue, Job } from 'bullmq';
 import { NotificationJobData } from './jobs/notification.job';
 import { AvailabilityCacheJobData } from './jobs/availability-cache.job';
 import { ScanSimulationJobData } from './jobs/scan-simulation.job';
@@ -11,43 +10,63 @@ export class BullmqService {
   private readonly logger = new Logger(BullmqService.name);
 
   constructor(
-    @InjectQueue(QUEUE_NAMES.NOTIFICATION) private readonly notificationQueue: Queue<NotificationJobData>,
-    @InjectQueue(QUEUE_NAMES.AVAILABILITY_CACHE) private readonly availabilityQueue: Queue<AvailabilityCacheJobData>,
-    @InjectQueue(QUEUE_NAMES.SCAN_SIMULATION) private readonly scanSimulationQueue: Queue<ScanSimulationJobData>,
+    @InjectQueue('notification') private readonly notificationQueue: Queue<NotificationJobData>,
+    @InjectQueue('availability-cache') private readonly availabilityCacheQueue: Queue<AvailabilityCacheJobData>,
+    @InjectQueue('scan-simulation') private readonly scanSimulationQueue: Queue<ScanSimulationJobData>,
   ) {}
 
-  async addNotificationJob(data: NotificationJobData): Promise<string> {
-    this.logger.log(`Enqueuing notification job for user ${data.userId}`);
-    const job = await this.notificationQueue.add('send-notification', data);
-    this.logger.log(`Notification job ${job.id} enqueued`);
-    return job.id ?? '';
+  async addNotificationJob(data: NotificationJobData): Promise<Job<NotificationJobData>> {
+    this.logger.log(`Adding notification job for user ${data.userId}`);
+    return this.notificationQueue.add('send-notification', data, {
+      jobId: `notification-${data.userId}-${data.type}-${Date.now()}`,
+    });
   }
 
-  async addAvailabilityCacheRefreshJob(data: AvailabilityCacheJobData): Promise<string> {
-    this.logger.log(`Enqueuing availability cache refresh for business ${data.businessId}`);
-    const job = await this.availabilityQueue.add('refresh-availability-cache', data);
-    this.logger.log(`Availability cache job ${job.id} enqueued`);
-    return job.id ?? '';
+  async addAvailabilityCacheRefreshJob(data: AvailabilityCacheJobData): Promise<Job<AvailabilityCacheJobData>> {
+    this.logger.log(`Adding availability cache refresh job for business ${data.businessId}`);
+    return this.availabilityCacheQueue.add('refresh-availability-cache', data, {
+      jobId: `availability-cache-${data.businessId}-${data.date ?? 'all'}`,
+    });
   }
 
-  async addScanSimulationJob(data: ScanSimulationJobData): Promise<string> {
-    this.logger.log(`Enqueuing scan simulation for business ${data.businessId}`);
-    const job = await this.scanSimulationQueue.add('run-scan-simulation', data);
-    this.logger.log(`Scan simulation job ${job.id} enqueued`);
-    return job.id ?? '';
+  async addScanSimulationJob(data: ScanSimulationJobData): Promise<Job<ScanSimulationJobData>> {
+    this.logger.log(`Adding scan simulation job for business ${data.businessId}`);
+    return this.scanSimulationQueue.add('run-scan-simulation', data, {
+      jobId: `scan-sim-${data.businessId}-${Date.now()}`,
+    });
   }
 
-  async getQueueMetrics(): Promise<Record<string, unknown>> {
-    const [notificationCounts, availabilityCounts, scanCounts] = await Promise.all([
-      this.notificationQueue.getJobCounts(),
-      this.availabilityQueue.getJobCounts(),
-      this.scanSimulationQueue.getJobCounts(),
+  async getQueueMetrics(queueName: string): Promise<{
+    waiting: number;
+    active: number;
+    completed: number;
+    failed: number;
+    delayed: number;
+  }> {
+    const queue = this.getQueueByName(queueName);
+    if (!queue) {
+      throw new Error(`Queue ${queueName} not found`);
+    }
+    const [waiting, active, completed, failed, delayed] = await Promise.all([
+      queue.getWaitingCount(),
+      queue.getActiveCount(),
+      queue.getCompletedCount(),
+      queue.getFailedCount(),
+      queue.getDelayedCount(),
     ]);
+    return { waiting, active, completed, failed, delayed };
+  }
 
-    return {
-      notification: notificationCounts,
-      availability: availabilityCounts,
-      scanSimulation: scanCounts,
-    };
+  private getQueueByName(name: string): Queue | null {
+    switch (name) {
+      case 'notification':
+        return this.notificationQueue;
+      case 'availability-cache':
+        return this.availabilityCacheQueue;
+      case 'scan-simulation':
+        return this.scanSimulationQueue;
+      default:
+        return null;
+    }
   }
 }

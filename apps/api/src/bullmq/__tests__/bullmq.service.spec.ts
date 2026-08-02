@@ -1,109 +1,134 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BullmqService } from '../bullmq.service';
 import { getQueueToken } from '@nestjs/bullmq';
-import { QUEUE_NAMES } from '../bullmq.module';
 import { Queue } from 'bullmq';
-
-const mockQueue = {
-  add: jest.fn(),
-  getJobCounts: jest.fn(),
-};
 
 describe('BullmqService', () => {
   let service: BullmqService;
-  let notificationQueue: Queue;
-  let availabilityQueue: Queue;
-  let scanSimulationQueue: Queue;
+  let notificationQueue: jest.Mocked<Queue>;
+  let availabilityCacheQueue: jest.Mocked<Queue>;
+  let scanSimulationQueue: jest.Mocked<Queue>;
 
   beforeEach(async () => {
+    notificationQueue = {
+      add: jest.fn().mockResolvedValue({ id: 'test-job-id' }),
+      getWaitingCount: jest.fn().mockResolvedValue(0),
+      getActiveCount: jest.fn().mockResolvedValue(0),
+      getCompletedCount: jest.fn().mockResolvedValue(0),
+      getFailedCount: jest.fn().mockResolvedValue(0),
+      getDelayedCount: jest.fn().mockResolvedValue(0),
+    } as any;
+
+    availabilityCacheQueue = {
+      add: jest.fn().mockResolvedValue({ id: 'test-job-id' }),
+      getWaitingCount: jest.fn().mockResolvedValue(0),
+      getActiveCount: jest.fn().mockResolvedValue(0),
+      getCompletedCount: jest.fn().mockResolvedValue(0),
+      getFailedCount: jest.fn().mockResolvedValue(0),
+      getDelayedCount: jest.fn().mockResolvedValue(0),
+    } as any;
+
+    scanSimulationQueue = {
+      add: jest.fn().mockResolvedValue({ id: 'test-job-id' }),
+      getWaitingCount: jest.fn().mockResolvedValue(0),
+      getActiveCount: jest.fn().mockResolvedValue(0),
+      getCompletedCount: jest.fn().mockResolvedValue(0),
+      getFailedCount: jest.fn().mockResolvedValue(0),
+      getDelayedCount: jest.fn().mockResolvedValue(0),
+    } as any;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BullmqService,
-        {
-          provide: getQueueToken(QUEUE_NAMES.NOTIFICATION),
-          useValue: { ...mockQueue },
-        },
-        {
-          provide: getQueueToken(QUEUE_NAMES.AVAILABILITY_CACHE),
-          useValue: { ...mockQueue },
-        },
-        {
-          provide: getQueueToken(QUEUE_NAMES.SCAN_SIMULATION),
-          useValue: { ...mockQueue },
-        },
+        { provide: getQueueToken('notification'), useValue: notificationQueue },
+        { provide: getQueueToken('availability-cache'), useValue: availabilityCacheQueue },
+        { provide: getQueueToken('scan-simulation'), useValue: scanSimulationQueue },
       ],
     }).compile();
 
     service = module.get<BullmqService>(BullmqService);
-    notificationQueue = module.get(getQueueToken(QUEUE_NAMES.NOTIFICATION));
-    availabilityQueue = module.get(getQueueToken(QUEUE_NAMES.AVAILABILITY_CACHE));
-    scanSimulationQueue = module.get(getQueueToken(QUEUE_NAMES.SCAN_SIMULATION));
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  it('should be defined', () => {
+    expect(service).toBeDefined();
   });
 
   describe('addNotificationJob', () => {
     it('should add a notification job to the queue', async () => {
-      const jobData = {
+      const data = {
         userId: 'user-1',
         type: 'booking_confirmation' as const,
-        payload: { title: 'Test', body: 'Test body' },
+        title: 'Booking Confirmed',
+        body: 'Your appointment has been booked',
       };
 
-      jest.spyOn(notificationQueue, 'add').mockResolvedValue({ id: 'job-1' } as any);
+      await service.addNotificationJob(data);
 
-      const result = await service.addNotificationJob(jobData);
-
-      expect(notificationQueue.add).toHaveBeenCalledWith('send-notification', jobData);
-      expect(result).toBe('job-1');
+      expect(notificationQueue.add).toHaveBeenCalledWith(
+        'send-notification',
+        data,
+        expect.objectContaining({
+          jobId: expect.stringContaining('notification-user-1-booking_confirmation-'),
+        }),
+      );
     });
   });
 
-  describe('addAvailabilityCacheJob', () => {
-    it('should add an availability cache job to the queue', async () => {
-      const jobData = { businessId: 'biz-1', date: '2025-01-01' };
+  describe('addAvailabilityCacheRefreshJob', () => {
+    it('should add an availability cache refresh job', async () => {
+      const data = { businessId: 'biz-1', date: '2024-01-15' };
 
-      jest.spyOn(availabilityQueue, 'add').mockResolvedValue({ id: 'job-2' } as any);
+      await service.addAvailabilityCacheJob(data);
 
-      const result = await service.addAvailabilityCacheJob(jobData);
-
-      expect(availabilityQueue.add).toHaveBeenCalledWith('refresh-availability-cache', jobData);
-      expect(result).toBe('job-2');
+      expect(availabilityCacheQueue.add).toHaveBeenCalledWith(
+        'refresh-availability-cache',
+        data,
+        expect.objectContaining({
+          jobId: 'availability-cache-biz-1-2024-01-15',
+        }),
+      );
     });
   });
 
   describe('addScanSimulationJob', () => {
-    it('should add a scan simulation job to the queue', async () => {
-      const jobData = { businessId: 'biz-1', scanType: 'availability_check' as const };
+    it('should add a scan simulation job', async () => {
+      const data = { businessId: 'biz-1', scanType: 'full' as const };
 
-      jest.spyOn(scanSimulationQueue, 'add').mockResolvedValue({ id: 'job-3' } as any);
+      await service.addScanSimulationJob(data);
 
-      const result = await service.addScanSimulationJob(jobData);
-
-      expect(scanSimulationQueue.add).toHaveBeenCalledWith('run-scan-simulation', jobData);
-      expect(result).toBe('job-3');
+      expect(scanSimulationQueue.add).toHaveBeenCalledWith(
+        'run-scan-simulation',
+        data,
+        expect.objectContaining({
+          jobId: expect.stringContaining('scan-sim-biz-1-'),
+        }),
+      );
     });
   });
 
   describe('getQueueMetrics', () => {
-    it('should return job counts for all queues', async () => {
-      jest.spyOn(notificationQueue, 'getJobCounts').mockResolvedValue({ waiting: 1, active: 0, completed: 5 });
-      jest.spyOn(availabilityQueue, 'getJobCounts').mockResolvedValue({ waiting: 0, active: 1, completed: 3 });
-      jest.spyOn(scanSimulationQueue, 'getJobCounts').mockResolvedValue({ waiting: 0, active: 0, completed: 2 });
+    it('should return queue metrics', async () => {
+      notificationQueue.getWaitingCount.mockResolvedValue(5);
+      notificationQueue.getActiveCount.mockResolvedValue(2);
+      notificationQueue.getCompletedCount.mockResolvedValue(100);
+      notificationQueue.getFailedCount.mockResolvedValue(3);
+      notificationQueue.getDelayedCount.mockResolvedValue(1);
 
-      const metrics = await service.getQueueMetrics();
+      const metrics = await service.getQueueMetrics('notification');
 
       expect(metrics).toEqual({
-        notification: { waiting: 1, active: 0, completed: 5 },
-        availability: { waiting: 0, active: 1, completed: 3 },
-        scanSimulation: { waiting: 0, active: 0, completed: 2 },
+        waiting: 5,
+        active: 2,
+        completed: 100,
+        failed: 3,
+        delayed: 1,
       });
+    });
+
+    it('should throw for unknown queue name', async () => {
+      await expect(service.getQueueMetrics('unknown')).rejects.toThrow(
+        'Queue unknown not found',
+      );
     });
   });
 });
-
-function getQueueToken(name: string) {
-  return `BullQueue_${name}`;
-}
