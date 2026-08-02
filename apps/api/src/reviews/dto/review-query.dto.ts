@@ -1,28 +1,24 @@
-import { IsOptional, IsInt, Min, Max } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsInt, Min, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class GetReviewQueryDto {
-  @ApiPropertyOptional({ description: 'Page number', default: 1 })
+export class ReviewQueryDto {
+  @ApiPropertyOptional({ default: 1 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  page?: number;
+  page?: number = 1;
 
-  @ApiPropertyOptional({ description: 'Items per page', default: 10, maximum: 50 })
+  @ApiPropertyOptional({ default: 20 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(50)
-  limit?: number;
+  limit?: number = 20;
 
-  @ApiPropertyOptional({ description: 'Filter by rating', minimum: 1, maximum: 5 })
+  @ApiPropertyOptional({ enum: ['recent', 'highest', 'lowest'], default: 'recent' })
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(5)
-  rating?: number;
+  @IsEnum(['recent', 'highest', 'lowest'])
+  sort?: 'recent' | 'highest' | 'lowest' = 'recent';
 }

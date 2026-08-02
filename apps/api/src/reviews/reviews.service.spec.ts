@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReviewsService } from './reviews.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 
 describe('ReviewsService', () => {
   let service: ReviewsService;
-  let prisma: any;
+  let prisma: PrismaService;
 
   const mockPrisma = {
     appointment: {
@@ -18,9 +18,6 @@ describe('ReviewsService', () => {
       count: jest.fn(),
       aggregate: jest.fn(),
       groupBy: jest.fn(),
-    },
-    business: {
-      findUnique: jest.fn(),
       update: jest.fn(),
     },
   };
@@ -34,7 +31,7 @@ describe('ReviewsService', () => {
     }).compile();
 
     service = module.get<ReviewsService>(ReviewsService);
-    prisma = module.get(PrismaService);
+    prisma = module.get<PrismaService>(PrismaService);
   });
 
   afterEach(() => {
@@ -43,105 +40,159 @@ describe('ReviewsService', () => {
 
   describe('create', () => {
     const userId = 'user-1';
-    const dto = {
-      appointmentId: 'appt-1',
-      rating: 5,
-      comment: 'Great service!',
-    };
+    const dto = { appointmentId: 'appt-1', rating: 5, comment: 'Great!' };
 
-    it('should create a review successfully', async () => {
-      prisma.appointment.findUnique.mockResolvedValue({
-        id: 'appt-1',
-        userId: 'user-1',
-        businessId: 'biz-1',
-        status: 'COMPLETED',
-        business: { id: 'biz-1', name: 'Test Biz' },
-      });
-      prisma.review.findUnique.mockResolvedValue(null);
-      prisma.review.create.mockResolvedValue({
-        id: 'rev-1',
-        ...dto,
-        userId,
-        businessId: 'biz-1',
-        isFlagged: false,
-        user: { id: 'user-1', firstName: 'John', lastName: 'Doe', avatarUrl: null },
-      });
-      prisma.review.aggregate.mockResolvedValue({ _avg: { rating: 5 }, _count: { rating: 1 } });
-      prisma.business.update.mockResolvedValue({});
+    it('should throw NotFoundException if appointment does not exist', async () => {
+      (prisma.appointment.findUnique as jest.Mock).mockResolvedValue(null);
 
-      const result = await service.create(userId, dto);
-      expect(result).toHaveProperty('id', 'rev-1');
-      expect(prisma.review.create).toHaveBeenCalled();
-      expect(prisma.business.update).toHaveBeenCalled();
-    });
-
-    it('should throw if appointment not found', async () => {
-      prisma.appointment.findUnique.mockResolvedValue(null);
       await expect(service.create(userId, dto)).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw if appointment does not belong to user', async () => {
-      prisma.appointment.findUnique.mockResolvedValue({
+    it('should throw BadRequestException if appointment belongs to another user', async () => {
+      (prisma.appointment.findUnique as jest.Mock).mockResolvedValue({
         id: 'appt-1',
         userId: 'other-user',
         businessId: 'biz-1',
         status: 'COMPLETED',
       });
-      await expect(service.create(userId, dto)).rejects.toThrow(ForbiddenException);
+
+      await expect(service.create(userId, dto)).rejects.toThrow(BadRequestException);
     });
 
-    it('should throw if appointment is not completed', async () => {
-      prisma.appointment.findUnique.mockResolvedValue({
+    it('should throw BadRequestException if appointment is not completed', async () => {
+      (prisma.appointment.findUnique as jest.Mock).mockResolvedValue({
         id: 'appt-1',
-        userId: 'user-1',
+        userId,
         businessId: 'biz-1',
-        status: 'PENDING',
+        status: 'CONFIRMED',
       });
-      await expect(service.create(userId, dto)).rejects.toThrow(ForbiddenException);
+
+      await expect(service.create(userId, dto)).rejects.toThrow(BadRequestException);
     });
 
-    it('should throw if duplicate review', async () => {
-      prisma.appointment.findUnique.mockResolvedValue({
+    it('should throw ConflictException if review already exists', async () => {
+      (prisma.appointment.findUnique as jest.Mock).mockResolvedValue({
         id: 'appt-1',
-        userId: 'user-1',
+        userId,
         businessId: 'biz-1',
         status: 'COMPLETED',
       });
-      prisma.review.findUnique.mockResolvedValue({ id: 'existing-review' });
-      await expect(service.create(userId, dto)).rejects.toThrow(BadRequestException);
+      (prisma.review.findUnique as jest.Mock).mockResolvedValue({ id: 'rev-1' });
+
+      await expect(service.create(userId, dto)).rejects.toThrow(ConflictException);
+    });
+
+    it('should create and return review on success', async () => {
+      const mockReview = {
+        id: 'rev-1',
+        userId,
+        businessId: 'biz-1',
+        appointmentId: 'appt-1',
+        rating: 5,
+        comment: 'Great!',
+        user: { id: userId, firstName: 'John', lastName: 'Doe', avatarUrl: null },
+      };
+
+      (prisma.appointment.findUnique as jest.Mock).mockResolvedValue({
+        id: 'appt-1',
+        userId,
+        businessId: 'biz-1',
+        status: 'COMPLETED',
+      });
+      (prisma.review.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.review.create as jest.Mock).mockResolvedValue(mockReview);
+
+      const result = await service.create(userId, dto);
+
+      expect(result).toEqual(mockReview);
+      expect(prisma.review.create).toHaveBeenCalledWith({
+        data: {
+          userId,
+          businessId: 'biz-1',
+          appointmentId: 'appt-1',
+          rating: 5,
+          comment: 'Great!',
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+            },
+          },
+        },
+      });
     });
   });
 
   describe('findByBusiness', () => {
-    it('should return paginated reviews', async () => {
-      prisma.review.findMany.mockResolvedValue([]);
-      prisma.review.count.mockResolvedValue(0);
-      const result = await service.findByBusiness('biz-1', { page: 1, limit: 10 });
-      expect(result).toHaveProperty('data');
-      expect(result).toHaveProperty('meta');
-      expect(result.meta.total).toBe(0);
+    it('should return paginated reviews with meta', async () => {
+      const mockReviews = [
+        { id: 'rev-1', rating: 5, comment: 'Nice', user: { id: 'u1', firstName: 'A', lastName: 'B', avatarUrl: null } },
+      ];
+      (prisma.review.findMany as jest.Mock).mockResolvedValue(mockReviews);
+      (prisma.review.count as jest.Mock).mockResolvedValue(1);
+
+      const result = await service.findByBusiness('biz-1', { page: 1, limit: 10, sort: 'recent' });
+
+      expect(result).toEqual({
+        data: mockReviews,
+        meta: { page: 1, limit: 10, total: 1, totalPages: 1 },
+      });
     });
   });
 
-  describe('getStats', () => {
-    it('should return rating stats', async () => {
-      prisma.business.findUnique.mockResolvedValue({
-        id: 'biz-1',
-        avgRating: 4.5,
-        reviewCount: 10,
+  describe('getRatingStats', () => {
+    it('should return average rating and distribution', async () => {
+      (prisma.review.aggregate as jest.Mock).mockResolvedValue({
+        _avg: { rating: 4.5 },
+        _count: { rating: 10 },
       });
-      prisma.review.groupBy.mockResolvedValue([
-        { rating: 5, _count: { rating: 6 } },
-        { rating: 4, _count: { rating: 4 } },
+      (prisma.review.groupBy as jest.Mock).mockResolvedValue([
+        { rating: 5, _count: { rating: 5 } },
+        { rating: 4, _count: { rating: 5 } },
       ]);
-      const result = await service.getStats('biz-1');
-      expect(result.averageRating).toBe(4.5);
-      expect(result.ratingDistribution[5]).toBe(6);
+
+      const result = await service.getRatingStats('biz-1');
+
+      expect(result).toEqual({
+        averageRating: 4.5,
+        totalReviews: 10,
+        ratingDistribution: {
+          1: 0,
+          2: 0,
+          3: 0,
+          4: 5,
+          5: 5,
+        },
+      });
+    });
+  });
+
+  describe('report', () => {
+    it('should throw NotFoundException if review does not exist', async () => {
+      (prisma.review.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(service.report('rev-1', 'user-1')).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw if business not found', async () => {
-      prisma.business.findUnique.mockResolvedValue(null);
-      await expect(service.getStats('biz-1')).rejects.toThrow(NotFoundException);
+    it('should mark review as reported', async () => {
+      (prisma.review.findUnique as jest.Mock).mockResolvedValue({ id: 'rev-1' });
+      (prisma.review.update as jest.Mock).mockResolvedValue({
+        id: 'rev-1',
+        isReported: true,
+        reportedBy: 'user-1',
+        reportedAt: new Date(),
+      });
+
+      const result = await service.report('rev-1', 'user-1');
+
+      expect(result).toEqual({
+        message: 'Review has been moderated',
+        reviewId: 'rev-1',
+      });
     });
   });
 });

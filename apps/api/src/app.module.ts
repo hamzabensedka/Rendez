@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from '@nestjs/prisma';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
-import { RolesGuard } from './auth/guards/roles.guard';
+import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
-import { BusinessModule } from './businesses/business.module';
+import { BusinessesModule } from './businesses/businesses.module';
+import { ServicesModule } from './services/services.module';
 import { AvailabilityModule } from './availability/availability.module';
-import { BookingModule } from './booking/booking.module';
-import { ReviewModule } from './review/review.module';
-import { PaymentModule } from './payments/payments.module';
-import { NotificationModule } from './notification/notification.module';
+import { AppointmentsModule } from './appointments/appointments.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { FavoritesModule } from './favorites/favorites.module';
+import { PaymentsModule } from './payments/payments.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { BullmqModule } from './bullmq/bullmq.module';
 import { AdminModule } from './admin/admin.module';
 
 @Module({
@@ -18,25 +18,16 @@ import { AdminModule } from './admin/admin.module';
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
-    BusinessModule,
+    BusinessesModule,
+    ServicesModule,
     AvailabilityModule,
-    BookingModule,
-    ReviewModule,
-    PaymentModule,
-    NotificationModule,
+    AppointmentsModule,
+    ReviewsModule,
+    FavoritesModule,
+    PaymentsModule,
+    NotificationsModule,
+    BullmqModule,
     AdminModule,
   ],
-  controllers: [],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
-  ],
 })
-
 export class AppModule {}
