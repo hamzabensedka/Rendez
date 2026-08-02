@@ -1,27 +1,43 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { QUEUE_NAMES } from '../bullmq.module';
 import { ScanSimulationJobData } from '../jobs/scan-simulation.job';
 
-@Processor(QUEUE_NAMES.SCAN_SIMULATION)
+@Processor('scan-simulation')
 export class ScanSimulationProcessor extends WorkerHost {
   private readonly logger = new Logger(ScanSimulationProcessor.name);
 
   async process(job: Job<ScanSimulationJobData>): Promise<void> {
-    this.logger.log(`Processing scan simulation for business ${job.data.businessId}`);
+    const { businessId, scanType, parameters } = job.data;
 
-    const { businessId, scanType } = job.data;
+    this.logger.log(`Processing scan simulation job ${job.id} for business ${businessId} (type: ${scanType})`);
 
-    // Simulate scan execution
-    await this.simulateScan(businessId, scanType);
+    try {
+      // Simulate scan processing
+      await this.runScanSimulation(businessId, scanType, parameters);
 
-    this.logger.log(`Scan simulation completed for business ${businessId}`);
+      this.logger.log(`Scan simulation completed for business ${businessId}`);
+    } catch (error) {
+      this.logger.error(
+        `Scan simulation failed for business ${businessId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
+    }
   }
 
-  private async simulateScan(businessId: string, scanType: string): Promise<void> {
-    // Simulate scan processing delay
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    this.logger.debug(`Simulated ${scanType} scan for business ${businessId}`);
+  private async runScanSimulation(
+    businessId: string,
+    scanType: string,
+    parameters?: Record<string, unknown>,
+  ): Promise<void> {
+    // Simulate scan processing time
+    const processingTime = parameters?.durationMs
+      ? (parameters.durationMs as number)
+      : 500;
+
+    await new Promise((resolve) => setTimeout(resolve, processingTime));
+
+    this.logger.debug(`Scan simulation completed for business ${businessId} (type: ${scanType})`);
   }
 }

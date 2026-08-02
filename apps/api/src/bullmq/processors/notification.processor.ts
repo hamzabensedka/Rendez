@@ -1,30 +1,41 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { QUEUE_NAMES } from '../bullmq.module';
 import { NotificationJobData } from '../jobs/notification.job';
 
-@Processor(QUEUE_NAMES.NOTIFICATION)
+@Processor('notification')
 export class NotificationProcessor extends WorkerHost {
   private readonly logger = new Logger(NotificationProcessor.name);
 
   async process(job: Job<NotificationJobData>): Promise<void> {
-    this.logger.log(`Processing notification job ${job.id} for user ${job.data.userId}`);
+    const { userId, type, title, body, data } = job.data;
 
-    const { userId, type, payload } = job.data;
+    this.logger.log(`Processing notification job ${job.id} for user ${userId} (type: ${type})`);
 
-    // Simulate push notification sending
-    this.logger.log(`Sending ${type} notification to user ${userId}: ${JSON.stringify(payload)}`);
+    try {
+      // Simulate push notification sending
+      // In production, this would integrate with Expo Push API, Firebase, or similar
+      await this.sendPushNotification(userId, title, body, data);
 
-    // In production, this would call Expo Push API, Firebase, or email service
-    await this.simulateSend(userId, type, payload);
-
-    this.logger.log(`Notification job ${job.id} completed successfully`);
+      this.logger.log(`Successfully sent ${type} notification to user ${userId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send notification to user ${userId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error; // Let BullMQ handle retries
+    }
   }
 
-  private async simulateSend(userId: string, type: string, payload: Record<string, unknown>): Promise<void> {
-    // Simulate async delivery delay
+  private async sendPushNotification(
+    userId: string,
+    title: string,
+    body: string,
+    data?: Record<string, unknown>,
+  ): Promise<void> {
+    // Simulate async push notification delivery
+    // In production: fetch user's Expo push tokens from DB and call Expo Push API
     await new Promise((resolve) => setTimeout(resolve, 100));
-    this.logger.debug(`Simulated delivery to ${userId}: ${type} - ${JSON.stringify(payload)}`);
+    this.logger.debug(`Push notification delivered to user ${userId}: ${title}`);
   }
 }

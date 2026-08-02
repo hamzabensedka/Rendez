@@ -1,9 +1,7 @@
 export interface NotificationJobData {
   userId: string;
-  type: 'booking_confirmation' | 'booking_reminder' | 'booking_cancellation' | 'review_request' | 'general';
-  payload: {
-    title: string;
-    body: string;
-    data?: Record<string, unknown>;
-  };
+  type: 'booking_confirmation' | 'reminder' | 'cancellation' | 'reschedule' | 'review_request';
+  title: string;
+  body: string;
+  data?: Record<string, unknown>;
 }
