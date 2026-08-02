@@ -1,18 +1,24 @@
 export interface Review {
-  id: number;
-  rating: number;
-  comment?: string;
+  id: string;
+  businessId: string;
+  userId: string;
+  appointmentId?: string;
+  rating: number; // 1-5
+  comment: string;
   createdAt: string;
   updatedAt: string;
-  user?: {
-    id: number;
+  user: {
+    id: string;
     name: string;
     avatarUrl?: string;
   };
-  businessId: number;
 }
 
-export interface CreateReviewPayload {
-  rating: number;
-  comment?: string;
+export interface ReviewsResponse {
+  reviews: Review[];
+  averageRating: number;
+  totalCount: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
 }
