@@ -1,34 +1,53 @@
-import { Controller, Post, Get, Body, Param, UseGuards, HttpStatus, HttpException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+  HttpStatus,
+  HttpCode,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { ReviewQueryDto } from './dto/review-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { User } from '../auth/decorators/current-user.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('user')
-  async create(@User() user: any, @Body() createReviewDto: CreateReviewDto) {
-    try {
-      const review = await this.reviewsService.create(user, createReviewDto);
-      return review;
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  async create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateReviewDto,
+  ) {
+    return this.reviewsService.create(user.id, dto);
   }
 
-  @Get(':businessId')
-  async findAll(@Param('businessId') businessId: number) {
-    try {
-      const reviews = await this.reviewsService.findAll(businessId);
-      return reviews;
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+  @Get('business/:businessId')
+  async findByBusiness(
+    @Param('businessId', ParseUUIDPipe) businessId: string,
+    @Query() query: GetReviewQueryDto,
+  ) {
+    return this.reviewsService.findByBusiness(businessId, query);
+  }
+
+  @Get('business/:businessId/stats')
+  async getStats(
+    @Param('businessId', ParseUUIDPipe) businessId: string,
+  ) {
+    return this.reviewsService.getStats(businessId);
+  }
+
+  @Get(':id')
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.reviewsService.findOne(id);
   }
 }
