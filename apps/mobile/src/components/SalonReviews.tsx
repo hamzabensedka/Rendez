@@ -1,64 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ExpoRouter } from 'expo-router';
-import { fetchSalonReviews, submitReview } from '../api/reviews';
-import StarRating from 'react-native-star-rating';
+import { fetchReviews, submitReview } from '../api/reviews';
+import { StarRating } from '../components/StarRating';
+import { Review } from '../types/Review';
 
-interface Review {
-  id: number;
-  rating: number;
-  comment: string;
+interface SalonReviewsProps {
+  salonId: number;
 }
 
-const SalonReviews = () => {
+const SalonReviews = ({ salonId }: SalonReviewsProps) => {
   const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState('');
-  const { data: reviews, isLoading } = useQuery(['salonReviews'], fetchSalonReviews);
-  const { mutate: submitReviewMutation } = useMutation(submitReview);
+  const [review, setReview] = useState('');
 
-  const handleSubmitReview = async () => {
-    try {
-      await submitReviewMutation({ rating, comment });
-      setRating(0);
-      setComment('');
-    } catch (error) {
-      console.error(error);
-    }
+  const { data: reviews, isLoading } = useQuery(['reviews', salonId], () => fetchReviews(salonId));
+  const { mutate: submitReviewMutate } = useMutation(['submitReview'], submitReview);
+
+  const handleReviewSubmit = async () => {
+    if (rating === 0 || review === '') return;
+    await submitReviewMutate({ salonId, rating, review });
+    setRating(0);
+    setReview('');
   };
 
   if (isLoading) return <Text>Loading...</Text>;
 
   return (
     <View>
-      <Text>Salon Reviews</Text>
-      <FlatList
-        data={reviews}
-        renderItem={({ item }) => (
-          <View>
-            <Text>{item.comment}</Text>
-            <StarRating
-              rating={item.rating}
-              disabled={true}
-              starSize={20}
-            />
-          </View>
-        )}
-        keyExtractor={(item) => item.id.toString()}
-      />
-      <TouchableOpacity onPress={handleSubmitReview}>
+      <Text>Reviews</Text>
+      {reviews && (
+        <FlatList
+          data={reviews}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View>
+              <Text>{item.user.name}</Text>
+              <StarRating rating={item.rating} />
+              <Text>{item.review}</Text>
+            </View>
+          )}
+        />
+      )}
+      <TouchableOpacity onPress={handleReviewSubmit}>
         <Text>Submit Review</Text>
       </TouchableOpacity>
-      <StarRating
-        rating={rating}
-        onSelectRating={setRating}
-        starSize={20}
-      />
-      <TextInput
-        value={comment}
-        onChangeText={setComment}
-        placeholder='Comment'
-      />
+      <StarRating rating={rating} onRatingChange={setRating} />
+      <Text>Leave a review:</Text>
+      <TextInput value={review} onChangeText={setReview} />
     </View>
   );
 };
