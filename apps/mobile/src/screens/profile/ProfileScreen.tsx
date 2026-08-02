@@ -2,459 +2,401 @@ import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
+  StyleSheet,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
+  Image,
   ScrollView,
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../hooks/useAuth';
-import { apiClient } from '../../services/apiClient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQueryClient } from '@tanstack/react-query';
+import * as ImagePicker from 'expo-image-picker';
+import { useProfile, useUpdateProfile } from '../../hooks/useProfile';
 import { UserProfile } from '../../types/user';
-import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, typography, spacing } from '../../theme';
 
-export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
-  const queryClient = useQueryClient();
+const ProfileScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
+  const { data: profile, isLoading, error } = useQuery<UserProfile>({
+    queryKey: ['profile'],
+    queryFn: () => fetch('/api/profile').then((res) => res.json()),
+  });
+  const updateProfile = useUpdateProfile();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
-
-  const {
-    data: profile,
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useQuery<UserProfile>({
-    queryKey: ['profile'],
-    queryFn: async () => {
-      const response = await apiClient.get('/profile');
-      return response.data;
-    },
-    onSuccess: (data: UserProfile) => {
-      setName(data.name || '');
-      setPhone(data.phone || '');
-      setAvatarUrl(data.avatarUrl || '');
-    },
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    avatar: '',
   });
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  const updateProfileMutation = useMutation({
-    mutationFn: async (profileData: Partial<UserProfile>) => {
-      const response = await apiClient.patch('/profile', profileData);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-      setIsEditing(false);
-      Alert.alert('Success', 'Profile updated successfully');
-    },
-    onError: (err: any) => {
-      const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        'Failed to update profile';
-      Alert.alert('Error', message);
-    },
-  });
-
-  const handleEdit = useCallback(() => {
+  React.useEffect(() => {
     if (profile) {
-      setName(profile.name || '');
-      setPhone(profile.phone || '');
-      setAvatarUrl(profile.avatarUrl || '');
+      setFormData({
+        name: profile.name || '',
+        phone: profile.phone || '',
+        avatar: profile.avatar || '',
+      });
     }
-    setIsEditing(true);
   }, [profile]);
+
+  const handleInputChange = useCallback((field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (validationErrors[field]) {
+      setValidationErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  }, [validationErrors]);
+
+  const validate = useCallback(() => {
+    const errors: Record<string, string> = {};
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required';
+    } else if (formData.name.trim().length < 2) {
+      errors.name = 'Name must be at least 2 characters';
+    }
+    if (formData.phone && !/^\+?[1-9]\d{1,14}$/.test(formData.phone.replace(/[\s()-]/g, ''))) {
+      errors.phone = 'Enter a valid phone number';
+    }
+    return errors;
+  }, [formData]);
+
+  const handleSave = useCallback(async () => {
+    const errors = validate();
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+    try {
+      await updateProfile.mutateAsync({
+        name: formData.name.trim(),
+        phone: formData.phone.trim() || undefined,
+        avatar: formData.avatar || undefined,
+      });
+      setIsEditing(false);
+    } catch (err: any) {
+      Alert.alert('Error', err?.message || 'Failed to update profile');
+    }
+  }, [formData, validate, updateProfile]);
 
   const handleCancel = useCallback(() => {
     if (profile) {
-      setName(profile.name || '');
-      setPhone(profile.phone || '');
-      setAvatarUrl(profile.avatarUrl || '');
+      setFormData({
+        name: profile.name || '',
+        phone: profile.phone || '',
+        avatar: profile.avatar || '',
+      });
     }
+    setValidationErrors({});
     setIsEditing(false);
   }, [profile]);
 
-  const handleSave = useCallback(() => {
-    if (!name.trim()) {
-      Alert.alert('Validation Error', 'Name is required');
+  const handlePickAvatar = useCallback(async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission Required', 'Allow access to your photos to change avatar.');
       return;
     }
-
-    const updatedFields: Partial<UserProfile> = {};
-
-    if (name.trim() !== (profile?.name || '')) {
-      updatedFields.name = name.trim();
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets?.length) {
+      setFormData((prev) => ({ ...prev, avatar: result.assets[0].uri }));
     }
-    if (phone.trim() !== (profile?.phone || '')) {
-      updatedFields.phone = phone.trim();
-    }
-    if (avatarUrl.trim() !== (profile?.avatarUrl || '')) {
-      updatedFields.avatarUrl = avatarUrl.trim();
-    }
-
-    if (Object.keys(updatedFields).length === 0) {
-      setIsEditing(false);
-      return;
-    }
-
-    updateProfileMutation.mutate(updatedFields);
-  }, [name, phone, avatarUrl, profile, updateProfileMutation]);
+  }, []);
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.centered}>
-        <ActivityIndicator size="large" color="#4A90D9" />
-        <Text style={styles.loadingText}>Loading profile...</Text>
-      </SafeAreaView>
+      <View style={[styles.centered, { paddingTop: insets.top }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
     );
   }
 
-  if (isError) {
+  if (error) {
     return (
-      <SafeAreaView style={styles.centered}>
-        <Ionicons name="alert-circle-outline" size={48} color="#FF3B30" />
-        <Text style={styles.errorTitle}>Failed to load profile</Text>
-        <Text style={styles.errorMessage}>
-          {(error as any)?.message || 'An unexpected error occurred'}
-        </Text>
+      <View style={[styles.centered, { paddingTop: insets.top }]}>
+        <Text style={styles.errorText}>Failed to load profile</Text>
         <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-          <Text style={styles.retryButtonText}>Retry</Text>
+          <Text style={styles.retryText}>Retry</Text>
         </TouchableOpacity>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.flex}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.container}
+    >
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg },
+        ]}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>My Profile</Text>
-            {!isEditing ? (
-              <TouchableOpacity onPress={handleEdit} style={styles.editButton}>
-                <Ionicons name="create-outline" size={22} color="#4A90D9" />
-                <Text style={styles.editButtonText}>Edit</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity onPress={handleCancel} style={styles.cancelButton}>
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+        <View style={styles.header}>
+          <Text style={styles.title}>My Profile</Text>
+          {!isEditing ? (
+            <TouchableOpacity style={styles.editButton} onPress={() => setIsEditing(true)}>
+              <Text style={styles.editButtonText}>Edit</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
 
-          {/* Avatar Section */}
-          <View style={styles.avatarSection}>
-            <View style={styles.avatarContainer}>
-              {avatarUrl ? (
-                <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarInitial}>
-                    {(name || user?.email || '?').charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={40} color="#999" />
-                </View>
-              )}
-            </View>
+        <View style={styles.avatarSection}>
+          <TouchableOpacity onPress={isEditing ? handlePickAvatar : undefined} disabled={!isEditing}>
+            <Image
+              source={
+                formData.avatar
+                  ? { uri: formData.avatar }
+                  : require('../../assets/default-avatar.png')
+              }
+              style={styles.avatar}
+            />
             {isEditing && (
-              <View style={styles.avatarUrlInput}>
-                <Text style={styles.fieldLabel}>Avatar URL</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={avatarUrl}
-                  onChangeText={setAvatarUrl}
-                  placeholder="https://example.com/avatar.jpg"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="url"
-                />
+              <View style={styles.avatarOverlay}>
+                <Text style={styles.avatarOverlayText}>Change</Text>
               </View>
             )}
-          </View>
+          </TouchableOpacity>
+        </View>
 
-          {/* Profile Fields */}
-          <View style={styles.fieldsContainer}>
-            {/* Email (read-only) */}
-            <View style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>Email</Text>
-              <View style={styles.readOnlyField}>
-                <Text style={styles.readOnlyValue}>{user?.email || 'N/A'}</Text>
-                <Ionicons name="lock-closed-outline" size={16} color="#999" />
-              </View>
-            </View>
-
-            {/* Name */}
-            <View style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>
-                Name <Text style={styles.required}>*</Text>
-              </Text>
-              {isEditing ? (
+        <View style={styles.form}>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Name</Text>
+            {isEditing ? (
+              <>
                 <TextInput
-                  style={styles.textInput}
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="Enter your name"
+                  style={[styles.input, validationErrors.name ? styles.inputError : null]}
+                  value={formData.name}
+                  onChangeText={(val) => handleInputChange('name', val)}
+                  placeholder="Your name"
+                  placeholderTextColor={colors.textMuted}
                   autoCapitalize="words"
                   maxLength={100}
                 />
-              ) : (
-                <View style={styles.readOnlyField}>
-                  <Text style={styles.readOnlyValue}>{name || 'Not set'}</Text>
-                </View>
-              )}
-            </View>
+                {validationErrors.name ? (
+                  <Text style={styles.fieldError}>{validationErrors.name}</Text>
+                ) : null}
+              </>
+            ) : (
+              <Text style={styles.value}>{profile?.name || '—'}</Text>
+            )}
+          </View>
 
-            {/* Phone */}
-            <View style={styles.fieldRow}>
-              <Text style={styles.fieldLabel}>Phone</Text>
-              {isEditing ? (
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Email</Text>
+            <Text style={styles.value}>{profile?.email || '—'}</Text>
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Phone</Text>
+            {isEditing ? (
+              <>
                 <TextInput
-                  style={styles.textInput}
-                  value={phone}
-                  onChangeText={setPhone}
-                  placeholder="+1 (555) 000-0000"
+                  style={[styles.input, validationErrors.phone ? styles.inputError : null]}
+                  value={formData.phone}
+                  onChangeText={(e) => handleInputChange('phone', e)}
+                  placeholder="+1 234 567 890"
+                  placeholderTextColor={colors.textMuted}
                   keyboardType="phone-pad"
                   maxLength={20}
                 />
-              ) : (
-                <View style={styles.readOnlyField}>
-                  <Text style={styles.readOnlyValue}>{phone || 'Not set'}</Text>
-                </View>
-              )}
-            </View>
+                {validationErrors.phone ? (
+                  <Text style={styles.fieldError}>{validationErrors.phone}</Text>
+                ) : null}
+              </>
+            ) : (
+              <Text style={styles.value}>{profile?.phone || '—'}</Text>
+            )}
           </View>
 
-          {/* Save Button (editing mode) */}
           {isEditing && (
-            <TouchableOpacity
-              style={[
-                styles.saveButton,
-                updateProfileMutation.isPending && styles.saveButtonDisabled,
-              ]}
-              onPress={handleSave}
-              disabled={updateProfileMutation.isPending}
-            >
-              {updateProfileMutation.isPending ? (
-                <ActivityIndicator size="small" color="#FFF" />
-              ) : (
-                <Text style={styles.saveButtonText}>Save Changes</Text>
-              )}
-            </TouchableOpacity>
+            <View style={styles.actions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleCancel}
+                disabled={updateProfile.isPending}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveButton, updateProfile.isPending ? styles.saveButtonDisabled : null]}
+                onPress={handleSave}
+                disabled={updateProfile.isPending}
+              >
+                {updateProfile.isPending ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           )}
-
-          {/* Sign Out */}
-          <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
-            <Ionicons name="log-out-outline" size={20} color="#FF3B30" />
-            <Text style={styles.signOutText}>Sign Out</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.background,
   },
-  flex: {
-    flex: 1,
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+    flexGrow: 1,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    padding: 24,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#666',
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginTop: 16,
-  },
-  errorMessage: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 8,
-    marginHorizontal: 32,
-  },
-  retryButton: {
-    marginTop: 20,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    backgroundColor: '#4A90D9',
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  scrollContent: {
-    padding: 20,
-    paddingBottom: 40,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1A1A1A',
+  title: {
+    ...typography.h1,
+    color: colors.text,
   },
   editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.primary,
     borderRadius: 8,
-    backgroundColor: '#EBF2FD',
   },
   editButtonText: {
-    marginLeft: 4,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#4A90D9',
-  },
-  cancelButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: '#F1F1F1',
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
+    ...typography.button,
+    color: '#fff',
   },
   avatarSection: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
-  avatarContainer: {
-    marginBottom: 12,
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.border,
   },
-  avatarPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#E8ECF0',
+  avatarOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 30,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderBottomLeftRadius: 60,
+    borderBottomRightRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatarInitial: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#4A90D9',
-  },
-  avatarUrlInput: {
-    width: '100%',
-  },
-  fieldsContainer: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  fieldRow: {
-    marginBottom: 16,
-  },
-  fieldLabel: {
-    fontSize: 14,
+  avatarOverlayText: {
+    color: '#fff',
+    fontSize: 12,
     fontWeight: '600',
-    color: '#666',
-    marginBottom: 6,
+  },
+  form: {
+    flex: 1,
+  },
+  fieldGroup: {
+    marginBottom: spacing.lg,
+  },
+  label: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginBottom: spacing.xs,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  required: {
-    color: '#FF3B30',
-  },
-  textInput: {
-    backgroundColor: '#F8F9FA',
+  input: {
+    ...typography.body,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: colors.border,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: '#1A1A1A',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    color: colors.text,
+    backgroundColor: colors.surface,
   },
-  readOnlyField: {
+  inputError: {
+    borderColor: colors.error,
+  },
+  value: {
+    ...typography.body,
+    color: colors.text,
+    paddingVertical: spacing.sm,
+  },
+  fieldError: {
+    ...typography.caption,
+    color: colors.error,
+    marginTop: spacing.xs,
+  },
+  actions: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    justifyContent: 'flex-end',
+    marginTop: spacing.xl,
+    gap: spacing.md,
   },
-  readOnlyValue: {
-    fontSize: 16,
-    color: '#1A1A1A',
+  cancelButton: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cancelButtonText: {
+    ...typography.button,
+    color: colors.text,
   },
   saveButton: {
-    backgroundColor: '#4A90D9',
-    borderRadius: 12,
-    paddingVertical: 14,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+    backgroundColor: colors.primary,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    gap: spacing.sm,
   },
   saveButtonDisabled: {
     opacity: 0.6,
   },
   saveButtonText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '700',
+    ...typography.button,
+    color: '#fff',
   },
-  signOutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FFD4D2',
-    backgroundColor: '#FFF',
+  errorText: {
+    ...typography.body,
+    color: colors.error,
+    marginBottom: spacing.md,
   },
-  signOutText: {
-    marginLeft: 8,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FF3B30',
+  retryButton: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: 8,
+    backgroundColor: colors.primary,
+  },
+  retryText: {
+    ...typography.button,
+    color: '#fff',
   },
 });
+
+export default ProfileScreen;
