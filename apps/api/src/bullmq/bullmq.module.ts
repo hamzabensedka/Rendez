@@ -1,47 +1,27 @@
-import { Module, Global } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
-import { ConfigService } from '@nestjs/config';
-import { BullmqService } from './bullmq.service';
-import { NotificationProcessor } from './processors/notification.processor';
-import { AvailabilityProcessor } from './processors/availability.processor';
-import { ScanSimulationProcessor } from './processors/scan-simulation.processor';
+import { Module } from '@nestjs/common';
+import { BullmqModule } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
+import { CacheService } from '../cache/cache.service';
+import { ReminderEmailJob } from '../jobs/reminder-email.job';
+import { AvailabilityCacheInvalidationJob } from '../jobs/availability-cache-invalidation.job';
 
-@Global()
 @Module({
   imports: [
-    BullModule.forRootAsync({
-      useFactory: (configService: ConfigService) => ({
-        connection: {
-          host: configService.get<string>('REDIS_HOST', 'localhost'),
-          port: configService.get<number>('REDIS_PORT', 6379),
-          password: configService.get<string>('REDIS_PASSWORD', ''),
-          maxRetriesPerRequest: null,
-          enableReadyCheck: false,
-        },
-        defaultJobOptions: {
-          removeOnComplete: 100,
-          removeOnFail: 500,
-          attempts: 3,
-          backoff: {
-            type: 'exponential',
-            delay: 1000,
-          },
-        },
-      }),
-      inject: [ConfigService],
+    BullmqModule.registerQueue({
+      name: 'reminder-emails'
     }),
-    BullModule.registerQueue(
-      { name: 'notification' },
-      { name: 'availability-cache' },
-      { name: 'scan-simulation' },
-    ),
+    BullmqModule.registerQueue({
+      name: 'availability-cache-invalidation'
+    })
   ],
   providers: [
-    BullmqService,
-    NotificationProcessor,
-    AvailabilityProcessor,
-    ScanSimulationProcessor,
-  ],
-  exports: [BullmqService],
+    ReminderEmailJob,
+    AvailabilityCacheInvalidationJob,
+    PrismaService,
+    EmailService,
+    CacheService
+  ]
 })
 export class BullmqModule {}
