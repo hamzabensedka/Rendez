@@ -1,40 +1,18 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
-import { NotificationService, NOTIFICATION_QUEUE } from './notification.service';
-import { NotificationProcessor } from './notification.processor';
 import { NotificationsController } from './notifications.controller';
-import { EMAIL_PROVIDER, EmailProvider } from './providers/email.provider';
-import { ResendProvider } from './providers/resend.provider';
-import { PUSH_PROVIDER, ExpoPushProvider } from './providers/push.provider';
+import { NotificationsService } from './notifications.service';
+import { BullModule } from '@nestjs/bull';
+import { BullQueueService } from './bull-queue.service';
 
 @Module({
   imports: [
-    BullModule.registerQueue({
-      name: NOTIFICATION_QUEUE,
+    BullModule.registerQueue('notifications', {
       defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-          type: 'exponential',
-          delay: 1000,
-        },
-        removeOnComplete: 100,
-        removeOnFail: 50,
+        removeOnComplete: true,
       },
     }),
   ],
   controllers: [NotificationsController],
-  providers: [
-    NotificationService,
-    NotificationProcessor,
-    {
-      provide: EMAIL_PROVIDER,
-      useClass: ResendProvider,
-    },
-    {
-      provide: PUSH_PROVIDER,
-      useClass: ExpoPushProvider,
-    },
-  ],
-  exports: [NotificationService],
+  providers: [NotificationsService, BullQueueService],
 })
 export class NotificationsModule {}
