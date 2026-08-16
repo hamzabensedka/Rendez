@@ -1,24 +1,32 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ProviderService } from './provider.service';
-import { CreateServiceDto } from './dto/create-service.dto';
-import { CreateStaffDto } from './dto/create-staff.dto';
 
 @Controller('provider')
 export class ProviderController {
   constructor(private readonly providerService: ProviderService) {}
 
-  @Post('services')
-  createService(@Body() createServiceDto: CreateServiceDto) {
-    return this.providerService.createService(createServiceDto);
+  @Get()
+  async findAll(): Promise<any> {
+    return this.providerService.findAll();
   }
 
-  @Post('staff')
-  createStaff(@Body() createStaffDto: CreateStaffDto) {
-    return this.providerService.createStaff(createStaffDto);
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<any> {
+    return this.providerService.findOne(id);
   }
 
-  @Get('appointments')
-  getAppointments() {
-    return this.providerService.getAppointments();
+  @Post()
+  async create(@Body() createProviderDto: any): Promise<any> {
+    return this.providerService.create(createProviderDto);
+  }
+
+  @Patch(':id')
+  async update(@Param('id') id: string, @Body() updateProviderDto: any): Promise<any> {
+    return this.providerService.update(id, updateProviderDto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string): Promise<any> {
+    return this.providerService.remove(id);
   }
 }

@@ -1,21 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateServiceDto } from './dto/create-service.dto';
-import { CreateStaffDto } from './dto/create-staff.dto';
 
 @Injectable()
 export class ProviderService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  createService(createServiceDto: CreateServiceDto) {
-    return this.prismaService.service.create({ data: createServiceDto });
+  async findAll(): Promise<any> {
+    return this.prisma.provider.findMany();
   }
 
-  createStaff(createStaffDto: CreateStaffDto) {
-    return this.prismaService.staff.create({ data: createStaffDto });
+  async findOne(id: string): Promise<any> {
+    return this.prisma.provider.findUnique({ where: { id } });
   }
 
-  getAppointments() {
-    return this.prismaService.appointment.findMany();
+  async create(createProviderDto: any): Promise<any> {
+    return this.prisma.provider.create({ data: createProviderDto });
+  }
+
+  async update(id: string, updateProviderDto: any): Promise<any> {
+    return this.prisma.provider.update({ where: { id }, data: updateProviderDto });
+  }
+
+  async remove(id: string): Promise<any> {
+    return this.prisma.provider.delete({ where: { id } });
   }
 }
