@@ -1,6 +1,8 @@
 export class StaffDto {
   id: number;
-  providerId: number;
   name: string;
   email: string;
+  constructor(partial: Partial<StaffDto>) {
+    Object.assign(this, partial);
+  }
 }
