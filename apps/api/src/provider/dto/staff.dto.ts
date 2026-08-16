@@ -1,8 +1,12 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 export class StaffDto {
-  id: number;
+  @ApiProperty({ example: 'John Doe' })
   name: string;
+
+  @ApiProperty({ example: 'johndoe@example.com' })
   email: string;
-  constructor(partial: Partial<StaffDto>) {
-    Object.assign(this, partial);
-  }
+
+  @ApiProperty({ example: '1234567890' })
+  phoneNumber: string;
 }
