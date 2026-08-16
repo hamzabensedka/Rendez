@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enhanced Business Profile</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#dda25f",
+              "background-light": "#f8f7f6",
+              "background-dark": "#201912",
+              // Custom Palette from prompt
+              "palette-cream": "#fefae0",
+              "palette-dark-green": "#283618",
+              "palette-med-green": "#606c38",
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar hiding for horizontal scroll */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-[#171512] dark:text-white">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden pb-[80px]">
+<!-- TopAppBar -->
+<div class="sticky top-0 z-10 flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-[#e4e1dc] dark:border-[#3a352f]">
+<div class="text-[#171512] dark:text-white flex size-12 shrink-0 items-center justify-start cursor-pointer">
+<span class="material-symbols-outlined" style="font-size: 24px;">arrow_back</span>
+</div>
+<h2 class="text-[#171512] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Business Details</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 bg-transparent text-[#171512] dark:text-white gap-2 text-base font-bold min-w-0 p-0">
+<span class="material-symbols-outlined" style="font-size: 24px;">bookmark</span>
+</button>
+</div>
+</div>
+<!-- Hero Section / Business Header -->
+<div class="flex flex-col gap-4 p-4">
+<div class="flex items-center gap-4">
+<div class="w-20 h-20 rounded-full bg-cover bg-center shadow-sm" data-alt="Spa business logo featuring a minimal leaf design" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAE8A2m899F0aUHq55O1BIzH58bceeHA9YWJMPlJIgH_gvTF1MVOyPIXrU2mPtImGpOoynoJ5TK2UYLitnlH-0T64057CqT0MwK38nb4T-Wht0vibcgWoQ-c5Qn53eeY4wTWZj94KRR2J3_amHjoct-9I0c09qW5NezB1sdu6EYxQ8IiKWfzMR-z4-XptxGGaly1YBF2_AbD977dRLHcC85ZtTkNE1k0DqE66AH33E4h98lkvtqcNA_5zIWEik0UO6AxAz03wCHNAQ');"></div>
+<div class="flex flex-col justify-center">
+<h1 class="text-2xl font-bold text-palette-dark-green dark:text-primary">Verdant Valley Spa</h1>
+<div class="flex items-center gap-1 text-palette-med-green dark:text-[#a0ac85] text-sm font-medium">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span>Portland, Oregon</span>
+</div>
+<div class="flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-primary text-sm font-fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-sm font-bold text-[#171512] dark:text-white">4.9</span>
+<span class="text-xs text-[#857666] dark:text-[#9ca3af]">(1.2k reviews)</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Loyalty Card Section -->
+<div class="p-4 pt-0">
+<div class="flex flex-col gap-4 rounded-xl bg-palette-cream p-5 shadow-sm border border-[#e4e1dc] dark:border-none relative overflow-hidden">
+<!-- Decorative background elements -->
+<div class="absolute -right-6 -top-6 w-32 h-32 bg-primary/10 rounded-full blur-2xl"></div>
+<div class="flex items-center justify-between relative z-10">
+<div>
+<p class="text-palette-med-green text-sm font-bold uppercase tracking-wider">Loyalty Program</p>
+<h3 class="text-palette-dark-green text-xl font-extrabold mt-1">Free Aromatherapy</h3>
+</div>
+<div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined" style="font-size: 28px; font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+</div>
+<div class="flex flex-col gap-2 mt-2 relative z-10">
+<div class="flex justify-between items-end">
+<span class="text-4xl font-black text-palette-dark-green">350</span>
+<span class="text-sm font-medium text-palette-med-green mb-2">/ 450 points</span>
+</div>
+<!-- ProgressBar -->
+<div class="rounded-full bg-white/50 h-3 w-full overflow-hidden">
+<div class="h-full rounded-full bg-primary" style="width: 78%;"></div>
+</div>
+<p class="text-palette-med-green text-xs font-medium mt-1">Earn 100 more points for your reward!</p>
+</div>
+</div>
+</div>
+<!-- Amenities Section -->
+<div class="px-4 py-2">
+<h3 class="text-palette-dark-green dark:text-white text-lg font-bold mb-3">Amenities</h3>
+<div class="grid grid-cols-4 gap-3">
+<div class="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-[#2a241d] border border-[#f0f0f0] dark:border-[#3a352f]">
+<span class="material-symbols-outlined text-palette-med-green dark:text-primary">wifi</span>
+<span class="text-xs font-medium text-[#171512] dark:text-[#d1d5db]">Wi-Fi</span>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-[#2a241d] border border-[#f0f0f0] dark:border-[#3a352f]">
+<span class="material-symbols-outlined text-palette-med-green dark:text-primary">local_parking</span>
+<span class="text-xs font-medium text-[#171512] dark:text-[#d1d5db]">Parking</span>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-[#2a241d] border border-[#f0f0f0] dark:border-[#3a352f]">
+<span class="material-symbols-outlined text-palette-med-green dark:text-primary">ac_unit</span>
+<span class="text-xs font-medium text-[#171512] dark:text-[#d1d5db]">A/C</span>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 rounded-lg bg-white dark:bg-[#2a241d] border border-[#f0f0f0] dark:border-[#3a352f]">
+<span class="material-symbols-outlined text-palette-med-green dark:text-primary">coffee</span>
+<span class="text-xs font-medium text-[#171512] dark:text-[#d1d5db]">Coffee</span>
+</div>
+</div>
+</div>
+<!-- About Section -->
+<div class="px-4 py-4">
+<h3 class="text-palette-dark-green dark:text-white text-lg font-bold mb-2">About Us</h3>
+<p class="text-[#5c554e] dark:text-[#9ca3af] text-sm leading-relaxed">
+                Verdant Valley Spa is a sanctuary designed to help you reconnect with nature and yourself. We specialize in organic treatments using locally sourced ingredients. Our space is a calm refuge from the city noise, featuring sustainable practices and a dedicated team of wellness experts.
+            </p>
+</div>
+<!-- Team Section -->
+<div class="px-4 py-2">
+<div class="flex justify-between items-center mb-3">
+<h3 class="text-palette-dark-green dark:text-white text-lg font-bold">Our Specialists</h3>
+<a class="text-primary text-sm font-semibold" href="#">See all</a>
+</div>
+<div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+<!-- Member 1 -->
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-16 h-16 rounded-full bg-cover bg-center border-2 border-primary" data-alt="Professional headshot of a smiling woman with glasses" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDo4KCRnh49QJIojLZMnCylz3r164TLj0CZ0ce7pmwqGSfkCWsl4mU_w24UP4m97amCdvynfOiJ6r0ITBj2mnusSY_y2m4YsJMIJSSVY1PZB1VkZdjSnDVCOZj_baxFQIHbjYAiKiXER6AKIMWr2tr_biSm1jJ7zhHLnErz_gSJNRhpt7_0ZaR6Mka_ebPLlzT1A947Qk8tXGbjL5QmluBGKQLXUhhkLTBLdmV9a4Q0bZ_shPnfHwH-tiWmQeMybE3bqY52DqA8l8M');"></div>
+<div class="text-center">
+<p class="text-sm font-bold text-[#171512] dark:text-white">Sarah J.</p>
+<p class="text-xs text-[#857666] dark:text-[#9ca3af]">Massage</p>
+</div>
+</div>
+<!-- Member 2 -->
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-16 h-16 rounded-full bg-cover bg-center border-2 border-transparent" data-alt="Professional headshot of a man in a suit smiling" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAcDbueFvHxXtoP9U144Kt7bcug0VMwlyPJZLLsBIuGMbwqGUWtw7n1O3D_aHNd2klFdcONcEy2P1UU2ANzSH82d6X_mbhdVgCFHXz8VPh5y0rxoH4NJ1zy1It8t388O18KFnurkErpm_7E9cYjruinZPSuoNFpz1P_RVHU_WG3UFL0jn7sCWN-AHHZeM-QX1TPQJ__c-AhzhtUj9DqjWkTCkCn-wpAXCpUqAb0raiyfUR24dbk4tJjAh-f6AbzxFCU2bTNayAaghY');"></div>
+<div class="text-center">
+<p class="text-sm font-bold text-[#171512] dark:text-white">Mike R.</p>
+<p class="text-xs text-[#857666] dark:text-[#9ca3af]">Physio</p>
+</div>
+</div>
+<!-- Member 3 -->
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-16 h-16 rounded-full bg-cover bg-center border-2 border-transparent" data-alt="Professional headshot of a woman with a warm smile" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCdTICwxrBrTxAFUNnG3yNw8WpY-hmPPucQZeHPtoNPeCV8PzZTgN3DPAvoA24ZfVCuuEZvKrwWrhES9w0N5VSuXYpc_X-9K5OwaVaxEpR0bxoAtz9TJzy_4iMJ4NkhmYY79Zw65Yw8Dsl3ONa6W9dz7IgqLb3wkwwpnLcq7K8KBnWxqC70OplcHXccCTUj2vJ1WJbalgTkuonlckeq1fqjOL9SF-OqjrZEa94mzy042E9ktFwZpulNZuQt-zzDvE391tNYXz5YDHA');"></div>
+<div class="text-center">
+<p class="text-sm font-bold text-[#171512] dark:text-white">Elena D.</p>
+<p class="text-xs text-[#857666] dark:text-[#9ca3af]">Facials</p>
+</div>
+</div>
+<!-- Member 4 -->
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-16 h-16 rounded-full bg-cover bg-center border-2 border-transparent" data-alt="Professional headshot of a woman looking confident" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA8Co6rcP8XDc7M7sIJRZpcDrM72R631OmhOLeEJXJkyugJD5rTsuTrF5AXKmsG0BuC4VhirxRQspQN-SGgIRlRR4Kc2vgj7NEW-kNCkkuo8NjFMknuRa0jMjoQqxO2bmjr-f1Wlh52nAeS56c67usOlgVajPm13ENdTTlxNAv95BAzQhklswJaMiHZAu7-HRVJtW3S6qisUZ6QBBt6fX_t8U4B7WWYRVoqPYKAkqZ3c1Y_7QJq3ZZX1a-6OwyOB8FRQ-f5-11QUNo');"></div>
+<div class="text-center">
+<p class="text-sm font-bold text-[#171512] dark:text-white">Anna K.</p>
+<p class="text-xs text-[#857666] dark:text-[#9ca3af]">Nails</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Gallery Section -->
+<div class="flex flex-col">
+<h2 class="text-palette-dark-green dark:text-white tracking-light text-[22px] font-bold leading-tight px-4 text-left pb-2 pt-2">Gallery</h2>
+<div class="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-3 p-4 pt-2">
+<div class="flex flex-col gap-3">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg" data-alt="Close up of essential oils and spa stones" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCw4OOTamZws9PuOWwFpABTvZYUfRhiivsj0G9DxfKKvU8FjZyS7QPRp22U2f0kaejbHnNa24hL5YIsPhnOvUGdsCzrkcPeVLtGvCP1Dnn2hz4nt96XS5bX8zPfzVAUk4vbBgw7U1NJ_I2wUYCQ6cfvmd-zvHJnWw3RaImfmU1kJSYdv3jmF3SujozUO7ZRnHbD7gj7WT3heYK3soeZNnAHnQqmr-kRxlAvI02_5FLnrlrgiouO2dxkg92vCIdYW1_vnGHPiweYEc0");'></div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg" data-alt="Interior view of a modern massage room" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCXmygmtlDe_iZlJ0qBTGJzElR1T0KBrbH6boiqJwm8WnaB-lR2t9O8GvXK53nEuzjsjyRLjJKxGyJM4EVzoiJbYeOMIw6nZqhl3lEDTNuZH3XE-B8ShUEIrx9jigptJ9NZNrx66qjuNny-rzsT3kqH_nmD-06cYbU5Doc_8qA5fsnTI24Zknkciosyr-9HWBcG2SUQercb8wTYXt72HsDpxNfxJdxt_GwOQZmCf6mlEOyjyj1JFl7Ldhh7NbixZlUUaCHYS7KC16I");'></div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg" data-alt="Relaxing waiting area with plants and sunlight" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuASWIS2x-QwKNCgtbv9qDcOhh6brxYme5gbgTwC-XfX0CHoc9Hhb6Vrr-2fCXi398DfiY9LaiDhcN2Q9y5eK_BRC2nGuttMERXT_Kz_BUopC3Z6etkyMW0KGFeQpdP46oSKE-I2ckKmoSbDi9N6RUHw4lnVJvFbK15_LLk5tnLebXEZi0D2kOJNXAqhntmvti-bMzadDBBJztEI2AX2g34xlGynhp1todjC_vW_Uxl9XiwEd3jIbELmJLBEp_erphWxYns45QmppaM");'></div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="w-full bg-center bg-no-repeat aspect-square bg-cover rounded-lg" data-alt="Aesthetic shot of towels and flowers" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCRY6EhD9vSbWXA-XkHhdysqnuy30G8Qzb_EQL9zMF4fOW5ReAVFvZZ_6dGzGYlE_2AWF-z29Iy8WaIVZhd-YOxUfZfWN3pYCFQWbNYSJbxkkn3-UlSK2MCwkim7hGb9P_89WV_8_vfRsAGdKTnuaqGwjnJPlvfokUQRdryQ1JY-aZ-A9kGwaxRw8e5WCMl_xVFSd7Hj021-xRdXmik4OEn6fTg74iSNHlQ3l32LoBRiBwRvoxtTAW-FJVhr8wug9Hrmk5jQ8E0_us");'></div>
+</div>
+</div>
+</div>
+<!-- Spacer for Bottom Nav -->
+<div class="h-5 bg-background-light dark:bg-background-dark"></div>
+<!-- Bottom Navigation -->
+<div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#1a1510] border-t border-[#e4e1dc] dark:border-[#3a352f] flex justify-around items-center h-[72px] px-2 z-50">
+<button class="flex flex-col items-center justify-center gap-1 w-full h-full text-[#857666] dark:text-[#9ca3af]">
+<span class="material-symbols-outlined text-2xl">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 w-full h-full text-palette-dark-green dark:text-primary">
+<span class="material-symbols-outlined text-2xl font-bold">search</span>
+<span class="text-[10px] font-bold">Search</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 w-full h-full text-[#857666] dark:text-[#9ca3af]">
+<span class="material-symbols-outlined text-2xl">calendar_month</span>
+<span class="text-[10px] font-medium">Bookings</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 w-full h-full text-[#857666] dark:text-[#9ca3af]">
+<span class="material-symbols-outlined text-2xl">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</button>
+</div>
+</div>
+</body></html>

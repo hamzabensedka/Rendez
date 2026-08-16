@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User Profile &amp; Settings</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#bb6b25",
+          "background-light": "#f8f7f6",
+          "background-dark": "#201912",
+        },
+        fontFamily: {
+          "display": ["Inter"]
+        },
+        borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+      },
+    },
+  }
+</script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark">
+<!-- 
+    Main Container 
+    Applying user requested palette: #fefae0 background, #283618 text.
+    Dark mode falls back to theme config "background-dark".
+  -->
+<div class="relative flex h-full min-h-screen w-full flex-col bg-[#fefae0] dark:bg-background-dark group/design-root overflow-x-hidden font-display text-[#283618] dark:text-white pb-24">
+<!-- Top App Bar -->
+<div class="flex items-center p-4 pb-2 justify-between sticky top-0 z-10 bg-[#fefae0] dark:bg-background-dark/95 backdrop-blur-sm">
+<!-- Back Icon (Contextual, usually hidden on root tab, but good for settings depth) -->
+<button class="flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-[#283618]/5 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Profile</h2>
+<!-- Settings/Gear Icon -->
+<button class="flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-[#283618]/5 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<!-- Profile Header -->
+<div class="flex flex-col items-center justify-center p-4 pt-4">
+<div class="relative group cursor-pointer">
+<!-- User Photo -->
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-32 w-32 border-4 border-white shadow-sm dark:border-[#283618]" data-alt="Portrait of a smiling woman" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB1gUB7MzWDkcqp0DFk4PhL5HV_gLpz3M2JHNRIev-SO6p7xTdNaZpVrusEdsqncItZrm0e7QvM3kn3WAlYcgjeUH7-7qyLio0EUM4XiRzreOFuUzxOjlmbt7Upng0eB3yKLzxU7-X1SoQhs1QGqornnJA4Vlj1iV6EZcTMBhJm8MRE8YQEj_EKbxxO8-WWuMKWg33fdFri6sfm5_t490ryBosS0FLxa4ItnY-f5CQ8qH6Ms_yT6TlNTHU-ylPczMIPggYewPTs0Cg");'></div>
+<!-- Edit Icon Badge -->
+<button class="absolute bottom-1 right-1 bg-[#bc6c25] hover:bg-[#a05a1f] text-white p-2.5 rounded-full border-[3px] border-[#fefae0] dark:border-background-dark flex items-center justify-center shadow-md transition-transform active:scale-95">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+</div>
+<div class="mt-5 flex flex-col items-center gap-1">
+<h1 class="text-2xl font-bold leading-tight text-center text-[#283618] dark:text-white">Jane Doe</h1>
+<p class="text-[#283618]/70 dark:text-white/60 text-sm font-medium">jane.doe@example.com</p>
+</div>
+<!-- Membership Badge -->
+<div class="mt-3">
+<span class="inline-flex items-center gap-1 bg-[#283618]/5 dark:bg-white/10 px-3 py-1 rounded-full text-xs font-semibold text-[#283618] dark:text-white/80 uppercase tracking-wide">
+<span class="material-symbols-outlined text-sm">verified</span>
+                Member since 2023
+             </span>
+</div>
+</div>
+<div class="h-4"></div>
+<!-- Settings List Items -->
+<!-- Using cards for a modern clean look on the cream background -->
+<div class="flex flex-col gap-3 px-4">
+<!-- Payment Methods -->
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-white/60 dark:bg-white/5 border border-white/40 dark:border-white/5 shadow-sm cursor-pointer hover:bg-white dark:hover:bg-white/10 transition-all active:scale-[0.99]">
+<div class="flex items-center justify-center rounded-xl bg-[#bc6c25]/10 shrink-0 size-12 text-[#bc6c25]">
+<span class="material-symbols-outlined">credit_card</span>
+</div>
+<div class="flex-1 flex flex-col justify-center">
+<p class="text-base font-bold leading-normal text-[#283618] dark:text-white">Payment Methods</p>
+<p class="text-xs text-[#283618]/50 dark:text-white/40">Visa ending in 4242</p>
+</div>
+<span class="material-symbols-outlined text-[#283618]/40 dark:text-white/40">chevron_right</span>
+</div>
+<!-- Loyalty Rewards -->
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-white/60 dark:bg-white/5 border border-white/40 dark:border-white/5 shadow-sm cursor-pointer hover:bg-white dark:hover:bg-white/10 transition-all active:scale-[0.99]">
+<div class="flex items-center justify-center rounded-xl bg-[#bc6c25]/10 shrink-0 size-12 text-[#bc6c25]">
+<span class="material-symbols-outlined">loyalty</span>
+</div>
+<div class="flex-1 flex flex-col justify-center">
+<p class="text-base font-bold leading-normal text-[#283618] dark:text-white">Loyalty Rewards</p>
+<p class="text-xs text-[#283618]/50 dark:text-white/40">1,250 Points available</p>
+</div>
+<span class="material-symbols-outlined text-[#283618]/40 dark:text-white/40">chevron_right</span>
+</div>
+<!-- Communication Preferences -->
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-white/60 dark:bg-white/5 border border-white/40 dark:border-white/5 shadow-sm cursor-pointer hover:bg-white dark:hover:bg-white/10 transition-all active:scale-[0.99]">
+<div class="flex items-center justify-center rounded-xl bg-[#bc6c25]/10 shrink-0 size-12 text-[#bc6c25]">
+<span class="material-symbols-outlined">notifications</span>
+</div>
+<div class="flex-1 flex flex-col justify-center">
+<p class="text-base font-bold leading-normal text-[#283618] dark:text-white">Communication Preferences</p>
+<p class="text-xs text-[#283618]/50 dark:text-white/40">Email &amp; SMS</p>
+</div>
+<span class="material-symbols-outlined text-[#283618]/40 dark:text-white/40">chevron_right</span>
+</div>
+<!-- Security/2FA -->
+<div class="flex items-center gap-4 p-4 rounded-2xl bg-white/60 dark:bg-white/5 border border-white/40 dark:border-white/5 shadow-sm cursor-pointer hover:bg-white dark:hover:bg-white/10 transition-all active:scale-[0.99]">
+<div class="flex items-center justify-center rounded-xl bg-[#bc6c25]/10 shrink-0 size-12 text-[#bc6c25]">
+<span class="material-symbols-outlined">security</span>
+</div>
+<div class="flex-1 flex flex-col justify-center">
+<p class="text-base font-bold leading-normal text-[#283618] dark:text-white">Security &amp; 2FA</p>
+<p class="text-xs text-[#283618]/50 dark:text-white/40">FaceID Enabled</p>
+</div>
+<span class="material-symbols-outlined text-[#283618]/40 dark:text-white/40">chevron_right</span>
+</div>
+</div>
+<!-- Spacer to push Logout to bottom if list is short -->
+<div class="flex-1 min-h-[40px]"></div>
+<!-- Logout Button -->
+<div class="p-4 px-4">
+<button class="w-full h-14 flex items-center justify-center gap-2 rounded-2xl bg-[#bc6c25] text-[#fefae0] font-bold text-base shadow-lg shadow-orange-900/10 hover:bg-[#a05a1f] active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined">logout</span>
+            Log Out
+        </button>
+<p class="text-center text-xs text-[#283618]/40 dark:text-white/30 mt-4">App Version 2.4.0</p>
+</div>
+<!-- Bottom Navigation -->
+<div class="fixed bottom-0 left-0 w-full bg-[#fefae0] dark:bg-background-dark border-t border-[#283618]/5 dark:border-white/5 shadow-[0_-5px_20px_-5px_rgba(0,0,0,0.05)] pb-6 pt-2 z-50">
+<div class="flex items-center justify-around h-16 max-w-md mx-auto">
+<!-- Home -->
+<button class="flex flex-col items-center justify-center w-full h-full text-[#283618]/40 dark:text-white/40 hover:text-[#283618]/80 dark:hover:text-white/80 transition-colors group">
+<span class="material-symbols-outlined mb-1 group-hover:-translate-y-0.5 transition-transform">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</button>
+<!-- Appointments -->
+<button class="flex flex-col items-center justify-center w-full h-full text-[#283618]/40 dark:text-white/40 hover:text-[#283618]/80 dark:hover:text-white/80 transition-colors group">
+<span class="material-symbols-outlined mb-1 group-hover:-translate-y-0.5 transition-transform">calendar_month</span>
+<span class="text-[10px] font-medium">Bookings</span>
+</button>
+<!-- Favorites -->
+<button class="flex flex-col items-center justify-center w-full h-full text-[#283618]/40 dark:text-white/40 hover:text-[#283618]/80 dark:hover:text-white/80 transition-colors group">
+<span class="material-symbols-outlined mb-1 group-hover:-translate-y-0.5 transition-transform">favorite</span>
+<span class="text-[10px] font-medium">Saved</span>
+</button>
+<!-- Profile (Active) -->
+<button class="flex flex-col items-center justify-center w-full h-full text-[#bc6c25]">
+<span class="material-symbols-outlined mb-1 fill-current font-variation-settings-fill">person</span>
+<span class="text-[10px] font-bold">Profile</span>
+</button>
+</div>
+</div>
+</div>
+<style>
+    /* Utility for filled icons in Material Symbols */
+    .font-variation-settings-fill {
+      font-variation-settings: 'FILL' 1;
+    }
+  </style>
+</body></html>

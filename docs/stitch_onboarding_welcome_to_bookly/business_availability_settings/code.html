@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Business Availability Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#606c37",
+                        "background-light": "#fefae0", /* Updated to match description preference, though config said #f7f7f6, user specifically asked for #fefae0 base. I will use a blend or stick to theme config for consistency if strict, but user request usually overrides. Let's use user request for main bg but keep tailwind config structure for others. */
+                        "background-dark": "#1b1c16",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2c2d26",
+                        "text-main-light": "#151613",
+                        "text-main-dark": "#e2e3de",
+                        "text-sec-light": "#7a7e6d",
+                        "text-sec-dark": "#aeb2a0",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto shadow-xl bg-surface-light dark:bg-surface-dark">
+<!-- Top App Bar -->
+<div class="flex items-center bg-surface-light dark:bg-surface-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-gray-100 dark:border-gray-800">
+<div class="text-text-main-light dark:text-text-main-dark flex size-12 shrink-0 items-center justify-center cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="text-text-main-light dark:text-text-main-dark text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center font-display">Availability</h2>
+<div class="flex w-12 items-center justify-end cursor-pointer">
+<p class="text-primary text-base font-bold leading-normal tracking-[0.015em] shrink-0 font-display hover:opacity-80">Save</p>
+</div>
+</div>
+<!-- Main Content -->
+<div class="flex-1 overflow-y-auto">
+<!-- Section: Weekly Hours -->
+<div class="flex flex-col">
+<h3 class="text-text-main-light dark:text-text-main-dark text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-6 font-display">Weekly Hours</h3>
+<div class="p-4 flex flex-col gap-3">
+<!-- Monday -->
+<div class="flex flex-col bg-background-light dark:bg-background-dark/50 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
+<div class="flex justify-between items-center mb-3">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center bg-primary text-white w-8 h-8 rounded-full text-xs font-bold">M</div>
+<p class="text-text-main-light dark:text-text-main-dark text-base font-semibold font-display">Monday</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="grid grid-cols-2 gap-4 items-center">
+<div class="flex flex-col gap-1">
+<label class="text-text-sec-light dark:text-text-sec-dark text-xs font-medium uppercase">Start</label>
+<div class="relative">
+<select class="w-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-main-light dark:text-text-main-dark text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 appearance-none font-display">
+<option>9:00 AM</option>
+<option>9:30 AM</option>
+<option>10:00 AM</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-text-sec-light pointer-events-none text-lg">expand_more</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-text-sec-light dark:text-text-sec-dark text-xs font-medium uppercase">End</label>
+<div class="relative">
+<select class="w-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-main-light dark:text-text-main-dark text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 appearance-none font-display">
+<option>5:00 PM</option>
+<option>5:30 PM</option>
+<option>6:00 PM</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-text-sec-light pointer-events-none text-lg">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Add Break Button (Secondary style) -->
+<button class="mt-3 flex w-full cursor-pointer items-center justify-center rounded-lg h-9 px-4 bg-primary/10 text-primary hover:bg-primary/20 transition-colors gap-2 text-sm font-bold leading-normal tracking-[0.015em] font-display">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span class="truncate">Add Break</span>
+</button>
+</div>
+<!-- Tuesday -->
+<div class="flex flex-col bg-background-light dark:bg-background-dark/50 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
+<div class="flex justify-between items-center mb-3">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center bg-primary text-white w-8 h-8 rounded-full text-xs font-bold">T</div>
+<p class="text-text-main-light dark:text-text-main-dark text-base font-semibold font-display">Tuesday</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="grid grid-cols-2 gap-4 items-center">
+<div class="flex flex-col gap-1">
+<label class="text-text-sec-light dark:text-text-sec-dark text-xs font-medium uppercase">Start</label>
+<div class="relative">
+<select class="w-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-main-light dark:text-text-main-dark text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 appearance-none font-display">
+<option>9:00 AM</option>
+<option>9:30 AM</option>
+<option>10:00 AM</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-text-sec-light pointer-events-none text-lg">expand_more</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="text-text-sec-light dark:text-text-sec-dark text-xs font-medium uppercase">End</label>
+<div class="relative">
+<select class="w-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-main-light dark:text-text-main-dark text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 appearance-none font-display">
+<option>5:00 PM</option>
+<option>5:30 PM</option>
+<option>6:00 PM</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-text-sec-light pointer-events-none text-lg">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Wednesday (Example of Closed state) -->
+<div class="flex flex-col bg-background-light/50 dark:bg-background-dark/30 rounded-xl p-4 border border-gray-100 dark:border-gray-800 opacity-75">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-300 w-8 h-8 rounded-full text-xs font-bold">W</div>
+<p class="text-text-main-light dark:text-text-main-dark text-base font-semibold font-display">Wednesday</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<p class="text-text-sec-light dark:text-text-sec-dark text-sm mt-2 ml-11">Closed</p>
+</div>
+<!-- Thursday to Sunday Summary -->
+<div class="bg-background-light dark:bg-background-dark/50 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+<div class="flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center bg-primary text-white w-8 h-8 rounded-full text-xs font-bold">T</div>
+<div>
+<p class="text-text-main-light dark:text-text-main-dark text-sm font-semibold font-display">Thursday</p>
+<p class="text-text-sec-light dark:text-text-sec-dark text-xs font-display">9:00 AM - 5:00 PM</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-text-sec-light">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center bg-primary text-white w-8 h-8 rounded-full text-xs font-bold">F</div>
+<div>
+<p class="text-text-main-light dark:text-text-main-dark text-sm font-semibold font-display">Friday</p>
+<p class="text-text-sec-light dark:text-text-sec-dark text-xs font-display">9:00 AM - 5:00 PM</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-text-sec-light">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors bg-gray-50 dark:bg-gray-800/50">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-300 w-8 h-8 rounded-full text-xs font-bold">S</div>
+<div>
+<p class="text-text-main-light dark:text-text-main-dark text-sm font-semibold font-display">Saturday</p>
+<p class="text-text-sec-light dark:text-text-sec-dark text-xs font-display">Closed</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-text-sec-light">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-4 hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer transition-colors bg-gray-50 dark:bg-gray-800/50">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-300 w-8 h-8 rounded-full text-xs font-bold">S</div>
+<div>
+<p class="text-text-main-light dark:text-text-main-dark text-sm font-semibold font-display">Sunday</p>
+<p class="text-text-sec-light dark:text-text-sec-dark text-xs font-display">Closed</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-text-sec-light">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+<div class="h-1 bg-gray-100 dark:bg-gray-800 mx-4 rounded-full"></div>
+<!-- Section: Holidays & Exceptions -->
+<div class="flex flex-col pb-8">
+<div class="flex justify-between items-center pr-4">
+<h3 class="text-text-main-light dark:text-text-main-dark text-lg font-bold leading-tight tracking-[-0.015em] px-4 pb-2 pt-6 font-display">Holidays &amp; Exceptions</h3>
+<button class="text-primary text-sm font-bold pt-4 hover:underline">Add Date</button>
+</div>
+<div class="p-4 flex flex-col gap-3">
+<!-- Holiday Item -->
+<div class="flex items-center justify-between bg-background-light dark:bg-background-dark/50 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
+<div class="flex gap-4 items-center">
+<div class="flex flex-col items-center justify-center bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 w-12 h-12 rounded-lg">
+<span class="text-[10px] font-bold uppercase">Dec</span>
+<span class="text-lg font-bold leading-none">25</span>
+</div>
+<div class="flex flex-col">
+<p class="text-text-main-light dark:text-text-main-dark text-base font-semibold font-display">Christmas Day</p>
+<p class="text-text-sec-light dark:text-text-sec-dark text-sm font-display">Closed all day</p>
+</div>
+</div>
+<button class="text-text-sec-light hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+<!-- Exception Item -->
+<div class="flex items-center justify-between bg-background-light dark:bg-background-dark/50 rounded-xl p-4 border border-gray-100 dark:border-gray-800">
+<div class="flex gap-4 items-center">
+<div class="flex flex-col items-center justify-center bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 w-12 h-12 rounded-lg">
+<span class="text-[10px] font-bold uppercase">Jan</span>
+<span class="text-lg font-bold leading-none">01</span>
+</div>
+<div class="flex flex-col">
+<p class="text-text-main-light dark:text-text-main-dark text-base font-semibold font-display">New Year's Day</p>
+<p class="text-text-sec-light dark:text-text-sec-dark text-sm font-display">10:00 AM - 2:00 PM</p>
+</div>
+</div>
+<button class="text-text-sec-light hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined">delete</span>
+</button>
+</div>
+</div>
+<!-- Add Exception Button -->
+<div class="px-4">
+<button class="flex w-full cursor-pointer items-center justify-center rounded-lg h-12 px-4 bg-primary text-white hover:bg-primary/90 transition-all shadow-sm gap-2 text-base font-bold leading-normal tracking-[0.015em] font-display">
+<span class="material-symbols-outlined">calendar_add_on</span>
+<span class="truncate">Add Special Hours</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</body></html>

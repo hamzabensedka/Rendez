@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>My Bookings List</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#606c38", 
+                        "background-light": "#fefae0", 
+                        "background-dark": "#101f22",
+                        "custom-yellow": "#dda15e",
+                        "custom-green-dark": "#283618",
+                        "custom-green-light": "#606c38",
+                        "nav-active": "#bc6c25",
+                        "nav-inactive": "#283618"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>.no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-white transition-colors duration-200">
+<div class="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto bg-background-light dark:bg-background-dark shadow-xl overflow-hidden">
+<header class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-10">
+<button class="text-slate-900 dark:text-white flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">My Bookings</h2>
+</header>
+<div class="sticky top-[60px] z-10 bg-background-light dark:bg-background-dark pt-2 pb-1">
+<div class="flex border-b border-[#bc6c25]/20 dark:border-slate-800 px-4 justify-between">
+<a class="group flex flex-col items-center justify-center border-b-[3px] border-custom-green-light pb-3 flex-1 cursor-pointer" href="#">
+<p class="text-slate-900 dark:text-white text-sm font-bold leading-normal tracking-[0.015em]">Upcoming</p>
+</a>
+<a class="group flex flex-col items-center justify-center border-b-[3px] border-transparent pb-3 flex-1 cursor-pointer hover:border-custom-green-light/50 dark:hover:border-slate-700 transition-colors" href="#">
+<p class="text-slate-500 dark:text-slate-400 group-hover:text-custom-green-dark dark:group-hover:text-slate-300 text-sm font-medium leading-normal tracking-[0.015em] transition-colors">Past</p>
+</a>
+</div>
+</div>
+<div class="flex flex-col gap-4 p-4 pb-24 overflow-y-auto no-scrollbar">
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-[#1a2c30] p-4 shadow-sm border border-[#bc6c25]/10 dark:border-slate-800 transition-all hover:shadow-md">
+<div class="flex flex-[2_2_0px] flex-col justify-between gap-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="px-2 py-0.5 rounded bg-custom-green-light/10 text-custom-green-light text-[10px] font-bold uppercase tracking-wider">Tomorrow</span>
+</div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight">Glossy Salon</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Haircut &amp; Styling</p>
+<p class="text-slate-400 dark:text-slate-500 text-xs mt-1">10:00 AM • 1 hr</p>
+</div>
+<button class="flex items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-custom-yellow hover:bg-[#c9904d] active:scale-95 text-white gap-2 text-sm font-medium leading-normal w-fit transition-all shadow-sm">
+<span class="material-symbols-outlined text-[18px]">calendar_month</span>
+<span class="truncate">Reschedule</span>
+</button>
+</div>
+<div class="w-24 sm:w-32 bg-center bg-no-repeat bg-cover rounded-lg shrink-0" data-alt="Modern bright salon interior with mirrors and chairs" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDdgNFJ7nuaH6Yx50IjtO8fNcBMeK0XvAEQ_vu5TQNxWIPqfg2LMOBWLyGZbjt96Y4NVKj8oLMyRmTl1v8eHFkUqLJHre6u4UoK3deuWZOmnk11p6tovIQFI-dCX8cLYlDKrx0Cjk1VfZxUq7owR-_OQg94qjJgT_LL9lWjbi9-HOdSZgDCqrg6mWF8dgZTcNYHnPlV_2nBzNiP5Pb4AHhqRb8j0_hBg9BFL7BAqM0n6h6i2R5VIDJywn5eDBE6kt8JAFDw9iDzIXA");'>
+</div>
+</div>
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-[#1a2c30] p-4 shadow-sm border border-[#bc6c25]/10 dark:border-slate-800 transition-all hover:shadow-md">
+<div class="flex flex-[2_2_0px] flex-col justify-between gap-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="px-2 py-0.5 rounded bg-custom-green-light text-white text-[10px] font-bold uppercase tracking-wider">Confirmed</span>
+</div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight">Dr. Smith Dental</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Routine Checkup</p>
+<p class="text-slate-400 dark:text-slate-500 text-xs mt-1">2:30 PM • 30 mins</p>
+</div>
+<button class="flex items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-transparent border border-transparent hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 text-custom-green-dark dark:text-slate-200 gap-2 text-sm font-medium leading-normal w-fit transition-all group">
+<span class="material-symbols-outlined text-[18px]">cancel</span>
+<span class="truncate">Cancel</span>
+</button>
+</div>
+<div class="w-24 sm:w-32 bg-center bg-no-repeat bg-cover rounded-lg shrink-0" data-alt="Clean and modern dental office equipment" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAA8qSUevHJ4EPtaM2vOXppY6Sud4bhzIJuTMuKxwacNLvbGMtub88sAAcrzt02Bc6deVs-Zcd-RpTYqS3t30g25CXlTJP93BM_WrXXEN432vcrY2AyLuWYowOQQ0iPsXpaKgAAMuoyNreFxvbc3a2J8kH6NsUMHkOWainO3301b1-UN7jhHvgc3Pdm3rVnHA6vxjjBSM2yKs7GxvMaphLeYvhMT0tCp6zFtdMV0E1NpA2QH-ux4_4yRivfUpkGSrilFR9TFhuCGwM");'>
+</div>
+</div>
+<div class="flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-[#1a2c30] p-4 shadow-sm border border-[#bc6c25]/10 dark:border-slate-800 transition-all hover:shadow-md">
+<div class="flex flex-[2_2_0px] flex-col justify-between gap-4">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="px-2 py-0.5 rounded bg-custom-green-light text-white text-[10px] font-bold uppercase tracking-wider">Nov 02</span>
+</div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-tight">City Spa</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Full Body Massage</p>
+<p class="text-slate-400 dark:text-slate-500 text-xs mt-1">4:00 PM • 1.5 hrs</p>
+</div>
+<button class="flex items-center justify-center overflow-hidden rounded-lg h-9 px-4 bg-custom-yellow hover:bg-[#c9904d] active:scale-95 text-white gap-2 text-sm font-medium leading-normal w-fit transition-all shadow-sm">
+<span class="material-symbols-outlined text-[18px]">calendar_month</span>
+<span class="truncate">Reschedule</span>
+</button>
+</div>
+<div class="w-24 sm:w-32 bg-center bg-no-repeat bg-cover rounded-lg shrink-0" data-alt="Relaxing spa setting with candles and towels" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCA3Pv8suLpiTFGA1xweEXubtxbzOl5-Mp6rhAKhtrMB2lEP3nWwxO25k0Wu8mDO-Jllx9LnBjEqQnS4Owuayuq269nzoGbU1hErRuhqxhN2EeEWXHd1XdYkIr1z5yLc5JZnKsxuQO1in5qbNZozmbzm6ADjk3Z7ALdUUREN3GQYtEjKtT7Fx_t5Fr7s9PPZq7OzxCr2Ox3z7YaQVnenjJU6F9xTUkjPrWh6xdEoFNU6sbgCT8_M-6OpeBs-NjD7YALHlxg6utTlI0");'>
+</div>
+</div>
+<div class="animate-pulse flex items-stretch justify-between gap-4 rounded-xl bg-white dark:bg-[#1a2c30] p-4 shadow-sm border border-[#bc6c25]/10 dark:border-slate-800">
+<div class="flex flex-[2_2_0px] flex-col justify-between gap-4">
+<div class="flex flex-col gap-2">
+<div class="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+<div class="h-5 w-3/4 bg-slate-200 dark:bg-slate-700 rounded"></div>
+<div class="h-4 w-1/2 bg-slate-200 dark:bg-slate-700 rounded"></div>
+<div class="h-3 w-1/3 bg-slate-200 dark:bg-slate-700 rounded mt-1"></div>
+</div>
+<div class="h-9 w-28 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+</div>
+<div class="w-24 sm:w-32 aspect-square bg-slate-200 dark:bg-slate-700 rounded-lg shrink-0"></div>
+</div>
+</div>
+<div class="fixed bottom-0 left-0 right-0 z-50 bg-background-light dark:bg-[#152326] border-t border-[#bc6c25]/10 dark:border-slate-800 flex justify-around items-center h-[80px] pb-3 max-w-md mx-auto">
+<button class="flex flex-col items-center justify-center gap-1 w-16 text-nav-inactive dark:text-slate-400 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-[28px]">home</span>
+<span class="text-[10px] font-medium">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 w-16 text-nav-inactive dark:text-slate-400 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-[28px]">search</span>
+<span class="text-[10px] font-medium">Search</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 w-16 text-nav-active dark:text-[#bc6c25] hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-[28px] filled font-variation-settings-'FILL'-1">calendar_month</span>
+<span class="text-[10px] font-medium">Bookings</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 w-16 text-nav-inactive dark:text-slate-400 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-[28px]">favorite</span>
+<span class="text-[10px] font-medium">Favorites</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-1 w-16 text-nav-inactive dark:text-slate-400 hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-[28px]">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</button>
+</div>
+</div>
+</body></html>

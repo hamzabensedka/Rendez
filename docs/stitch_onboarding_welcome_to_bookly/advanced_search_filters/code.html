@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Advanced Search Filters</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#606c37",
+                        "background-light": "#f7f7f6",
+                        "background-dark": "#1b1c16",
+                        "brand-bg": "#fefae0", // User requested background
+                        "brand-text": "#283618", // User requested typography
+                        "brand-accent": "#bc6c25", // User requested accent
+                        "brand-button": "#606c38", // User requested button
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gray-800/80 font-display">
+<!-- Screen Wrapper - simulating the bottom sheet overlay context -->
+<div class="relative flex h-screen w-full flex-col justify-end overflow-hidden">
+<!-- Bottom Sheet Container -->
+<div class="relative flex w-full flex-col rounded-t-[32px] bg-brand-bg dark:bg-background-dark shadow-2xl transition-all duration-300 max-h-[90vh]">
+<!-- Handle & Header Area -->
+<div class="flex flex-col items-center pt-3 pb-2 flex-shrink-0">
+<!-- BottomSheetHandle reused/styled -->
+<div class="h-1.5 w-12 rounded-full bg-brand-text/20 dark:bg-white/20 mb-4"></div>
+<div class="flex w-full items-center justify-between px-6 pb-2">
+<h2 class="text-2xl font-bold tracking-tight text-brand-text dark:text-white">Filters</h2>
+<button class="text-sm font-medium text-brand-accent dark:text-primary hover:opacity-80 transition-opacity">Reset</button>
+</div>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto px-6 pt-2 pb-32">
+<!-- Section: Quick Filters (Chips) -->
+<div class="mb-8">
+<p class="mb-4 text-sm font-bold uppercase tracking-wider text-brand-text/60 dark:text-gray-400">Sort &amp; Filter</p>
+<div class="flex flex-wrap gap-3">
+<!-- Chip: Available Today -->
+<button class="group flex items-center gap-2 rounded-full border border-brand-text/10 bg-white dark:bg-white/5 dark:border-white/10 px-4 py-2.5 transition-all hover:border-brand-accent active:scale-95">
+<span class="material-symbols-outlined text-[20px] text-brand-text dark:text-white">calendar_today</span>
+<span class="text-sm font-medium text-brand-text dark:text-white">Available Today</span>
+</button>
+<!-- Chip: Instant Booking (Active State) -->
+<button class="group flex items-center gap-2 rounded-full border border-brand-button bg-brand-button px-4 py-2.5 shadow-md transition-all active:scale-95">
+<span class="material-symbols-outlined text-[20px] text-white">bolt</span>
+<span class="text-sm font-medium text-white">Instant Booking</span>
+</button>
+<!-- Chip: Top Rated -->
+<button class="group flex items-center gap-2 rounded-full border border-brand-text/10 bg-white dark:bg-white/5 dark:border-white/10 px-4 py-2.5 transition-all hover:border-brand-accent active:scale-95">
+<span class="material-symbols-outlined text-[20px] text-brand-text dark:text-white">star</span>
+<span class="text-sm font-medium text-brand-text dark:text-white">Top Rated</span>
+</button>
+</div>
+</div>
+<!-- Section: Price Range -->
+<div class="mb-8">
+<div class="mb-4 flex items-end justify-between">
+<h3 class="text-lg font-bold text-brand-text dark:text-white">Price Range</h3>
+<p class="text-sm font-medium text-brand-text/70 dark:text-gray-400">$20 - $150</p>
+</div>
+<!-- Modified Slider Component -->
+<div class="relative h-12 w-full select-none touch-none">
+<!-- Track Background -->
+<div class="absolute top-1/2 left-0 h-1.5 w-full -translate-y-1/2 rounded-full bg-brand-text/10 dark:bg-white/20"></div>
+<!-- Active Track (Using brand accent #bc6c25) -->
+<div class="absolute top-1/2 left-[10%] right-[30%] h-1.5 -translate-y-1/2 rounded-full bg-brand-accent"></div>
+<!-- Thumb Left -->
+<div class="absolute top-1/2 left-[10%] -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing">
+<div class="flex flex-col items-center gap-2">
+<div class="h-7 w-7 rounded-full border-4 border-white dark:border-gray-800 bg-brand-accent shadow-md transition-transform hover:scale-110"></div>
+<span class="absolute -top-8 text-xs font-bold text-brand-text dark:text-white">$20</span>
+</div>
+</div>
+<!-- Thumb Right -->
+<div class="absolute top-1/2 right-[30%] translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing">
+<div class="flex flex-col items-center gap-2">
+<div class="h-7 w-7 rounded-full border-4 border-white dark:border-gray-800 bg-brand-accent shadow-md transition-transform hover:scale-110"></div>
+<span class="absolute -top-8 text-xs font-bold text-brand-text dark:text-white">$150</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section: Distance -->
+<div class="mb-6">
+<div class="mb-4 flex items-end justify-between">
+<h3 class="text-lg font-bold text-brand-text dark:text-white">Distance</h3>
+<p class="text-sm font-medium text-brand-text/70 dark:text-gray-400">Within 15 km</p>
+</div>
+<!-- Modified Slider Component for Single Value -->
+<div class="relative h-12 w-full select-none touch-none">
+<!-- Track Background -->
+<div class="absolute top-1/2 left-0 h-1.5 w-full -translate-y-1/2 rounded-full bg-brand-text/10 dark:bg-white/20"></div>
+<!-- Active Track (from 0 to 40%) -->
+<div class="absolute top-1/2 left-0 w-[40%] h-1.5 -translate-y-1/2 rounded-full bg-brand-accent"></div>
+<!-- Thumb -->
+<div class="absolute top-1/2 left-[40%] -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing">
+<div class="flex flex-col items-center gap-2">
+<div class="h-7 w-7 rounded-full border-4 border-white dark:border-gray-800 bg-brand-accent shadow-md transition-transform hover:scale-110"></div>
+<span class="absolute -top-8 whitespace-nowrap text-xs font-bold text-brand-text dark:text-white">15 km</span>
+</div>
+</div>
+</div>
+<!-- Map Preview Placeholder -->
+<div class="mt-4 h-32 w-full overflow-hidden rounded-xl border border-brand-text/5 dark:border-white/10 relative">
+<div class="absolute inset-0 bg-gradient-to-br from-brand-text/5 to-brand-text/10 dark:from-white/5 dark:to-white/10"></div>
+<!-- Map background pattern simulation -->
+<div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#283618 1px, transparent 1px); background-size: 10px 10px;"></div>
+<div class="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 transform flex-col items-center">
+<div class="flex h-12 w-12 items-center justify-center rounded-full bg-brand-accent/20 backdrop-blur-sm">
+<div class="h-4 w-4 rounded-full bg-brand-accent ring-4 ring-white dark:ring-gray-800"></div>
+</div>
+</div>
+<div class="absolute bottom-2 right-2 rounded bg-white/80 dark:bg-black/60 px-2 py-1 text-[10px] font-medium text-brand-text dark:text-white backdrop-blur-sm">
+                            New York Area
+                        </div>
+<img class="absolute inset-0 h-full w-full object-cover opacity-0" data-alt="Map showing a radius circle around a central location in a city grid" data-location="New York" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmf1p4_PePMmFxkJgBiFESGt2vg1pYsTsa3uTgQpH0MUS7QaOdVSEKyejrNx5oRCWOwP6NUWtiTLfmmwkVtIqlVTmj2MlvltZPpIe92559lzUri2K13AD6qCOWhkzh-cUvd147r4XhY9fiAvD9ymkqhcUcHKLzmQFN1nXJQv-Lb_Y2k7Y_evKWaGpQmNzT6fPraVrE4fRhB2bwOL1_YgtuNpKKowLz51OUcM3RdPhON2NRCZVPvy9VDipDbMmHzGjE9sjRbcHMpeI"/>
+</div>
+</div>
+</div>
+<!-- Footer Action -->
+<div class="absolute bottom-0 left-0 w-full bg-brand-bg/95 dark:bg-background-dark/95 px-6 pb-8 pt-4 backdrop-blur-sm border-t border-brand-text/5 dark:border-white/5">
+<button class="flex w-full items-center justify-center rounded-xl bg-brand-button hover:bg-[#4f592d] py-4 text-center font-bold text-white shadow-lg shadow-brand-button/20 transition-all active:scale-[0.98]">
+                    Apply Filters
+                </button>
+</div>
+</div>
+</div>
+</body></html>

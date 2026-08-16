@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Staff Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#bc6c25", // Overriding based on user request for specific element colors
+                        "background-cream": "#fefae0", // User requested background
+                        "text-dark-green": "#283618", // User requested text
+                        "background-light": "#f8f7f6",
+                        "background-dark": "#211911",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hiding for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-cream text-text-dark-green font-display min-h-screen relative overflow-x-hidden pb-24">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 bg-background-cream/95 backdrop-blur-sm px-4 py-3 flex items-center justify-between border-b border-text-dark-green/5">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 active:bg-black/10 transition-colors">
+<span class="material-symbols-outlined text-text-dark-green" style="font-size: 24px;">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight text-text-dark-green">Staff Management</h1>
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 active:bg-black/10 transition-colors">
+<span class="material-symbols-outlined text-text-dark-green" style="font-size: 24px;">search</span>
+</button>
+</header>
+<!-- Main Content List -->
+<main class="flex flex-col gap-1 p-4">
+<!-- Section Header -->
+<div class="mb-2 mt-2 flex items-center justify-between">
+<h2 class="text-sm font-semibold uppercase tracking-wider opacity-70">Team Members</h2>
+<span class="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-full">4 Active</span>
+</div>
+<!-- Staff Member 1 -->
+<div class="group relative flex items-center gap-4 bg-white/60 p-3 rounded-xl shadow-sm border border-white/50 transition-all hover:bg-white/80">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat bg-cover rounded-full h-14 w-14 shadow-inner" data-alt="Portrait of a female stylist with curly hair smiling" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCD-TJ0dmQy6JiqrV7VpsP0w-Tf_P9d9nVCBOoGpOU9SGdfKO-45PwU_NfV1HGiktsMW7TXQuftD2-70SNNvQ-9fq-uz28jPAyLXLXpUBlIK9ioOlWt6tqGa90VRara7PR6GIQnh6XNtW4WwZ522HjKfoK5mLio2kyiNYWOBFzzxr8MBwnbhbmr89H6yFrf2CBkgCV1lpA-wG8-nlITGu99WHFw-2LjM9Ntijynl589xGVsl_OYhbB9Fv6Tv9FzEKMiSRgeiTQxtCY");'>
+</div>
+<div class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500"></div>
+</div>
+<div class="flex flex-col flex-1 justify-center min-w-0">
+<p class="text-text-dark-green text-base font-bold leading-tight truncate">Jessica Martinez</p>
+<p class="text-text-dark-green/70 text-sm font-normal leading-normal truncate">Senior Stylist</p>
+</div>
+<div class="shrink-0 flex flex-col items-end gap-1">
+<label class="relative flex h-[28px] w-[48px] cursor-pointer items-center rounded-full border border-black/5 bg-gray-200 p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary transition-colors duration-200">
+<input checked="" class="peer invisible absolute" type="checkbox"/>
+<div class="h-full aspect-square rounded-full bg-white shadow-sm transition-all duration-200 peer-checked:shadow-md"></div>
+</label>
+<span class="text-[10px] font-medium text-text-dark-green/60">Available</span>
+</div>
+</div>
+<!-- Staff Member 2 -->
+<div class="group relative flex items-center gap-4 bg-white/60 p-3 rounded-xl shadow-sm border border-white/50 transition-all hover:bg-white/80">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat bg-cover rounded-full h-14 w-14 shadow-inner" data-alt="Portrait of a male barber with a beard" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC7AWt1PuQJjMcvhDXc29PL97JhbHQYBl5Hcr4pn-vatAxHQ4DFVQDPgykWijkAxfj74E8dZ5QsOoO6SP2dHbePL-Q-S5a60bNHJvkiNOntaTrm4zRjRXAnwMBSAzxBPDDMcMZ2AJwdxkkXC5LhiwcBosP9AH1evURvq6dXqxv661bL0baWNj-Py46c2n_rS07ELoyP59Umqr4-9X4414eEfB7kngECbdvrvHOW8qb_woJvo7BdRKO2ypi_kqX-qfHCdW2X9FEIDVI");'>
+</div>
+<div class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500"></div>
+</div>
+<div class="flex flex-col flex-1 justify-center min-w-0">
+<p class="text-text-dark-green text-base font-bold leading-tight truncate">David Lee</p>
+<p class="text-text-dark-green/70 text-sm font-normal leading-normal truncate">Master Barber</p>
+</div>
+<div class="shrink-0 flex flex-col items-end gap-1">
+<label class="relative flex h-[28px] w-[48px] cursor-pointer items-center rounded-full border border-black/5 bg-gray-200 p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary transition-colors duration-200">
+<input checked="" class="peer invisible absolute" type="checkbox"/>
+<div class="h-full aspect-square rounded-full bg-white shadow-sm transition-all duration-200 peer-checked:shadow-md"></div>
+</label>
+<span class="text-[10px] font-medium text-text-dark-green/60">Available</span>
+</div>
+</div>
+<!-- Staff Member 3 -->
+<div class="group relative flex items-center gap-4 bg-white/60 p-3 rounded-xl shadow-sm border border-white/50 transition-all hover:bg-white/80">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat bg-cover rounded-full h-14 w-14 shadow-inner grayscale opacity-80" data-alt="Portrait of a young female stylist with straight hair" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBzMxWgaTJYY-R304ltTZjuwMZUJnJNyzyEmrU6jmgc6MAWgQaLwK6JJ7kz8Xy2wuMJmIwMafDfFn4zwELDdnc5-184ahIO84VEA0MQ3eKRJ8dnTgrfhwqF8-NjD0pOF_ffMhPO5XjEW73XJZ_sv-fmZEndBr4teXDais4u6MYccvyVTeoOU98yZYRYyYL8hlyHDFxwsdgTKuSUYC61yCB8gWGmSEQjJRm0rlUVCMNOyGgP5-SdY7HALeSvEqvGS3aSC3UPUV6wU7Q");'>
+</div>
+<div class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-gray-300"></div>
+</div>
+<div class="flex flex-col flex-1 justify-center min-w-0 opacity-70">
+<p class="text-text-dark-green text-base font-bold leading-tight truncate">Sarah Kim</p>
+<p class="text-text-dark-green/70 text-sm font-normal leading-normal truncate">Junior Stylist</p>
+</div>
+<div class="shrink-0 flex flex-col items-end gap-1">
+<label class="relative flex h-[28px] w-[48px] cursor-pointer items-center rounded-full border border-black/5 bg-gray-200 p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary transition-colors duration-200">
+<input class="peer invisible absolute" type="checkbox"/>
+<div class="h-full aspect-square rounded-full bg-white shadow-sm transition-all duration-200 peer-checked:shadow-md"></div>
+</label>
+<span class="text-[10px] font-medium text-text-dark-green/60">Away</span>
+</div>
+</div>
+<!-- Staff Member 4 -->
+<div class="group relative flex items-center gap-4 bg-white/60 p-3 rounded-xl shadow-sm border border-white/50 transition-all hover:bg-white/80">
+<div class="relative shrink-0">
+<div class="bg-center bg-no-repeat bg-cover rounded-full h-14 w-14 shadow-inner" data-alt="Portrait of a male colorist with glasses" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD3ADQLZEoVMRdAPwbpK6R-6gryWL5GkOtEjvgcZAIYer5n42EDnVMb2qAduCiFCrt85uJTiHI33d-4jR8uZh2pCuCC7x53XdJPf3UOM5bm8uYHdj2ChDvTuCtjdmizPbdam_bQMKKT6et9oOmQkVx1FuiAZMilUrJIhSbjHkXMXBcJSpBavSsXlk0A2Qr4BCW6Jh_ymvx1A-nmIBbm8E3mCxEH1QZIqpOkI_2d2ySekqvna8ew81ZOYnROrJ2Nj38Oz_ZTXnDzVtI");'>
+</div>
+<div class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500"></div>
+</div>
+<div class="flex flex-col flex-1 justify-center min-w-0">
+<p class="text-text-dark-green text-base font-bold leading-tight truncate">Michael Brown</p>
+<p class="text-text-dark-green/70 text-sm font-normal leading-normal truncate">Color Specialist</p>
+</div>
+<div class="shrink-0 flex flex-col items-end gap-1">
+<label class="relative flex h-[28px] w-[48px] cursor-pointer items-center rounded-full border border-black/5 bg-gray-200 p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary transition-colors duration-200">
+<input checked="" class="peer invisible absolute" type="checkbox"/>
+<div class="h-full aspect-square rounded-full bg-white shadow-sm transition-all duration-200 peer-checked:shadow-md"></div>
+</label>
+<span class="text-[10px] font-medium text-text-dark-green/60">Available</span>
+</div>
+</div>
+<div class="mt-4 px-4 text-center">
+<p class="text-xs text-text-dark-green/50">Manage staff availability for booking directly from this list.</p>
+</div>
+</main>
+<!-- Floating Action Button -->
+<div class="fixed bottom-24 right-4 z-40">
+<button class="flex items-center justify-center gap-2 bg-primary text-white h-14 pl-4 pr-6 rounded-2xl shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined" style="font-size: 24px;">add</span>
+<span class="font-bold text-sm tracking-wide">Add Staff</span>
+</button>
+</div>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-md border-t border-text-dark-green/5 pb-safe pt-2 z-50">
+<div class="flex justify-around items-end h-[60px] pb-4">
+<a class="flex flex-col items-center gap-1 w-full text-text-dark-green/40 hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size: 24px;">dashboard</span>
+<span class="text-[10px] font-medium">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 w-full text-text-dark-green/40 hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size: 24px;">calendar_month</span>
+<span class="text-[10px] font-medium">Calendar</span>
+</a>
+<a class="flex flex-col items-center gap-1 w-full text-text-dark-green/40 hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size: 24px;">groups</span>
+<span class="text-[10px] font-medium">Clients</span>
+</a>
+<a class="flex flex-col items-center gap-1 w-full text-text-dark-green/40 hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform" style="font-size: 24px;">spa</span>
+<span class="text-[10px] font-medium">Services</span>
+</a>
+<a class="flex flex-col items-center gap-1 w-full text-primary transition-colors" href="#">
+<span class="material-symbols-outlined fill-1" style="font-size: 24px;">more_horiz</span>
+<span class="text-[10px] font-bold">More</span>
+</a>
+</div>
+</nav>
+<!-- Safe area padding for iPhones without home button -->
+<style>
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+    </style>
+</body></html>
