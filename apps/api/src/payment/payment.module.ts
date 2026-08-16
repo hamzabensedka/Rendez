@@ -7,7 +7,7 @@ import { StripeModule } from 'nestjs-stripe';
   imports: [StripeModule.forRoot({
     apiKey: process.env.STRIPE_SECRET_KEY,
     apiVersion: '2022-11-15',
-  })],
+  }),],
   controllers: [PaymentController],
   providers: [PaymentService],
 })
