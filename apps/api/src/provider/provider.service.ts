@@ -5,23 +5,15 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ProviderService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(): Promise<any> {
-    return this.prisma.provider.findMany();
+  async getBusinesses() {
+    return this.prisma.business.findMany();
   }
 
-  async findOne(id: string): Promise<any> {
-    return this.prisma.provider.findUnique({ where: { id } });
+  async getBusiness(id: number) {
+    return this.prisma.business.findUnique({ where: { id } });
   }
 
-  async create(createProviderDto: any): Promise<any> {
-    return this.prisma.provider.create({ data: createProviderDto });
-  }
-
-  async update(id: string, updateProviderDto: any): Promise<any> {
-    return this.prisma.provider.update({ where: { id }, data: updateProviderDto });
-  }
-
-  async remove(id: string): Promise<any> {
-    return this.prisma.provider.delete({ where: { id } });
+  async createBusiness(business: any) {
+    return this.prisma.business.create({ data: business });
   }
 }

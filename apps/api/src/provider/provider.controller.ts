@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { ProviderService } from './provider.service';
 
 @Controller('provider')
@@ -6,27 +6,17 @@ export class ProviderController {
   constructor(private readonly providerService: ProviderService) {}
 
   @Get()
-  async findAll(): Promise<any> {
-    return this.providerService.findAll();
+  async getBusinesses() {
+    return this.providerService.getBusinesses();
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<any> {
-    return this.providerService.findOne(id);
+  async getBusiness(@Param('id') id: number) {
+    return this.providerService.getBusiness(id);
   }
 
   @Post()
-  async create(@Body() createProviderDto: any): Promise<any> {
-    return this.providerService.create(createProviderDto);
-  }
-
-  @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateProviderDto: any): Promise<any> {
-    return this.providerService.update(id, updateProviderDto);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string): Promise<any> {
-    return this.providerService.remove(id);
+  async createBusiness(@Body() business: any) {
+    return this.providerService.createBusiness(business);
   }
 }
