@@ -5,8 +5,5 @@ export class CreatePaymentDto {
   amount: number;
 
   @ApiProperty()
-  source: string;
-
-  @ApiProperty()
-  description: string;
+  currency: string;
 }
