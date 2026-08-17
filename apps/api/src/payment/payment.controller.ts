@@ -6,8 +6,8 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
-  @Post()
-  async createPayment(@Body() createPaymentDto: CreatePaymentDto) {
-    return this.paymentService.createPayment(createPaymentDto);
+  @Post('webhook')
+  async webhook(@Body() createPaymentDto: CreatePaymentDto) {
+    return this.paymentService.webhook(createPaymentDto);
   }
 }
