@@ -1,9 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
-
 export class CreatePaymentDto {
-  @ApiProperty()
-  appointmentId: string;
-
-  @ApiProperty()
+  appointmentId: number;
   amount: number;
 }

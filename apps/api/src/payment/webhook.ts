@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { Stripe } from 'stripe';
 
 @Injectable()
-export class PaymentWebhook implements OnModuleInit {
+export class WebhookService implements OnModuleInit {
   private stripe: Stripe;
 
   constructor(private readonly prismaService: PrismaService) {
@@ -14,16 +14,16 @@ export class PaymentWebhook implements OnModuleInit {
   }
 
   onModuleInit() {
-    this.stripe.webhooks.retrieve(
-      'whsec_123',
-      { at_most: 1 },
-      (err, webhook) => {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log(webhook);
-        }
-      }
-    );
+    this.stripe.webhooks.endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  }
+
+  async handleWebhook(event: any) {
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object;
+      const payment = await this.prismaService.payment.update({
+        where: { providerTxn: paymentIntent.id },
+        data: { status: 'paid' },
+      });
+    }
   }
 }
