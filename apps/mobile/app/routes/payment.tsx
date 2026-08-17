@@ -1,39 +1,59 @@
-import { createPaymentIntent, createWebhook } from '../services/stripe';
-import { PaymentIntent } from '../types/stripe';
+import React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useEffect, useState } from 'react';
-import { View, Text, Button } from 'react-native';
-import { ExpoRouter } from 'expo-router';
+import { useForm } from 'react-hook-form';
+import { zodSchema } from 'zod-schema';
+import { StripeProvider } from '@stripe/stripe-react-native';
+import { usePaymentIntent } from '../hooks/usePaymentIntent';
+import { usePaymentMutation } from '../hooks/usePaymentMutation';
+import { PaymentIntent } from '../types/PaymentIntent';
+import { Payment } from '../types/Payment';
 
 const PaymentScreen = () => {
   const navigation = useNavigation();
-  const [paymentIntent, setPaymentIntent] = useState<PaymentIntent | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState('pending');
+  const { register, handleSubmit } = useForm<Payment>();
+  const { mutate: createPaymentIntent } = usePaymentIntent();
+  const { mutate: createPayment } = usePaymentMutation();
 
-  useEffect(() => {
-    const fetchPaymentIntent = async () => {
-      const intent = await createPaymentIntent();
-      setPaymentIntent(intent);
-    };
-    fetchPaymentIntent();
-  }, []);
-
-  const handlePayment = async () => {
-    if (!paymentIntent) return;
+  const handlePayment = async (data: Payment) => {
     try {
-      const webhook = await createWebhook();
-      // Handle payment with Stripe
-      setPaymentStatus('success');
+      const paymentIntent: PaymentIntent = await createPaymentIntent(
+        {
+          amount: data.amount,
+          currency: 'usd',
+          payment_method_types: ['card'],
+        }
+      );
+
+      const paymentMethod = await StripeProvider.setOptions({
+        publishingKey: 'YOUR_PUBLISHABLE_KEY',
+        merchantId: 'YOUR_MERCHANT_ID',
+      });
+
+      const payment = await StripeProvider.paymentRequestWithCardForm(
+        paymentIntent.id,
+        paymentMethod
+      );
+
+      if (payment.status === 'succeeded') {
+        await createPayment({
+          appointmentId: data.appointmentId,
+          providerTxn: payment.transactionId,
+          amount: data.amount,
+          status: 'paid',
+        });
+      }
     } catch (error) {
-      setPaymentStatus('failed');
+      console.error(error);
     }
   };
 
   return (
     <View>
       <Text>Payment Screen</Text>
-      <Button title='Pay' onPress={handlePayment} />
-      <Text>Payment Status: {paymentStatus}</Text>
+      <TouchableOpacity onPress={handleSubmit(handlePayment)}>
+        <Text>Pay Now</Text>
+      </TouchableOpacity>
     </View>
   );
 };
