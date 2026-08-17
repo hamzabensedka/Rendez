@@ -1,39 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { Table, TableHead, TableBody, TableRow, TableCell } from './styles';
 import axios from 'axios';
 
 const BusinessesTable = () => {
   const [businesses, setBusinesses] = useState([]);
 
   useEffect(() => {
-    axios.get('/api/businesses').then(response => {
-      setBusinesses(response.data);
-    });
+    axios.get('/api/businesses')
+      .then(response => {
+        setBusinesses(response.data);
+      })
+      .catch(error => {
+        console.error(error);
+      });
   }, []);
 
   return (
-    <Table>
-      <TableHead>
-        <TableRow>
-          <TableCell>ID</TableCell>
-          <TableCell>Name</TableCell>
-          <TableCell>Category</TableCell>
-          <TableCell>Latitude</TableCell>
-          <TableCell>Longitude</TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Address</th>
+        </tr>
+      </thead>
+      <tbody>
         {businesses.map(business => (
-          <TableRow key={business.id}>
-            <TableCell>{business.id}</TableCell>
-            <TableCell>{business.name}</TableCell>
-            <TableCell>{business.category}</TableCell>
-            <TableCell>{business.lat}</TableCell>
-            <TableCell>{business.lng}</TableCell>
-          </TableRow>
+          <tr key={business.id}>
+            <td>{business.id}</td>
+            <td>{business.name}</td>
+            <td>{business.address}</td>
+          </tr>
         ))}
-      </TableBody>
-    </Table>
+      </tbody>
+    </table>
   );
 };
 

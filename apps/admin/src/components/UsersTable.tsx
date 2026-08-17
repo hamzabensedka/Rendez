@@ -1,35 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { Table, TableHead, TableBody, TableRow, TableCell } from './styles';
 import axios from 'axios';
 
 const UsersTable = () => {
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    axios.get('/api/users').then(response => {
-      setUsers(response.data);
-    });
+    axios.get('/api/users')
+      .then(response => {
+        setUsers(response.data);
+      })
+      .catch(error => {
+        console.error(error);
+      });
   }, []);
 
   return (
-    <Table>
-      <TableHead>
-        <TableRow>
-          <TableCell>ID</TableCell>
-          <TableCell>Email</TableCell>
-          <TableCell>Role</TableCell>
-        </TableRow>
-      </TableHead>
-      <TableBody>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+        </tr>
+      </thead>
+      <tbody>
         {users.map(user => (
-          <TableRow key={user.id}>
-            <TableCell>{user.id}</TableCell>
-            <TableCell>{user.email}</TableCell>
-            <TableCell>{user.role}</TableCell>
-          </TableRow>
+          <tr key={user.id}>
+            <td>{user.id}</td>
+            <td>{user.name}</td>
+            <td>{user.email}</td>
+          </tr>
         ))}
-      </TableBody>
-    </Table>
+      </tbody>
+    </table>
   );
 };
 
