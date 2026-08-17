@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Stripe } from 'stripe';
+import { Payment } from '@prisma/client';
 
 @Injectable()
 export class PaymentService {
@@ -13,21 +14,26 @@ export class PaymentService {
   }
 
   async createPayment(createPaymentDto: any) {
-    const paymentIntent = await this.stripe.paymentIntents.create({
-      amount: createPaymentDto.amount,
-      currency: 'usd',
-      payment_method_types: ['card'],
-    });
-
-    const payment = await this.prismaService.payment.create({
-      data: {
-        appointmentId: createPaymentDto.appointmentId,
-        providerTxn: paymentIntent.id,
+    try {
+      const paymentIntent = await this.stripe.paymentIntents.create({
         amount: createPaymentDto.amount,
-        status: 'pending',
-      },
-    });
+        currency: 'usd',
+        payment_method_types: ['card'],
+      });
 
-    return payment;
+      const payment = await this.prismaService.payment.create({
+        data: {
+          appointmentId: createPaymentDto.appointmentId,
+          providerTxn: paymentIntent.id,
+          amount: createPaymentDto.amount,
+          status: 'pending',
+        },
+      });
+
+      return payment;
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   }
 }

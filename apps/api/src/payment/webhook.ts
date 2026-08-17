@@ -14,16 +14,45 @@ export class WebhookService implements OnModuleInit {
   }
 
   onModuleInit() {
-    this.stripe.webhooks.endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    this.stripe.webhooks.retrieve(
+      'whsec_123456789',
+      { at_most: 5 },
+      (err, webhook) => {
+        if (err) {
+          console.error(err);
+        } else {
+          console.log(webhook);
+        }
+      }
+    );
   }
 
-  async handleWebhook(event: any) {
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object;
-      const payment = await this.prismaService.payment.update({
-        where: { providerTxn: paymentIntent.id },
-        data: { status: 'paid' },
-      });
+  async handleWebhook(@Body() body: any) {
+    try {
+      const sig = this.stripe.webhooks.constructSignature(
+        body,
+        'whsec_123456789',
+      );
+
+      if (!sig) {
+        throw new Error('Invalid signature');
+      }
+
+      const event = this.stripe.webhooks.constructEvent(
+        body,
+        sig,
+      );
+
+      if (event.type === 'payment_intent.succeeded') {
+        const paymentIntent = event.data.object;
+        const payment = await this.prismaService.payment.update({
+          where: { providerTxn: paymentIntent.id },
+          data: { status: 'paid' },
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      throw error;
     }
   }
 }
