@@ -1,52 +1,50 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Headers,
-  HttpCode,
-  HttpStatus,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { Stripe } from 'stripe';
-import { ConfigService } from '@nestjs/config';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Post, Body, Get, Query, Patch, Param, Delete, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PaymentsService } from './payments.service';
+import { PaymentDto } from './dto/create-payment.dto';
+import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { ApiTags } from '@nestjs/swagger';
+import { Auth } from '../../auth/decorators/auth.decorator';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { User } from '../../auth/types/authenticated-user.type';
 
 @ApiTags('payments')
+@Controller('payments')
 export class PaymentsController {
-  private stripe: Stripe;
+  constructor(private readonly paymentsService: PaymentsService) {}
 
-  constructor(private configService: ConfigService) {
-    const apiKey = this.configService.get<string>('STRIPE_SECRET_KEY');
-    this.stripe = new Stripe(apiKey, { apiVersion: '2023-10-16' });
+  @Post()
+  @Auth()
+  async create(@Body() paymentDto: PaymentDto, @CurrentUser() user: User) {
+    return this.paymentsService.create(paymentDto, user);
   }
 
-  @Post('webhook')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Stripe webhook endpoint' })
-  async webhook(@Headers('stripe-signature') signature: string, @Body() rawBody: Buffer) {
-    const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
-    let event: Stripe.Event;
+  @Get()
+  @Auth()
+  async findAll(@Query() query: any) {
+    return this.paymentsService.findAll(query);
+  }
 
-    try {
-      event = this.stripe.webhooks.constructEvent(
-        rawBody.toString(),
-        signature,
-        webhookSecret
-      );
-    } catch (err) {
-      throw new UnauthorizedException(`Webhook Error: ${err.message}`);
-    }
+  @Get(':id')
+  @Auth()
+  async findOne(@Param('id') id: string) {
+    return this.paymentsService.findOne(id);
+  }
 
-    // Handle the event
-    switch (event.type) {
-      case 'checkout.session.completed':
-        // TODO: fulfill order, update booking status, etc.
-        break;
-      // Add more cases as needed
-      default:
-        console.log(`Unhandled event type ${event.type}`);
-    }
+  @Patch(':id')
+  @Auth()
+  async update(@Param('id') id: string, @Body() updatePaymentDto: UpdatePaymentDto) {
+    return this.paymentsService.update(id, updatePaymentDto);
+  }
 
-    return { received: true };
+  @Delete(':id')
+  @Auth()
+  async remove(@Param('id') id: string) {
+    return this.paymentsService.remove(id);
+  }
+
+  @Post(':id/fulfill')
+  @Auth()
+  async fulfillOrder(@Param('id') id: string) {
+    return this.paymentsService.fulfillOrder(id);
   }
 }
