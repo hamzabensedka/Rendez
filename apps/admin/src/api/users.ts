@@ -1,10 +1,11 @@
-import axios from 'axios';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma.service';
 
-const usersApi = axios.create({
-  baseURL: 'http://localhost:3000/api/users'
-});
+@Injectable()
+export class UsersService {
+  constructor(private readonly prisma: PrismaService) {}
 
-export const getUsers = async () => {
-  const response = await usersApi.get('/');
-  return response.data;
-};
+  async getAllUsers() {
+    return this.prisma.user.findMany();
+  }
+}
