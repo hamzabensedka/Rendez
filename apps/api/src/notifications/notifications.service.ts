@@ -1,26 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { BullQueueService } from './bull-queue.service';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
+import { PrismaClient } from '@prisma/client';
+import { RedisClient } from 'redis';
 
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly prismaService: PrismaService, private readonly bullQueueService: BullQueueService) {}
+  constructor(
+    @InjectQueue('notifications') private readonly notificationsQueue: Queue,
+    private readonly prisma: PrismaClient,
+    private readonly redisClient: RedisClient,
+  ) {}
 
-  async sendAppointmentReminder(appointmentId: number) {
-    const appointment = await this.prismaService.appointment.findUnique({
-      where: { id: appointmentId },
-      include: { user: true, business: true },
-    });
-
-    if (!appointment) return;
-
-    const notification = {
-      type: 'appointmentReminder',
-      userId: appointment.user.id,
-      businessId: appointment.business.id,
-      appointmentId,
-    };
-
-    await this.bullQueueService.add('notifications', notification);
+  async sendReminder(notification: any) {
+    // Send reminder logic here
+    await this.notificationsQueue.add('send-reminder', notification);
   }
 }
