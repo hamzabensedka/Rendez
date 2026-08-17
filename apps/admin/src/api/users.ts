@@ -1,16 +1,10 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
+import axios from 'axios';
 
-@Injectable()
-export class UsersService {
-  constructor(
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
-  ) {}
+const usersApi = axios.create({
+  baseURL: 'http://localhost:3000/api/users'
+});
 
-  async getUsers(): Promise<User[]> {
-    return this.usersRepository.find();
-  }
-}
+export const getUsers = async () => {
+  const response = await usersApi.get('/');
+  return response.data;
+};
