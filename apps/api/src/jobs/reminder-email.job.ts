@@ -1,24 +1,31 @@
-import { Processor, Job } from 'bullmq';
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../users/user.entity';
-import { MailService } from '../mail/mail.service';
+import { Job } from 'bullmq';
+import { MailService } from '../../mail/mail.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class ReminderEmailJob {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     private readonly mailService: MailService,
+    private readonly prismaService: PrismaService
   ) {}
 
-  @Processor('reminder-emails')
   async handle(job: Job) {
-    const userId = job.data.userId;
-    const user = await this.userRepository.findOne(userId);
-    if (!user) return;
+    const { appointmentId } = job.data;
+    const appointment = await this.prismaService.appointment.findUnique({
+      where: { id: appointmentId },
+      include: { user: true }
+    });
 
-    await this.mailService.sendReminderEmail(user);
+    if (!appointment) return;
+
+    const { user } = appointment;
+    const mailOptions = {
+      to: user.email,
+      subject: 'Reminder: Upcoming Appointment',
+      text: `Reminder: You have an upcoming appointment on ${appointment.date}`
+    };
+
+    await this.mailService.sendMail(mailOptions);
   }
 }

@@ -1,16 +1,21 @@
-import { Processor, Job } from 'bullmq';
 import { Injectable } from '@nestjs/common';
-import { CacheService } from '../cache/cache.service';
+import { Job } from 'bullmq';
+import { CacheService } from '../../cache/cache.service';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class AvailabilityCacheInvalidationJob {
   constructor(
     private readonly cacheService: CacheService,
+    private readonly prismaService: PrismaService
   ) {}
 
-  @Processor('availability-cache-invalidation')
   async handle(job: Job) {
-    const availabilityId = job.data.availabilityId;
-    await this.cacheService.invalidateAvailabilityCache(availabilityId);
+    const { providerId } = job.data;
+    await this.cacheService.invalidate(`availability:${providerId}`);
+    await this.prismaService.provider.update({
+      where: { id: providerId },
+      data: { availability: { invalidateCache: true } }
+    });
   }
 }
