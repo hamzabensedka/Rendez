@@ -1,45 +1,32 @@
-import { Controller, Get, Post, Body, Put, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ProviderService } from './provider.service';
-import { BusinessHoursDto } from './dto/business-hours.dto';
-import { StaffDto } from './dto/staff.dto';
-import { ServicesDto } from './dto/services.dto';
 
 @Controller('provider')
 export class ProviderController {
   constructor(private readonly providerService: ProviderService) {}
 
   @Get()
-  async getProvider(): Promise<any> {
-    return this.providerService.getProvider();
+  async getBusinesses() {
+    return this.providerService.getBusinesses();
   }
 
-  @Post('business-hours')
-  async createBusinessHours(@Body() businessHoursDto: BusinessHoursDto): Promise<any> {
-    return this.providerService.createBusinessHours(businessHoursDto);
+  @Get(':id')
+  async getBusiness(@Param('id') id: number) {
+    return this.providerService.getBusiness(id);
   }
 
-  @Put('business-hours/:id')
-  async updateBusinessHours(@Param('id') id: number, @Body() businessHoursDto: BusinessHoursDto): Promise<any> {
-    return this.providerService.updateBusinessHours(id, businessHoursDto);
+  @Post()
+  async createBusiness(@Body() createBusinessDto: any) {
+    return this.providerService.createBusiness(createBusinessDto);
   }
 
-  @Post('staff')
-  async createStaff(@Body() staffDto: StaffDto): Promise<any> {
-    return this.providerService.createStaff(staffDto);
+  @Patch(':id')
+  async updateBusiness(@Param('id') id: number, @Body() updateBusinessDto: any) {
+    return this.providerService.updateBusiness(id, updateBusinessDto);
   }
 
-  @Put('staff/:id')
-  async updateStaff(@Param('id') id: number, @Body() staffDto: StaffDto): Promise<any> {
-    return this.providerService.updateStaff(id, staffDto);
-  }
-
-  @Post('services')
-  async createServices(@Body() servicesDto: ServicesDto): Promise<any> {
-    return this.providerService.createServices(servicesDto);
-  }
-
-  @Put('services/:id')
-  async updateServices(@Param('id') id: number, @Body() servicesDto: ServicesDto): Promise<any> {
-    return this.providerService.updateServices(id, servicesDto);
+  @Delete(':id')
+  async deleteBusiness(@Param('id') id: number) {
+    return this.providerService.deleteBusiness(id);
   }
 }

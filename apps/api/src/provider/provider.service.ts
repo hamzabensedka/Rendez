@@ -1,53 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { BusinessHoursDto } from './dto/business-hours.dto';
-import { StaffDto } from './dto/staff.dto';
-import { ServicesDto } from './dto/services.dto';
 
 @Injectable()
 export class ProviderService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async getProvider(): Promise<any> {
-    return this.prismaService.provider.findMany();
+  async getBusinesses() {
+    return this.prismaService.business.findMany();
   }
 
-  async createBusinessHours(businessHoursDto: BusinessHoursDto): Promise<any> {
-    return this.prismaService.businessHours.create({
-      data: businessHoursDto,
-    });
+  async getBusiness(id: number) {
+    return this.prismaService.business.findUnique({ where: { id } });
   }
 
-  async updateBusinessHours(id: number, businessHoursDto: BusinessHoursDto): Promise<any> {
-    return this.prismaService.businessHours.update({
-      where: { id },
-      data: businessHoursDto,
-    });
+  async createBusiness(createBusinessDto: any) {
+    return this.prismaService.business.create({ data: createBusinessDto });
   }
 
-  async createStaff(staffDto: StaffDto): Promise<any> {
-    return this.prismaService.staff.create({
-      data: staffDto,
-    });
+  async updateBusiness(id: number, updateBusinessDto: any) {
+    return this.prismaService.business.update({ where: { id }, data: updateBusinessDto });
   }
 
-  async updateStaff(id: number, staffDto: StaffDto): Promise<any> {
-    return this.prismaService.staff.update({
-      where: { id },
-      data: staffDto,
-    });
-  }
-
-  async createServices(servicesDto: ServicesDto): Promise<any> {
-    return this.prismaService.services.create({
-      data: servicesDto,
-    });
-  }
-
-  async updateServices(id: number, servicesDto: ServicesDto): Promise<any> {
-    return this.prismaService.services.update({
-      where: { id },
-      data: servicesDto,
-    });
+  async deleteBusiness(id: number) {
+    return this.prismaService.business.delete({ where: { id } });
   }
 }
