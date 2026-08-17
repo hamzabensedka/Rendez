@@ -1,8 +1,8 @@
-import axios from 'axios';
+import api from './api';
 
-const getProviderServices = async (providerId: number) => {
-  const response = await axios.get(`https://example.com/api/services?providerId=${providerId}`);
+const getServices = async (providerId: number) => {
+  const response = await api.get(`/services?providerId=${providerId}`);
   return response.data;
 };
 
-export { getProviderServices };
+export default getServices;

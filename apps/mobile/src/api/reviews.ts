@@ -1,17 +1,13 @@
-import { fetch } from '../../utils/fetch';
+import api from './api';
 
-export const getSalonReviews = async () => {
-  const response = await fetch('https://example.com/api/reviews');
-  return response.json();
+const getReviews = async () => {
+  const response = await api.get('/reviews');
+  return response.data;
 };
 
-export const submitReview = async (data: { rating: number; comment: string }) => {
-  const response = await fetch('https://example.com/api/reviews', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-  return response.json();
+const createReview = async (review: any) => {
+  const response = await api.post('/reviews', review);
+  return response.data;
 };
+
+export { getReviews, createReview };
