@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
-import { NotificationsController } from './notifications.controller';
 import { NotificationsService } from './notifications.service';
+import { NotificationsController } from './notifications.controller';
 import { BullModule } from '@nestjs/bull';
-import { BullQueueService } from './bull-queue.service';
+import { BullQueueModule } from '@nestjs/bull-queue';
+import { RedisModule } from '@nestjs/redis';
+import { PrismaModule } from '@nestjs/prisma';
 
 @Module({
   imports: [
@@ -11,8 +13,18 @@ import { BullQueueService } from './bull-queue.service';
         removeOnComplete: true,
       },
     }),
+    BullQueueModule.registerQueue('notifications'),
+    RedisModule.registerClient({
+      config: {
+        host: 'localhost',
+        port: 6379,
+      },
+    }),
+    PrismaModule.registerClient({
+      prismaClient: 'prisma',
+    }),
   ],
   controllers: [NotificationsController],
-  providers: [NotificationsService, BullQueueService],
+  providers: [NotificationsService],
 })
 export class NotificationsModule {}
