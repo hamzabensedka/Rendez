@@ -9,24 +9,15 @@ export class NotificationsService {
     private readonly bullMQService: BullMQService
   ) {}
 
-  async sendAppointmentReminder(appointmentId: number) {
-    const appointment = await this.prismaService.appointment.findUnique({
-      where: { id: appointmentId },
-      include: { user: true, business: true },
-    });
+  async sendNotification(notification: any) {
+    // Send notification logic here
+    await this.bullMQService.addNotificationJob(notification);
+  }
 
-    if (!appointment) {
-      throw new Error(`Appointment not found`);
-    }
-
-    const user = appointment.user;
-    const business = appointment.business;
-
-    // Send notification using BullMQ
-    await this.bullMQService.add('send-appointment-reminder', {
-      userId: user.id,
-      businessId: business.id,
-      appointmentId,
+  async getNotification(id: string) {
+    // Get notification logic here
+    return this.prismaService.notification.findUnique({
+      where: { id }
     });
   }
 }

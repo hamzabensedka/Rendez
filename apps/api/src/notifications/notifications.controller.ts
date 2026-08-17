@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 
 @Controller('notifications')
@@ -6,7 +6,12 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Post()
-  async sendAppointmentReminder(@Body() appointmentId: number) {
-    return this.notificationsService.sendAppointmentReminder(appointmentId);
+  async sendNotification(@Body() notification: any) {
+    return this.notificationsService.sendNotification(notification);
+  }
+
+  @Get(':id')
+  async getNotification(@Param('id') id: string) {
+    return this.notificationsService.getNotification(id);
   }
 }
