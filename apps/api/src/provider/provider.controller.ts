@@ -1,70 +1,32 @@
-import { Controller, Get, Post, Body, Put, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ProviderService } from './provider.service';
-import { BusinessHoursDTO } from './dto/business-hours.dto';
-import { StaffDTO } from './dto/staff.dto';
-import { ServicesDTO } from './dto/services.dto';
 
 @Controller('provider')
 export class ProviderController {
   constructor(private readonly providerService: ProviderService) {}
 
-  @Post('business-hours')
-  async createBusinessHours(@Body() businessHoursDTO: BusinessHoursDTO) {
-    return this.providerService.createBusinessHours(businessHoursDTO);
+  @Get()
+  async getBusinesses() {
+    return this.providerService.getBusinesses();
   }
 
-  @Get('business-hours')
-  async getBusinessHours() {
-    return this.providerService.getBusinessHours();
+  @Get(':id')
+  async getBusiness(@Param('id') id: number) {
+    return this.providerService.getBusiness(id);
   }
 
-  @Put('business-hours/:id')
-  async updateBusinessHours(@Param('id') id: number, @Body() businessHoursDTO: BusinessHoursDTO) {
-    return this.providerService.updateBusinessHours(id, businessHoursDTO);
+  @Post()
+  async createBusiness(@Body() createBusinessDto: any) {
+    return this.providerService.createBusiness(createBusinessDto);
   }
 
-  @Delete('business-hours/:id')
-  async deleteBusinessHours(@Param('id') id: number) {
-    return this.providerService.deleteBusinessHours(id);
+  @Patch(':id')
+  async updateBusiness(@Param('id') id: number, @Body() updateBusinessDto: any) {
+    return this.providerService.updateBusiness(id, updateBusinessDto);
   }
 
-  @Post('staff')
-  async createStaff(@Body() staffDTO: StaffDTO) {
-    return this.providerService.createStaff(staffDTO);
-  }
-
-  @Get('staff')
-  async getStaff() {
-    return this.providerService.getStaff();
-  }
-
-  @Put('staff/:id')
-  async updateStaff(@Param('id') id: number, @Body() staffDTO: StaffDTO) {
-    return this.providerService.updateStaff(id, staffDTO);
-  }
-
-  @Delete('staff/:id')
-  async deleteStaff(@Param('id') id: number) {
-    return this.providerService.deleteStaff(id);
-  }
-
-  @Post('services')
-  async createServices(@Body() servicesDTO: ServicesDTO) {
-    return this.providerService.createServices(servicesDTO);
-  }
-
-  @Get('services')
-  async getServices() {
-    return this.providerService.getServices();
-  }
-
-  @Put('services/:id')
-  async updateServices(@Param('id') id: number, @Body() servicesDTO: ServicesDTO) {
-    return this.providerService.updateServices(id, servicesDTO);
-  }
-
-  @Delete('services/:id')
-  async deleteServices(@Param('id') id: number) {
-    return this.providerService.deleteServices(id);
+  @Delete(':id')
+  async deleteBusiness(@Param('id') id: number) {
+    return this.providerService.deleteBusiness(id);
   }
 }
