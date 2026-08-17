@@ -1,61 +1,42 @@
+import { Router, Route, Outlet, Link } from '@tanstack/react-router';
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useForm } from 'react-hook-form';
-import { zodSchema } from 'zod-schema';
-import { StripeProvider } from '@stripe/stripe-react-native';
-import { usePaymentIntent } from '../hooks/usePaymentIntent';
-import { usePaymentMutation } from '../hooks/usePaymentMutation';
-import { PaymentIntent } from '../types/PaymentIntent';
-import { Payment } from '../types/Payment';
+import { Text, View } from 'react-native';
+import { StripeProvider } from 'react-stripe-elements';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../../hooks/useAuth';
+import { usePayment } from '../../hooks/usePayment';
 
-const PaymentScreen = () => {
-  const navigation = useNavigation();
-  const { register, handleSubmit } = useForm<Payment>();
-  const { mutate: createPaymentIntent } = usePaymentIntent();
-  const { mutate: createPayment } = usePaymentMutation();
+const PaymentRoute = () => {
+  const { user } = useAuth();
+  const { paymentMethod } = usePayment();
+  const queryClient = useQueryClient();
 
-  const handlePayment = async (data: Payment) => {
+  const handlePayment = async () => {
     try {
-      const paymentIntent: PaymentIntent = await createPaymentIntent(
-        {
-          amount: data.amount,
-          currency: 'usd',
-          payment_method_types: ['card'],
-        }
-      );
-
-      const paymentMethod = await StripeProvider.setOptions({
-        publishingKey: 'YOUR_PUBLISHABLE_KEY',
-        merchantId: 'YOUR_MERCHANT_ID',
+      const paymentIntent = await paymentMethod.createPaymentIntent({
+        amount: 1000,
+        currency: 'usd',
+        payment_method_types: ['card'],
       });
-
-      const payment = await StripeProvider.paymentRequestWithCardForm(
-        paymentIntent.id,
-        paymentMethod
-      );
-
-      if (payment.status === 'succeeded') {
-        await createPayment({
-          appointmentId: data.appointmentId,
-          providerTxn: payment.transactionId,
-          amount: data.amount,
-          status: 'paid',
-        });
-      }
+      await queryClient.invalidateQueries('paymentIntent');
     } catch (error) {
       console.error(error);
     }
   };
 
   return (
-    <View>
-      <Text>Payment Screen</Text>
-      <TouchableOpacity onPress={handleSubmit(handlePayment)}>
-        <Text>Pay Now</Text>
-      </TouchableOpacity>
-    </View>
+    <StripeProvider
+      publishableKey='YOUR_PUBLISHABLE_KEY'
+      merchantId='YOUR_MERCHANT_ID'
+    >
+      <View>
+        <Text>Payment Method:</Text>
+        <Text>{paymentMethod.id}</Text>
+        <Link to='/payment/success'>Make Payment</Link>
+        <Button title='Make Payment' onPress={handlePayment} />
+      </View>
+    </StripeProvider>
   );
 };
 
-export default PaymentScreen;
+export default PaymentRoute;
