@@ -9,16 +9,9 @@ export class ReviewsService {
   async create(createReviewDto: CreateReviewDto) {
     return this.prismaService.review.create({
       data: {
-        rating: createReviewDto.rating,
-        comment: createReviewDto.comment,
-        salonId: createReviewDto.salonId,
-        userId: createReviewDto.userId,
+        ...createReviewDto,
       },
     });
-  }
-
-  async findAll() {
-    return this.prismaService.review.findMany();
   }
 
   async findOne(id: number) {
