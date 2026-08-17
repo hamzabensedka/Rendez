@@ -8,6 +8,6 @@ export class PaymentController {
 
   @Post('webhook')
   async webhook(@Body() createPaymentDto: CreatePaymentDto) {
-    return this.paymentService.webhook(createPaymentDto);
+    return this.paymentService.handleWebhook(createPaymentDto);
   }
 }
