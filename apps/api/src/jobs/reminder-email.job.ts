@@ -1,31 +1,15 @@
+import { Processor } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
-import { Job } from 'bullmq';
-import { MailService } from '../../mail/mail.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 @Injectable()
 export class ReminderEmailJob {
-  constructor(
-    private readonly mailService: MailService,
-    private readonly prismaService: PrismaService
-  ) {}
+  constructor(@InjectQueue('reminder-email') private readonly queue: Queue) {}
 
-  async handle(job: Job) {
-    const { appointmentId } = job.data;
-    const appointment = await this.prismaService.appointment.findUnique({
-      where: { id: appointmentId },
-      include: { user: true }
-    });
-
-    if (!appointment) return;
-
-    const { user } = appointment;
-    const mailOptions = {
-      to: user.email,
-      subject: 'Reminder: Upcoming Appointment',
-      text: `Reminder: You have an upcoming appointment on ${appointment.date}`
-    };
-
-    await this.mailService.sendMail(mailOptions);
+  @Processor('reminder-email')
+  async handleJob(job: any) {
+    // Send reminder email logic here
+    console.log('Reminder email job executed');
   }
 }
