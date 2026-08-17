@@ -1,27 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateBusinessHoursDto } from './dto/create-business-hours.dto';
+import { CreateStaffDto } from './dto/create-staff.dto';
+import { CreateServiceDto } from './dto/create-service.dto';
 
 @Injectable()
 export class ProviderService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
-  async getBusinesses() {
-    return this.prisma.business.findMany();
+  async createBusinessHours(createBusinessHoursDto: CreateBusinessHoursDto) {
+    return this.prismaService.businessHours.create({
+      data: createBusinessHoursDto,
+    });
   }
 
-  async getBusiness(id: number) {
-    return this.prisma.business.findUnique({ where: { id } });
+  async createStaff(createStaffDto: CreateStaffDto) {
+    return this.prismaService.staff.create({
+      data: createStaffDto,
+    });
   }
 
-  async createBusiness(createBusinessDto: any) {
-    return this.prisma.business.create({ data: createBusinessDto });
-  }
-
-  async updateBusiness(id: number, updateBusinessDto: any) {
-    return this.prisma.business.update({ where: { id }, data: updateBusinessDto });
-  }
-
-  async deleteBusiness(id: number) {
-    return this.prisma.business.delete({ where: { id } });
+  async createService(createServiceDto: CreateServiceDto) {
+    return this.prismaService.services.create({
+      data: createServiceDto,
+    });
   }
 }
