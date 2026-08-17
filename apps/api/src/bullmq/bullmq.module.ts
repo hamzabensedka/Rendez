@@ -1,27 +1,25 @@
 import { Module } from '@nestjs/common';
-import { BullmqModule } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import { PrismaService } from '../prisma/prisma.service';
-import { EmailService } from '../email/email.service';
-import { CacheService } from '../cache/cache.service';
+import { BullMQModule } from '@nestjs/bullmq';
+import { MongooseModule } from '@nestjs/mongoose';
+import { RedisModule } from '../redis/redis.module';
+import { BullmqService } from './bullmq.service';
 import { ReminderEmailJob } from '../jobs/reminder-email.job';
 import { AvailabilityCacheInvalidationJob } from '../jobs/availability-cache-invalidation.job';
 
 @Module({
   imports: [
-    BullmqModule.registerQueue({
-      name: 'reminder-emails'
-    }),
-    BullmqModule.registerQueue({
-      name: 'availability-cache-invalidation'
-    })
+    BullMQModule.registerQueue(
+      {
+        name: 'reminder-emails',
+      },
+    ),
+    BullMQModule.registerQueue(
+      {
+        name: 'availability-cache-invalidation',
+      },
+    ),
+    RedisModule,
   ],
-  providers: [
-    ReminderEmailJob,
-    AvailabilityCacheInvalidationJob,
-    PrismaService,
-    EmailService,
-    CacheService
-  ]
+  providers: [BullmqService, ReminderEmailJob, AvailabilityCacheInvalidationJob],
 })
 export class BullmqModule {}
