@@ -1,31 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from 'nestjs-prisma';
 import { Stripe } from 'stripe';
 import { Payment } from '@prisma/client';
 
 @Injectable()
 export class PaymentService {
-  private stripe: Stripe;
-
-  constructor(private readonly prismaService: PrismaService) {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2022-11-15',
-    });
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async createPayment(createPaymentDto: any) {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2022-11-15',
+    });
+
     try {
-      const paymentIntent = await this.stripe.paymentIntents.create({
+      const paymentIntent = await stripe.paymentIntents.create({
         amount: createPaymentDto.amount,
         currency: 'usd',
         payment_method_types: ['card'],
       });
 
-      const payment = await this.prismaService.payment.create({
+      const payment = await this.prisma.payment.create({
         data: {
-          appointmentId: createPaymentDto.appointmentId,
-          providerTxn: paymentIntent.id,
           amount: createPaymentDto.amount,
+          paymentIntentId: paymentIntent.id,
           status: 'pending',
         },
       });
