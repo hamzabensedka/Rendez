@@ -1,40 +1,33 @@
-import { Router, Route, Outlet, Link } from '@tanstack/react-router';
+import { ExpoRouter } from 'expo-router';
 import React from 'react';
-import { Text, View } from 'react-native';
-import { StripeProvider } from 'react-stripe-elements';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { StripeProvider } from '@stripe/stripe-react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../hooks/useAuth';
-import { usePayment } from '../../hooks/usePayment';
+import { paymentIntent } from '../api';
+import { PaymentScreen } from '../features/payment';
 
 const PaymentRoute = () => {
-  const { user } = useAuth();
-  const { paymentMethod } = usePayment();
   const queryClient = useQueryClient();
 
   const handlePayment = async () => {
-    try {
-      const paymentIntent = await paymentMethod.createPaymentIntent({
-        amount: 1000,
-        currency: 'usd',
-        payment_method_types: ['card'],
-      });
-      await queryClient.invalidateQueries('paymentIntent');
-    } catch (error) {
-      console.error(error);
+    const paymentIntentResponse = await paymentIntent();
+    const { clientSecret } = paymentIntentResponse;
+
+    // Initialize Stripe
+    const stripe = StripeProvider.init('publishable_key');
+
+    // Confirm payment
+    const paymentResponse = await stripe.confirmPaymentIntent(clientSecret);
+
+    if (paymentResponse.status === 'succeeded') {
+      // Update payment status
+      await queryClient.invalidateQueries('paymentStatus');
     }
   };
 
   return (
-    <StripeProvider
-      publishableKey='YOUR_PUBLISHABLE_KEY'
-      merchantId='YOUR_MERCHANT_ID'
-    >
-      <View>
-        <Text>Payment Method:</Text>
-        <Text>{paymentMethod.id}</Text>
-        <Link to='/payment/success'>Make Payment</Link>
-        <Button title='Make Payment' onPress={handlePayment} />
-      </View>
+    <StripeProvider publishableKey="publishable_key">
+      <PaymentScreen onPay={handlePayment} />
     </StripeProvider>
   );
 };
