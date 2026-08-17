@@ -1,17 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import { BookingsService } from '../api/bookings';
+import { api } from '../api/bookings';
 
 const BookingsTable = () => {
-  const [bookings, setBookings] = React.useState([]);
+  const [bookings, setBookings] = useState([]);
 
-  const fetchBookings = async () => {
-    const bookingsService = new BookingsService();
-    const data = await bookingsService.getAllBookings();
-    setBookings(data);
-  };
-
-  React.useEffect(() => {
+  useEffect(() => {
+    const fetchBookings = async () => {
+      const response = await api.getBookings();
+      setBookings(response.data);
+    };
     fetchBookings();
   }, []);
 
@@ -21,12 +19,12 @@ const BookingsTable = () => {
       <FlatList
         data={bookings}
         renderItem={({ item }) => (
-          <View>
+          <View style={styles.booking}>
             <Text>{item.id}</Text>
-            <Text>{item.userId}</Text>
-            <Text>{item.businessId}</Text>
+            <Text>{item.date}</Text>
           </View>
         )}
+        keyExtractor={(item) => item.id.toString()}
       />
     </View>
   );
@@ -36,8 +34,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
+  booking: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc'
+  }
 });
 
 export default BookingsTable;

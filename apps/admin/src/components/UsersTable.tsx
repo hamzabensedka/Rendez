@@ -1,17 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import { UsersService } from '../api/users';
+import { api } from '../api/users';
 
 const UsersTable = () => {
-  const [users, setUsers] = React.useState([]);
+  const [users, setUsers] = useState([]);
 
-  const fetchUsers = async () => {
-    const usersService = new UsersService();
-    const data = await usersService.getAllUsers();
-    setUsers(data);
-  };
-
-  React.useEffect(() => {
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const response = await api.getUsers();
+      setUsers(response.data);
+    };
     fetchUsers();
   }, []);
 
@@ -21,11 +19,12 @@ const UsersTable = () => {
       <FlatList
         data={users}
         renderItem={({ item }) => (
-          <View>
-            <Text>{item.id}</Text>
+          <View style={styles.user}>
+            <Text>{item.name}</Text>
             <Text>{item.email}</Text>
           </View>
         )}
+        keyExtractor={(item) => item.id.toString()}
       />
     </View>
   );
@@ -35,8 +34,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
+  user: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc'
+  }
 });
 
 export default UsersTable;
