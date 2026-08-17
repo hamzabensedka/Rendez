@@ -1,8 +1,8 @@
-import axios from 'axios';
+import api from '../../../api';
 
-const getUserProfile = async (userId: number) => {
-  const response = await axios.get(`https://example.com/api/users/${userId}`);
+const getUser = async (userId: number) => {
+  const response = await api.get(`/users/${userId}`);
   return response.data;
 };
 
-export { getUserProfile };
+export default getUser;

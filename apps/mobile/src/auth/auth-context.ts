@@ -1,47 +1,29 @@
-import React, { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
+import { useState, useEffect } from 'react';
 
-const AuthContext = createContext();
-
-const AuthProvider = ({ children }) => {
+const useAuth = () => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-      axios.get(`https://example.com/api/users/me`, {
-        headers: {
-          Authorization: `Bearer ${storedToken}`,
-        },
-      }).then((response) => {
-        setUser(response.data);
-      });
-    }
-  }, []);
-
-  const login = async (email, password) => {
-    const response = await axios.post('https://example.com/api/login', {
-      email,
-      password,
-    });
-    setToken(response.data.token);
-    setUser(response.data.user);
-    localStorage.setItem('token', response.data.token);
+  const login = async (credentials: any) => {
+    const response = await api.post('/login', credentials);
+    setUser(response.data);
   };
 
   const logout = async () => {
-    setToken(null);
+    await api.post('/logout');
     setUser(null);
-    localStorage.removeItem('token');
   };
 
-  return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const getCurrentUser = async () => {
+    const response = await api.get('/users/me');
+    setUser(response.data);
+  };
+
+  useEffect(() => {
+    getCurrentUser();
+  }, []);
+
+  return { user, login, logout };
 };
 
-export { AuthProvider, AuthContext };
+export default useAuth;
