@@ -1,5 +1,5 @@
 export class CreateServiceDto {
-  name: string;
-  duration: number;
-  price: number;
+  readonly name: string;
+  readonly description: string;
+  readonly price: number;
 }
