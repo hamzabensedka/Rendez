@@ -1,10 +1,11 @@
-import axios from 'axios';
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma.service';
 
-const businessesApi = axios.create({
-  baseURL: 'http://localhost:3000/api/businesses'
-});
+@Injectable()
+export class BusinessesService {
+  constructor(private readonly prisma: PrismaService) {}
 
-export const getBusinesses = async () => {
-  const response = await businessesApi.get('/');
-  return response.data;
-};
+  async getAllBusinesses() {
+    return this.prisma.business.findMany();
+  }
+}

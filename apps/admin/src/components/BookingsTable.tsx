@@ -1,41 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from 'react';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { BookingsService } from '../api/bookings';
 
 const BookingsTable = () => {
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = React.useState([]);
 
-  useEffect(() => {
-    axios.get('/api/bookings')
-      .then(response => {
-        setBookings(response.data);
-      })
-      .catch(error => {
-        console.error(error);
-      });
+  const fetchBookings = async () => {
+    const bookingsService = new BookingsService();
+    const data = await bookingsService.getAllBookings();
+    setBookings(data);
+  };
+
+  React.useEffect(() => {
+    fetchBookings();
   }, []);
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Date</th>
-          <th>Time</th>
-          <th>Business</th>
-        </tr>
-      </thead>
-      <tbody>
-        {bookings.map(booking => (
-          <tr key={booking.id}>
-            <td>{booking.id}</td>
-            <td>{booking.date}</td>
-            <td>{booking.time}</td>
-            <td>{booking.business.name}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <View style={styles.container}>
+      <Text>Bookings Table</Text>
+      <FlatList
+        data={bookings}
+        renderItem={({ item }) => (
+          <View>
+            <Text>{item.id}</Text>
+            <Text>{item.userId}</Text>
+            <Text>{item.businessId}</Text>
+          </View>
+        )}
+      />
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 export default BookingsTable;

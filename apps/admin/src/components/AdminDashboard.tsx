@@ -1,17 +1,26 @@
 import React from 'react';
-import { UsersTable } from './UsersTable';
-import { BusinessesTable } from './BusinessesTable';
-import { BookingsTable } from './BookingsTable';
+import { View, Text, StyleSheet } from 'react-native';
+import BookingsTable from './BookingsTable';
+import BusinessesTable from './BusinessesTable';
+import UsersTable from './UsersTable';
 
 const AdminDashboard = () => {
   return (
-    <div>
-      <h1>Admin Dashboard</h1>
-      <UsersTable />
-      <BusinessesTable />
+    <View style={styles.container}>
+      <Text>Admin Dashboard</Text>
       <BookingsTable />
-    </div>
+      <BusinessesTable />
+      <UsersTable />
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 export default AdminDashboard;

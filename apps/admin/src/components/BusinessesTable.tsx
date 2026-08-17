@@ -1,39 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from 'react';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { BusinessesService } from '../api/businesses';
 
 const BusinessesTable = () => {
-  const [businesses, setBusinesses] = useState([]);
+  const [businesses, setBusinesses] = React.useState([]);
 
-  useEffect(() => {
-    axios.get('/api/businesses')
-      .then(response => {
-        setBusinesses(response.data);
-      })
-      .catch(error => {
-        console.error(error);
-      });
+  const fetchBusinesses = async () => {
+    const businessesService = new BusinessesService();
+    const data = await businessesService.getAllBusinesses();
+    setBusinesses(data);
+  };
+
+  React.useEffect(() => {
+    fetchBusinesses();
   }, []);
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Address</th>
-        </tr>
-      </thead>
-      <tbody>
-        {businesses.map(business => (
-          <tr key={business.id}>
-            <td>{business.id}</td>
-            <td>{business.name}</td>
-            <td>{business.address}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <View style={styles.container}>
+      <Text>Businesses Table</Text>
+      <FlatList
+        data={businesses}
+        renderItem={({ item }) => (
+          <View>
+            <Text>{item.id}</Text>
+            <Text>{item.name}</Text>
+            <Text>{item.categoryId}</Text>
+          </View>
+        )}
+      />
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 export default BusinessesTable;

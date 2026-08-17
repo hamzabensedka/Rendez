@@ -1,39 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from 'react';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { UsersService } from '../api/users';
 
 const UsersTable = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = React.useState([]);
 
-  useEffect(() => {
-    axios.get('/api/users')
-      .then(response => {
-        setUsers(response.data);
-      })
-      .catch(error => {
-        console.error(error);
-      });
+  const fetchUsers = async () => {
+    const usersService = new UsersService();
+    const data = await usersService.getAllUsers();
+    setUsers(data);
+  };
+
+  React.useEffect(() => {
+    fetchUsers();
   }, []);
 
   return (
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Email</th>
-        </tr>
-      </thead>
-      <tbody>
-        {users.map(user => (
-          <tr key={user.id}>
-            <td>{user.id}</td>
-            <td>{user.name}</td>
-            <td>{user.email}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <View style={styles.container}>
+      <Text>Users Table</Text>
+      <FlatList
+        data={users}
+        renderItem={({ item }) => (
+          <View>
+            <Text>{item.id}</Text>
+            <Text>{item.email}</Text>
+          </View>
+        )}
+      />
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 export default UsersTable;
