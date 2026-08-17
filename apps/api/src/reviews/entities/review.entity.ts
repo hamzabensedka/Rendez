@@ -1,23 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { User } from '../auth/entities/user.entity';
-import { Business } from '../businesses/entities/business.entity';
+import { Field, ObjectType } from '@nestjs/graphql';
+import { BaseModel } from '../prisma/base.model';
 
-@Entity()
-export class Review {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  rating: number;
-
-  @Column()
+@ObjectType()
+export class Review extends BaseModel {
+  @Field(() => String)
   comment: string;
 
-  @ManyToOne(() => User, (user) => user.reviews)
-  @JoinColumn({ name: 'userId' })
-  user: User;
-
-  @ManyToOne(() => Business, (business) => business.reviews)
-  @JoinColumn({ name: 'businessId' })
-  business: Business;
+  @Field(() => Int)
+  rating: number;
 }

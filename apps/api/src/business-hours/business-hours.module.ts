@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
 import { BusinessHoursController } from './business-hours.controller';
 import { BusinessHoursService } from './business-hours.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { BusinessHours } from './entities/business-hours.entity';
+import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([BusinessHours])],
+  imports: [PrismaModule],
   controllers: [BusinessHoursController],
-  providers: [BusinessHoursService],
+  providers: [BusinessHoursService]
 })
 export class BusinessHoursModule {}
