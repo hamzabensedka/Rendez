@@ -1,21 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AppointmentsModule } from './appointments/appointments.module';
-import { AuthModule } from './auth/auth.module';
-import { AvailabilityModule } from './availability/availability.module';
-import { BullMQModule } from './bullmq/bullmq.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { JobsModule } from './jobs/jobs.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [
-    AppointmentsModule,
-    AuthModule,
-    AvailabilityModule,
-    BullMQModule,
-    PrismaModule,
-    JobsModule
-  ],
-  controllers: [],
-  providers: [],
+  imports: [UserModule],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
