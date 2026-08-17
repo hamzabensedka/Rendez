@@ -1,73 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { BusinessHoursDTO } from './dto/business-hours.dto';
-import { StaffDTO } from './dto/staff.dto';
-import { ServicesDTO } from './dto/services.dto';
 
 @Injectable()
 export class ProviderService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async createBusinessHours(businessHoursDTO: BusinessHoursDTO) {
-    return this.prismaService.businessHours.create({
-      data: businessHoursDTO,
-    });
+  async getBusinesses() {
+    return this.prisma.business.findMany();
   }
 
-  async getBusinessHours() {
-    return this.prismaService.businessHours.findMany();
+  async getBusiness(id: number) {
+    return this.prisma.business.findUnique({ where: { id } });
   }
 
-  async updateBusinessHours(id: number, businessHoursDTO: BusinessHoursDTO) {
-    return this.prismaService.businessHours.update({
-      where: { id },
-      data: businessHoursDTO,
-    });
+  async createBusiness(createBusinessDto: any) {
+    return this.prisma.business.create({ data: createBusinessDto });
   }
 
-  async deleteBusinessHours(id: number) {
-    return this.prismaService.businessHours.delete({ where: { id } });
+  async updateBusiness(id: number, updateBusinessDto: any) {
+    return this.prisma.business.update({ where: { id }, data: updateBusinessDto });
   }
 
-  async createStaff(staffDTO: StaffDTO) {
-    return this.prismaService.staff.create({
-      data: staffDTO,
-    });
-  }
-
-  async getStaff() {
-    return this.prismaService.staff.findMany();
-  }
-
-  async updateStaff(id: number, staffDTO: StaffDTO) {
-    return this.prismaService.staff.update({
-      where: { id },
-      data: staffDTO,
-    });
-  }
-
-  async deleteStaff(id: number) {
-    return this.prismaService.staff.delete({ where: { id } });
-  }
-
-  async createServices(servicesDTO: ServicesDTO) {
-    return this.prismaService.services.create({
-      data: servicesDTO,
-    });
-  }
-
-  async getServices() {
-    return this.prismaService.services.findMany();
-  }
-
-  async updateServices(id: number, servicesDTO: ServicesDTO) {
-    return this.prismaService.services.update({
-      where: { id },
-      data: servicesDTO,
-    });
-  }
-
-  async deleteServices(id: number) {
-    return this.prismaService.services.delete({ where: { id } });
+  async deleteBusiness(id: number) {
+    return this.prisma.business.delete({ where: { id } });
   }
 }
