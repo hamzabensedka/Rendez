@@ -19,18 +19,18 @@ const BookingsTable = () => {
       <thead>
         <tr>
           <th>ID</th>
-          <th>Business ID</th>
-          <th>User ID</th>
           <th>Date</th>
+          <th>Time</th>
+          <th>Business</th>
         </tr>
       </thead>
       <tbody>
         {bookings.map(booking => (
           <tr key={booking.id}>
             <td>{booking.id}</td>
-            <td>{booking.businessId}</td>
-            <td>{booking.userId}</td>
             <td>{booking.date}</td>
+            <td>{booking.time}</td>
+            <td>{booking.business.name}</td>
           </tr>
         ))}
       </tbody>

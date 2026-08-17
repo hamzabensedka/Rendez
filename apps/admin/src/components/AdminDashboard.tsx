@@ -1,17 +1,16 @@
 import React from 'react';
-import { Box, Text } from 'packages/ui';
-import BookingsTable from './BookingsTable';
-import BusinessesTable from './BusinessesTable';
-import UsersTable from './UsersTable';
+import { UsersTable } from './UsersTable';
+import { BusinessesTable } from './BusinessesTable';
+import { BookingsTable } from './BookingsTable';
 
 const AdminDashboard = () => {
   return (
-    <Box>
-      <Text variant="h1">Admin Dashboard</Text>
-      <BookingsTable />
-      <BusinessesTable />
+    <div>
+      <h1>Admin Dashboard</h1>
       <UsersTable />
-    </Box>
+      <BusinessesTable />
+      <BookingsTable />
+    </div>
   );
 };
 
