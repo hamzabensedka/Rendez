@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class StaffDto {
-  @ApiProperty({ example: 'John Doe' })
+  @ApiProperty()
   name: string;
 
-  @ApiProperty({ example: 'johndoe@example.com' })
+  @ApiProperty()
   email: string;
 
-  @ApiProperty({ example: '1234567890' })
+  @ApiProperty()
   phoneNumber: string;
 }

@@ -1,12 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class BusinessHoursDto {
-  @ApiProperty({ example: 'Monday' })
-  day: string;
+  @ApiProperty()
+  Monday: string;
 
-  @ApiProperty({ example: '09:00' })
-  startTime: string;
+  @ApiProperty()
+  Tuesday: string;
 
-  @ApiProperty({ example: '17:00' })
-  endTime: string;
+  @ApiProperty()
+  Wednesday: string;
+
+  @ApiProperty()
+  Thursday: string;
+
+  @ApiProperty()
+  Friday: string;
+
+  @ApiProperty()
+  Saturday: string;
+
+  @ApiProperty()
+  Sunday: string;
 }

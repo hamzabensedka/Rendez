@@ -13,38 +13,41 @@ export class ProviderService {
   }
 
   async createBusinessHours(businessHoursDto: BusinessHoursDto): Promise<any> {
-    return this.prismaService.businessHours.create({ data: businessHoursDto });
+    return this.prismaService.businessHours.create({
+      data: businessHoursDto,
+    });
   }
 
   async updateBusinessHours(id: number, businessHoursDto: BusinessHoursDto): Promise<any> {
-    return this.prismaService.businessHours.update({ where: { id }, data: businessHoursDto });
-  }
-
-  async deleteBusinessHours(id: number): Promise<any> {
-    return this.prismaService.businessHours.delete({ where: { id } });
+    return this.prismaService.businessHours.update({
+      where: { id },
+      data: businessHoursDto,
+    });
   }
 
   async createStaff(staffDto: StaffDto): Promise<any> {
-    return this.prismaService.staff.create({ data: staffDto });
+    return this.prismaService.staff.create({
+      data: staffDto,
+    });
   }
 
   async updateStaff(id: number, staffDto: StaffDto): Promise<any> {
-    return this.prismaService.staff.update({ where: { id }, data: staffDto });
-  }
-
-  async deleteStaff(id: number): Promise<any> {
-    return this.prismaService.staff.delete({ where: { id } });
+    return this.prismaService.staff.update({
+      where: { id },
+      data: staffDto,
+    });
   }
 
   async createServices(servicesDto: ServicesDto): Promise<any> {
-    return this.prismaService.services.create({ data: servicesDto });
+    return this.prismaService.services.create({
+      data: servicesDto,
+    });
   }
 
   async updateServices(id: number, servicesDto: ServicesDto): Promise<any> {
-    return this.prismaService.services.update({ where: { id }, data: servicesDto });
-  }
-
-  async deleteServices(id: number): Promise<any> {
-    return this.prismaService.services.delete({ where: { id } });
+    return this.prismaService.services.update({
+      where: { id },
+      data: servicesDto,
+    });
   }
 }
