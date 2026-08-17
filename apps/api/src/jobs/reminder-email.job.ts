@@ -1,42 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { BullMQ } from '@bullmq/bullmq';
-import { JobOptions } from '@bullmq/bullmq';
 import { PrismaService } from '../prisma/prisma.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { BullMQService } from '../bullmq/bullmq.service';
 
 @Injectable()
 export class ReminderEmailJob {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notifications: NotificationsService,
-    private readonly bullMQ: BullMQ
+    private readonly bullMQService: BullMQService
   ) {}
 
-  async handle(job: any, done: (err?: Error | null) => void) {
-    const { appointmentId } = job.data;
-    const appointment = await this.prisma.appointment.findUnique({
-      where: { id: appointmentId },
-      include: { user: true }
+  async execute() {
+    // Implement logic to send reminder emails using Prisma and BullMQ
+    const appointments = await this.prisma.appointment.findMany({
+      where: {
+        remindAt: {
+          lte: new Date()
+        }
+      }
     });
 
-    if (!appointment) {
-      done(new Error(`Appointment not found: ${appointmentId}`));
-      return;
-    }
-
-    const { user } = appointment;
-    const notification = {
-      recipient: user,
-      message: `Reminder: ${appointment.title}`
-    };
-
-    try {
-      await this.notifications.send(notification);
-      done();
-    } catch (error) {
-      done(error);
+    for (const appointment of appointments) {
+      await this.bullMQService.add('send-reminder-email', appointment);
     }
   }
 }
