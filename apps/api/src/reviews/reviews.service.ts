@@ -14,6 +14,10 @@ export class ReviewsService {
     });
   }
 
+  async findAll() {
+    return this.prismaService.review.findMany();
+  }
+
   async findOne(id: number) {
     return this.prismaService.review.findUnique({
       where: { id },

@@ -11,6 +11,11 @@ export class ReviewsController {
     return this.reviewsService.create(createReviewDto);
   }
 
+  @Get()
+  async findAll() {
+    return this.reviewsService.findAll();
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: number) {
     return this.reviewsService.findOne(id);
