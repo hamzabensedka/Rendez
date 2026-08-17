@@ -7,17 +7,12 @@ export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
   @Post()
-  create(@Body() createReviewDto: CreateReviewDto) {
+  async create(@Body() createReviewDto: CreateReviewDto) {
     return this.reviewsService.create(createReviewDto);
   }
 
-  @Get()
-  findAll() {
-    return this.reviewsService.findAll();
-  }
-
   @Get(':id')
-  findOne(@Param('id') id: number) {
+  async findOne(@Param('id') id: number) {
     return this.reviewsService.findOne(id);
   }
 }

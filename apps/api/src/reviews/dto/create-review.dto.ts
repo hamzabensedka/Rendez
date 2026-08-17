@@ -9,7 +9,4 @@ export class CreateReviewDto {
 
   @ApiProperty()
   salonId: number;
-
-  @ApiProperty()
-  userId: number;
 }
