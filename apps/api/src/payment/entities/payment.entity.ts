@@ -1,19 +1,20 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Field, ObjectType } from '@nestjs/graphql';
+import { BaseModel } from '../../prisma/base.model';
 
-@Entity()
-export class Payment {
-  @PrimaryGeneratedColumn()
-  id: number;
+@ObjectType()
+export class Payment extends BaseModel {
+  @Field(() => String)
+  status: string;
 
-  @Column()
-  appointmentId: number;
+  @Field(() => String)
+  method: string;
 
-  @Column()
-  providerTxn: string;
-
-  @Column()
+  @Field(() => Float)
   amount: number;
 
-  @Column()
-  status: string;
+  @Field(() => Date)
+  createdAt: Date;
+
+  @Field(() => Date)
+  updatedAt: Date;
 }
