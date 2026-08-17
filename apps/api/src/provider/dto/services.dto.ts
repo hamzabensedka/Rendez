@@ -1,6 +1,12 @@
-export class ServicesDto {
-  id: number;
+import { ApiProperty } from '@nestjs/swagger';
+
+export class ServicesDTO {
+  @ApiProperty()
   name: string;
-  duration: number;
+
+  @ApiProperty()
+  description: string;
+
+  @ApiProperty()
   price: number;
 }

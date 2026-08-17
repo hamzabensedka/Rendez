@@ -1,36 +1,73 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { BusinessHours } from '../business-hours/entities/business-hours.entity';
-import { Staff } from '../staff/entities/staff.entity';
-import { Service } from '../services/entities/service.entity';
-import { CreateBusinessHoursDto } from '../business-hours/dto/create-business-hours.dto';
-import { CreateStaffDto } from '../staff/dto/create-staff.dto';
-import { CreateServiceDto } from '../services/dto/create-service.dto';
+import { PrismaService } from '../prisma/prisma.service';
+import { BusinessHoursDTO } from './dto/business-hours.dto';
+import { StaffDTO } from './dto/staff.dto';
+import { ServicesDTO } from './dto/services.dto';
 
 @Injectable()
 export class ProviderService {
-  constructor(
-    @InjectRepository(BusinessHours)
-    private readonly businessHoursRepository: Repository<BusinessHours>,
-    @InjectRepository(Staff)
-    private readonly staffRepository: Repository<Staff>,
-    @InjectRepository(Service)
-    private readonly serviceRepository: Repository<Service>,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
-  async createBusinessHours(createBusinessHoursDto: CreateBusinessHoursDto) {
-    const businessHours = this.businessHoursRepository.create(createBusinessHoursDto);
-    return this.businessHoursRepository.save(businessHours);
+  async createBusinessHours(businessHoursDTO: BusinessHoursDTO) {
+    return this.prismaService.businessHours.create({
+      data: businessHoursDTO,
+    });
   }
 
-  async createStaff(createStaffDto: CreateStaffDto) {
-    const staff = this.staffRepository.create(createStaffDto);
-    return this.staffRepository.save(staff);
+  async getBusinessHours() {
+    return this.prismaService.businessHours.findMany();
   }
 
-  async createService(createServiceDto: CreateServiceDto) {
-    const service = this.serviceRepository.create(createServiceDto);
-    return this.serviceRepository.save(service);
+  async updateBusinessHours(id: number, businessHoursDTO: BusinessHoursDTO) {
+    return this.prismaService.businessHours.update({
+      where: { id },
+      data: businessHoursDTO,
+    });
+  }
+
+  async deleteBusinessHours(id: number) {
+    return this.prismaService.businessHours.delete({ where: { id } });
+  }
+
+  async createStaff(staffDTO: StaffDTO) {
+    return this.prismaService.staff.create({
+      data: staffDTO,
+    });
+  }
+
+  async getStaff() {
+    return this.prismaService.staff.findMany();
+  }
+
+  async updateStaff(id: number, staffDTO: StaffDTO) {
+    return this.prismaService.staff.update({
+      where: { id },
+      data: staffDTO,
+    });
+  }
+
+  async deleteStaff(id: number) {
+    return this.prismaService.staff.delete({ where: { id } });
+  }
+
+  async createServices(servicesDTO: ServicesDTO) {
+    return this.prismaService.services.create({
+      data: servicesDTO,
+    });
+  }
+
+  async getServices() {
+    return this.prismaService.services.findMany();
+  }
+
+  async updateServices(id: number, servicesDTO: ServicesDTO) {
+    return this.prismaService.services.update({
+      where: { id },
+      data: servicesDTO,
+    });
+  }
+
+  async deleteServices(id: number) {
+    return this.prismaService.services.delete({ where: { id } });
   }
 }

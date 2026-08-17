@@ -1,9 +1,24 @@
-export class BusinessHoursDto {
-  Monday: string;
-  Tuesday: string;
-  Wednesday: string;
-  Thursday: string;
-  Friday: string;
-  Saturday: string;
-  Sunday: string;
+import { ApiProperty } from '@nestjs/swagger';
+
+export class BusinessHoursDTO {
+  @ApiProperty()
+  monday: string;
+
+  @ApiProperty()
+  tuesday: string;
+
+  @ApiProperty()
+  wednesday: string;
+
+  @ApiProperty()
+  thursday: string;
+
+  @ApiProperty()
+  friday: string;
+
+  @ApiProperty()
+  saturday: string;
+
+  @ApiProperty()
+  sunday: string;
 }
