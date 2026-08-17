@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Stripe } from 'stripe';
-import { Payment } from '@prisma/client';
 
 @Injectable()
 export class PaymentService {
@@ -13,34 +12,22 @@ export class PaymentService {
     });
   }
 
-  async createPaymentIntent(amount: number) {
+  async createPayment(createPaymentDto: any) {
     const paymentIntent = await this.stripe.paymentIntents.create({
-      amount,
+      amount: createPaymentDto.amount,
       currency: 'usd',
       payment_method_types: ['card'],
     });
-    return paymentIntent;
-  }
 
-  async handleWebhook(createPaymentDto: any) {
-    const signature = createPaymentDto.headers['stripe-signature'];
-    const event = this.stripe.webhooks.constructEvent(
-      createPaymentDto.body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    const payment = await this.prismaService.payment.create({
+      data: {
+        appointmentId: createPaymentDto.appointmentId,
+        providerTxn: paymentIntent.id,
+        amount: createPaymentDto.amount,
+        status: 'pending',
+      },
+    });
 
-    if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object;
-      const payment = await this.prismaService.payment.create({
-        data: {
-          appointmentId: paymentIntent.metadata.appointmentId,
-          providerTxn: paymentIntent.id,
-          amount: paymentIntent.amount,
-          status: 'success',
-        },
-      });
-      return payment;
-    }
+    return payment;
   }
 }
