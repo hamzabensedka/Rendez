@@ -1,17 +1,15 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
-import { BusinessesService } from '../api/businesses';
+import { api } from '../api/businesses';
 
 const BusinessesTable = () => {
-  const [businesses, setBusinesses] = React.useState([]);
+  const [businesses, setBusinesses] = useState([]);
 
-  const fetchBusinesses = async () => {
-    const businessesService = new BusinessesService();
-    const data = await businessesService.getAllBusinesses();
-    setBusinesses(data);
-  };
-
-  React.useEffect(() => {
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      const response = await api.getBusinesses();
+      setBusinesses(response.data);
+    };
     fetchBusinesses();
   }, []);
 
@@ -21,12 +19,12 @@ const BusinessesTable = () => {
       <FlatList
         data={businesses}
         renderItem={({ item }) => (
-          <View>
-            <Text>{item.id}</Text>
+          <View style={styles.business}>
             <Text>{item.name}</Text>
-            <Text>{item.categoryId}</Text>
+            <Text>{item.address}</Text>
           </View>
         )}
+        keyExtractor={(item) => item.id.toString()}
       />
     </View>
   );
@@ -36,8 +34,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
+  business: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc'
+  }
 });
 
 export default BusinessesTable;
