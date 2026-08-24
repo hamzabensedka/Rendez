@@ -17,7 +17,20 @@ export interface UseBookingSubmitParams {
 function formatSuccessDate(isoDate: string): string {
   const d = new Date(isoDate);
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
 }
 
@@ -64,14 +77,17 @@ export function useBookingSubmit(params: UseBookingSubmitParams) {
         idempotencyKey: generateIdempotencyKey(),
       };
       const { data } = await api.post<{ id?: string }>('/appointments', payload);
-      const loc = business?.locations?.[0] as { address1?: string; postalCode?: string; city?: string } | undefined;
+      const loc = business?.locations?.[0] as
+        | { address1?: string; postalCode?: string; city?: string }
+        | undefined;
       const address = loc
         ? [loc.address1, loc.postalCode, loc.city].filter(Boolean).join(', ')
         : '';
       const totalMinutes = selectedServices.reduce((sum, s) => sum + (s.durationMin ?? 0), 0);
-      const serviceLabel = selectedServices.length === 1
-        ? selectedServices[0].name
-        : selectedServices.map((s) => s.name).join(', ');
+      const serviceLabel =
+        selectedServices.length === 1
+          ? selectedServices[0].name
+          : selectedServices.map((s) => s.name).join(', ');
       router.replace({
         pathname: '/(main)/booking/success',
         params: {
@@ -86,8 +102,11 @@ export function useBookingSubmit(params: UseBookingSubmitParams) {
       });
     } catch (err: unknown) {
       const message =
-        err && typeof err === 'object' && 'response' in err &&
-        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+        err &&
+        typeof err === 'object' &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message ===
+          'string'
           ? (err as { response: { data: { message: string } } }).response.data.message
           : 'Something went wrong. Please try again or choose another slot.';
       Alert.alert('Booking failed', message);

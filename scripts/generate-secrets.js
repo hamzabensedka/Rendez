@@ -16,4 +16,3 @@ console.log('Copy these to your .env file:\n');
 console.log(`JWT_ACCESS_SECRET="${generateSecret()}"`);
 console.log(`JWT_REFRESH_SECRET="${generateSecret()}"`);
 console.log('\n✅ Done! Keep these secrets secure and never commit them to git.');
-

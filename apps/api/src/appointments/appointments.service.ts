@@ -1,98 +1,235 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
-import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
-import { NotificationService } from '../notifications/notification.service';
-import { BookingNotificationData, NotificationChannel } from '../notifications/notification-channel.enum';
+import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
+
+type Tx = PrismaService | Parameters<Parameters<PrismaService['$transaction']>[0]>[0];
+
+const isOverlapViolation = (err: unknown): boolean => {
+  const raw = String((err as { message?: string; meta?: { message?: string } })?.message ?? '');
+  const meta = String((err as { meta?: { message?: string } })?.meta?.message ?? '');
+  return `${raw} ${meta}`.includes('23P01') || `${raw} ${meta}`.includes('no_overlapping');
+};
 
 @Injectable()
 export class AppointmentsService {
   private readonly logger = new Logger(AppointmentsService.name);
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly notificationService: NotificationService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateAppointmentDto) {
-    const appointment = await this.prisma.appointment.create({
-      data: {
-        userId,
-        businessId: dto.businessId,
-        serviceId: dto.serviceId,
-        start: new Date(dto.start),
-        end: new Date(dto.end),
-        status: 'CONFIRMED',
-      },
-      include: {
-        user: true,
-        business: true,
-        service: true,
-      },
-    });
-
-    this.logger.log(`Created appointment ${appointment.id} for user ${userId}`);
-
-    // Send booking confirmation notification
-    try {
-      const notificationData: BookingNotificationData = {
-        appointmentId: appointment.id,
-        businessName: appointment.business.name,
-        serviceName: appointment.service.name,
-        dateTime: appointment.start.toISOString(),
-        customerName: appointment.user.name || appointment.user.email,
-        customerEmail: appointment.user.email,
-      };
-
-      await this.notificationService.sendBookingConfirmation(
-        notificationData,
-        [NotificationChannel.EMAIL],
-      );
-
-      // Schedule booking reminder (24 hours before)
-      const reminderTime = appointment.start.getTime() - 24 * 60 * 60 * 1000;
-      const now = Date.now();
-      
-      if (reminderTime > now) {
-        await this.notificationService.sendBookingReminder(
-          notificationData,
-          [NotificationChannel.EMAIL],
-        );
-      }
-    } catch (error) {
-      this.logger.error('Failed to send booking confirmation notification', error);
+    if (!dto.items.length) {
+      throw new BadRequestException('At least one service item is required');
     }
 
-    return appointment;
+    try {
+      return await this.prisma.$transaction(async (tx: Tx) => {
+        const business = await tx.business.findFirst({
+          where: { id: dto.businessId, status: 'active', deletedAt: null },
+          select: { id: true, timezone: true },
+        });
+        if (!business) {
+          throw new NotFoundException('Business not found or not active');
+        }
+
+        const location = await tx.location.findFirst({
+          where: { id: dto.locationId, businessId: dto.businessId },
+          select: { id: true },
+        });
+        if (!location) {
+          throw new BadRequestException('The selected location does not belong to this business');
+        }
+
+        if (dto.staffId) {
+          const staff = await tx.staff.findFirst({
+            where: { id: dto.staffId, businessId: dto.businessId },
+            select: { id: true },
+          });
+          if (!staff) {
+            throw new BadRequestException(
+              'The selected staff member does not belong to this business'
+            );
+          }
+        }
+
+        const variantIds = dto.items.map((i) => i.serviceVariantId);
+        const variants = await tx.serviceVariant.findMany({
+          where: { id: { in: variantIds } },
+          select: {
+            id: true,
+            durationMin: true,
+            bufferBeforeMin: true,
+            bufferAfterMin: true,
+            priceCents: true,
+            service: { select: { businessId: true, isActive: true } },
+          },
+        });
+        const byId = new Map(variants.map((v) => [v.id, v]));
+        for (const item of dto.items) {
+          const v = byId.get(item.serviceVariantId);
+          if (!v || !v.service.isActive || v.service.businessId !== dto.businessId) {
+            throw new BadRequestException(
+              'One or more service variants do not belong to this business or are unavailable'
+            );
+          }
+        }
+
+        const start = new Date(dto.startAt);
+        let durationMs = 0;
+        let bufferAfterMs = 0;
+        for (const item of dto.items) {
+          const v = byId.get(item.serviceVariantId)!;
+          const qty = item.quantity ?? 1;
+          durationMs += v.durationMin * 60_000 * qty;
+          // Leading buffers are enforced by the availability slot generator;
+          // reserving them in the exclusion range requires a DB change (roadmap).
+          bufferAfterMs = Math.max(bufferAfterMs, (v.bufferAfterMin ?? 0) * 60_000);
+        }
+        // Trailing buffer is reserved inside the excluded [start, end) range so
+        // overlapping slots cannot be booked; leading buffer is honored by the
+        // availability slot generator.
+        const end = new Date(start.getTime() + durationMs + bufferAfterMs);
+
+        const appointment = await tx.appointment.create({
+          data: {
+            businessId: dto.businessId,
+            locationId: dto.locationId,
+            clientUserId: userId,
+            staffId: dto.staffId,
+            startAtUtc: start,
+            endAtUtc: end,
+            timezoneSnapshot: business.timezone,
+            idempotencyKey: dto.idempotencyKey,
+          },
+          include: {
+            business: true,
+            location: true,
+            appointmentItems: true,
+          },
+        });
+
+        await tx.appointmentItem.createMany({
+          data: dto.items.map((item) => {
+            const v = byId.get(item.serviceVariantId)!;
+            return {
+              appointmentId: appointment.id,
+              serviceVariantId: item.serviceVariantId,
+              durationMinSnapshot: v.durationMin,
+              priceCentsSnapshot: v.priceCents,
+              quantity: item.quantity ?? 1,
+            };
+          }),
+        });
+
+        this.logger.log(`Created appointment ${appointment.id} for user ${userId}`);
+        return appointment;
+      });
+    } catch (err) {
+      if (isOverlapViolation(err)) {
+        throw new ConflictException('This time slot is no longer available');
+      }
+      throw err;
+    }
   }
 
-  async findAllByUser(userId: string) {
-    return this.prisma.appointment.findMany({
-      where: { userId },
+  async findUserAppointments(userId: string, upcoming = true, page = 1, limit = 20) {
+    const take = Math.min(Math.max(limit || 20, 1), 100);
+    const skip = Math.max(((page || 1) - 1) * take, 0);
+    const now = new Date();
+
+    const where = {
+      clientUserId: userId,
+      ...(upcoming ? { startAtUtc: { gte: now } } : {}),
+    };
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.appointment.findMany({
+        where,
+        include: {
+          business: true,
+          location: true,
+          appointmentItems: { include: { serviceVariant: true } },
+        },
+        orderBy: { startAtUtc: upcoming ? 'asc' : 'desc' },
+        skip,
+        take,
+      }),
+      this.prisma.appointment.count({ where }),
+    ]);
+
+    return { data, total, page: page || 1, limit: take };
+  }
+
+  async findOne(id: string, user: AuthenticatedUser) {
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id },
       include: {
         business: true,
-        service: true,
+        location: true,
+        appointmentItems: { include: { serviceVariant: true } },
       },
-      orderBy: { start: 'asc' },
     });
+    if (!appointment) {
+      throw new NotFoundException('Appointment not found');
+    }
+
+    if (appointment.clientUserId === user.id || user.role === 'admin') {
+      return appointment;
+    }
+
+    if (user.role === 'providerOwner' || user.role === 'providerStaff') {
+      const provider = await this.prisma.provider.findFirst({
+        where: { userId: user.id, businessId: appointment.businessId },
+        select: { id: true },
+      });
+      if (provider) return appointment;
+      throw new ForbiddenException('You cannot access appointments of another business');
+    }
+
+    throw new ForbiddenException('You cannot access this appointment');
   }
 
-  async cancel(userId: string, appointmentId: string, dto: CancelAppointmentDto) {
-    const appointment = await this.prisma.appointment.update({
-      where: { id: appointmentId },
+  async cancel(id: string, user: AuthenticatedUser, reason?: string) {
+    // Access control (owner / same-business provider / admin).
+    const appointment = await this.findOne(id, user);
+
+    if (appointment.status !== 'BOOKED') {
+      throw new ConflictException(
+        `Only booked appointments can be cancelled (current status: ${appointment.status})`
+      );
+    }
+
+    const freeHours = appointment.business.freeCancellationBeforeHours;
+    if (
+      typeof freeHours === 'number' &&
+      freeHours > 0 &&
+      Date.now() > appointment.startAtUtc.getTime() - freeHours * 3_600_000
+    ) {
+      throw new ConflictException(
+        `Free cancellation window has passed (${freeHours}h before start)`
+      );
+    }
+
+    const result = await this.prisma.appointment.updateMany({
+      where: { id, status: 'BOOKED' },
       data: {
         status: 'CANCELLED',
-        cancelReason: dto.reason,
-      },
-      include: {
-        user: true,
-        business: true,
-        service: true,
+        cancelReason: reason,
+        cancelledAt: new Date(),
       },
     });
+    if (result.count === 0) {
+      throw new ConflictException('Appointment was already cancelled');
+    }
 
-    this.logger.log(`Cancelled appointment ${appointmentId}`);
-
-    return appointment;
+    this.logger.log(`Cancelled appointment ${id}`);
+    return this.findOne(id, user);
   }
 }

@@ -7,4 +7,3 @@ export class CancelAppointmentDto {
   @IsString()
   reason?: string;
 }
-

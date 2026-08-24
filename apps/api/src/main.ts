@@ -1,13 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { Logger } from 'nestjs-pino';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { envSchema } from './env.validation';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 
-// Fail fast if required env vars are missing or invalid
 envSchema.validate();
 
 function parseAllowedOrigins(): string[] {
@@ -22,17 +21,14 @@ function parseAllowedOrigins(): string[] {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
-  app.useLogger(app.get(Logger));
+  const app = await NestFactory.create(AppModule);
+
+  app.useLogger(app.get(PinoLogger));
+  const logger = app.get(PinoLogger);
 
   app.use(helmet());
-
-  // Global prefix
   app.setGlobalPrefix('v1');
-
   app.useGlobalFilters(new GlobalExceptionFilter());
-
-  // Validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -41,13 +37,11 @@ async function bootstrap() {
     })
   );
 
-  // CORS
   app.enableCors({
     origin: parseAllowedOrigins(),
     credentials: true,
   });
 
-  // Swagger (non-production only)
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('Planity API')
@@ -61,12 +55,9 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  const logger = app.get(Logger);
   logger.log(`API listening on port ${port} (prefix /v1)`);
   if (process.env.NODE_ENV !== 'production') {
     logger.log(`Swagger UI at http://localhost:${port}/api`);
   }
 }
-
 bootstrap();
-

@@ -11,7 +11,7 @@ export const SalonInfo = React.memo<SalonInfoProps>(function SalonInfo({ salon }
   return (
     <View style={styles.container}>
       <Text style={styles.name}>{salon.name}</Text>
-      
+
       <View style={styles.row}>
         <Ionicons name="location-outline" size={18} color="#666" style={styles.icon} />
         <Text style={styles.address}>{salon.address}</Text>

@@ -10,36 +10,36 @@ interface SearchResultsHeaderProps {
   onBack?: () => void;
 }
 
-export const SearchResultsHeader = React.memo<SearchResultsHeaderProps>(function SearchResultsHeader({ 
-  onBack 
-}) {
-  const router = useRouter();
+export const SearchResultsHeader = React.memo<SearchResultsHeaderProps>(
+  function SearchResultsHeader({ onBack }) {
+    const router = useRouter();
 
-  const handleBack = useCallback(() => {
-    if (onBack) {
-      onBack();
-    } else {
-      router.back();
-    }
-  }, [onBack, router]);
+    const handleBack = useCallback(() => {
+      if (onBack) {
+        onBack();
+      } else {
+        router.back();
+      }
+    }, [onBack, router]);
 
-  return (
-    <View style={styles.header}>
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={handleBack}
-        accessibilityLabel="Back"
-        accessibilityRole="button"
-      >
-        <Ionicons name="arrow-back" size={24} color={colors.light.text} />
-      </TouchableOpacity>
-      
-      <AppLogo />
-      
-      <ProfileButton />
-    </View>
-  );
-});
+    return (
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleBack}
+          accessibilityLabel="Back"
+          accessibilityRole="button"
+        >
+          <Ionicons name="arrow-back" size={24} color={colors.light.text} />
+        </TouchableOpacity>
+
+        <AppLogo />
+
+        <ProfileButton />
+      </View>
+    );
+  }
+);
 
 const styles = StyleSheet.create({
   header: {

@@ -1,8 +1,19 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useServiceCategoriesQuery, type ServiceCategoryDto } from '../../../application/query/hooks';
+import {
+  useServiceCategoriesQuery,
+  type ServiceCategoryDto,
+} from '../../../application/query/hooks';
 
 interface ServiceFiltersProps {
   visible: boolean;
@@ -42,51 +53,66 @@ export const ServiceFilters = React.memo<ServiceFiltersProps>(function ServiceFi
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
       <SafeAreaProvider>
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
-        <View style={styles.topBar}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton} accessibilityRole="button">
-            <Ionicons name="close" size={28} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleReset} accessibilityRole="button">
-            <Text style={styles.resetButton}>Réinitialiser</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.topBar}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeButton}
+              accessibilityRole="button"
+            >
+              <Ionicons name="close" size={28} color="#000" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleReset} accessibilityRole="button">
+              <Text style={styles.resetButton}>Réinitialiser</Text>
+            </TouchableOpacity>
+          </View>
 
-        <View style={styles.content}>
-          <Text style={styles.mainTitle}>Prestations</Text>
+          <View style={styles.content}>
+            <Text style={styles.mainTitle}>Prestations</Text>
 
-          {isPending ? (
-            <ActivityIndicator style={styles.loader} />
-          ) : isError ? (
-            <Text style={styles.errorText}>Impossible de charger les catégories.</Text>
-          ) : (
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View style={styles.chipsContainer}>
-                {categories.map((c: ServiceCategoryDto) => {
-                  const isSelected = selectedSlugs.includes(c.slug);
-                  return (
-                    <TouchableOpacity
-                      key={c.slug}
-                      style={[styles.chip, isSelected && styles.chipSelected]}
-                      onPress={() => toggleSlug(c.slug)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>{c.label}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </ScrollView>
-          )}
-        </View>
+            {isPending ? (
+              <ActivityIndicator style={styles.loader} />
+            ) : isError ? (
+              <Text style={styles.errorText}>Impossible de charger les catégories.</Text>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={styles.chipsContainer}>
+                  {categories.map((c: ServiceCategoryDto) => {
+                    const isSelected = selectedSlugs.includes(c.slug);
+                    return (
+                      <TouchableOpacity
+                        key={c.slug}
+                        style={[styles.chip, isSelected && styles.chipSelected]}
+                        onPress={() => toggleSlug(c.slug)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                          {c.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            )}
+          </View>
 
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.applyButton} onPress={handleApply} accessibilityRole="button">
-            <Text style={styles.applyButtonText}>Enregistrer</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={styles.applyButton}
+              onPress={handleApply}
+              accessibilityRole="button"
+            >
+              <Text style={styles.applyButtonText}>Enregistrer</Text>
+            </TouchableOpacity>
+          </View>
         </SafeAreaView>
       </SafeAreaProvider>
     </Modal>

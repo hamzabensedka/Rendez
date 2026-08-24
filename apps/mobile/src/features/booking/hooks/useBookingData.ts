@@ -24,7 +24,12 @@ export interface BookingBusiness {
   services?: Array<{
     id: string;
     name: string;
-    serviceVariants?: Array<{ id: string; name: string; durationMin: number; priceCents: number | null }>;
+    serviceVariants?: Array<{
+      id: string;
+      name: string;
+      durationMin: number;
+      priceCents: number | null;
+    }>;
   }>;
 }
 
@@ -66,9 +71,9 @@ export function useBookingData(
   const serviceVariant = useMemo((): ServiceVariant | null => {
     if (!business || !serviceVariantId) return null;
     for (const service of business.services ?? []) {
-        const variant = service.serviceVariants?.find(
-          (v: { id: string }) => v.id === serviceVariantId
-        );
+      const variant = service.serviceVariants?.find(
+        (v: { id: string }) => v.id === serviceVariantId
+      );
       if (variant) {
         return { ...variant, service: { id: service.id, name: service.name } };
       }

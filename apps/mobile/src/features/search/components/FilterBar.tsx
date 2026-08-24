@@ -10,10 +10,7 @@ interface FilterBarProps {
   onSelect: (filterId: string) => void;
 }
 
-export const FilterBar = React.memo<FilterBarProps>(function FilterBar({
-  filters,
-  onSelect,
-}) {
+export const FilterBar = React.memo<FilterBarProps>(function FilterBar({ filters, onSelect }) {
   return (
     <View style={styles.container}>
       <ScrollView
@@ -28,13 +25,15 @@ export const FilterBar = React.memo<FilterBarProps>(function FilterBar({
             onPress={() => onSelect(filter.id)}
             variant="secondary"
             size="sm"
-            leftIcon={filter.icon ? (
-              <Ionicons
-                name={filter.icon as React.ComponentProps<typeof Ionicons>['name']}
-                size={18}
-                color={colors.light.accent}
-              />
-            ) : undefined}
+            leftIcon={
+              filter.icon ? (
+                <Ionicons
+                  name={filter.icon as React.ComponentProps<typeof Ionicons>['name']}
+                  size={18}
+                  color={colors.light.accent}
+                />
+              ) : undefined
+            }
             style={styles.chip}
             textStyle={{ fontWeight: '500' }}
           />

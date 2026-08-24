@@ -5,9 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.rendez.app"
@@ -17,13 +15,19 @@
     },
     "web": {},
     "plugins": [
-      "expo-router",
-      "expo-font",
-      "@maplibre/maplibre-react-native"
+      [
+        "expo-router",
+        {
+          "root": "./app"
+        }
+      ],
+      "expo-font"
     ],
     "scheme": "rendez",
     "extra": {
-      "router": {},
+      "router": {
+        "root": "./app"
+      },
       "eas": {
         "projectId": "71437d10-d154-4254-9f57-563559d607c9"
       }

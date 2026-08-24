@@ -66,42 +66,51 @@ export const SearchInput = React.memo<SearchInputProps>(function SearchInput({
               accessibilityLabel="Search"
             />
             {showClear ? (
-              <TouchableOpacity onPress={handleClear} style={styles.clearButton} accessibilityLabel="Clear search" accessibilityRole="button">
-                <Text variant="footnote" color={colors.light.accent}>Clear</Text>
+              <TouchableOpacity
+                onPress={handleClear}
+                style={styles.clearButton}
+                accessibilityLabel="Clear search"
+                accessibilityRole="button"
+              >
+                <Text variant="footnote" color={colors.light.accent}>
+                  Clear
+                </Text>
               </TouchableOpacity>
             ) : null}
           </View>
         ) : (
-        <View style={styles.searchRow}>
-          <Ionicons
-            name="search"
-            size={20}
-            color={colors.light.textSecondary}
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder={placeholder}
-            placeholderTextColor={colors.light.textTertiary}
-            value={value}
-            onChangeText={onChangeText}
-            onSubmitEditing={onSubmitEditing}
-            autoFocus={autoFocus}
-            maxLength={maxLength}
-            returnKeyType="search"
-            accessibilityLabel="Search"
-          />
-          {showClear ? (
-            <TouchableOpacity
-              onPress={handleClear}
-              style={styles.clearButton}
-              accessibilityLabel="Clear search"
-              accessibilityRole="button"
-            >
-              <Text variant="footnote" color={colors.light.accent}>Clear</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
+          <View style={styles.searchRow}>
+            <Ionicons
+              name="search"
+              size={20}
+              color={colors.light.textSecondary}
+              style={styles.searchIcon}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder={placeholder}
+              placeholderTextColor={colors.light.textTertiary}
+              value={value}
+              onChangeText={onChangeText}
+              onSubmitEditing={onSubmitEditing}
+              autoFocus={autoFocus}
+              maxLength={maxLength}
+              returnKeyType="search"
+              accessibilityLabel="Search"
+            />
+            {showClear ? (
+              <TouchableOpacity
+                onPress={handleClear}
+                style={styles.clearButton}
+                accessibilityLabel="Clear search"
+                accessibilityRole="button"
+              >
+                <Text variant="footnote" color={colors.light.accent}>
+                  Clear
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
         )}
       </View>
     </View>

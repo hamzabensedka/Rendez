@@ -46,24 +46,24 @@ describe('AvailabilityService', () => {
     it('throws NotFoundException when business is not found', async () => {
       mockPrisma.business.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.getAvailableSlots(businessId, date, variantId)
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.getAvailableSlots(businessId, date, variantId)
-      ).rejects.toThrow(/business not found/i);
+      await expect(service.getAvailableSlots(businessId, date, variantId)).rejects.toThrow(
+        NotFoundException
+      );
+      await expect(service.getAvailableSlots(businessId, date, variantId)).rejects.toThrow(
+        /business not found/i
+      );
     });
 
     it('throws NotFoundException when service variant is not found', async () => {
       mockPrisma.business.findUnique.mockResolvedValue({ id: businessId, timezone });
       mockPrisma.serviceVariant.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.getAvailableSlots(businessId, date, variantId)
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.getAvailableSlots(businessId, date, variantId)
-      ).rejects.toThrow(/service variant not found/i);
+      await expect(service.getAvailableSlots(businessId, date, variantId)).rejects.toThrow(
+        NotFoundException
+      );
+      await expect(service.getAvailableSlots(businessId, date, variantId)).rejects.toThrow(
+        /service variant not found/i
+      );
     });
 
     it('returns date and timezone in response', async () => {
@@ -121,9 +121,7 @@ describe('AvailabilityService', () => {
 
       expect(result.slots.length).toBeGreaterThan(0);
       const slotStarts = result.slots.map((s) => s.startAt);
-      const tenOClockIso = DateTime.fromISO(`${date}T10:00`, { zone: timezone })
-        .toUTC()
-        .toISO();
+      const tenOClockIso = DateTime.fromISO(`${date}T10:00`, { zone: timezone }).toUTC().toISO();
       expect(slotStarts).not.toContain(tenOClockIso);
     });
   });

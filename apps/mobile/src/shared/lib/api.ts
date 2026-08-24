@@ -19,6 +19,36 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// Single-flight refresh: concurrent 401s share one /auth/refresh call so the
+// rotating server-side session is never invalidated by our own parallelism.
+let refreshPromise: Promise<string> | null = null;
+
+async function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const refreshToken = await SecureStore.getItemAsync('refreshToken');
+      if (!refreshToken) {
+        throw new Error('No refresh token');
+      }
+
+      const response = await axios.post(`${API_URL}/auth/refresh`, {
+        refreshToken,
+      });
+
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
+
+      await SecureStore.setItemAsync('accessToken', accessToken);
+      if (newRefreshToken) {
+        await SecureStore.setItemAsync('refreshToken', newRefreshToken);
+      }
+      return accessToken as string;
+    })().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
 // Handle token refresh on 401
 api.interceptors.response.use(
   (response) => response,
@@ -29,22 +59,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = await SecureStore.getItemAsync('refreshToken');
-        if (!refreshToken) {
-          throw new Error('No refresh token');
-        }
-
-        const response = await axios.post(`${API_URL}/auth/refresh`, {
-          refreshToken,
-        });
-
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
-
-        await SecureStore.setItemAsync('accessToken', accessToken);
-        if (newRefreshToken) {
-          await SecureStore.setItemAsync('refreshToken', newRefreshToken);
-        }
-
+        const accessToken = await refreshAccessToken();
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
@@ -59,5 +74,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-
-

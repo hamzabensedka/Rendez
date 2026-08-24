@@ -1,45 +1,135 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
-import { getUserProfile } from '../../api/userApi';
-import { useAuth } from '../../contexts/AuthContext';
+import { View, StyleSheet, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Text } from '@planity/ui';
+import { useAuth } from '../../../application/providers';
+import { useBottomNavInset } from '../../../application/components/BottomNav';
+import { editorialTheme as THEME } from '../../../application/theme/editorialTheme';
 
-const ProfileScreen = () => {
-  const { user } = useAuth();
-  const { data, error, isLoading } = useQuery(['userProfile'], () => getUserProfile(user.id));
+export default function ProfileScreen() {
+  const router = useRouter();
+  const { user, loading, logout } = useAuth();
+  const bottomInset = useBottomNavInset();
 
-  if (isLoading) return <Text>Loading...</Text>;
-  if (error) return <Text>Error: {error.message}</Text>;
+  async function handleLogout() {
+    await logout();
+    router.replace('/(auth)/login');
+  }
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator color={THEME.colors.primary} />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        <SafeAreaView style={styles.safe} edges={['top']}>
+          <View style={[styles.body, { paddingBottom: bottomInset + 24 }]}>
+            <Text variant="title2" style={styles.title}>
+              Account
+            </Text>
+            <Text style={styles.subtitle}>Sign in to manage bookings and favorites.</Text>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => router.push('/(auth)/login')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.primaryButtonText}>Log in</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => router.push('/(auth)/register')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.secondaryButtonText}>Create account</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Image source={{ uri: data.avatar }} style={styles.avatar} />
-      <Text style={styles.name}>{data.name}</Text>
-      <Text style={styles.email}>{data.email}</Text>
+      <StatusBar barStyle="dark-content" />
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={[styles.body, { paddingBottom: bottomInset + 24 }]}>
+          <Text variant="title2" style={styles.title}>
+            Account
+          </Text>
+          <Text style={styles.name}>{user.name}</Text>
+          <Text style={styles.email}>{user.email}</Text>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={handleLogout}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.secondaryButtonText}>Log out</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: THEME.colors.surface,
   },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  safe: {
+    flex: 1,
+  },
+  body: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+  title: {
+    marginBottom: 12,
+  },
+  subtitle: {
+    color: THEME.colors.onSurfaceVariant,
+    marginBottom: 24,
   },
   name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 4,
   },
   email: {
-    fontSize: 18,
-    color: '#666',
+    color: THEME.colors.onSurfaceVariant,
+    marginBottom: 32,
+  },
+  primaryButton: {
+    backgroundColor: THEME.colors.primary,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  primaryButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: THEME.colors.outline,
+  },
+  secondaryButtonText: {
+    fontWeight: '600',
   },
 });
-
-export default ProfileScreen;

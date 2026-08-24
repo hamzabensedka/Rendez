@@ -1,5 +1,15 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { View, Image, StyleSheet, FlatList, Dimensions, Text, TouchableOpacity, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import {
+  View,
+  Image,
+  StyleSheet,
+  FlatList,
+  Dimensions,
+  Text,
+  TouchableOpacity,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface SalonImageCarouselProps {
@@ -36,17 +46,23 @@ export const SalonImageCarousel = React.memo<SalonImageCarouselProps>(function S
     }
   }, [activeIndex, images.length]);
 
-  const renderItem = useCallback(({ item }: { item: string }) => (
-    <View style={{ width: SCREEN_WIDTH, height: IMAGE_HEIGHT }}>
-      <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
-    </View>
-  ), []);
+  const renderItem = useCallback(
+    ({ item }: { item: string }) => (
+      <View style={{ width: SCREEN_WIDTH, height: IMAGE_HEIGHT }}>
+        <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
+      </View>
+    ),
+    []
+  );
 
-  const getItemLayout = useCallback((_: unknown, index: number) => ({
-    length: SCREEN_WIDTH,
-    offset: SCREEN_WIDTH * index,
-    index,
-  }), []);
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: SCREEN_WIDTH,
+      offset: SCREEN_WIDTH * index,
+      index,
+    }),
+    []
+  );
 
   return (
     <View style={styles.container}>

@@ -20,11 +20,16 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const getColors = () => {
     switch (variant) {
-      case 'success': return { bg: colors.light.success + '20', text: colors.light.success }; // 20% opacity
-      case 'error': return { bg: colors.light.error + '20', text: colors.light.error };
-      case 'warning': return { bg: colors.light.surfaceSecondary, text: colors.light.textSecondary };
-      case 'outline': return { bg: 'transparent', text: colors.light.text, border: colors.light.border };
-      default: return { bg: colors.light.background, text: colors.light.textSecondary };
+      case 'success':
+        return { bg: colors.light.success + '20', text: colors.light.success }; // 20% opacity
+      case 'error':
+        return { bg: colors.light.error + '20', text: colors.light.error };
+      case 'warning':
+        return { bg: colors.light.surfaceSecondary, text: colors.light.textSecondary };
+      case 'outline':
+        return { bg: 'transparent', text: colors.light.text, border: colors.light.border };
+      default:
+        return { bg: colors.light.background, text: colors.light.textSecondary };
     }
   };
 

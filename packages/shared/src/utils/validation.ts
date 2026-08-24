@@ -20,4 +20,3 @@ export function isValidPhone(phone: string): boolean {
 export function generateIdempotencyKey(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 }
-

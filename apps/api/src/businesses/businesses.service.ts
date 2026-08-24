@@ -158,10 +158,7 @@ export class BusinessesService {
     extra?: FindAllBusinessesFilters
   ): Promise<PaginatedBusinesses> {
     const safePage = Math.max(1, Math.floor(page));
-    const safeLimit = Math.min(
-      MAX_LIMIT,
-      Math.max(1, Math.floor(limit))
-    );
+    const safeLimit = Math.min(MAX_LIMIT, Math.max(1, Math.floor(limit)));
     const skip = (safePage - 1) * safeLimit;
 
     const where: Prisma.BusinessWhereInput = {
@@ -240,9 +237,7 @@ export class BusinessesService {
             },
           },
         ];
-        where.AND = Array.isArray(where.AND)
-          ? [...where.AND, ...dateConditions]
-          : dateConditions;
+        where.AND = Array.isArray(where.AND) ? [...where.AND, ...dateConditions] : dateConditions;
       }
     }
 
@@ -266,9 +261,7 @@ export class BusinessesService {
   }
 
   async findOne(idOrSlug: string) {
-    const byId = this.isUuid(idOrSlug)
-      ? { id: idOrSlug }
-      : { slug: idOrSlug };
+    const byId = this.isUuid(idOrSlug) ? { id: idOrSlug } : { slug: idOrSlug };
     const business = await this.prisma.business.findFirst({
       where: {
         ...byId,
@@ -315,13 +308,9 @@ export class BusinessesService {
     city: string;
     country: string;
   }): string {
-    const parts = [
-      loc.address1,
-      loc.address2,
-      loc.postalCode,
-      loc.city,
-      loc.country,
-    ].filter(Boolean);
+    const parts = [loc.address1, loc.address2, loc.postalCode, loc.city, loc.country].filter(
+      Boolean
+    );
     return parts.join(', ');
   }
 
@@ -383,9 +372,7 @@ export class BusinessesService {
     name: string,
     explicitSlug?: string | null
   ): Promise<string> {
-    let base = explicitSlug?.trim()
-      ? this.slugify(explicitSlug)
-      : this.slugify(name);
+    let base = explicitSlug?.trim() ? this.slugify(explicitSlug) : this.slugify(name);
     if (!base) base = 'business';
     let slug = base;
     let n = 0;
@@ -403,9 +390,7 @@ export class BusinessesService {
 
   /** Resolve active business id from UUID or slug (minimal query). */
   private async resolveActiveBusinessId(idOrSlug: string): Promise<string> {
-    const byId = this.isUuid(idOrSlug)
-      ? { id: idOrSlug }
-      : { slug: idOrSlug };
+    const byId = this.isUuid(idOrSlug) ? { id: idOrSlug } : { slug: idOrSlug };
     const row = await this.prisma.business.findFirst({
       where: {
         ...byId,
@@ -492,4 +477,3 @@ export class BusinessesService {
     };
   }
 }
-

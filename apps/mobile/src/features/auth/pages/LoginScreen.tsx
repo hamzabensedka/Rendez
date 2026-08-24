@@ -10,12 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, {
-  FadeIn,
-  FadeOut,
-  FadeInDown,
-  FadeOutUp,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Text, Button, Card, Input } from '@planity/ui';
 import { colors, spacing } from '@planity/ui';
@@ -75,87 +70,95 @@ export default function LoginScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-          <View style={styles.header}>
-            <Text variant="title2" style={styles.title}>
-              Welcome back
-            </Text>
-            <Text variant="body" color={colors.light.textSecondary}>
-              Sign in to continue
-            </Text>
-          </View>
+            <View style={styles.header}>
+              <Text variant="title2" style={styles.title}>
+                Welcome back
+              </Text>
+              <Text variant="body" color={colors.light.textSecondary}>
+                Sign in to continue
+              </Text>
+            </View>
 
-          <View style={styles.section}>
-            {!showForm ? (
-              <Animated.View
-                key="sign-in-button"
-                entering={FadeIn.duration(200)}
-                exiting={FadeOut.duration(180)}
-                style={styles.triggerWrapper}
-              >
-                <TouchableOpacity
-                  onPress={handleShowForm}
-                  activeOpacity={0.85}
-                  style={styles.signInTrigger}
+            <View style={styles.section}>
+              {!showForm ? (
+                <Animated.View
+                  key="sign-in-button"
+                  entering={FadeIn.duration(200)}
+                  exiting={FadeOut.duration(180)}
+                  style={styles.triggerWrapper}
                 >
-                  <Text variant="headline" style={styles.signInTriggerText}>
+                  <TouchableOpacity
+                    onPress={handleShowForm}
+                    activeOpacity={0.85}
+                    style={styles.signInTrigger}
+                  >
+                    <Text variant="headline" style={styles.signInTriggerText}>
+                      Sign in
+                    </Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              ) : (
+                <Animated.View
+                  key="login-form"
+                  entering={FadeInDown.duration(320)}
+                  exiting={FadeOutUp.duration(200)}
+                  style={styles.formWrapper}
+                >
+                  <Text variant="headline" style={styles.sectionTitle}>
                     Sign in
                   </Text>
-                </TouchableOpacity>
-              </Animated.View>
-            ) : (
-              <Animated.View
-                key="login-form"
-                entering={FadeInDown.duration(320)}
-                exiting={FadeOutUp.duration(200)}
-                style={styles.formWrapper}
-              >
-                <Text variant="headline" style={styles.sectionTitle}>
-                  Sign in
-                </Text>
-                <Card variant="elevated" padding="lg" style={styles.card}>
-                  <Input
-                    label="Email"
-                    placeholder="Email"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                  />
-                  <Input
-                    label="Password"
-                    placeholder="Password"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    autoCapitalize="none"
-                  />
-                  <Button
-                    title={loading ? 'Signing in…' : 'Sign in'}
-                    onPress={handleLogin}
-                    variant="primary"
-                    disabled={loading}
-                    loading={loading}
-                    style={styles.button}
-                  />
-                </Card>
-              </Animated.View>
-            )}
-          </View>
+                  <Card variant="elevated" padding="lg" style={styles.card}>
+                    <Input
+                      label="Email"
+                      placeholder="Email"
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoComplete="email"
+                    />
+                    <Input
+                      label="Password"
+                      placeholder="Password"
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry
+                      autoCapitalize="none"
+                    />
+                    <Button
+                      title={loading ? 'Signing in…' : 'Sign in'}
+                      onPress={handleLogin}
+                      variant="primary"
+                      disabled={loading}
+                      loading={loading}
+                      style={styles.button}
+                    />
+                  </Card>
+                </Animated.View>
+              )}
+            </View>
 
-          <View style={styles.section}>
-            <TouchableOpacity
-              style={styles.linkButton}
-              onPress={() => router.push('/(auth)/register')}
-            >
-              <Text variant="body" color={colors.light.textSecondary}>
-                Don't have an account?{' '}
+            <View style={styles.section}>
+              <TouchableOpacity
+                style={styles.linkButton}
+                onPress={() => router.replace('/(main)/explore')}
+              >
                 <Text variant="body" weight="600" color={colors.light.accent}>
-                  Sign up
+                  Continue without signing in
                 </Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.linkButton}
+                onPress={() => router.push('/(auth)/register')}
+              >
+                <Text variant="body" color={colors.light.textSecondary}>
+                  Don't have an account?{' '}
+                  <Text variant="body" weight="600" color={colors.light.accent}>
+                    Sign up
+                  </Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>

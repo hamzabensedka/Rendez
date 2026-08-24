@@ -42,16 +42,7 @@ export const Card: React.FC<CardProps> = ({
   const paddingValue = padding === 'none' ? 0 : spacing[padding as keyof typeof spacing];
 
   return (
-    <View
-      style={[
-        styles.base,
-        getStyle(),
-        { padding: paddingValue },
-        style,
-      ]}
-    >
-      {children}
-    </View>
+    <View style={[styles.base, getStyle(), { padding: paddingValue }, style]}>{children}</View>
   );
 };
 

@@ -43,12 +43,15 @@ export function useAddressSearch(options: UseAddressSearchOptions = {}): UseAddr
     };
   }, [query]);
 
-  const selectAddress = useCallback((address: AddressSuggestion) => {
-    setSelectedAddress(address);
-    setQuery(address.address);
-    setSuggestions([]);
-    onSelect?.(address);
-  }, [onSelect]);
+  const selectAddress = useCallback(
+    (address: AddressSuggestion) => {
+      setSelectedAddress(address);
+      setQuery(address.address);
+      setSuggestions([]);
+      onSelect?.(address);
+    },
+    [onSelect]
+  );
 
   return {
     query,

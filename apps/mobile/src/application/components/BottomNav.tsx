@@ -52,10 +52,10 @@ const NavItem: React.FC<NavItemProps> = ({
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <Ionicons 
-        name={(isActive ? (activeIcon || icon) : icon) as any} 
-        size={22} 
-        color={isActive ? THEME.colors.onPrimary : THEME.colors.onSurfaceVariant} 
+      <Ionicons
+        name={(isActive ? activeIcon || icon : icon) as any}
+        size={22}
+        color={isActive ? THEME.colors.onPrimary : THEME.colors.onSurfaceVariant}
         style={{ opacity: isActive ? 1 : 0.6 }}
       />
     </TouchableOpacity>

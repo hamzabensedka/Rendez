@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
@@ -43,9 +38,7 @@ export class RedisCacheService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     const url = this.config.get<string>('REDIS_URL')?.trim();
     if (!url) {
-      this.logger.log(
-        'REDIS_URL not set; using in-memory cache (single instance only).'
-      );
+      this.logger.log('REDIS_URL not set; using in-memory cache (single instance only).');
       return;
     }
 
@@ -62,9 +55,7 @@ export class RedisCacheService implements OnModuleInit, OnModuleDestroy {
       await candidate.ping();
       this.client = candidate;
       this.client.on('error', (err: unknown) => {
-        this.logger.warn(
-          `Redis connection error after connect: ${formatRedisError(err)}`
-        );
+        this.logger.warn(`Redis connection error after connect: ${formatRedisError(err)}`);
       });
       this.logger.log(`Redis connected (${redactRedisUrl(url)}).`);
     } catch (err) {
@@ -89,6 +80,17 @@ export class RedisCacheService implements OnModuleInit, OnModuleDestroy {
 
   get isRedis(): boolean {
     return this.client !== null;
+  }
+
+  /** True when the Redis connection answers PING; false on in-memory fallback or failure. */
+  async ping(): Promise<boolean> {
+    if (!this.client) return false;
+    try {
+      const pong = await this.client.ping();
+      return pong === 'PONG';
+    } catch {
+      return false;
+    }
   }
 
   async get(key: string): Promise<string | null> {

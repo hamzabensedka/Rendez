@@ -1,6 +1,13 @@
 import React, { useCallback, useState, useMemo, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, StyleSheet, StatusBar, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  StatusBar,
+  ActivityIndicator,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,7 +36,9 @@ import type { AddressSuggestion } from '../types';
 function mapBusinessToRendezCard(b: ApiBusinessListItem): RendezSalonCardData {
   const address =
     b.locations && b.locations.length > 0
-      ? [b.locations[0].address1, b.locations[0].postalCode, b.locations[0].city].filter(Boolean).join(', ')
+      ? [b.locations[0].address1, b.locations[0].postalCode, b.locations[0].city]
+          .filter(Boolean)
+          .join(', ')
       : '—';
   return {
     id: b.id,
@@ -63,7 +72,11 @@ export default function SearchResultsScreen() {
   const timeSummaryParam = params.time?.trim() ?? '';
 
   const categorySlugs = useMemo(
-    () => categoriesParam.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+    () =>
+      categoriesParam
+        .split(',')
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean),
     [categoriesParam]
   );
 
@@ -173,8 +186,7 @@ export default function SearchResultsScreen() {
 
   const error = useMemo(() => {
     if (!isError || !queryError) return null;
-    const message =
-      queryError instanceof Error ? queryError.message : 'Failed to load results';
+    const message = queryError instanceof Error ? queryError.message : 'Failed to load results';
     const isNetworkError =
       message === 'Network Error' ||
       message.includes('Network request failed') ||
@@ -315,7 +327,10 @@ export default function SearchResultsScreen() {
               size={16}
               color={viewMode === 'list' ? colors.light.background : colors.light.text}
             />
-            <Text variant="footnote" style={[styles.mapPillText, viewMode === 'list' && styles.mapPillTextActive]}>
+            <Text
+              variant="footnote"
+              style={[styles.mapPillText, viewMode === 'list' && styles.mapPillTextActive]}
+            >
               Liste
             </Text>
           </TouchableOpacity>
@@ -331,7 +346,10 @@ export default function SearchResultsScreen() {
               size={16}
               color={viewMode === 'map' ? colors.light.background : colors.light.text}
             />
-            <Text variant="footnote" style={[styles.mapPillText, viewMode === 'map' && styles.mapPillTextActive]}>
+            <Text
+              variant="footnote"
+              style={[styles.mapPillText, viewMode === 'map' && styles.mapPillTextActive]}
+            >
               Carte
             </Text>
           </TouchableOpacity>
@@ -360,7 +378,8 @@ export default function SearchResultsScreen() {
     ({ item, index }: ListRenderItemInfo<ApiBusinessListItem>) => {
       const cardData = mapBusinessToRendezCard(item);
       cardData.imageUri = DEFAULT_SALON_IMAGES[index % DEFAULT_SALON_IMAGES.length];
-      cardData.categories = labelBySlug.get(item.category ?? '') ?? item.category ?? cardData.categories;
+      cardData.categories =
+        labelBySlug.get(item.category ?? '') ?? item.category ?? cardData.categories;
       return (
         <View style={styles.cardWrapper}>
           <RendezSalonCard

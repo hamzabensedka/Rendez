@@ -23,9 +23,7 @@ interface PlacesSuggestResponse {
 /**
  * Search for addresses via backend places/suggest API.
  */
-export async function searchAddresses(
-  params: SearchAddressParams
-): Promise<AddressSuggestion[]> {
+export async function searchAddresses(params: SearchAddressParams): Promise<AddressSuggestion[]> {
   const { query, limit = 10 } = params;
 
   if (!query.trim()) {

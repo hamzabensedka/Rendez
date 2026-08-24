@@ -68,10 +68,9 @@ describe('api client refresh on 401', () => {
     const res = await api.get('/probe');
 
     expect(res.data).toEqual({ ok: true });
-    expect(postSpy).toHaveBeenCalledWith(
-      expect.stringMatching(/\/v1\/auth\/refresh$/),
-      { refreshToken: 'refresh-1' }
-    );
+    expect(postSpy).toHaveBeenCalledWith(expect.stringMatching(/\/v1\/auth\/refresh$/), {
+      refreshToken: 'refresh-1',
+    });
     expect(SecureStore.setItemAsync).toHaveBeenCalledWith('accessToken', 'access-new');
     expect(SecureStore.setItemAsync).toHaveBeenCalledWith('refreshToken', 'refresh-2');
   });
@@ -84,4 +83,42 @@ describe('api client refresh on 401', () => {
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('accessToken');
     expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith('refreshToken');
   });
+
+  it('shares a single refresh call across concurrent 401s (single-flight)', async () => {
+    // Two different endpoints both 401 on first attempt, then succeed.
+    let probeAttempts = 0;
+    let secondAttempts = 0;
+    api.defaults.adapter = async (config: InternalAxiosRequestConfig) => {
+      const url = config.url ?? '';
+      if (url.includes('/probe')) {
+        probeAttempts += 1;
+        return probeAttempts === 1 ? rejectWith401(config) : ok(config);
+      }
+      if (url.includes('/second')) {
+        secondAttempts += 1;
+        return secondAttempts === 1 ? rejectWith401(config) : ok(config);
+      }
+      throw new Error(`Unexpected request URL in test adapter: ${url}`);
+    };
+
+    const postSpy = jest.spyOn(axios, 'post').mockResolvedValue({
+      data: { accessToken: 'access-new', refreshToken: 'refresh-2' },
+    } as AxiosResponse);
+
+    const [a, b] = await Promise.all([api.get('/probe'), api.get('/second')]);
+
+    expect(a.data).toEqual({ ok: true });
+    expect(b.data).toEqual({ ok: true });
+    expect(postSpy).toHaveBeenCalledTimes(1);
+  });
+
+  function ok(config: InternalAxiosRequestConfig): AxiosResponse {
+    return {
+      data: { ok: true },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+    };
+  }
 });

@@ -1,5 +1,10 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet, TouchableOpacityProps, GestureResponderEvent } from 'react-native';
+import {
+  TouchableOpacity,
+  StyleSheet,
+  TouchableOpacityProps,
+  GestureResponderEvent,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { colors, radius } from '@planity/ui';
@@ -25,7 +30,7 @@ export const ProfileButton = React.memo<ProfileButtonProps>(function ProfileButt
       onPress(e);
     } else if (!user) {
       // Not logged in - redirect to login
-      router.push('/login');
+      router.push('/(auth)/login');
     } else {
       // Logged in - go to profile
       router.push('/(main)/profile');
@@ -36,19 +41,15 @@ export const ProfileButton = React.memo<ProfileButtonProps>(function ProfileButt
 
   return (
     <TouchableOpacity
-      style={[
-        styles.container,
-        isDark ? styles.darkContainer : styles.lightContainer,
-        style,
-      ]}
+      style={[styles.container, isDark ? styles.darkContainer : styles.lightContainer, style]}
       onPress={handlePress}
       activeOpacity={0.7}
-      accessibilityLabel={user ? "Profile" : "Login"}
+      accessibilityLabel={user ? 'Profile' : 'Login'}
       accessibilityRole="button"
       {...props}
     >
       <Ionicons
-        name={user ? "person" : "person-outline"}
+        name={user ? 'person' : 'person-outline'}
         size={20}
         color={isDark ? colors.light.surface : colors.light.text}
       />

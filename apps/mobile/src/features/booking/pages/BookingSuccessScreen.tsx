@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Linking,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -273,12 +266,15 @@ export default function BookingSuccessScreen() {
 
   const handleAddToCalendar = () => {
     // Build a simple calendar intent or deep link; fallback to opening calendar app
-    const start = params.dateFormatted && params.timeFormatted
-      ? `${params.dateFormatted} ${params.timeFormatted}`
-      : '';
+    const start =
+      params.dateFormatted && params.timeFormatted
+        ? `${params.dateFormatted} ${params.timeFormatted}`
+        : '';
     // Could use expo-calendar or a generic mailto/calendar URL
     if (start) {
-      Linking.openURL(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=Appointment at ${encodeURIComponent(businessName)}&dates=`);
+      Linking.openURL(
+        `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Appointment at ${encodeURIComponent(businessName)}&dates=`
+      );
     }
   };
 
@@ -297,7 +293,11 @@ export default function BookingSuccessScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleClose} style={styles.headerClose} accessibilityLabel="Close">
+        <TouchableOpacity
+          onPress={handleClose}
+          style={styles.headerClose}
+          accessibilityLabel="Close"
+        >
           <Ionicons name="close" size={24} color={colors.light.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Confirmation</Text>
@@ -369,17 +369,29 @@ export default function BookingSuccessScreen() {
             <Text style={styles.cardLabel}>Location</Text>
             <Text style={styles.cardValue}>{address}</Text>
           </View>
-          <TouchableOpacity style={styles.locationArrow} onPress={() => {}} accessibilityLabel="Open in maps">
+          <TouchableOpacity
+            style={styles.locationArrow}
+            onPress={() => {}}
+            accessibilityLabel="Open in maps"
+          >
             <Ionicons name="paper-plane-outline" size={20} color={colors.light.textSecondary} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.btnPrimary} onPress={handleAddToCalendar} activeOpacity={0.9}>
+          <TouchableOpacity
+            style={styles.btnPrimary}
+            onPress={handleAddToCalendar}
+            activeOpacity={0.9}
+          >
             <Ionicons name="calendar-outline" size={20} color="#fff" />
             <Text style={styles.btnPrimaryText}>Add to Calendar</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.btnSecondary} onPress={handleManageBooking} activeOpacity={0.9}>
+          <TouchableOpacity
+            style={styles.btnSecondary}
+            onPress={handleManageBooking}
+            activeOpacity={0.9}
+          >
             <Text style={styles.btnSecondaryText}>Manage Booking</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.backLink} onPress={handleBackToHome}>

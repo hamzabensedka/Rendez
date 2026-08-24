@@ -20,19 +20,13 @@ export class FavoritesController {
 
   @Post()
   @ApiOperation({ summary: 'Add business to favorites' })
-  async add(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() body: { businessId: string }
-  ) {
+  async add(@CurrentUser() user: AuthenticatedUser, @Body() body: { businessId: string }) {
     return this.favoritesService.add(user.id, body.businessId);
   }
 
   @Delete(':businessId')
   @ApiOperation({ summary: 'Remove business from favorites' })
-  async remove(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('businessId') businessId: string
-  ) {
+  async remove(@CurrentUser() user: AuthenticatedUser, @Param('businessId') businessId: string) {
     await this.favoritesService.remove(user.id, businessId);
   }
 }

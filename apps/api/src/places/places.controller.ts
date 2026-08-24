@@ -13,10 +13,7 @@ export class PlacesController {
   @ApiOperation({ summary: 'Address/place suggestions (geocoding proxy)' })
   @ApiQuery({ name: 'q', required: false, description: 'Search query' })
   @ApiQuery({ name: 'limit', required: false, description: 'Max results (default 10)' })
-  async suggest(
-    @Query('q') q?: string,
-    @Query('limit') limit?: string
-  ) {
+  async suggest(@Query('q') q?: string, @Query('limit') limit?: string) {
     const limitNum = limit ? parseInt(limit, 10) : 10;
     return this.placesService.suggest(q ?? '', isNaN(limitNum) ? 10 : limitNum);
   }

@@ -20,14 +20,34 @@ import { useAuth } from '../../../application/providers';
 import { useKeyboardHeight } from '../../../application/hooks/useKeyboardHeight';
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
 
 function formatSummaryDate(isoDate: string): string {
   const d = new Date(isoDate);
   const dayName = DAY_NAMES[d.getDay()];
   const month = MONTH_NAMES[d.getMonth()];
   const date = d.getDate();
-  const suffix = date === 1 || date === 21 || date === 31 ? 'st' : date === 2 || date === 22 ? 'nd' : date === 3 || date === 23 ? 'rd' : 'th';
+  const suffix =
+    date === 1 || date === 21 || date === 31
+      ? 'st'
+      : date === 2 || date === 22
+        ? 'nd'
+        : date === 3 || date === 23
+          ? 'rd'
+          : 'th';
   return `${dayName}, ${month} ${date}${suffix}`;
 }
 
@@ -40,12 +60,7 @@ export default function BookingIdentificationScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { login: setAuthUser } = useAuth();
-  const {
-    selectedSlot,
-    existingServices,
-    businessId,
-    businessName,
-  } = useLocalSearchParams<{
+  const { selectedSlot, existingServices, businessId, businessName } = useLocalSearchParams<{
     selectedSlot: string;
     existingServices: string;
     businessId: string;
@@ -127,85 +142,93 @@ export default function BookingIdentificationScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
         >
-        <Text style={styles.screenTitle}>AUTHENTICATION</Text>
+          <Text style={styles.screenTitle}>AUTHENTICATION</Text>
 
-        {/* Summary card - unchanged */}
-        <View style={styles.summarySection}>
-          <Text style={styles.sectionLabel}>SUMMARY</Text>
-          <View style={styles.summaryCard}>
-            <View style={styles.summaryLeft}>
-              <View style={styles.calendarIconWrap}>
-                <Ionicons name="calendar-outline" size={22} color={colors.light.text} />
+          {/* Summary card - unchanged */}
+          <View style={styles.summarySection}>
+            <Text style={styles.sectionLabel}>SUMMARY</Text>
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryLeft}>
+                <View style={styles.calendarIconWrap}>
+                  <Ionicons name="calendar-outline" size={22} color={colors.light.text} />
+                </View>
+                <View style={styles.summaryText}>
+                  <Text style={styles.summaryDate}>{dateLabel}</Text>
+                  <Text style={styles.summaryTime}>{timeLabel}</Text>
+                  {servicesLabel ? (
+                    <Text style={styles.summaryServices}>{servicesLabel}</Text>
+                  ) : null}
+                </View>
               </View>
-              <View style={styles.summaryText}>
-                <Text style={styles.summaryDate}>{dateLabel}</Text>
-                <Text style={styles.summaryTime}>{timeLabel}</Text>
-                {servicesLabel ? (
-                  <Text style={styles.summaryServices}>{servicesLabel}</Text>
-                ) : null}
-              </View>
-            </View>
-            <TouchableOpacity onPress={handleModify} style={styles.modifyButton}>
-              <Text style={styles.modifyText}>MODIFY</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.authSection}>
-          <Text style={styles.authHeading}>New to the app?</Text>
-          <TouchableOpacity style={styles.primaryButton} onPress={handleCreateAccount} activeOpacity={0.8}>
-            <Text style={styles.primaryButtonText}>CREATE MY ACCOUNT</Text>
-          </TouchableOpacity>
-
-          <View style={styles.orRow}>
-            <View style={styles.orLine} />
-            <Text style={styles.orText}>OR</Text>
-            <View style={styles.orLine} />
-          </View>
-
-          {!showLoginForm ? (
-            <>
-              <Text style={styles.authHeading}>Already have an account?</Text>
-              <TouchableOpacity style={styles.secondaryButton} onPress={handleSignInTap} activeOpacity={0.8}>
-                <Text style={styles.secondaryButtonText}>SIGN IN</Text>
+              <TouchableOpacity onPress={handleModify} style={styles.modifyButton}>
+                <Text style={styles.modifyText}>MODIFY</Text>
               </TouchableOpacity>
-            </>
-          ) : (
-            <Animated.View
-              key="login-form"
-              entering={FadeInDown.duration(320)}
-              exiting={FadeOutUp.duration(200)}
-              style={styles.loginFormWrap}
+            </View>
+          </View>
+
+          <View style={styles.authSection}>
+            <Text style={styles.authHeading}>New to the app?</Text>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleCreateAccount}
+              activeOpacity={0.8}
             >
-              <Text style={styles.authHeading}>Sign in</Text>
-              <Input
-                label="Email"
-                placeholder="Email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-              />
-              <Input
-                label="Password"
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-              />
-              <Button
-                title={loginLoading ? 'Signing in…' : 'Sign in'}
-                onPress={handleLoginSubmit}
-                variant="primary"
-                disabled={loginLoading}
-                loading={loginLoading}
-                style={styles.loginSubmitButton}
-              />
-            </Animated.View>
-          )}
-        </View>
+              <Text style={styles.primaryButtonText}>CREATE MY ACCOUNT</Text>
+            </TouchableOpacity>
+
+            <View style={styles.orRow}>
+              <View style={styles.orLine} />
+              <Text style={styles.orText}>OR</Text>
+              <View style={styles.orLine} />
+            </View>
+
+            {!showLoginForm ? (
+              <>
+                <Text style={styles.authHeading}>Already have an account?</Text>
+                <TouchableOpacity
+                  style={styles.secondaryButton}
+                  onPress={handleSignInTap}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.secondaryButtonText}>SIGN IN</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <Animated.View
+                key="login-form"
+                entering={FadeInDown.duration(320)}
+                exiting={FadeOutUp.duration(200)}
+                style={styles.loginFormWrap}
+              >
+                <Text style={styles.authHeading}>Sign in</Text>
+                <Input
+                  label="Email"
+                  placeholder="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                />
+                <Input
+                  label="Password"
+                  placeholder="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  autoCapitalize="none"
+                />
+                <Button
+                  title={loginLoading ? 'Signing in…' : 'Sign in'}
+                  onPress={handleLoginSubmit}
+                  variant="primary"
+                  disabled={loginLoading}
+                  loading={loginLoading}
+                  style={styles.loginSubmitButton}
+                />
+              </Animated.View>
+            )}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

@@ -1,82 +1,83 @@
-# Rondez
+# Planity
 
-Salon and beauty booking marketplace with an Apple-inspired mobile experience. Discover local businesses, browse services, pick time slots, and manage appointments.
+Salon and beauty booking marketplace. Discover local businesses, browse services,
+pick real availability, book — with a provider portal and admin tooling on the
+same design language.
+
+## Status
+
+The codebase is a **clean baseline**: security-hardened, dead-code-free, all QA
+gates green (`pnpm typecheck && pnpm lint && pnpm test`). See
+[docs/ROADMAP.md](docs/ROADMAP.md) for the active implementation plan.
 
 ## Tech stack
 
-- **Monorepo:** Nx + pnpm
-- **Mobile:** Expo React Native, Expo Router, TypeScript
-- **Backend:** NestJS, Prisma, PostgreSQL (Supabase)
-- **Shared packages:** `@planity/ui` (design system), `@planity/shared` (types & utils)
+- **Monorepo:** Nx + pnpm (`apps/*`, `packages/*`)
+- **Mobile:** Expo React Native (SDK 54), Expo Router, TanStack Query, TypeScript strict
+- **API:** NestJS 10, Prisma + PostgreSQL (Supabase), Redis cache, BullMQ (planned)
+- **Shared packages:** `@planity/ui` (design system: Text/Button/Card/Input/Badge + editorialTheme tokens), `@planity/shared` (types & utils)
 
-## Features (shipped)
+## What works today
 
-- User auth (register, login, JWT refresh via SecureStore)
-- Explore businesses, business detail (services, staff, reviews placeholder)
-- Real-time availability and appointment booking
-- My bookings list and appointment detail
-- Device-local favorites
-- Provider business creation API (JWT-protected)
+- Auth: register/login, JWT access+refresh with hashed rotating refresh-token sessions, logout/logout-all
+- Client: explore businesses, map/viewport search, business detail, real availability slots, booking (validated, conflict-safe via DB exclusion constraint), bookings list, favorites
+- Provider: same-business appointment read/cancel paths (portal UI: see roadmap Phase 2)
+- Reviews: create on completed appointments, public approved-only listings; moderation endpoints for admins
+- Platform: rate limiting (global floor + stricter auth limits), structured pino logs with request IDs, health probes (`/v1/health`, `/v1/health/ready`)
 
 ## Project structure
 
 ```
 apps/
-  api/       # NestJS backend (prefix /v1)
-  mobile/    # Expo React Native app
+  api/       # NestJS API (prefix /v1) — modules in src/, one folder per domain
+  mobile/    # Expo client (client experience)
 packages/
-  shared/    # Types, utils, constants
-  ui/        # Design tokens and components
-docs/        # Architecture, setup, product spec
+  shared/    # Types, constants, utils used by api + mobile
+  ui/        # Design-system primitives + editorialTheme tokens (single source of style)
+docs/
+  ROADMAP.md       # Active plan (provider portal, notifications, admin, ops)
+  architecture.md  # System architecture
 ```
 
 ## Getting started
 
-**Full setup guide:** [docs/setup/QUICK_START.md](docs/setup/QUICK_START.md)
-
-### Quick start
+See [docs/setup/QUICK_START.md](docs/setup/QUICK_START.md).
 
 ```bash
 pnpm install
 
 # API
-cd apps/api && cp .env.example .env
-# Set DATABASE_URL, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET
-pnpm prisma:generate && pnpm prisma:migrate && pnpm prisma:seed
-pnpm start:dev                    # http://localhost:3000/v1
+cd apps/api && cp .env.example .env   # DATABASE_URL, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET
+node ../../node_modules/prisma/build/index.js generate
+pnpm prisma:migrate && pnpm prisma:seed
+pnpm start:dev                        # http://localhost:3000/v1
 
 # Mobile (separate terminal)
 cd apps/mobile
-# Create .env with EXPO_PUBLIC_API_URL=http://localhost:3000/v1
+echo "EXPO_PUBLIC_API_URL=http://localhost:3000/v1" > .env
 pnpm start
 ```
 
-Swagger API docs: `http://localhost:3000/api` when the API is running.
+Swagger API docs: `http://localhost:3000/api` (non-production only).
+
+## Development commands
+
+```bash
+pnpm dev          # API + mobile in parallel (nx run-many serve)
+pnpm typecheck    # tsc --noEmit across workspace projects
+pnpm lint         # eslint across workspace projects
+pnpm test         # jest suites across workspace projects
+pnpm format       # prettier write
+```
 
 ## Documentation
 
 | Doc | Description |
 |-----|-------------|
-| [docs/setup/QUICK_START.md](docs/setup/QUICK_START.md) | Step-by-step local setup |
-| [docs/setup/SUPABASE_SETUP.md](docs/setup/SUPABASE_SETUP.md) | Supabase database setup |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture |
-| [docs/IMPLEMENTATION_SUMMARY.md](docs/IMPLEMENTATION_SUMMARY.md) | What's built vs. roadmap |
-| [docs/product.md](docs/product.md) | Product specification |
-| [apps/api/README.md](apps/api/README.md) | API module reference |
-
-## Development commands
-
-```bash
-pnpm dev          # Start API + mobile in parallel
-pnpm build        # Build all apps
-pnpm lint         # Lint all projects
-pnpm test         # Run tests
-```
-
-## Roadmap
-
-Payments, admin dashboard (Next.js), Redis/BullMQ job queue, provider mobile app, push notifications, account-level favorites.
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Active implementation plan |
+| [docs/architecture.md](docs/architecture.md) | System architecture |
+| [docs/setup/QUICK_START.md](docs/setup/QUICK_START.md) | Local setup |
 
 ## License
 
-Private — portfolio project.
+Private.

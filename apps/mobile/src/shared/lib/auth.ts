@@ -62,5 +62,3 @@ export async function getCurrentUser() {
   // Canonical GET /auth/me returns the user profile object (same shape as former GET /users/me).
   return response.data;
 }
-
-

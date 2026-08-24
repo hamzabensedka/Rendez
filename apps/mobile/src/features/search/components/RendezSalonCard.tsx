@@ -57,11 +57,7 @@ export const RendezSalonCard = React.memo<RendezSalonCardProps>(function RendezS
     >
       {/* Image with overlays */}
       <View style={styles.imageWrapper}>
-        <Image
-          source={{ uri: data.imageUri }}
-          style={styles.image}
-          resizeMode="cover"
-        />
+        <Image source={{ uri: data.imageUri }} style={styles.image} resizeMode="cover" />
         {/* Favorite heart - top left */}
         <TouchableOpacity
           style={styles.heartButton}

@@ -4,19 +4,25 @@ import { Ionicons } from '@expo/vector-icons';
 
 const TAGS = [
   'Hair salon',
-  'Women\'s hair',
+  "Women's hair",
   'Nails',
   'Lash extensions',
   'Facial',
   'Straightening',
   'Waxing',
   'Microblading',
-  'Men\'s hair',
+  "Men's hair",
 ];
 
 const STAFF = [
   { id: '1', name: 'Studio team', initials: 'ST', image: null },
-  { id: '2', name: 'Alex', initials: null, image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100&h=100' },
+  {
+    id: '2',
+    name: 'Alex',
+    initials: null,
+    image:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100&h=100',
+  },
   { id: '3', name: 'Jordan', initials: 'J', image: null },
   { id: '4', name: 'Nails', initials: 'N', image: null },
 ];
@@ -44,7 +50,7 @@ export const SalonAbout = React.memo(function SalonAbout() {
         <View style={styles.mapContainer}>
           <View style={styles.mapBackground} />
           <TouchableOpacity style={styles.mapButton}>
-            <Ionicons name="map-outline" size={16} color="#FFFFFF" style={{marginRight: 8}} />
+            <Ionicons name="map-outline" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
             <Text style={styles.mapButtonText}>Show map</Text>
           </TouchableOpacity>
         </View>
@@ -92,7 +98,8 @@ export const SalonAbout = React.memo(function SalonAbout() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>About</Text>
         <Text style={styles.descriptionText}>
-          A welcoming space for hair and grooming services. Modern style with attention to detail. Book your appointment online.
+          A welcoming space for hair and grooming services. Modern style with attention to detail.
+          Book your appointment online.
         </Text>
       </View>
 

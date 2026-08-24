@@ -84,7 +84,9 @@ export default function AppointmentDetailScreen() {
         <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text variant="body" color={colors.light.accent}>Back</Text>
+            <Text variant="body" color={colors.light.accent}>
+              Back
+            </Text>
           </TouchableOpacity>
         </View>
         <View style={styles.center}>
@@ -105,9 +107,13 @@ export default function AppointmentDetailScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={colors.light.surface} />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text variant="body" color={colors.light.accent}>Back</Text>
+          <Text variant="body" color={colors.light.accent}>
+            Back
+          </Text>
         </TouchableOpacity>
-        <Text variant="title3" style={styles.headerTitle}>Appointment</Text>
+        <Text variant="title3" style={styles.headerTitle}>
+          Appointment
+        </Text>
       </View>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
@@ -115,14 +121,18 @@ export default function AppointmentDetailScreen() {
             {getAppointmentStatusLabel(appointment.status)}
           </Text>
         </View>
-        <Text variant="title1" style={styles.businessName}>{appointment.business.name}</Text>
+        <Text variant="title1" style={styles.businessName}>
+          {appointment.business.name}
+        </Text>
         {appointment.staff && (
           <Text variant="body" color={colors.light.textSecondary} style={styles.staff}>
             with {appointment.staff.name}
           </Text>
         )}
         <View style={styles.card}>
-          <Text variant="footnote" color={colors.light.textSecondary}>Date</Text>
+          <Text variant="footnote" color={colors.light.textSecondary}>
+            Date
+          </Text>
           <Text variant="headline" style={styles.cardValue}>
             {startDate.toLocaleDateString('en-US', {
               weekday: 'long',
@@ -133,7 +143,9 @@ export default function AppointmentDetailScreen() {
           </Text>
         </View>
         <View style={styles.card}>
-          <Text variant="footnote" color={colors.light.textSecondary}>Time</Text>
+          <Text variant="footnote" color={colors.light.textSecondary}>
+            Time
+          </Text>
           <Text variant="headline" style={styles.cardValue}>
             {startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} –{' '}
             {endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -141,8 +153,12 @@ export default function AppointmentDetailScreen() {
         </View>
         {appointment.location?.address && (
           <View style={styles.card}>
-            <Text variant="footnote" color={colors.light.textSecondary}>Address</Text>
-            <Text variant="body" style={styles.cardValue}>{appointment.location.address}</Text>
+            <Text variant="footnote" color={colors.light.textSecondary}>
+              Address
+            </Text>
+            <Text variant="body" style={styles.cardValue}>
+              {appointment.location.address}
+            </Text>
           </View>
         )}
       </ScrollView>

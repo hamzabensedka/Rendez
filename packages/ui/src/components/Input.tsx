@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, TextInputProps, TouchableOpacity, ViewStyle } from 'react-native';
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  TextInputProps,
+  TouchableOpacity,
+  ViewStyle,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from './Text';
 import { colors, radius, spacing } from '../tokens';
@@ -43,13 +50,13 @@ export const Input: React.FC<InputProps> = ({
             borderColor: error
               ? colors.light.error
               : isFocused
-              ? colors.light.borderFocus
-              : colors.light.border,
+                ? colors.light.borderFocus
+                : colors.light.border,
           },
         ]}
       >
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
-        
+
         <TextInput
           style={[styles.input, style]}
           placeholderTextColor={colors.light.textSecondary}
@@ -60,7 +67,7 @@ export const Input: React.FC<InputProps> = ({
         />
 
         {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
-        
+
         {secureTextEntry && (
           <TouchableOpacity
             onPress={togglePasswordVisibility}

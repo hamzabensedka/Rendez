@@ -15,14 +15,23 @@ const packages = [
   {
     name: 'react-native-worklets',
     replace: [
-      ['"-DWORKLETS_FEATURE_FLAGS=${WORKLETS_FEATURE_FLAGS}"\n                abiFilters (*reactNativeArchitectures())', '"-DWORKLETS_FEATURE_FLAGS=${WORKLETS_FEATURE_FLAGS}",\n                        "-DCMAKE_OBJECT_PATH_MAX=512"\n                abiFilters (*reactNativeArchitectures())'],
+      [
+        '"-DWORKLETS_FEATURE_FLAGS=${WORKLETS_FEATURE_FLAGS}"\n                abiFilters (*reactNativeArchitectures())',
+        '"-DWORKLETS_FEATURE_FLAGS=${WORKLETS_FEATURE_FLAGS}",\n                        "-DCMAKE_OBJECT_PATH_MAX=512"\n                abiFilters (*reactNativeArchitectures())',
+      ],
     ],
   },
   {
     name: 'react-native-screens',
     replace: [
-      ['"-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"\n            ', '"-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",\n                        "-DCMAKE_OBJECT_PATH_MAX=512"\n            '],
-      ['"-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",\n            ', '"-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",\n                        "-DCMAKE_OBJECT_PATH_MAX=512"\n            '],
+      [
+        '"-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"\n            ',
+        '"-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",\n                        "-DCMAKE_OBJECT_PATH_MAX=512"\n            ',
+      ],
+      [
+        '"-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",\n            ',
+        '"-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",\n                        "-DCMAKE_OBJECT_PATH_MAX=512"\n            ',
+      ],
     ],
   },
 ];

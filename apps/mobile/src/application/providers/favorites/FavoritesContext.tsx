@@ -65,8 +65,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
         await api.delete(`/users/me/favorites/${businessId}`);
       }
     },
-    onMutate: async ({ businessId, add }: ToggleVars): Promise<ToggleCtx | undefined> => {
-      if (!userId) return undefined;
+    onMutate: async ({ businessId, add }: ToggleVars): Promise<ToggleCtx> => {
+      if (!userId) return { previous: undefined };
       await queryClient.cancelQueries({ queryKey: queryKeys.favorites(userId) });
       const previous = queryClient.getQueryData(queryKeys.favorites(userId)) as
         | FavoriteItem[]

@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { BusinessesService } from './businesses.service';
 import { ServicesService } from '../services/services.service';
@@ -33,7 +25,11 @@ export class BusinessesController {
   @ApiQuery({ name: 'city', required: false })
   @ApiQuery({ name: 'query', required: false })
   @ApiQuery({ name: 'categories', required: false, description: 'Comma-separated category slugs' })
-  @ApiQuery({ name: 'lat', required: false, description: 'User latitude (with lng for near-me bbox)' })
+  @ApiQuery({
+    name: 'lat',
+    required: false,
+    description: 'User latitude (with lng for near-me bbox)',
+  })
   @ApiQuery({ name: 'lng', required: false, description: 'User longitude' })
   @ApiQuery({ name: 'radiusKm', required: false, description: 'Search radius in km (default 20)' })
   @ApiQuery({
@@ -58,8 +54,7 @@ export class BusinessesController {
     const limitNum = limit ? parseInt(limit, 10) : undefined;
     const latNum = lat !== undefined && lat !== '' ? parseFloat(lat) : undefined;
     const lngNum = lng !== undefined && lng !== '' ? parseFloat(lng) : undefined;
-    const radiusNum =
-      radiusKm !== undefined && radiusKm !== '' ? parseFloat(radiusKm) : undefined;
+    const radiusNum = radiusKm !== undefined && radiusKm !== '' ? parseFloat(radiusKm) : undefined;
     return this.businessesService.findAll(city, query, pageNum, limitNum, {
       categories,
       lat: latNum,

@@ -78,4 +78,3 @@ export class AuthController {
     return this.usersService.findOne(user.id);
   }
 }
-

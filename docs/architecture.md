@@ -1,1 +1,61 @@
-# Planity Clone System Architecture\n\n## 1. Overview\nThe Planity Clone is a mobile-first marketplace connecting users with local service businesses. Architecture uses a clean monorepo with Nx, separating mobile (Expo/React Native), API (NestJS), shared libs, and infra.\n\n## 2. Tech Stack\n- Mobile: Expo, React Native, TypeScript, Expo Router, TanStack React Query, React Native Reanimated\n- API: NestJS, TypeScript, Prisma, PostgreSQL+PostGIS, Redis, BullMQ\n- DevOps: Docker Compose, GitHub Actions, EAS Build, pnpm, Nx\n- Testing: Jest\n\n## 3. High-Level Architecture\nMobile <--HTTPS--> API (NestJS) <---> PostgreSQL/PostGIS\n                         ^          |\n                         |          v\n                       Redis   BullMQ Workers\n\n## 4. Service Boundaries\n| Boundary | Responsibility |\n|----------|----------------|\n| Mobile App | UI, navigation, state, animations |\n| Auth Service | Register, login, JWT |\n| Business Service | CRUD businesses, categories, geo |\n| Service & Availability | Services, slots, availability |\n| Booking Service | Create, validate appointments |\n| Appointment Mgmt | Reschedule, cancel |\n| Reviews & Ratings | Submit, read |\n| Favorites | Toggle, list |\n| Payments | Stripe integration |\n| Notifications | Push, email via BullMQ |\n| Admin/Provider Portal | Role‑based dashboards |\n| Shared Lib | Types, design system, utils |\n| Infra | Docker, CI/CD, env |\n\n## 5. Folder Structure (Nx)\nplanity-clone/\n├─ apps/\n│   ├─ mobile/          # Expo app\n│   │   ├─ src/\n│   │   │   ├─ assets/\n│   │   │   ├─ components/\n│   │   │   ├─ screens/   # Expo Router\n│   │   │   ├─ hooks/\n│   │   │   ├─ services/  # API client (React Query)\n│   │   │   ├─ types/\n│   │   │   └─ index.tsx\n│   │   ├─ app.json\n│   │   └─ eas.json\n│   └─ admin/           # optional NestJS admin portal\n│       └─ src/\n├─ libs/\n│   ├─ design-system/\n│   ├─ ui/\n│   ├─ utils/\n│   ├─ types/\n│   └─ api-client/\n├─ api/\n│   └─ src/\n│       ├─ auth/\n│       ├─ business/\n│       ├─ service/\n│       ├─ booking/\n│       ├─ review/\n│       ├─ payment/\n│       ├─ notification/\n│       ├─ admin/\n│       ├─ common/\n│       ├─ prisma/\n│       ├─ bullmq/\n│       └─ main.ts\n├─ docker/\n│   ├─ api.Dockerfile\n│   └─ docker-compose.yml\n├─ scripts/\n├─ nx.json\n├─ package.json\n├─ pnpm-workspace.yaml\n└─ .github/\n    └─ workflows/\n        ├─ ci.yml\n        └─ release.yml\n\n## 6. Data Model (Prisma)\n- User: id, email, passwordHash, role, createdAt\n- Business: id, ownerId, name, lat/lng (PostGIS), categoryId, ...\n- Service: id, businessId, name, duration, price\n- Availability: id, businessId, weekday, start, end, slotLength\n- Appointment: id, userId, businessId, serviceId, start, end, status\n- Review: id, appointmentId, userId, rating, comment\n- Favorite: id, userId, businessId (unique)\n- Payment: id, appointmentId, providerTxn, amount, status\n\n## 7. API Contract (REST)\nPOST /auth/register\nPOST /auth/login\nGET /businesses?lat=&lng=&radius=&category=&search=\nGET /businesses/:id\nPOST /appointments\nGET /users/me/appointments\nPATCH /appointments/:id\nPOST /reviews\nPOST /favorites/toggle\nPOST /payments/webhook\n\n## 8. Notifications\nExpo Push triggered by BullMQ jobs after booking changes.\n\n## 9. Dev Workflow\npnpm dev runs Expo + NestJS (Docker Compose). CI: lint, test, build, push. EAS builds binaries.\n\n## 10. Quality Attributes\nScalable via stateless API, read replicas, Redis clustering. Maintainable via Nx modules, shared types, design system. Performant with React Query caching, Reanimated animations. Secure with JWT, role guards, Prisma, Stripe PCI, env secrets.\n\n## 11. Future Extensions\nGraphQL, micro‑service split, Next.js admin web, offline first with Expo SQLite.\n
+# Architecture
+
+## System shape
+
+Modular monolith API + React Native client, one shared design system.
+
+```
+┌──────────────┐   HTTP /v1    ┌──────────────────────────────┐
+│ Expo client  │ ────────────► │ NestJS API (stateless)       │
+│ apps/mobile  │               │  ├─ controllers → services    │
+└──────────────┘               │  ├─ global: ValidationPipe,   │
+                               │   │  ThrottlerGuard, pino,    │
+                               │   │  GlobalExceptionFilter    │
+                               │  └─ Prisma ─► PostgreSQL      │
+                               │        └────► Redis (cache)   │
+                               └──────────────────────────────┘
+```
+
+- **Stateless API**: JWT bearer auth; horizontally scalable. The per-request user fetch in `jwt.strategy` doubles as instant revocation for suspended/deleted accounts.
+- **Postgres** owns integrity-critical invariants: GiST exclusion constraint (`appointments_no_overlap_per_staff`) prevents double-booking; trigger `sync_business_review_stats` maintains business rating from APPROVED reviews; PostGIS powers viewport search; pg_trgm powers name search.
+- **Redis is optional** at all times: availability slot caching + geocoding locks. Failure degrades to in-process memory (single instance) — never to downtime.
+
+## Layers
+
+Controller → Service → Prisma. Business rules live in services; DB-level
+constraints are the final authority (the booking flow validates *and* relies on
+the exclusion constraint — the loser of a race gets a mapped HTTP 409).
+
+## Cross-cutting contracts
+
+| Concern | Implementation |
+|---|---|
+| Validation | Global `ValidationPipe` (whitelist + forbidNonWhitelisted + transform); every DTO uses class-validator |
+| Errors | Single envelope from `GlobalExceptionFilter`: P2002→409, P2025→404, overlap violation→409, unexpected→generic 500 (details only in logs) |
+| Rate limiting | Global floor 100 req/min/IP (`ThrottlerGuard` as APP_GUARD); stricter overrides via `@Throttle` on auth routes |
+| AuthZ | Explicit `JwtAuthGuard` (+ `RolesGuard` with roles from `@planity/shared`); ownership re-checked against DB in services |
+| Logging | pino JSON logs, per-request correlation id, secrets redacted |
+| Health | `/v1/health` liveness; `/v1/health/ready` readiness (DB required, cache optional) |
+
+## Modules (registered)
+
+auth · users · businesses · appointments · availability · reviews · favorites ·
+services · service-categories · places · config · redis · prisma · health
+
+Deleted during the baseline purge (do not resurrect without reading
+docs/ROADMAP.md): duplicate payment stacks, bullmq/notification stubs,
+provider-portal/staff/business-hours scaffolds written against a stale schema.
+Their replacements are planned in the roadmap phases.
+
+## Design system
+
+All React Native surfaces (mobile today, provider portal and admin later)
+consume `@planity/ui` primitives and `editorialTheme` tokens exclusively —
+no hex literals or ad-hoc typography outside the theme package.
+
+## Environments & configuration
+
+Configuration comes exclusively from env vars validated at boot by
+`apps/api/src/env.validation.ts` (DATABASE_URL, JWT_ACCESS_SECRET ≥16 chars,
+JWT_REFRESH_SECRET, optional REDIS_URL / ALLOWED_ORIGINS / LOG_LEVEL).
+Swagger is served only outside production.

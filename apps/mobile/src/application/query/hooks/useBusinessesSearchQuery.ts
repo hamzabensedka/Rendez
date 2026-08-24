@@ -46,7 +46,7 @@ export function useBusinessesSearchQuery(params: BusinessesSearchParams) {
           categories: categoriesKey || undefined,
           lat: params.nearMeCoords?.lat,
           lng: params.nearMeCoords?.lng,
-          radiusKm: params.nearMeCoords != null ? params.radiusKm ?? 20 : undefined,
+          radiusKm: params.nearMeCoords != null ? (params.radiusKm ?? 20) : undefined,
           availDate: params.availDate || undefined,
         },
       });

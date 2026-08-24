@@ -94,7 +94,9 @@ export const SalonReviews = React.memo(function SalonReviews({ businessId }: Sal
         </View>
         <View style={styles.ratingRight}>
           <Text style={styles.reviewCount}>
-            {ratingCount === 0 ? 'No reviews yet' : `${ratingCount} review${ratingCount === 1 ? '' : 's'}`}
+            {ratingCount === 0
+              ? 'No reviews yet'
+              : `${ratingCount} review${ratingCount === 1 ? '' : 's'}`}
           </Text>
         </View>
       </View>
@@ -113,9 +115,7 @@ export const SalonReviews = React.memo(function SalonReviews({ businessId }: Sal
                   <Text style={styles.reviewAuthor}> · {review.clientName}</Text>
                 ) : null}
               </View>
-              {review.comment ? (
-                <Text style={styles.reviewText}>{review.comment}</Text>
-              ) : null}
+              {review.comment ? <Text style={styles.reviewText}>{review.comment}</Text> : null}
               <Text style={styles.reviewDate}>{formatDate(review.createdAt)}</Text>
             </View>
           ))

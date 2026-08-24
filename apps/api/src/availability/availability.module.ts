@@ -10,4 +10,3 @@ import { BusinessesModule } from '../businesses/businesses.module';
   exports: [AvailabilityService],
 })
 export class AvailabilityModule {}
-

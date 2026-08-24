@@ -7,8 +7,6 @@ import {
   ActivityIndicator,
   StatusBar,
   ScrollView,
-  Image,
-  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,36 +15,29 @@ import { useAuth, useFavorites } from '../../../application/providers';
 import { useBottomNavInset } from '../../../application/components/BottomNav';
 import { editorialTheme as THEME } from '../../../application/theme/editorialTheme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 interface FavoriteItemProps {
   id: string;
   name: string;
-  location: string;
-  category: string;
-  imageUrl: string;
   onPress: () => void;
   onRemove: () => void;
 }
 
-const FavoriteItem: React.FC<FavoriteItemProps> = ({
-  name,
-  location,
-  category,
-  imageUrl,
-  onPress,
-  onRemove,
-}) => (
+const FavoriteItem: React.FC<FavoriteItemProps> = ({ name, onPress, onRemove }) => (
   <View style={styles.itemContainer}>
     {/* Image Container */}
     <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
       <View style={styles.imageWrapper}>
-        <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+        {/* Placeholder until business images are served by the API */}
+        <View style={styles.imagePlaceholder}>
+          <Ionicons name="storefront-outline" size={40} color={THEME.colors.outline} />
+        </View>
         {/* Favorite Button */}
-        <TouchableOpacity 
-          style={styles.favoriteButton} 
+        <TouchableOpacity
+          style={styles.favoriteButton}
           onPress={onRemove}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={`Remove ${name} from favorites`}
         >
           <View style={styles.favoriteButtonInner}>
             <Ionicons name="heart" size={18} color={THEME.colors.primary} />
@@ -59,9 +50,6 @@ const FavoriteItem: React.FC<FavoriteItemProps> = ({
     <View style={styles.infoContainer}>
       <View style={styles.infoLeft}>
         <Text style={styles.salonName}>{name}</Text>
-        <Text style={styles.salonMeta}>
-          {location} • {category}
-        </Text>
       </View>
       <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
         <Text style={styles.viewDetails}>VIEW DETAILS</Text>
@@ -69,31 +57,6 @@ const FavoriteItem: React.FC<FavoriteItemProps> = ({
     </View>
   </View>
 );
-
-// Mock data for demonstration
-const MOCK_FAVORITES = [
-  {
-    id: '1',
-    name: 'Le Studio Noir',
-    location: 'Paris',
-    category: 'Hair & Aesthetic',
-    imageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&h=450&fit=crop',
-  },
-  {
-    id: '2',
-    name: 'The Arch Gallery',
-    location: 'London',
-    category: 'Brows & Lash',
-    imageUrl: 'https://images.unsplash.com/photo-1600948836101-f9ffda59d250?w=800&h=450&fit=crop',
-  },
-  {
-    id: '3',
-    name: 'Ethereal Skin',
-    location: 'New York',
-    category: 'Clinical Facial',
-    imageUrl: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&h=450&fit=crop',
-  },
-];
 
 export default function FavoritesScreen() {
   const router = useRouter();
@@ -103,7 +66,7 @@ export default function FavoritesScreen() {
   // Redirect to login if not authenticated
   React.useEffect(() => {
     if (!user) {
-      router.replace('/login');
+      router.replace('/(auth)/login');
     }
   }, [user, router]);
 
@@ -111,26 +74,16 @@ export default function FavoritesScreen() {
     toggleFavorite(businessId);
   };
 
-  const displayItems = favoriteItems.length > 0 
-    ? favoriteItems.map(item => ({
-        id: item.businessId,
-        name: item.businessName ?? 'Unknown Studio',
-        location: 'Paris', // Would come from business data
-        category: 'Hair & Beauty', // Would come from business data
-        imageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&h=450&fit=crop',
-      }))
-    : MOCK_FAVORITES; // Use mock data when no real favorites
-
   const bottomInset = useBottomNavInset();
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.surface} />
-      
+
       {/* Top App Bar */}
       <SafeAreaView style={styles.headerContainer} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
             activeOpacity={0.7}
@@ -138,14 +91,13 @@ export default function FavoritesScreen() {
             <Ionicons name="arrow-back" size={24} color={THEME.colors.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>ATELIER</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.headerAvatar}
             onPress={() => router.push('/(main)/profile')}
+            accessibilityRole="button"
+            accessibilityLabel="Open profile"
           >
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' }}
-              style={styles.headerAvatarImage}
-            />
+            <Ionicons name="person" size={18} color={THEME.colors.onSurfaceVariant} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -159,7 +111,7 @@ export default function FavoritesScreen() {
         <View style={styles.editorialHeader}>
           <Text style={styles.sectionLabel}>YOUR CURATED COLLECTION</Text>
           <Text style={styles.headline}>Favorites</Text>
-          
+
           {/* Filter Chips */}
           <View style={styles.chipContainer}>
             <View style={styles.chipActive}>
@@ -176,25 +128,28 @@ export default function FavoritesScreen() {
           <View style={styles.center}>
             <ActivityIndicator size="large" color={THEME.colors.primary} />
           </View>
+        ) : favoriteItems.length === 0 ? (
+          <View style={styles.center}>
+            <Ionicons name="heart-outline" size={48} color={THEME.colors.outline} />
+            <Text style={styles.emptyTitle}>No favorites yet</Text>
+            <Text style={styles.emptySubtitle}>Studios you save will appear here.</Text>
+          </View>
         ) : (
           <View style={styles.listContainer}>
-            {displayItems.map((item) => (
+            {favoriteItems.map((item) => (
               <FavoriteItem
-                key={item.id}
-                id={item.id}
-                name={item.name}
-                location={item.location}
-                category={item.category}
-                imageUrl={item.imageUrl}
-                onPress={() => router.push(`/(main)/business/${item.id}`)}
-                onRemove={() => handleRemoveFavorite(item.id)}
+                key={item.businessId}
+                id={item.businessId}
+                name={item.businessName ?? 'Studio'}
+                onPress={() => router.push(`/(main)/business/${item.businessId}`)}
+                onRemove={() => handleRemoveFavorite(item.businessId)}
               />
             ))}
           </View>
         )}
 
         {/* Explore More Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.exploreButton}
           onPress={() => router.push('/(main)/explore')}
           activeOpacity={0.8}
@@ -243,9 +198,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: `${THEME.colors.outline}33`, // 20% opacity
   },
-  headerAvatarImage: {
+  imagePlaceholder: {
     width: '100%',
     height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: THEME.colors.surfaceContainerHigh,
+  },
+  emptyTitle: {
+    fontSize: THEME.typography.title.fontSize,
+    fontWeight: '600',
+    color: THEME.colors.onSurface,
+    marginTop: THEME.spacing.md,
+  },
+  emptySubtitle: {
+    fontSize: THEME.typography.body.fontSize - 1,
+    color: THEME.colors.onSurfaceVariant,
+    marginTop: THEME.spacing.xs,
   },
   scroll: {
     flex: 1,
@@ -354,14 +323,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.01,
     color: THEME.colors.primary,
     marginBottom: THEME.spacing.xs,
-  },
-  salonMeta: {
-    fontSize: THEME.typography.body.fontSize - 2,
-    fontWeight: '500',
-    letterSpacing: 0.1,
-    color: THEME.colors.onSurfaceVariant,
-    textTransform: 'uppercase',
-    opacity: 0.6,
   },
   viewDetails: {
     fontSize: THEME.typography.label.fontSize - 1,

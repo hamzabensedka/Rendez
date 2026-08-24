@@ -1,5 +1,15 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, ScrollView, FlatList, Dimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  FlatList,
+  Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Card, Button, Badge } from '@planity/ui';
 import { colors, spacing, radius } from '@planity/ui';
@@ -12,12 +22,9 @@ interface SalonCardProps {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_MARGIN = spacing.lg;
-const CARD_WIDTH = SCREEN_WIDTH - (CARD_MARGIN * 2);
+const CARD_WIDTH = SCREEN_WIDTH - CARD_MARGIN * 2;
 
-export const SalonCard = React.memo<SalonCardProps>(function SalonCard({
-  salon,
-  onPress,
-}) {
+export const SalonCard = React.memo<SalonCardProps>(function SalonCard({ salon, onPress }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -28,32 +35,30 @@ export const SalonCard = React.memo<SalonCardProps>(function SalonCard({
     setActiveIndex(roundIndex);
   }, []);
 
-  const renderImageItem = useCallback(({ item }: { item: string }) => (
-    <View style={{ width: CARD_WIDTH, height: 200 }}>
-      <Image
-        source={{ uri: item }}
-        style={styles.image}
-        resizeMode="cover"
-      />
-    </View>
-  ), []);
+  const renderImageItem = useCallback(
+    ({ item }: { item: string }) => (
+      <View style={{ width: CARD_WIDTH, height: 200 }}>
+        <Image source={{ uri: item }} style={styles.image} resizeMode="cover" />
+      </View>
+    ),
+    []
+  );
 
-  const getItemLayout = useCallback((_: unknown, index: number) => ({
-    length: CARD_WIDTH,
-    offset: CARD_WIDTH * index,
-    index,
-  }), []);
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: CARD_WIDTH,
+      offset: CARD_WIDTH * index,
+      index,
+    }),
+    []
+  );
 
   const toggleExpanded = useCallback(() => {
-    setIsExpanded(prev => !prev);
+    setIsExpanded((prev) => !prev);
   }, []);
 
   return (
-    <Card
-      variant="elevated"
-      padding="none"
-      style={styles.container}
-    >
+    <Card variant="elevated" padding="none" style={styles.container}>
       <TouchableOpacity
         onPress={onPress}
         activeOpacity={0.9}
@@ -83,13 +88,7 @@ export const SalonCard = React.memo<SalonCardProps>(function SalonCard({
           {/* Pagination Dots */}
           <View style={styles.dotsContainer}>
             {salon.images.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.dot,
-                  index === activeIndex && styles.activeDot
-                ]}
-              />
+              <View key={index} style={[styles.dot, index === activeIndex && styles.activeDot]} />
             ))}
           </View>
 
@@ -101,77 +100,140 @@ export const SalonCard = React.memo<SalonCardProps>(function SalonCard({
         {/* Info Section */}
         <View style={styles.infoContainer}>
           <View style={styles.headerRow}>
-             <View style={{ flex: 1 }}>
-                <Text variant="title3" numberOfLines={1}>{salon.name}</Text>
-                <View style={styles.row}>
-                    <Ionicons name="location-outline" size={14} color={colors.light.textSecondary} style={styles.icon} />
-                    <Text variant="body" color={colors.light.textSecondary} style={{ fontSize: 14 }} numberOfLines={1}>
-                        {salon.address} • {salon.distance}
-                    </Text>
-                </View>
-             </View>
-             <Badge
-               label={salon.rating.toString().replace('.', ',')}
-               icon={<Ionicons name="star" size={10} color={colors.light.surface} />}
-               variant="default" // Customize badge later for rating style
-               style={{ backgroundColor: colors.light.text, borderRadius: radius.sm }}
-               // Override text color to white for black badge
-             />
+            <View style={{ flex: 1 }}>
+              <Text variant="title3" numberOfLines={1}>
+                {salon.name}
+              </Text>
+              <View style={styles.row}>
+                <Ionicons
+                  name="location-outline"
+                  size={14}
+                  color={colors.light.textSecondary}
+                  style={styles.icon}
+                />
+                <Text
+                  variant="body"
+                  color={colors.light.textSecondary}
+                  style={{ fontSize: 14 }}
+                  numberOfLines={1}
+                >
+                  {salon.address} • {salon.distance}
+                </Text>
+              </View>
+            </View>
+            <Badge
+              label={salon.rating.toString().replace('.', ',')}
+              icon={<Ionicons name="star" size={10} color={colors.light.surface} />}
+              variant="default" // Customize badge later for rating style
+              style={{ backgroundColor: colors.light.text, borderRadius: radius.sm }}
+              // Override text color to white for black badge
+            />
           </View>
 
           <View style={styles.reviewsRow}>
-             <Text variant="caption" color={colors.light.textSecondary}>{salon.reviewCount} avis</Text>
-             <Text variant="caption" color={colors.light.textSecondary}> • </Text>
-             <Text variant="caption" color={colors.light.textSecondary}>{salon.priceLevel}</Text>
+            <Text variant="caption" color={colors.light.textSecondary}>
+              {salon.reviewCount} avis
+            </Text>
+            <Text variant="caption" color={colors.light.textSecondary}>
+              {' '}
+              •{' '}
+            </Text>
+            <Text variant="caption" color={colors.light.textSecondary}>
+              {salon.priceLevel}
+            </Text>
           </View>
 
           {/* Availability Section */}
           <View style={styles.availabilityContainer}>
             {salon.availability.morning.length > 0 && (
-                <View style={styles.timeRow}>
-                <Text variant="caption" weight="600" color={colors.light.textSecondary} style={styles.timeLabel}>AM</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.slotsScroll}>
-                    {salon.availability.morning.map((slot, index) => (
+              <View style={styles.timeRow}>
+                <Text
+                  variant="caption"
+                  weight="600"
+                  color={colors.light.textSecondary}
+                  style={styles.timeLabel}
+                >
+                  AM
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.slotsScroll}
+                >
+                  {salon.availability.morning.map((slot, index) => (
                     <TouchableOpacity key={`m-${index}`} style={styles.slotButton}>
-                        <Text variant="caption" color={colors.light.accent} weight="600">{slot}</Text>
+                      <Text variant="caption" color={colors.light.accent} weight="600">
+                        {slot}
+                      </Text>
                     </TouchableOpacity>
-                    ))}
+                  ))}
                 </ScrollView>
-                </View>
+              </View>
             )}
 
             {salon.availability.afternoon.length > 0 && (
-                <View style={styles.timeRow}>
-                <Text variant="caption" weight="600" color={colors.light.textSecondary} style={styles.timeLabel}>PM</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.slotsScroll}>
-                    {salon.availability.afternoon.map((slot, index) => (
+              <View style={styles.timeRow}>
+                <Text
+                  variant="caption"
+                  weight="600"
+                  color={colors.light.textSecondary}
+                  style={styles.timeLabel}
+                >
+                  PM
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.slotsScroll}
+                >
+                  {salon.availability.afternoon.map((slot, index) => (
                     <TouchableOpacity key={`a-${index}`} style={styles.slotButton}>
-                        <Text variant="caption" color={colors.light.accent} weight="600">{slot}</Text>
+                      <Text variant="caption" color={colors.light.accent} weight="600">
+                        {slot}
+                      </Text>
                     </TouchableOpacity>
-                    ))}
+                  ))}
                 </ScrollView>
-                </View>
+              </View>
             )}
           </View>
 
           {/* Expandable Content */}
           {isExpanded && (
             <View style={styles.expandedContent}>
-              <Text variant="headline" style={styles.sectionTitle}>Reviews</Text>
+              <Text variant="headline" style={styles.sectionTitle}>
+                Reviews
+              </Text>
               <View style={styles.reviewSnippet}>
                 <View style={styles.starsRow}>
-                  <Text variant="headline" style={{ marginRight: 4 }}>5</Text>
+                  <Text variant="headline" style={{ marginRight: 4 }}>
+                    5
+                  </Text>
                   {[1, 2, 3, 4, 5].map((_, i) => (
                     <Ionicons key={i} name="star" size={14} color={colors.light.text} />
                   ))}
                 </View>
-                <Text variant="caption" color={colors.light.textSecondary} style={{ marginBottom: 4 }}>Response from provider</Text>
-                <Text variant="body" style={{ fontSize: 14 }}>Thank you for your review.</Text>
+                <Text
+                  variant="caption"
+                  color={colors.light.textSecondary}
+                  style={{ marginBottom: 4 }}
+                >
+                  Response from provider
+                </Text>
+                <Text variant="body" style={{ fontSize: 14 }}>
+                  Thank you for your review.
+                </Text>
               </View>
 
-              <Text variant="headline" style={styles.sectionTitle}>About {salon.name}</Text>
-              <Text variant="body" color={colors.light.textSecondary} style={{ fontSize: 14, lineHeight: 20 }}>
-                {salon.description || "No description available."}
+              <Text variant="headline" style={styles.sectionTitle}>
+                About {salon.name}
+              </Text>
+              <Text
+                variant="body"
+                color={colors.light.textSecondary}
+                style={{ fontSize: 14, lineHeight: 20 }}
+              >
+                {salon.description || 'No description available.'}
               </Text>
             </View>
           )}
@@ -187,7 +249,7 @@ export const SalonCard = React.memo<SalonCardProps>(function SalonCard({
 
           <TouchableOpacity onPress={toggleExpanded} style={styles.toggleButton}>
             <Text variant="footnote" style={styles.toggleButtonText}>
-              {isExpanded ? "Show less" : "Show more"}
+              {isExpanded ? 'Show less' : 'Show more'}
             </Text>
           </TouchableOpacity>
         </View>

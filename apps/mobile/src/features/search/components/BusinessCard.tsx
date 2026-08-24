@@ -22,9 +22,7 @@ export interface ApiBusinessListItem {
   }>;
 }
 
-function formatAddress(
-  loc: NonNullable<ApiBusinessListItem['locations']>[number]
-): string {
+function formatAddress(loc: NonNullable<ApiBusinessListItem['locations']>[number]): string {
   const parts = [loc.address1, loc.address2, loc.postalCode, loc.city, loc.country].filter(Boolean);
   return parts.join(', ');
 }
@@ -34,7 +32,10 @@ interface BusinessCardProps {
   onPress: () => void;
 }
 
-export const BusinessCard = React.memo<BusinessCardProps>(function BusinessCard({ business, onPress }) {
+export const BusinessCard = React.memo<BusinessCardProps>(function BusinessCard({
+  business,
+  onPress,
+}) {
   const address =
     business.locations && business.locations.length > 0
       ? formatAddress(business.locations[0])
@@ -74,7 +75,12 @@ export const BusinessCard = React.memo<BusinessCardProps>(function BusinessCard(
         {address && (
           <View style={styles.addressRow}>
             <Ionicons name="location-outline" size={14} color={colors.light.textSecondary} />
-            <Text variant="body" color={colors.light.textSecondary} numberOfLines={1} style={styles.addressText}>
+            <Text
+              variant="body"
+              color={colors.light.textSecondary}
+              numberOfLines={1}
+              style={styles.addressText}
+            >
               {address}
             </Text>
           </View>

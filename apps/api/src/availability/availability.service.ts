@@ -2,10 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { DateTime } from 'luxon';
 import { localToUtc, getStartOfDayUtc, getEndOfDayUtc } from '@planity/shared';
-import {
-  DEFAULT_SLOT_STEP_MIN,
-  CACHE_TTL_AVAILABILITY,
-} from '@planity/shared';
+import { DEFAULT_SLOT_STEP_MIN, CACHE_TTL_AVAILABILITY } from '@planity/shared';
 import type { Business, ServiceVariant } from '@prisma/client';
 import { RedisCacheService } from '../redis/redis-cache.service';
 
@@ -45,13 +42,9 @@ export class AvailabilityService {
     const cached = await this.cache.getJson<AvailabilitySlotsResponse>(cacheKey);
     if (cached) return cached;
 
-    const { business, variant } = await this.loadBusinessAndVariant(
-      businessId,
-      serviceVariantId
-    );
+    const { business, variant } = await this.loadBusinessAndVariant(businessId, serviceVariantId);
     const timezone = business.timezone;
-    const requiredDuration =
-      variant.durationMin + variant.bufferBeforeMin + variant.bufferAfterMin;
+    const requiredDuration = variant.durationMin + variant.bufferBeforeMin + variant.bufferAfterMin;
 
     const startOfDayUtc = getStartOfDayUtc(date, timezone);
     const endOfDayUtc = getEndOfDayUtc(date, timezone);
@@ -59,19 +52,10 @@ export class AvailabilityService {
     const [rules, timeOffs, appointments] = await Promise.all([
       this.loadRulesForDay(businessId, date, timezone, staffId),
       this.loadTimeOffsInRange(businessId, startOfDayUtc, endOfDayUtc, staffId),
-      this.loadAppointmentsInRange(
-        businessId,
-        startOfDayUtc,
-        endOfDayUtc,
-        staffId
-      ),
+      this.loadAppointmentsInRange(businessId, startOfDayUtc, endOfDayUtc, staffId),
     ]);
 
-    const openFromRules = this.buildOpenIntervalsFromRules(
-      date,
-      timezone,
-      rules
-    );
+    const openFromRules = this.buildOpenIntervalsFromRules(date, timezone, rules);
     const afterTimeOff = this.subtractIntervals(openFromRules, timeOffs);
     const afterAppointments = this.subtractIntervals(afterTimeOff, appointments);
     const slots = this.generateSlotsFromIntervals(
@@ -124,16 +108,10 @@ export class AvailabilityService {
         businessId,
         staffId: staffId ?? null,
         dayOfWeek,
-        OR: [
-          { effectiveFrom: null },
-          { effectiveFrom: { lte: dayEndUtc } },
-        ],
+        OR: [{ effectiveFrom: null }, { effectiveFrom: { lte: dayEndUtc } }],
         AND: [
           {
-            OR: [
-              { effectiveTo: null },
-              { effectiveTo: { gte: dayStartUtc } },
-            ],
+            OR: [{ effectiveTo: null }, { effectiveTo: { gte: dayStartUtc } }],
           },
         ],
       },
@@ -150,10 +128,7 @@ export class AvailabilityService {
       where: {
         businessId,
         staffId: staffId ?? null,
-        AND: [
-          { startAtUtc: { lte: endUtc } },
-          { endAtUtc: { gte: startUtc } },
-        ],
+        AND: [{ startAtUtc: { lte: endUtc } }, { endAtUtc: { gte: startUtc } }],
       },
     });
   }
@@ -169,10 +144,7 @@ export class AvailabilityService {
         businessId,
         staffId: staffId ?? null,
         status: { not: 'CANCELLED' },
-        AND: [
-          { startAtUtc: { lte: endUtc } },
-          { endAtUtc: { gte: startUtc } },
-        ],
+        AND: [{ startAtUtc: { lte: endUtc } }, { endAtUtc: { gte: startUtc } }],
       },
     });
   }
@@ -206,9 +178,7 @@ export class AvailabilityService {
         if (currentStart < b.startAtUtc) {
           result.push({ start: currentStart, end: b.startAtUtc });
         }
-        currentStart = new Date(
-          Math.max(currentStart.getTime(), b.endAtUtc.getTime())
-        );
+        currentStart = new Date(Math.max(currentStart.getTime(), b.endAtUtc.getTime()));
       }
       if (currentStart < end) {
         result.push({ start: currentStart, end });

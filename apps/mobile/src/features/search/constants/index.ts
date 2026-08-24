@@ -2,18 +2,12 @@
  * Search feature constants
  */
 
-export const FREQUENT_SEARCHES = [
-  'Hair',
-  'Barber',
-  'Nails',
-  'Spa',
-  'Wellness',
-] as const;
+export const FREQUENT_SEARCHES = ['Hair', 'Barber', 'Nails', 'Spa', 'Wellness'] as const;
 
 export const SERVICE_CATEGORIES = [
-  'Men\'s hair',
-  'Women\'s hair',
-  'Kids\' hair',
+  "Men's hair",
+  "Women's hair",
+  "Kids' hair",
   'Color',
   'Hair care',
   'Straightening',
@@ -35,9 +29,21 @@ export const DEFAULT_SALON_IMAGES = [
 
 /** Trending treatments for search landing (Trending Near You). Images are B&W. */
 export const TRENDING_NEAR_YOU = [
-  { id: 'balayage', label: 'Balayage', imageUrl: 'https://picsum.photos/seed/balayage/400/533?grayscale' },
-  { id: 'facials', label: 'Facials', imageUrl: 'https://picsum.photos/seed/facials/400/533?grayscale' },
-  { id: 'gel-nails', label: 'Gel Nails', imageUrl: 'https://picsum.photos/seed/nails/400/533?grayscale' },
+  {
+    id: 'balayage',
+    label: 'Balayage',
+    imageUrl: 'https://picsum.photos/seed/balayage/400/533?grayscale',
+  },
+  {
+    id: 'facials',
+    label: 'Facials',
+    imageUrl: 'https://picsum.photos/seed/facials/400/533?grayscale',
+  },
+  {
+    id: 'gel-nails',
+    label: 'Gel Nails',
+    imageUrl: 'https://picsum.photos/seed/nails/400/533?grayscale',
+  },
 ] as const;
 
 /** Filter pills for search results (Distance, Rating, Price, etc.) */
@@ -63,7 +69,9 @@ export const SEARCH_FILTERS = [
 ] as const;
 
 /** Fallback city suggestions when geocoding API returns no results (e.g. offline or API down). */
-export const FALLBACK_CITY_SUGGESTIONS: Readonly<{ id: string; address: string; city: string; country: string }[]> = [
+export const FALLBACK_CITY_SUGGESTIONS: Readonly<
+  { id: string; address: string; city: string; country: string }[]
+> = [
   { id: 'fallback-paris', address: 'Paris, France', city: 'Paris', country: 'France' },
   { id: 'fallback-lyon', address: 'Lyon, France', city: 'Lyon', country: 'France' },
   { id: 'fallback-toulouse', address: 'Toulouse, France', city: 'Toulouse', country: 'France' },

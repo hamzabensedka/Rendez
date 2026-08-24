@@ -8,9 +8,7 @@ interface AroundMeButtonProps {
   onPress: () => void;
 }
 
-export const AroundMeButton = React.memo<AroundMeButtonProps>(function AroundMeButton({
-  onPress,
-}) {
+export const AroundMeButton = React.memo<AroundMeButtonProps>(function AroundMeButton({ onPress }) {
   return (
     <TouchableOpacity
       style={styles.card}

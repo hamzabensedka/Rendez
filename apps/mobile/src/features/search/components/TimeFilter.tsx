@@ -31,7 +31,10 @@ function formatYmd(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-function parseInitial(avail?: string, summary?: string): {
+function parseInitial(
+  avail?: string,
+  summary?: string
+): {
   preset: TimeFilterPreset;
   selectedDay: string;
 } {
@@ -92,65 +95,88 @@ export const TimeFilter = React.memo<TimeFilterProps>(function TimeFilter({
   const renderRadio = (label: string, value: TimeFilterPreset) => {
     const isSelected = preset === value;
     return (
-      <TouchableOpacity style={styles.radioRow} onPress={() => setState((s) => ({ ...s, preset: value }))} activeOpacity={0.7}>
-        <View style={styles.radioCircle}>{isSelected ? <View style={styles.radioDot} /> : null}</View>
+      <TouchableOpacity
+        style={styles.radioRow}
+        onPress={() => setState((s) => ({ ...s, preset: value }))}
+        activeOpacity={0.7}
+      >
+        <View style={styles.radioCircle}>
+          {isSelected ? <View style={styles.radioDot} /> : null}
+        </View>
         <Text style={styles.radioLabel}>{label}</Text>
       </TouchableOpacity>
     );
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
       <SafeAreaProvider>
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton} accessibilityRole="button">
-            <Ionicons name="close" size={28} color={colors.light.text} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Quand</Text>
-          <View style={styles.placeholder} />
-        </View>
-
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <View style={styles.optionsSection}>
-            {renderRadio('N’importe quand', 'any')}
-            {renderRadio("Aujourd'hui", 'today')}
-            {renderRadio('Demain', 'tomorrow')}
-            {renderRadio('Choisir une date', 'custom')}
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeButton}
+              accessibilityRole="button"
+            >
+              <Ionicons name="close" size={28} color={colors.light.text} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Quand</Text>
+            <View style={styles.placeholder} />
           </View>
 
-          {preset === 'custom' ? (
-            <View style={styles.calendarWrap}>
-              <Calendar
-                current={selectedDay}
-                onDayPress={(day) => setState((s) => ({ ...s, selectedDay: day.dateString }))}
-                markedDates={{
-                  [selectedDay]: {
-                    selected: true,
-                    selectedColor: colors.light.text,
-                  },
-                }}
-                theme={{
-                  todayTextColor: colors.light.accent,
-                  arrowColor: colors.light.text,
-                  monthTextColor: colors.light.text,
-                  textDayFontFamily: 'System',
-                  textMonthFontFamily: 'System',
-                  textDayHeaderFontFamily: 'System',
-                  selectedDayBackgroundColor: colors.light.text,
-                  selectedDayTextColor: colors.light.background,
-                }}
-                style={styles.calendar}
-              />
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.optionsSection}>
+              {renderRadio('N’importe quand', 'any')}
+              {renderRadio("Aujourd'hui", 'today')}
+              {renderRadio('Demain', 'tomorrow')}
+              {renderRadio('Choisir une date', 'custom')}
             </View>
-          ) : null}
-        </ScrollView>
 
-        <View style={styles.footer}>
-          <TouchableOpacity style={styles.applyButton} onPress={handleApply} accessibilityRole="button">
-            <Text style={styles.applyButtonText}>Enregistrer</Text>
-          </TouchableOpacity>
-        </View>
+            {preset === 'custom' ? (
+              <View style={styles.calendarWrap}>
+                <Calendar
+                  current={selectedDay}
+                  onDayPress={(day) => setState((s) => ({ ...s, selectedDay: day.dateString }))}
+                  markedDates={{
+                    [selectedDay]: {
+                      selected: true,
+                      selectedColor: colors.light.text,
+                    },
+                  }}
+                  theme={{
+                    todayTextColor: colors.light.accent,
+                    arrowColor: colors.light.text,
+                    monthTextColor: colors.light.text,
+                    textDayFontFamily: 'System',
+                    textMonthFontFamily: 'System',
+                    textDayHeaderFontFamily: 'System',
+                    selectedDayBackgroundColor: colors.light.text,
+                    selectedDayTextColor: colors.light.background,
+                  }}
+                  style={styles.calendar}
+                />
+              </View>
+            ) : null}
+          </ScrollView>
+
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={styles.applyButton}
+              onPress={handleApply}
+              accessibilityRole="button"
+            >
+              <Text style={styles.applyButtonText}>Enregistrer</Text>
+            </TouchableOpacity>
+          </View>
         </SafeAreaView>
       </SafeAreaProvider>
     </Modal>

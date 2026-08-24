@@ -10,8 +10,8 @@ interface SalonDetailsHeaderProps {
   onBack?: () => void;
 }
 
-export const SalonDetailsHeader = React.memo<SalonDetailsHeaderProps>(function SalonDetailsHeader({ 
-  onBack 
+export const SalonDetailsHeader = React.memo<SalonDetailsHeaderProps>(function SalonDetailsHeader({
+  onBack,
 }) {
   const router = useRouter();
 
@@ -25,7 +25,7 @@ export const SalonDetailsHeader = React.memo<SalonDetailsHeaderProps>(function S
 
   return (
     <View style={styles.header}>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.button}
         onPress={handleBack}
         accessibilityLabel="Back"
@@ -33,9 +33,9 @@ export const SalonDetailsHeader = React.memo<SalonDetailsHeaderProps>(function S
       >
         <Ionicons name="arrow-back" size={24} color={colors.light.text} />
       </TouchableOpacity>
-      
+
       <AppLogo />
-      
+
       <ProfileButton />
     </View>
   );

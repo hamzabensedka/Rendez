@@ -22,4 +22,3 @@ export class CreateServiceDto {
   @IsNumber()
   baseDurationMin?: number;
 }
-

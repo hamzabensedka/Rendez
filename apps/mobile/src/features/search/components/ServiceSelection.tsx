@@ -28,47 +28,68 @@ export const ServiceSelection = React.memo<ServiceSelectionProps>(function Servi
   return (
     <View style={styles.container}>
       {!hideTitle && (
-        <Text variant="title2" style={styles.title}>Choose service</Text>
+        <Text variant="title2" style={styles.title}>
+          Choose service
+        </Text>
       )}
-      
+
       {categories.map((category) => {
         const isExpanded = expandedCategories[category.id];
         return (
           <View key={category.id} style={styles.categoryContainer}>
-            <TouchableOpacity 
-              style={styles.categoryHeader} 
+            <TouchableOpacity
+              style={styles.categoryHeader}
               onPress={() => toggleCategory(category.id)}
               activeOpacity={0.7}
             >
-              <Text variant="body" weight="500">{category.title}</Text>
-              <Ionicons 
-                name={isExpanded ? "chevron-up" : "chevron-down"} 
-                size={20} 
-                color={colors.light.text} 
+              <Text variant="body" weight="500">
+                {category.title}
+              </Text>
+              <Ionicons
+                name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                size={20}
+                color={colors.light.text}
               />
             </TouchableOpacity>
-            
+
             {isExpanded && (
               <View style={styles.itemsContainer}>
                 {category.items.map((item) => (
                   <View key={item.id} style={styles.itemRow}>
                     <View style={styles.itemInfo}>
-                      <Text variant="body" style={styles.itemName}>{item.name}</Text>
+                      <Text variant="body" style={styles.itemName}>
+                        {item.name}
+                      </Text>
                       <View style={styles.itemMetaContainer}>
-                        <Text variant="footnote" weight="600" color={colors.light.textSecondary}>{item.price}</Text>
-                        <Text variant="footnote" color={colors.light.textSecondary} style={styles.itemDot}>•</Text>
-                        <Text variant="footnote" color={colors.light.textSecondary}>{item.duration}</Text>
+                        <Text variant="footnote" weight="600" color={colors.light.textSecondary}>
+                          {item.price}
+                        </Text>
+                        <Text
+                          variant="footnote"
+                          color={colors.light.textSecondary}
+                          style={styles.itemDot}
+                        >
+                          •
+                        </Text>
+                        <Text variant="footnote" color={colors.light.textSecondary}>
+                          {item.duration}
+                        </Text>
                       </View>
                       {item.description && (
-                        <Text variant="caption" color={colors.light.textSecondary} style={styles.itemDescription} numberOfLines={2}>
+                        <Text
+                          variant="caption"
+                          color={colors.light.textSecondary}
+                          style={styles.itemDescription}
+                          numberOfLines={2}
+                        >
                           {item.description}
                         </Text>
                       )}
                     </View>
-                    
-                    <Button 
-                      title="Choisir" 
-                      onPress={() => onSelect?.(item)} 
+
+                    <Button
+                      title="Choisir"
+                      onPress={() => onSelect?.(item)}
                       size="sm"
                       variant="primary" // Dark
                     />

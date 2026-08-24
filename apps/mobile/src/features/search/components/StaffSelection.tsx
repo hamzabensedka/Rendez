@@ -26,11 +26,7 @@ export const StaffSelection = React.memo<StaffSelectionProps>(function StaffSele
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* No Preference Option */}
-        <TouchableOpacity 
-          style={styles.row} 
-          onPress={() => onSelect(null)}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.row} onPress={() => onSelect(null)} activeOpacity={0.7}>
           <View style={styles.staffInfo}>
             <Text style={styles.staffName}>No preference</Text>
           </View>
@@ -45,9 +41,9 @@ export const StaffSelection = React.memo<StaffSelectionProps>(function StaffSele
           const initial = member.name.charAt(0).toUpperCase();
 
           return (
-            <TouchableOpacity 
-              key={member.id} 
-              style={styles.row} 
+            <TouchableOpacity
+              key={member.id}
+              style={styles.row}
               onPress={() => onSelect(member.id)}
               activeOpacity={0.7}
             >
@@ -90,7 +86,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 16,
-
   },
   staffInfo: {
     flexDirection: 'row',

@@ -33,9 +33,7 @@ export function BookingServiceList({
                 <Text style={styles.serviceCardMetaText}>{item.durationMin} min</Text>
                 <Text style={styles.serviceCardDot}> • </Text>
                 <Text style={styles.serviceCardPrice}>
-                  {item.priceCents != null
-                    ? `${(item.priceCents / 100).toFixed(0)}€`
-                    : '—'}
+                  {item.priceCents != null ? `${(item.priceCents / 100).toFixed(0)}€` : '—'}
                 </Text>
               </View>
               <TouchableOpacity

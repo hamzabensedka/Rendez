@@ -52,7 +52,9 @@ export function SearchList<T>({
   if (data.length === 0 && emptyMessage) {
     return (
       <View style={styles.emptyContainer}>
-        <Text variant="body" color={colors.light.textSecondary}>{emptyMessage}</Text>
+        <Text variant="body" color={colors.light.textSecondary}>
+          {emptyMessage}
+        </Text>
       </View>
     );
   }
@@ -60,7 +62,9 @@ export function SearchList<T>({
   return (
     <View style={styles.container}>
       {title ? (
-        <Text variant="headline" style={styles.sectionTitle}>{title}</Text>
+        <Text variant="headline" style={styles.sectionTitle}>
+          {title}
+        </Text>
       ) : null}
       <FlashList
         data={[...data]}

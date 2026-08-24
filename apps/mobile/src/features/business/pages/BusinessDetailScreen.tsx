@@ -169,7 +169,7 @@ export default function BusinessDetailScreen() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <StatusBar barStyle="dark-content" />
         <View style={styles.header}>
-           <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
             <Ionicons name="arrow-back" size={24} color={colors.light.text} />
           </TouchableOpacity>
         </View>
@@ -184,7 +184,9 @@ export default function BusinessDetailScreen() {
 
   const isFav = id && isFavorite(id);
   // Deterministic random image based on ID char code sum
-  const imageIndex = id ? id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % DEFAULT_SALON_IMAGES.length : 0;
+  const imageIndex = id
+    ? id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % DEFAULT_SALON_IMAGES.length
+    : 0;
   const heroImage = DEFAULT_SALON_IMAGES[imageIndex];
 
   return (
@@ -201,10 +203,7 @@ export default function BusinessDetailScreen() {
       >
         {/* Top Nav - in white padding area */}
         <View style={[styles.navBar, { paddingTop: insets.top, paddingHorizontal: HERO_PADDING }]}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.navButton}
-          >
+          <TouchableOpacity onPress={() => router.back()} style={styles.navButton}>
             <Ionicons name="arrow-back" size={24} color={colors.light.text} />
           </TouchableOpacity>
 
@@ -214,7 +213,7 @@ export default function BusinessDetailScreen() {
             </TouchableOpacity>
             <TouchableOpacity onPress={() => id && toggleFavorite(id)} style={styles.navButton}>
               <Ionicons
-                name={isFav ? "heart" : "heart-outline"}
+                name={isFav ? 'heart' : 'heart-outline'}
                 size={24}
                 color={isFav ? colors.light.error : colors.light.text}
               />
@@ -225,12 +224,13 @@ export default function BusinessDetailScreen() {
 
         {/* Hero Section - rounded corners, white padding on all sides */}
         <View style={[styles.heroWrapper, { paddingHorizontal: HERO_PADDING }]}>
-          <View style={[styles.heroImageContainer, { height: HERO_HEIGHT, borderRadius: HERO_BORDER_RADIUS }]}>
-            <Image
-              source={{ uri: heroImage }}
-              style={StyleSheet.absoluteFill}
-              resizeMode="cover"
-            />
+          <View
+            style={[
+              styles.heroImageContainer,
+              { height: HERO_HEIGHT, borderRadius: HERO_BORDER_RADIUS },
+            ]}
+          >
+            <Image source={{ uri: heroImage }} style={StyleSheet.absoluteFill} resizeMode="cover" />
             {/* Rating Badge - inside rounded image, top right */}
             <View style={[styles.ratingBadge, { top: 16, right: 16 }]}>
               <Ionicons name="star" size={16} color="#EAB308" />
@@ -262,7 +262,9 @@ export default function BusinessDetailScreen() {
             <View style={styles.statItem}>
               <Text style={styles.statLabel}>REVIEWS</Text>
               <Text style={styles.statValue}>
-                {business.ratingCount > 1000 ? (business.ratingCount / 1000).toFixed(1) + 'k' : business.ratingCount}
+                {business.ratingCount > 1000
+                  ? (business.ratingCount / 1000).toFixed(1) + 'k'
+                  : business.ratingCount}
               </Text>
             </View>
             <View style={styles.statItem}>
@@ -283,7 +285,8 @@ export default function BusinessDetailScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.infoTitle}>READ BEFORE BOOKING</Text>
               <Text style={styles.infoText}>
-                Please arrive 10 minutes early. Cancellations within 24 hours incur a 50% fee. All tools are sterilized medically.
+                Please arrive 10 minutes early. Cancellations within 24 hours incur a 50% fee. All
+                tools are sterilized medically.
               </Text>
             </View>
           </View>
@@ -301,9 +304,16 @@ export default function BusinessDetailScreen() {
               const isExpanded = expandedServiceId === service.id;
               let iconName: keyof typeof Ionicons.glyphMap = 'cut-outline';
               const lowerName = service.name.toLowerCase();
-              if (lowerName.includes('eye') || lowerName.includes('lash') || lowerName.includes('brow')) iconName = 'eye-outline';
-              else if (lowerName.includes('nail') || lowerName.includes('manicure')) iconName = 'hand-left-outline';
-              else if (lowerName.includes('skin') || lowerName.includes('face')) iconName = 'happy-outline';
+              if (
+                lowerName.includes('eye') ||
+                lowerName.includes('lash') ||
+                lowerName.includes('brow')
+              )
+                iconName = 'eye-outline';
+              else if (lowerName.includes('nail') || lowerName.includes('manicure'))
+                iconName = 'hand-left-outline';
+              else if (lowerName.includes('skin') || lowerName.includes('face'))
+                iconName = 'happy-outline';
               else if (lowerName.includes('massage')) iconName = 'body-outline';
 
               return (
@@ -316,12 +326,19 @@ export default function BusinessDetailScreen() {
                     activeOpacity={0.7}
                   >
                     <View style={styles.serviceItemLeft}>
-                      <Ionicons name={iconName} size={32} color={colors.light.text} style={{ opacity: 0.8 }} />
+                      <Ionicons
+                        name={iconName}
+                        size={32}
+                        color={colors.light.text}
+                        style={{ opacity: 0.8 }}
+                      />
                       <View style={{ marginLeft: 16 }}>
                         <Text style={styles.serviceName}>{service.name}</Text>
                         <Text style={styles.serviceDesc} numberOfLines={1}>
                           {service.serviceVariants
-                            .map((v: Business['services'][number]['serviceVariants'][number]) => v.name)
+                            .map(
+                              (v: Business['services'][number]['serviceVariants'][number]) => v.name
+                            )
                             .join(', ')}
                         </Text>
                       </View>
@@ -336,64 +353,70 @@ export default function BusinessDetailScreen() {
                     <View style={styles.serviceVariants}>
                       {service.serviceVariants.map(
                         (variant: Business['services'][number]['serviceVariants'][number]) => (
-                        <TouchableOpacity
-                          key={variant.id}
-                          style={styles.serviceVariantRow}
-                          onPress={() => {
-                            const isAdding = addToBooking === '1' && existingServices;
-                            if (isAdding && typeof existingServices === 'string') {
-                              try {
-                                const parsed = JSON.parse(existingServices) as Array<{
-                                  serviceVariantId: string;
-                                  name: string;
-                                  durationMin: number;
-                                  priceCents: number | null;
-                                }>;
-                                const newItem = {
-                                  serviceVariantId: variant.id,
-                                  name: variant.name,
-                                  durationMin: variant.durationMin,
-                                  priceCents: variant.priceCents,
-                                };
-                                router.replace({
-                                  pathname: '/(main)/booking',
-                                  params: {
-                                    businessId: business.id,
-                                    businessName: business.name ?? undefined,
+                          <TouchableOpacity
+                            key={variant.id}
+                            style={styles.serviceVariantRow}
+                            onPress={() => {
+                              const isAdding = addToBooking === '1' && existingServices;
+                              if (isAdding && typeof existingServices === 'string') {
+                                try {
+                                  const parsed = JSON.parse(existingServices) as Array<{
+                                    serviceVariantId: string;
+                                    name: string;
+                                    durationMin: number;
+                                    priceCents: number | null;
+                                  }>;
+                                  const newItem = {
                                     serviceVariantId: variant.id,
-                                    existingServices: JSON.stringify([...parsed, newItem]),
-                                  },
-                                });
-                                return;
-                              } catch {
-                                // fall through
+                                    name: variant.name,
+                                    durationMin: variant.durationMin,
+                                    priceCents: variant.priceCents,
+                                  };
+                                  router.replace({
+                                    pathname: '/(main)/booking',
+                                    params: {
+                                      businessId: business.id,
+                                      businessName: business.name ?? undefined,
+                                      serviceVariantId: variant.id,
+                                      existingServices: JSON.stringify([...parsed, newItem]),
+                                    },
+                                  });
+                                  return;
+                                } catch {
+                                  // fall through
+                                }
                               }
-                            }
-                            router.push({
-                              pathname: '/(main)/booking',
-                              params: {
-                                businessId: business.id,
-                                serviceVariantId: variant.id,
-                                businessName: business.name ?? undefined,
-                                serviceName: variant.name,
-                                durationMin: String(variant.durationMin),
-                                priceCents: variant.priceCents != null ? String(variant.priceCents) : undefined,
-                              },
-                            });
-                          }}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={styles.serviceVariantName}>{variant.name}</Text>
-                          <View style={styles.serviceVariantMeta}>
-                            <Text style={styles.serviceVariantDuration}>{variant.durationMin} min</Text>
-                            {variant.priceCents != null && (
-                              <Text style={styles.serviceVariantPrice}>
-                                €{(variant.priceCents / 100).toFixed(2)}
+                              router.push({
+                                pathname: '/(main)/booking',
+                                params: {
+                                  businessId: business.id,
+                                  serviceVariantId: variant.id,
+                                  businessName: business.name ?? undefined,
+                                  serviceName: variant.name,
+                                  durationMin: String(variant.durationMin),
+                                  priceCents:
+                                    variant.priceCents != null
+                                      ? String(variant.priceCents)
+                                      : undefined,
+                                },
+                              });
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={styles.serviceVariantName}>{variant.name}</Text>
+                            <View style={styles.serviceVariantMeta}>
+                              <Text style={styles.serviceVariantDuration}>
+                                {variant.durationMin} min
                               </Text>
-                            )}
-                          </View>
-                        </TouchableOpacity>
-                      ))}
+                              {variant.priceCents != null && (
+                                <Text style={styles.serviceVariantPrice}>
+                                  €{(variant.priceCents / 100).toFixed(2)}
+                                </Text>
+                              )}
+                            </View>
+                          </TouchableOpacity>
+                        )
+                      )}
                     </View>
                   )}
                 </View>
@@ -407,22 +430,14 @@ export default function BusinessDetailScreen() {
       </ScrollView>
 
       {/* Floating Bottom Bar */}
-      <View
-        style={[
-          styles.bottomBar,
-          { bottom: insets.bottom },
-        ]}
-      >
+      <View style={[styles.bottomBar, { bottom: insets.bottom }]}>
         <View style={styles.priceContainer}>
           <Text style={styles.startingFrom}>STARTING FROM</Text>
           <Text style={styles.priceValue}>
             {minPrice ? `$${(minPrice / 100).toFixed(2)}` : '—'}
           </Text>
         </View>
-        <TouchableOpacity
-          style={styles.bookButton}
-          onPress={handleBookAppointment}
-        >
+        <TouchableOpacity style={styles.bookButton} onPress={handleBookAppointment}>
           <Text style={styles.bookButtonText}>BOOK APPOINTMENT</Text>
         </TouchableOpacity>
       </View>

@@ -5,8 +5,18 @@ import { colors, spacing } from '@planity/ui';
 
 /** English month names for display. Locale: en-only until i18n is added. */
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 interface BookingDatePickerProps {

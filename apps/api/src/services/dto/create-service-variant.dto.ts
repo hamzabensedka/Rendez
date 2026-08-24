@@ -35,4 +35,3 @@ export class CreateServiceVariantDto {
   @Min(1)
   capacity?: number;
 }
-

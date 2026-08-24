@@ -46,23 +46,13 @@ export const AddressSuggestionList = React.memo<AddressSuggestionListProps>(
             accessibilityRole="button"
           >
             <View style={[styles.iconWrap, isFirst && styles.iconWrapFilled]}>
-              <Ionicons
-                name="location"
-                size={22}
-                color={isFirst ? '#FFFFFF' : colors.light.text}
-              />
+              <Ionicons name="location" size={22} color={isFirst ? '#FFFFFF' : colors.light.text} />
             </View>
             <View style={styles.textWrap}>
               <Text style={styles.primary}>{primary}</Text>
-              {secondary ? (
-                <Text style={styles.secondary}>{secondary}</Text>
-              ) : null}
+              {secondary ? <Text style={styles.secondary}>{secondary}</Text> : null}
             </View>
-            <Ionicons
-              name="chevron-forward"
-              size={22}
-              color={colors.light.text}
-            />
+            <Ionicons name="chevron-forward" size={22} color={colors.light.text} />
           </TouchableOpacity>
         );
       },

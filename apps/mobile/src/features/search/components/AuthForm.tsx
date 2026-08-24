@@ -36,14 +36,16 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
   };
 
   const toggleMode = () => {
-    setMode(prev => prev === 'login' ? 'signup' : 'login');
+    setMode((prev) => (prev === 'login' ? 'signup' : 'login'));
   };
 
   return (
     <View>
       {mode === 'login' ? (
         <>
-          <Text variant="title3" style={styles.sectionTitle}>Already have an account?</Text>
+          <Text variant="title3" style={styles.sectionTitle}>
+            Already have an account?
+          </Text>
 
           <Input
             label="Email *"
@@ -63,7 +65,9 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
           />
 
           <TouchableOpacity style={styles.forgotPassword}>
-            <Text variant="footnote" style={styles.forgotPasswordText}>Forgot password?</Text>
+            <Text variant="footnote" style={styles.forgotPasswordText}>
+              Forgot password?
+            </Text>
           </TouchableOpacity>
 
           <Button
@@ -76,12 +80,21 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
           {/* Divider */}
           <View style={styles.orContainer}>
             <View style={styles.orLine} />
-            <Text variant="footnote" weight="600" color={colors.light.textSecondary} style={styles.orText}>OU</Text>
+            <Text
+              variant="footnote"
+              weight="600"
+              color={colors.light.textSecondary}
+              style={styles.orText}
+            >
+              OU
+            </Text>
             <View style={styles.orLine} />
           </View>
 
           {/* Signup Link Section */}
-          <Text variant="title3" style={styles.sectionTitleCenter}>New to {APP_DISPLAY_NAME}?</Text>
+          <Text variant="title3" style={styles.sectionTitleCenter}>
+            New to {APP_DISPLAY_NAME}?
+          </Text>
 
           <Button
             title="Create account"
@@ -100,7 +113,9 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
         </>
       ) : (
         <>
-          <Text variant="title3" style={styles.sectionTitleCenter}>New to {APP_DISPLAY_NAME}?</Text>
+          <Text variant="title3" style={styles.sectionTitleCenter}>
+            New to {APP_DISPLAY_NAME}?
+          </Text>
 
           <Input
             label="Phone *"
@@ -109,14 +124,19 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
             onChangeText={setPhone}
             keyboardType="phone-pad"
             leftIcon={
-               <View style={styles.flagContainer}>
-                  <View style={styles.flagIcon}>
-                    <View style={{flex:1, backgroundColor:'#0055A4'}} />
-                    <View style={{flex:1, backgroundColor:'#FFFFFF'}} />
-                    <View style={{flex:1, backgroundColor:'#EF4135'}} />
-                  </View>
-                  <Ionicons name="caret-down" size={10} color={colors.light.text} style={{marginLeft: 6}} />
-               </View>
+              <View style={styles.flagContainer}>
+                <View style={styles.flagIcon}>
+                  <View style={{ flex: 1, backgroundColor: '#0055A4' }} />
+                  <View style={{ flex: 1, backgroundColor: '#FFFFFF' }} />
+                  <View style={{ flex: 1, backgroundColor: '#EF4135' }} />
+                </View>
+                <Ionicons
+                  name="caret-down"
+                  size={10}
+                  color={colors.light.text}
+                  style={{ marginLeft: 6 }}
+                />
+              </View>
             }
           />
 
@@ -145,7 +165,9 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
             <View style={[styles.checkbox, acceptedCGU && styles.checkboxChecked]}>
               {acceptedCGU && <Ionicons name="checkmark" size={14} color={colors.light.surface} />}
             </View>
-            <Text variant="body" style={styles.checkboxLabel}>I accept the <Text style={styles.linkText}>terms of service</Text>.</Text>
+            <Text variant="body" style={styles.checkboxLabel}>
+              I accept the <Text style={styles.linkText}>terms of service</Text>.
+            </Text>
           </TouchableOpacity>
 
           <Button
@@ -156,16 +178,27 @@ export const AuthForm = React.memo<AuthFormProps>(function AuthForm({
           />
 
           <Text variant="caption" color={colors.light.textSecondary} style={styles.legalText}>
-            Your data is processed by {APP_DISPLAY_NAME}. See our <Text style={styles.linkText}>privacy policy</Text>. This site is protected by reCAPTCHA and subject to Google's privacy policy and terms.
+            Your data is processed by {APP_DISPLAY_NAME}. See our{' '}
+            <Text style={styles.linkText}>privacy policy</Text>. This site is protected by reCAPTCHA
+            and subject to Google's privacy policy and terms.
           </Text>
 
           <View style={styles.orContainer}>
             <View style={styles.orLine} />
-            <Text variant="footnote" weight="600" color={colors.light.textSecondary} style={styles.orText}>OR</Text>
+            <Text
+              variant="footnote"
+              weight="600"
+              color={colors.light.textSecondary}
+              style={styles.orText}
+            >
+              OR
+            </Text>
             <View style={styles.orLine} />
           </View>
 
-          <Text variant="title3" style={styles.sectionTitleCenter}>Already have an account?</Text>
+          <Text variant="title3" style={styles.sectionTitleCenter}>
+            Already have an account?
+          </Text>
 
           <Button
             title="Sign in"

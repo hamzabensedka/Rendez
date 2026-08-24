@@ -48,12 +48,22 @@ export const SearchExpandedView = React.memo<SearchExpandedViewProps>(function S
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={onClose} style={styles.closeIcon} accessibilityRole="button" accessibilityLabel="Fermer">
+      <TouchableOpacity
+        onPress={onClose}
+        style={styles.closeIcon}
+        accessibilityRole="button"
+        accessibilityLabel="Fermer"
+      >
         <Ionicons name="close" size={24} color={colors.light.text} />
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.inputRow} onPress={onCategoryPress} activeOpacity={0.7}>
-        <Ionicons name="pricetag-outline" size={20} color={colors.light.textSecondary} style={styles.icon} />
+        <Ionicons
+          name="pricetag-outline"
+          size={20}
+          color={colors.light.textSecondary}
+          style={styles.icon}
+        />
         <Text variant="body" color={colors.light.text} numberOfLines={1} style={styles.flexText}>
           {serviceSummaryLabel}
         </Text>
@@ -62,7 +72,12 @@ export const SearchExpandedView = React.memo<SearchExpandedViewProps>(function S
 
       <View style={styles.addressBlock}>
         <View style={[styles.inputRow, styles.addressInputRow]}>
-          <Ionicons name="location-outline" size={20} color={colors.light.textSecondary} style={styles.icon} />
+          <Ionicons
+            name="location-outline"
+            size={20}
+            color={colors.light.textSecondary}
+            style={styles.icon}
+          />
           <TextInput
             style={styles.textInput}
             placeholder="Adresses, ville"
@@ -88,7 +103,12 @@ export const SearchExpandedView = React.memo<SearchExpandedViewProps>(function S
               accessibilityRole="button"
               accessibilityLabel="Près de moi"
             >
-              <Ionicons name="navigate-outline" size={20} color={colors.light.accent} style={styles.suggestionIcon} />
+              <Ionicons
+                name="navigate-outline"
+                size={20}
+                color={colors.light.accent}
+                style={styles.suggestionIcon}
+              />
               <Text variant="body" weight="600" color={colors.light.text}>
                 Près de moi
               </Text>
@@ -106,7 +126,12 @@ export const SearchExpandedView = React.memo<SearchExpandedViewProps>(function S
                     setShowSuggestions(false);
                   }}
                 >
-                  <Ionicons name="location-outline" size={18} color={colors.light.textSecondary} style={styles.suggestionIcon} />
+                  <Ionicons
+                    name="location-outline"
+                    size={18}
+                    color={colors.light.textSecondary}
+                    style={styles.suggestionIcon}
+                  />
                   <Text variant="body" color={colors.light.text} numberOfLines={2}>
                     {item.address}
                   </Text>
@@ -114,7 +139,11 @@ export const SearchExpandedView = React.memo<SearchExpandedViewProps>(function S
               )}
               ListEmptyComponent={
                 !locationLoading && locationDraft.trim().length > 0 ? (
-                  <Text variant="footnote" color={colors.light.textSecondary} style={styles.emptySuggest}>
+                  <Text
+                    variant="footnote"
+                    color={colors.light.textSecondary}
+                    style={styles.emptySuggest}
+                  >
                     Aucune suggestion
                   </Text>
                 ) : null
@@ -125,7 +154,12 @@ export const SearchExpandedView = React.memo<SearchExpandedViewProps>(function S
       </View>
 
       <TouchableOpacity style={styles.inputRow} onPress={onTimePress} activeOpacity={0.7}>
-        <Ionicons name="time-outline" size={20} color={colors.light.textSecondary} style={styles.icon} />
+        <Ionicons
+          name="time-outline"
+          size={20}
+          color={colors.light.textSecondary}
+          style={styles.icon}
+        />
         <Text variant="body" color={colors.light.text} numberOfLines={1} style={styles.flexText}>
           {timeDisplay}
         </Text>

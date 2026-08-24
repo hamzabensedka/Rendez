@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  TouchableOpacity,
-  FlatList,
-} from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '@planity/ui';
 import type { BookingCartItem } from '../types';
@@ -19,25 +12,11 @@ interface AddServiceModalProps {
   onSelect: (item: BookingCartItem) => void;
 }
 
-export function AddServiceModal({
-  visible,
-  onClose,
-  items,
-  onSelect,
-}: AddServiceModalProps) {
+export function AddServiceModal({ visible, onClose, items, onSelect }: AddServiceModalProps) {
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        <TouchableOpacity
-          style={StyleSheet.absoluteFill}
-          activeOpacity={1}
-          onPress={onClose}
-        />
+        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
         <View style={styles.modalContent}>
           <TouchableOpacity
             onPress={onClose}
@@ -69,9 +48,7 @@ export function AddServiceModal({
                 <Ionicons name="add-circle-outline" size={24} color={colors.light.text} />
               </TouchableOpacity>
             )}
-            ListEmptyComponent={
-              <Text style={styles.modalEmpty}>No other services available</Text>
-            }
+            ListEmptyComponent={<Text style={styles.modalEmpty}>No other services available</Text>}
           />
         </View>
       </View>

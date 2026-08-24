@@ -87,7 +87,9 @@ export default function RegisterScreen() {
       <View style={styles.progressSection}>
         <View style={styles.progressRow}>
           <Text style={styles.progressLabel}>Booking Progress</Text>
-          <Text style={styles.progressStep}>{BOOKING_STEP_INDEX} of {BOOKING_STEP_TOTAL}</Text>
+          <Text style={styles.progressStep}>
+            {BOOKING_STEP_INDEX} of {BOOKING_STEP_TOTAL}
+          </Text>
         </View>
         <View style={styles.progressBarBg}>
           <View style={[styles.progressBarFill, { width: BOOKING_PROGRESS_PERCENT }]} />

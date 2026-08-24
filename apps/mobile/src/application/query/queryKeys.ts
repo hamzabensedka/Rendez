@@ -20,5 +20,6 @@ export const queryKeys = {
   business: (id: string | undefined) => ['business', id] as const,
   availability: (businessId: string, serviceVariantId: string, date: string) =>
     ['availability', businessId, serviceVariantId, date] as const,
-  appointmentsUpcoming: (userId: string | undefined) => ['appointments', 'upcoming', userId] as const,
+  appointmentsUpcoming: (userId: string | undefined) =>
+    ['appointments', 'upcoming', userId] as const,
 };

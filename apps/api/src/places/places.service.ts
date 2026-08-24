@@ -41,9 +41,7 @@ export class PlacesService {
   ) {}
 
   async suggest(q: string, limit = 10): Promise<PlaceSuggestion[]> {
-    const countryCodes = (
-      this.config.get<string>('PLACES_COUNTRY_CODES') ?? 'fr'
-    )
+    const countryCodes = (this.config.get<string>('PLACES_COUNTRY_CODES') ?? 'fr')
       .split(',')
       .map((c) => c.trim().toLowerCase())
       .filter(Boolean)
@@ -86,8 +84,7 @@ export class PlacesService {
         const lat = parseFloat(f.lat);
         const lng = parseFloat(f.lon);
         const addr = f.address ?? {};
-        const city =
-          addr.city ?? addr.town ?? addr.village ?? addr.municipality;
+        const city = addr.city ?? addr.town ?? addr.village ?? addr.municipality;
         return {
           id: `nominatim-${f.place_id}-${i}`,
           address: f.display_name ?? `${f.lat}, ${f.lon}`,

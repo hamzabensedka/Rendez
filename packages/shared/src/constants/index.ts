@@ -26,4 +26,3 @@ export const JWT_REFRESH_EXPIRY = '7d';
 // Rate limiting
 export const RATE_LIMIT_AUTH = 5; // requests per window
 export const RATE_LIMIT_WINDOW = 60; // seconds
-

@@ -124,7 +124,11 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
   const availDateParam = searchParams.availDate?.trim() ?? '';
 
   const categorySlugs = useMemo(
-    () => categoriesParam.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+    () =>
+      categoriesParam
+        .split(',')
+        .map((s) => s.trim().toLowerCase())
+        .filter(Boolean),
     [categoriesParam]
   );
   const categoriesCsv = categorySlugs.join(',');
@@ -188,7 +192,9 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
   const cameraRef = useRef<any>(null);
   const viewportDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const hasNativeMap = Boolean(MapView && Camera && ShapeSource && (SymbolLayer || CircleLayer) && Images);
+  const hasNativeMap = Boolean(
+    MapView && Camera && ShapeSource && (SymbolLayer || CircleLayer) && Images
+  );
 
   const searchListQuery = useBusinessesSearchQuery({
     query: apiQuery,
@@ -227,38 +233,41 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
     [apiQuery, categoriesCsv, availDateParam]
   );
 
-  const onRegionDidChange = useCallback((event?: any) => {
-    // Mark that the user has manually moved the map — used to guard the initial setCamera call.
-    if (event?.properties?.isUserInteraction) {
-      userHasInteractedRef.current = true;
-    }
-    if (!mapRef.current || !mapReady) return;
-    if (viewportDebounceRef.current) clearTimeout(viewportDebounceRef.current);
-    viewportDebounceRef.current = setTimeout(async () => {
-      viewportDebounceRef.current = null;
-      try {
-        let bounds: { ne: [number, number]; sw: [number, number] } | null = null;
-        try {
-          bounds = await mapRef.current?.getVisibleBounds?.() ?? null;
-        } catch {
-          // getVisibleBounds can fail on some devices; use fallback from last known center
-        }
-        if (!bounds?.ne || !bounds?.sw) {
-          const [lng, lat] = initialCenterRef.current;
-          bounds = {
-            ne: [lng + FALLBACK_DELTA, lat + FALLBACK_DELTA],
-            sw: [lng - FALLBACK_DELTA, lat - FALLBACK_DELTA],
-          };
-        }
-        const [e, n] = bounds.ne;
-        const [w, s] = bounds.sw;
-        await fetchViewport({ north: n, south: s, east: e, west: w });
-      } catch {
-        setBusinesses((prev) => prev);
-        setLoading(false);
+  const onRegionDidChange = useCallback(
+    (event?: any) => {
+      // Mark that the user has manually moved the map — used to guard the initial setCamera call.
+      if (event?.properties?.isUserInteraction) {
+        userHasInteractedRef.current = true;
       }
-    }, VIEWPORT_DEBOUNCE_MS);
-  }, [mapReady, fetchViewport]); // initialCenterRef is a ref — no need in deps
+      if (!mapRef.current || !mapReady) return;
+      if (viewportDebounceRef.current) clearTimeout(viewportDebounceRef.current);
+      viewportDebounceRef.current = setTimeout(async () => {
+        viewportDebounceRef.current = null;
+        try {
+          let bounds: { ne: [number, number]; sw: [number, number] } | null = null;
+          try {
+            bounds = (await mapRef.current?.getVisibleBounds?.()) ?? null;
+          } catch {
+            // getVisibleBounds can fail on some devices; use fallback from last known center
+          }
+          if (!bounds?.ne || !bounds?.sw) {
+            const [lng, lat] = initialCenterRef.current;
+            bounds = {
+              ne: [lng + FALLBACK_DELTA, lat + FALLBACK_DELTA],
+              sw: [lng - FALLBACK_DELTA, lat - FALLBACK_DELTA],
+            };
+          }
+          const [e, n] = bounds.ne;
+          const [w, s] = bounds.sw;
+          await fetchViewport({ north: n, south: s, east: e, west: w });
+        } catch {
+          setBusinesses((prev) => prev);
+          setLoading(false);
+        }
+      }, VIEWPORT_DEBOUNCE_MS);
+    },
+    [mapReady, fetchViewport]
+  ); // initialCenterRef is a ref — no need in deps
 
   // When native map is ready, position the camera: center on salons when we have them, else user/Paris.
   useEffect(() => {
@@ -270,7 +279,9 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
       if (userHasInteractedRef.current) return;
 
       const withLocation = Array.isArray(initialBusinesses)
-        ? initialBusinesses.filter((b) => b.locations?.[0]?.lat != null && b.locations?.[0]?.lng != null)
+        ? initialBusinesses.filter(
+            (b) => b.locations?.[0]?.lat != null && b.locations?.[0]?.lng != null
+          )
         : [];
       let center: [number, number];
       let duration = 0;
@@ -309,7 +320,7 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
         try {
           let bounds: { ne: [number, number]; sw: [number, number] } | null = null;
           try {
-            bounds = await mapRef.current?.getVisibleBounds?.() ?? null;
+            bounds = (await mapRef.current?.getVisibleBounds?.()) ?? null;
           } catch {
             // use fallback bounds from current center
           }
@@ -332,7 +343,7 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
     };
 
     run();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, hasNativeMap, initialBusinesses]);
 
   // When native map is not available (Expo Go), mirror list search via React Query.
@@ -367,7 +378,7 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
     try {
       let bounds: { ne: [number, number]; sw: [number, number] } | null = null;
       try {
-        bounds = await mapRef.current.getVisibleBounds?.() ?? null;
+        bounds = (await mapRef.current.getVisibleBounds?.()) ?? null;
       } catch {
         // use fallback bounds from current center
       }
@@ -435,7 +446,6 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
     setPreviousBusiness(null);
   }, []);
 
-
   // When idle (previousBusiness = null): snap strip back to -cardWidth instantly.
   // Slot1 always renders selectedBusiness so even if the snap arrives one frame late,
   // the user still sees the correct card — no blink.
@@ -474,7 +484,9 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
         />
         <View style={styles.cardContent}>
           <View style={styles.cardRow}>
-            <Text style={styles.cardName} numberOfLines={1}>{b.name}</Text>
+            <Text style={styles.cardName} numberOfLines={1}>
+              {b.name}
+            </Text>
             <TouchableOpacity
               onPress={() => toggleFavorite(b.id)}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -496,9 +508,11 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
             <Ionicons name="star" size={12} color={bw.primary} />
             <Text style={styles.cardRatingText}>{b.ratingAvg?.toFixed(1) ?? '—'}</Text>
             <Text style={styles.cardReviews}>
-              ({(b.ratingCount ?? 0) >= 1000
+              (
+              {(b.ratingCount ?? 0) >= 1000
                 ? `${((b.ratingCount ?? 0) / 1000).toFixed(1)}k`
-                : b.ratingCount ?? 0} avis)
+                : (b.ratingCount ?? 0)}{' '}
+              avis)
             </Text>
           </View>
           <View style={styles.cardFooter}>
@@ -544,18 +558,31 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
       <SafeAreaView style={styles.safeArea} edges={embedded ? [] : ['top']}>
         {!embedded && (
           <View style={styles.header}>
-            <TouchableOpacity onPress={handleBack} style={styles.iconButton} accessibilityLabel="Back">
+            <TouchableOpacity
+              onPress={handleBack}
+              style={styles.iconButton}
+              accessibilityLabel="Back"
+            >
               <Ionicons name="arrow-back" size={24} color={bw.primary} />
             </TouchableOpacity>
             <Text style={styles.logo}>PLANITY</Text>
-            <TouchableOpacity onPress={handleProfile} style={styles.iconButton} accessibilityLabel="Profile">
+            <TouchableOpacity
+              onPress={handleProfile}
+              style={styles.iconButton}
+              accessibilityLabel="Profile"
+            >
               <Ionicons name="person-outline" size={24} color={bw.primary} />
             </TouchableOpacity>
           </View>
         )}
 
         <View style={styles.mapContainer}>
-          {hasNativeMap && MapViewComponent && CameraComponent && ShapeSourceComponent && (SymbolLayerComponent || CircleLayerComponent) && ImagesComponent ? (
+          {hasNativeMap &&
+          MapViewComponent &&
+          CameraComponent &&
+          ShapeSourceComponent &&
+          (SymbolLayerComponent || CircleLayerComponent) &&
+          ImagesComponent ? (
             <MapViewComponent
               ref={mapRef}
               style={styles.mapBackground}
@@ -566,9 +593,7 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
               logoEnabled={false}
             >
               <CameraComponent ref={cameraRef} followUserLocation={false} />
-              {UserLocationComponent && (
-                <UserLocationComponent visible={true} animated={true} />
-              )}
+              {UserLocationComponent && <UserLocationComponent visible={true} animated={true} />}
               {ImagesComponent && (
                 <ImagesComponent
                   images={{
@@ -578,7 +603,10 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
               )}
               <ShapeSourceComponent
                 id="businesses"
-                key={`businesses-${businesses.length}-${businesses.map((b) => b.id).slice(0, 3).join('-')}`}
+                key={`businesses-${businesses.length}-${businesses
+                  .map((b) => b.id)
+                  .slice(0, 3)
+                  .join('-')}`}
                 shape={businessesToGeoJSON(businesses)}
                 onPress={handleMarkerPress}
               >
@@ -593,9 +621,12 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
                             'interpolate',
                             ['linear'],
                             ['zoom'],
-                            10, 5.5,
-                            14, 8.5,
-                            18, 12,
+                            10,
+                            5.5,
+                            14,
+                            8.5,
+                            18,
+                            12,
                           ],
                           circleColor: bw.white,
                           circleStrokeWidth: 1,
@@ -613,9 +644,12 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
                           'interpolate',
                           ['linear'],
                           ['zoom'],
-                          10, 0.013,
-                          14, 0.024,
-                          18, 0.036,
+                          10,
+                          0.013,
+                          14,
+                          0.024,
+                          18,
+                          0.036,
                         ],
                         iconAllowOverlap: true,
                         iconIgnorePlacement: true,
@@ -628,14 +662,7 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
                     id="business-markers"
                     sourceID="businesses"
                     style={{
-                      circleRadius: [
-                        'interpolate',
-                        ['linear'],
-                        ['zoom'],
-                        10, 4,
-                        14, 7,
-                        18, 10,
-                      ],
+                      circleRadius: ['interpolate', ['linear'], ['zoom'], 10, 4, 14, 7, 18, 10],
                       circleColor: bw.white,
                       circleStrokeWidth: 1,
                       circleStrokeColor: bw.primary,
@@ -779,7 +806,12 @@ const styles = StyleSheet.create({
   cardRating: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   cardRatingText: { fontSize: 11, fontWeight: '700', color: bw.primary },
   cardReviews: { fontSize: 11, color: bw.textMuted },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
   cardService: { fontSize: 12, fontWeight: '700', color: bw.primary },
   bookButton: {
     backgroundColor: bw.primary,

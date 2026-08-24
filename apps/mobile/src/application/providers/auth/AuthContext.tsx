@@ -51,8 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       }
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Auth check failed';
-      setError(message);
+      await SecureStore.deleteItemAsync('accessToken');
+      await SecureStore.deleteItemAsync('refreshToken');
       if (__DEV__) {
         console.warn('[AuthContext] Bootstrap auth check failed:', e);
       }
@@ -83,7 +83,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, logout, clearError, pendingRegistration, setPendingRegistration }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        login,
+        logout,
+        clearError,
+        pendingRegistration,
+        setPendingRegistration,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -96,5 +107,3 @@ export function useAuth() {
   }
   return context;
 }
-
-

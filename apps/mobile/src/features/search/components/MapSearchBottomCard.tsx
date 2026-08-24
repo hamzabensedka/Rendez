@@ -29,9 +29,7 @@ export function MapSearchBottomCard({
       accessibilityLabel={`${selectedBusiness.name}, open business details`}
     >
       <View style={[styles.cardSlideContainer, { width: cardWidth }]}>
-        <Animated.View
-          style={[styles.carouselStrip, { width: cardWidth * 3 }, stripAnimatedStyle]}
-        >
+        <Animated.View style={[styles.carouselStrip, { width: cardWidth * 3 }, stripAnimatedStyle]}>
           <View style={[styles.carouselCard, { width: cardWidth }]}>
             <View style={styles.cardSlideSlotSingle}>
               <View style={styles.bottomCardInner}>{renderCard(selectedBusiness)}</View>

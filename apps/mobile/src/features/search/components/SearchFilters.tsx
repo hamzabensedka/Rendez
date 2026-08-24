@@ -1,5 +1,14 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Switch, SafeAreaView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  ScrollView,
+  Switch,
+  SafeAreaView,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface SearchFiltersProps {
@@ -21,19 +30,17 @@ interface FilterSectionProps {
   children: React.ReactNode;
 }
 
-const FilterSection = React.memo<FilterSectionProps>(({ title, isExpanded, onToggle, children }) => (
-  <View style={styles.section}>
-    <TouchableOpacity style={styles.sectionHeader} onPress={onToggle} activeOpacity={0.7}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <Ionicons 
-        name={isExpanded ? "chevron-up" : "chevron-down"} 
-        size={20} 
-        color="#000" 
-      />
-    </TouchableOpacity>
-    {isExpanded && <View style={styles.sectionContent}>{children}</View>}
-  </View>
-));
+const FilterSection = React.memo<FilterSectionProps>(
+  ({ title, isExpanded, onToggle, children }) => (
+    <View style={styles.section}>
+      <TouchableOpacity style={styles.sectionHeader} onPress={onToggle} activeOpacity={0.7}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <Ionicons name={isExpanded ? 'chevron-up' : 'chevron-down'} size={20} color="#000" />
+      </TouchableOpacity>
+      {isExpanded && <View style={styles.sectionContent}>{children}</View>}
+    </View>
+  )
+);
 
 export const SearchFilters = React.memo<SearchFiltersProps>(function SearchFilters({
   visible,
@@ -43,14 +50,14 @@ export const SearchFilters = React.memo<SearchFiltersProps>(function SearchFilte
   const [giftCard, setGiftCard] = useState(false);
   const [availability, setAvailability] = useState<FilterState['availability']>('any');
   const [sortBy, setSortBy] = useState<FilterState['sortBy']>('none');
-  
+
   const [expandedSections, setExpandedSections] = useState({
     availability: true,
     sortBy: true,
   });
 
   const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   const handleReset = useCallback(() => {
@@ -64,15 +71,9 @@ export const SearchFilters = React.memo<SearchFiltersProps>(function SearchFilte
     onClose();
   }, [giftCard, availability, sortBy, onApply, onClose]);
 
-  const renderRadioButton = (
-    label: string, 
-    selected: boolean, 
-    onPress: () => void
-  ) => (
+  const renderRadioButton = (label: string, selected: boolean, onPress: () => void) => (
     <TouchableOpacity style={styles.radioRow} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.radioCircle}>
-        {selected && <View style={styles.radioDot} />}
-      </View>
+      <View style={styles.radioCircle}>{selected && <View style={styles.radioDot} />}</View>
       <Text style={styles.radioLabel}>{label}</Text>
     </TouchableOpacity>
   );
@@ -126,8 +127,12 @@ export const SearchFilters = React.memo<SearchFiltersProps>(function SearchFilte
           >
             {renderRadioButton('Any time', availability === 'any', () => setAvailability('any'))}
             {renderRadioButton('Today', availability === 'today', () => setAvailability('today'))}
-            {renderRadioButton('Tomorrow', availability === 'tomorrow', () => setAvailability('tomorrow'))}
-            {renderRadioButton('Choose a date', availability === 'date', () => setAvailability('date'))}
+            {renderRadioButton('Tomorrow', availability === 'tomorrow', () =>
+              setAvailability('tomorrow')
+            )}
+            {renderRadioButton('Choose a date', availability === 'date', () =>
+              setAvailability('date')
+            )}
           </FilterSection>
 
           <View style={styles.divider} />
@@ -140,8 +145,12 @@ export const SearchFilters = React.memo<SearchFiltersProps>(function SearchFilte
           >
             {renderRadioButton('No preference', sortBy === 'none', () => setSortBy('none'))}
             {renderRadioButton('Top rated', sortBy === 'rating', () => setSortBy('rating'))}
-            {renderRadioButton('Price: high to low', sortBy === 'price_desc', () => setSortBy('price_desc'))}
-            {renderRadioButton('Price: low to high', sortBy === 'price_asc', () => setSortBy('price_asc'))}
+            {renderRadioButton('Price: high to low', sortBy === 'price_desc', () =>
+              setSortBy('price_desc')
+            )}
+            {renderRadioButton('Price: low to high', sortBy === 'price_asc', () =>
+              setSortBy('price_asc')
+            )}
           </FilterSection>
         </ScrollView>
 
@@ -221,7 +230,7 @@ const styles = StyleSheet.create({
     marginVertical: 16,
   },
   section: {
-    // 
+    //
   },
   sectionHeader: {
     flexDirection: 'row',

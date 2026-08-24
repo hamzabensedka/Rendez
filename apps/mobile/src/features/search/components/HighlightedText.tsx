@@ -20,7 +20,11 @@ export const HighlightedText = React.memo<HighlightedTextProps>(function Highlig
 }) {
   const parts = useMemo(() => {
     if (!query.trim()) {
-      return [<Text key="full-text" style={[styles.text, style]}>{text}</Text>];
+      return [
+        <Text key="full-text" style={[styles.text, style]}>
+          {text}
+        </Text>,
+      ];
     }
 
     const result: React.ReactElement[] = [];

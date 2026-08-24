@@ -158,7 +158,6 @@ export default function BookingScreen() {
         bottomOffset={footerBottomOffset}
       />
 
-
       <AddServiceModal
         visible={addServiceModalVisible}
         onClose={() => setAddServiceModalVisible(false)}

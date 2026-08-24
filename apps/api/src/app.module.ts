@@ -1,50 +1,67 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UserModule } from './user/user.module';
+import { ConfigModule as NestConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
 import { RedisModule } from './redis/redis.module';
 import { UsersModule } from './users/users.module';
-import { StaffModule } from './staff/staff.module';
 import { ConfigModule } from './config/config.module';
 import { PlacesModule } from './places/places.module';
 import { PrismaModule } from './prisma/prisma.module';
-import { BullMQModule } from './bullmq/bullmq.module';
-import { PaymentModule } from './payment/payment.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ServicesModule } from './services/services.module';
-import { ProviderModule } from './provider/provider.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { BusinessesModule } from './businesses/businesses.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { AvailabilityModule } from './availability/availability.module';
-import { NotificationModule } from './notifications/notification.module';
-import { BusinessHoursModule } from './business-hours/business-hours.module';
 import { ServiceCategoriesModule } from './service-categories/service-categories.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
-  imports: [UserModule,
+  imports: [
+    NestConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
+    // Structured JSON logs with per-request correlation ids; pretty in non-production.
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: process.env.LOG_LEVEL ?? 'info',
+        genReqId: () => globalThis.crypto.randomUUID(),
+        redact: {
+          paths: [
+            'req.headers.authorization',
+            'req.headers.cookie',
+            'req.body.password',
+            'req.body.refreshToken',
+          ],
+          censor: '[REDACTED]',
+        },
+        ...(process.env.NODE_ENV !== 'production'
+          ? {
+              transport: {
+                target: 'pino-pretty',
+                options: { singleLine: true },
+              },
+            }
+          : {}),
+      },
+    }),
+    // Global rate-limit floor: 100 req/min per IP; auth routes override via @Throttle.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     AuthModule,
     RedisModule,
     UsersModule,
-    StaffModule,
     ConfigModule,
     PlacesModule,
     PrismaModule,
-    BullMQModule,
-    PaymentModule,
     ReviewsModule,
     ServicesModule,
-    ProviderModule,
     FavoritesModule,
     BusinessesModule,
     AppointmentsModule,
     AvailabilityModule,
-    NotificationModule,
-    BusinessHoursModule,
     ServiceCategoriesModule,
+    HealthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

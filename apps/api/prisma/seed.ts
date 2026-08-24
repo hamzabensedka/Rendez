@@ -287,7 +287,10 @@ async function main() {
   ];
 
   for (const shop of coiffeurShops) {
-    const existing = await prisma.business.findUnique({ where: { slug: shop.slug }, include: { staff: true } });
+    const existing = await prisma.business.findUnique({
+      where: { slug: shop.slug },
+      include: { staff: true },
+    });
     if (existing) continue; // already seeded
 
     const biz = await prisma.business.create({
@@ -337,8 +340,22 @@ async function main() {
         isActive: true,
         serviceVariants: {
           create: [
-            { name: 'Coupe femme', priceCents: 4500, durationMin: 45, bufferBeforeMin: 5, bufferAfterMin: 10, capacity: 1 },
-            { name: 'Coupe homme', priceCents: 2800, durationMin: 30, bufferBeforeMin: 5, bufferAfterMin: 5, capacity: 1 },
+            {
+              name: 'Coupe femme',
+              priceCents: 4500,
+              durationMin: 45,
+              bufferBeforeMin: 5,
+              bufferAfterMin: 10,
+              capacity: 1,
+            },
+            {
+              name: 'Coupe homme',
+              priceCents: 2800,
+              durationMin: 30,
+              bufferBeforeMin: 5,
+              bufferAfterMin: 5,
+              capacity: 1,
+            },
           ],
         },
       },
@@ -354,8 +371,22 @@ async function main() {
         isActive: true,
         serviceVariants: {
           create: [
-            { name: 'Coloration complète', priceCents: 7500, durationMin: 90, bufferBeforeMin: 10, bufferAfterMin: 10, capacity: 1 },
-            { name: 'Mèches', priceCents: 9500, durationMin: 120, bufferBeforeMin: 10, bufferAfterMin: 15, capacity: 1 },
+            {
+              name: 'Coloration complète',
+              priceCents: 7500,
+              durationMin: 90,
+              bufferBeforeMin: 10,
+              bufferAfterMin: 10,
+              capacity: 1,
+            },
+            {
+              name: 'Mèches',
+              priceCents: 9500,
+              durationMin: 120,
+              bufferBeforeMin: 10,
+              bufferAfterMin: 15,
+              capacity: 1,
+            },
           ],
         },
       },
@@ -371,7 +402,14 @@ async function main() {
         isActive: true,
         serviceVariants: {
           create: [
-            { name: 'Brushing', priceCents: 2200, durationMin: 30, bufferBeforeMin: 5, bufferAfterMin: 5, capacity: 1 },
+            {
+              name: 'Brushing',
+              priceCents: 2200,
+              durationMin: 30,
+              bufferBeforeMin: 5,
+              bufferAfterMin: 5,
+              capacity: 1,
+            },
           ],
         },
       },
@@ -419,7 +457,8 @@ async function main() {
     {
       name: 'Salon Garonne',
       slug: 'salon-garonne-toulouse',
-      description: 'Coiffure et barbier près des quais. Ambiance décontractée, expertise homme et femme.',
+      description:
+        'Coiffure et barbier près des quais. Ambiance décontractée, expertise homme et femme.',
       category: 'barbier',
       city: 'Toulouse',
       address1: '42 Quai de la Daurade',
@@ -449,7 +488,10 @@ async function main() {
   ];
 
   for (const shop of toulouseSalons) {
-    const existing = await prisma.business.findUnique({ where: { slug: shop.slug }, include: { staff: true } });
+    const existing = await prisma.business.findUnique({
+      where: { slug: shop.slug },
+      include: { staff: true },
+    });
     if (existing) continue;
 
     const biz = await prisma.business.create({
@@ -499,8 +541,22 @@ async function main() {
         isActive: true,
         serviceVariants: {
           create: [
-            { name: 'Coupe femme', priceCents: 4200, durationMin: 45, bufferBeforeMin: 5, bufferAfterMin: 10, capacity: 1 },
-            { name: 'Coupe homme', priceCents: 2600, durationMin: 30, bufferBeforeMin: 5, bufferAfterMin: 5, capacity: 1 },
+            {
+              name: 'Coupe femme',
+              priceCents: 4200,
+              durationMin: 45,
+              bufferBeforeMin: 5,
+              bufferAfterMin: 10,
+              capacity: 1,
+            },
+            {
+              name: 'Coupe homme',
+              priceCents: 2600,
+              durationMin: 30,
+              bufferBeforeMin: 5,
+              bufferAfterMin: 5,
+              capacity: 1,
+            },
           ],
         },
       },
@@ -516,8 +572,22 @@ async function main() {
         isActive: true,
         serviceVariants: {
           create: [
-            { name: 'Coloration complète', priceCents: 7200, durationMin: 90, bufferBeforeMin: 10, bufferAfterMin: 10, capacity: 1 },
-            { name: 'Mèches', priceCents: 8800, durationMin: 120, bufferBeforeMin: 10, bufferAfterMin: 15, capacity: 1 },
+            {
+              name: 'Coloration complète',
+              priceCents: 7200,
+              durationMin: 90,
+              bufferBeforeMin: 10,
+              bufferAfterMin: 10,
+              capacity: 1,
+            },
+            {
+              name: 'Mèches',
+              priceCents: 8800,
+              durationMin: 120,
+              bufferBeforeMin: 10,
+              bufferAfterMin: 15,
+              capacity: 1,
+            },
           ],
         },
       },
@@ -533,7 +603,14 @@ async function main() {
         isActive: true,
         serviceVariants: {
           create: [
-            { name: 'Brushing', priceCents: 2000, durationMin: 30, bufferBeforeMin: 5, bufferAfterMin: 5, capacity: 1 },
+            {
+              name: 'Brushing',
+              priceCents: 2000,
+              durationMin: 30,
+              bufferBeforeMin: 5,
+              bufferAfterMin: 5,
+              capacity: 1,
+            },
           ],
         },
       },
@@ -723,7 +800,9 @@ async function main() {
       });
     }
 
-    console.log('   + 1 salon test réservation: Salon Test Réservation Toulouse (Toulouse, 7 Place du Capitole)');
+    console.log(
+      '   + 1 salon test réservation: Salon Test Réservation Toulouse (Toulouse, 7 Place du Capitole)'
+    );
   }
 
   // Ensure all salons are located in Toulouse (update any existing locations from previous seeds)
@@ -785,7 +864,9 @@ async function main() {
   console.log('✅ Seeding completed!');
   console.log('   + 3 coiffeur shops: Coiffure Élégance, Le Salon du Marais, Boucles & Co');
   console.log('   + 3 salons Toulouse: Coiffure Capitole, Salon Garonne, Boucles Roses');
-  console.log('   + 1 salon test: Salon Test Réservation Toulouse (slug: salon-test-reservation-toulouse)');
+  console.log(
+    '   + 1 salon test: Salon Test Réservation Toulouse (slug: salon-test-reservation-toulouse)'
+  );
   console.log('\n📝 Test accounts:');
   console.log('Admin: admin@planity.com / admin123');
   console.log('Provider: provider@planity.com / provider123');
@@ -793,7 +874,9 @@ async function main() {
   console.log('\n📅 Simuler une réservation (client):');
   console.log('  1. Se connecter avec client@planity.com / client123');
   console.log('  2. Rechercher "Toulouse" ou ouvrir le salon "Salon Test Réservation Toulouse"');
-  console.log('  3. Choisir une prestation (ex: Coupe femme), une date (lun–sam), un créneau puis confirmer.');
+  console.log(
+    '  3. Choisir une prestation (ex: Coupe femme), une date (lun–sam), un créneau puis confirmer.'
+  );
 }
 
 main()
@@ -804,4 +887,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

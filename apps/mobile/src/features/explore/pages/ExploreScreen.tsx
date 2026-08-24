@@ -35,10 +35,7 @@ export default function ExploreScreen() {
       </ImageBackground>
 
       {/* Profile Button - Top Right */}
-      <ProfileButton
-        variant="light"
-        style={[styles.profileButton, { top: insets.top + 16 }]}
-      />
+      <ProfileButton variant="light" style={[styles.profileButton, { top: insets.top + 16 }]} />
 
       <KeyboardAvoidingView
         style={[styles.content, { paddingTop: insets.top + 72, paddingBottom: insets.bottom + 24 }]}

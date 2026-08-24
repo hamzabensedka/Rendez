@@ -11,25 +11,20 @@ export interface TextProps extends RNTextProps {
   align?: TextStyle['textAlign'];
 }
 
-export const Text: React.FC<TextProps> = ({ 
-  children, 
-  variant = 'body', 
-  color = colors.light.text, 
+export const Text: React.FC<TextProps> = ({
+  children,
+  variant = 'body',
+  color = colors.light.text,
   weight,
   align,
-  style, 
-  ...props 
+  style,
+  ...props
 }) => {
   const variantStyles = typography[variant as TypographyVariant];
-  
+
   return (
-    <RNText 
-      style={[
-        variantStyles,
-        { color, textAlign: align },
-        weight && { fontWeight: weight },
-        style
-      ]} 
+    <RNText
+      style={[variantStyles, { color, textAlign: align }, weight && { fontWeight: weight }, style]}
       {...props}
     >
       {children}

@@ -10,7 +10,7 @@ module.exports = {
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
   moduleNameMapper: {
-    '^@planity/shared$': '<rootDir>/../node_modules/@planity/shared',
-    '^@planity/shared/(.*)$': '<rootDir>/../node_modules/@planity/shared/$1',
+    '^@planity/shared$': '<rootDir>/../../../packages/shared/src',
+    '^@planity/shared/(.*)$': '<rootDir>/../../../packages/shared/src/$1',
   },
 };

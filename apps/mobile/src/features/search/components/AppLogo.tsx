@@ -7,11 +7,7 @@ export const APP_DISPLAY_NAME = 'Rendez';
 
 export const AppLogo = React.memo<TextProps>(function AppLogo({ style, ...props }) {
   return (
-    <Text
-      variant="headline"
-      style={[styles.logo, style]}
-      {...props}
-    >
+    <Text variant="headline" style={[styles.logo, style]} {...props}>
       {APP_DISPLAY_NAME.toUpperCase()}
     </Text>
   );

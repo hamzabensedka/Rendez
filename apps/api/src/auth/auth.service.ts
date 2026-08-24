@@ -39,10 +39,7 @@ export class AuthService {
         },
       });
     } catch (error) {
-      if (
-        error instanceof PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ConflictException('Email already in use');
       }
 
@@ -103,12 +100,9 @@ export class AuthService {
   async refreshToken(refreshToken: string) {
     let payload: { sub: string; email: string };
     try {
-      payload = this.jwtService.verify<{ sub: string; email: string }>(
-        refreshToken,
-        {
-          secret: this.config.get<string>('JWT_REFRESH_SECRET'),
-        }
-      );
+      payload = this.jwtService.verify<{ sub: string; email: string }>(refreshToken, {
+        secret: this.config.get<string>('JWT_REFRESH_SECRET'),
+      });
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
@@ -222,4 +216,3 @@ export class AuthService {
     return user;
   }
 }
-

@@ -6,6 +6,8 @@ import {
   IsDateString,
   IsUUID,
   IsOptional,
+  ArrayMaxSize,
+  ArrayMinSize,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -33,8 +35,10 @@ export class CreateAppointmentDto {
   @IsUUID()
   staffId?: string;
 
-  @ApiProperty({ type: [AppointmentItemDto] })
+  @ApiProperty({ type: [AppointmentItemDto], maxItems: 20 })
   @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(20)
   @ValidateNested({ each: true })
   @Type(() => AppointmentItemDto)
   items: AppointmentItemDto[];
@@ -48,4 +52,3 @@ export class CreateAppointmentDto {
   @IsString()
   idempotencyKey?: string;
 }
-

@@ -49,6 +49,7 @@ screenshot.png
 .expo/
 .expo-shared/
 dist/
+.tmp-android-export/
 
 # Prisma
 *.db
@@ -64,3 +65,5 @@ logs/
 .github/skills/
 .github/agents/
 .github/prompts/
+# Graph tooling cache
+graphify-out/

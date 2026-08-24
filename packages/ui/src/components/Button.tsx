@@ -1,5 +1,11 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
+import {
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 import { Text } from './Text';
 import { colors, spacing, radius } from '../tokens';
 
@@ -31,22 +37,32 @@ export const Button: React.FC<ButtonProps> = ({
   const getBackgroundColor = () => {
     if (disabled) return colors.light.border;
     switch (variant) {
-      case 'primary': return colors.light.text; // Black primary
-      case 'secondary': return colors.light.surface;
-      case 'outline': return 'transparent';
-      case 'ghost': return 'transparent';
-      default: return colors.light.text;
+      case 'primary':
+        return colors.light.text; // Black primary
+      case 'secondary':
+        return colors.light.surface;
+      case 'outline':
+        return 'transparent';
+      case 'ghost':
+        return 'transparent';
+      default:
+        return colors.light.text;
     }
   };
 
   const getTextColor = () => {
     if (disabled) return colors.light.textSecondary;
     switch (variant) {
-      case 'primary': return colors.light.surface;
-      case 'secondary': return colors.light.text;
-      case 'outline': return colors.light.text;
-      case 'ghost': return colors.light.text;
-      default: return colors.light.surface;
+      case 'primary':
+        return colors.light.surface;
+      case 'secondary':
+        return colors.light.text;
+      case 'outline':
+        return colors.light.text;
+      case 'ghost':
+        return colors.light.text;
+      default:
+        return colors.light.surface;
     }
   };
 
@@ -58,9 +74,12 @@ export const Button: React.FC<ButtonProps> = ({
 
   const getPadding = () => {
     switch (size) {
-      case 'sm': return { paddingVertical: spacing.xs, paddingHorizontal: spacing.sm };
-      case 'lg': return { paddingVertical: spacing.lg, paddingHorizontal: spacing.xl };
-      default: return { paddingVertical: spacing.md, paddingHorizontal: spacing.lg }; // md
+      case 'sm':
+        return { paddingVertical: spacing.xs, paddingHorizontal: spacing.sm };
+      case 'lg':
+        return { paddingVertical: spacing.lg, paddingHorizontal: spacing.xl };
+      default:
+        return { paddingVertical: spacing.md, paddingHorizontal: spacing.lg }; // md
     }
   };
 
@@ -73,7 +92,7 @@ export const Button: React.FC<ButtonProps> = ({
         {
           backgroundColor: getBackgroundColor(),
           borderColor: getBorderColor(),
-          borderWidth: (variant === 'outline' || variant === 'secondary') ? 1 : 0,
+          borderWidth: variant === 'outline' || variant === 'secondary' ? 1 : 0,
           borderRadius: radius.md,
           ...getPadding(),
         },
@@ -88,12 +107,12 @@ export const Button: React.FC<ButtonProps> = ({
       ) : (
         <>
           {leftIcon}
-          <Text 
-            variant="headline" 
+          <Text
+            variant="headline"
             style={[
               { color: getTextColor(), marginHorizontal: spacing.sm },
               size === 'sm' && { fontSize: 14 },
-              textStyle
+              textStyle,
             ]}
           >
             {title}

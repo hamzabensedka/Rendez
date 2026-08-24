@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, spacing } from '@planity/ui';
@@ -89,19 +83,13 @@ export function BookingSlotsGrid({
           return (
             <TouchableOpacity
               key={index}
-              style={[
-                styles.slotChip,
-                { width: slotWidth },
-                isSelected && styles.slotChipSelected,
-              ]}
+              style={[styles.slotChip, { width: slotWidth }, isSelected && styles.slotChipSelected]}
               onPress={() => onSelectSlot(slot.startAt)}
               activeOpacity={0.7}
               accessibilityLabel={`Select time ${timeStr}`}
               accessibilityRole="button"
             >
-              <Text
-                style={[styles.slotChipText, isSelected && styles.slotChipTextSelected]}
-              >
+              <Text style={[styles.slotChipText, isSelected && styles.slotChipTextSelected]}>
                 {timeStr}
               </Text>
             </TouchableOpacity>

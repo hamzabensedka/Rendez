@@ -19,10 +19,7 @@ async function run() {
     process.exit(1);
   }
   const svg = fs.readFileSync(svgPath, 'utf8');
-  await sharp(Buffer.from(svg))
-    .resize(96, 96)
-    .png()
-    .toFile(outPath);
+  await sharp(Buffer.from(svg)).resize(96, 96).png().toFile(outPath);
   console.log('Written', outPath);
 }
 

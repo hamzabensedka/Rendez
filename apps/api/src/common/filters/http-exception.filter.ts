@@ -7,7 +7,10 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import {
+  PrismaClientKnownRequestError,
+  PrismaClientUnknownRequestError,
+} from '@prisma/client/runtime/library';
 
 /** Single error envelope for all API errors. */
 export interface ApiErrorBody {
@@ -35,9 +38,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<
-      Request & { requestId?: string; id?: string }
-    >();
+    const request = ctx.getRequest<Request & { requestId?: string; id?: string }>();
 
     const requestId = request.requestId ?? request.id;
 
@@ -70,10 +71,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         } else if (statusCode === HttpStatus.UNAUTHORIZED) error = 'UNAUTHORIZED';
         else if (statusCode === HttpStatus.FORBIDDEN) error = 'FORBIDDEN';
         else if (statusCode === HttpStatus.CONFLICT) error = 'CONFLICT';
-        else if (statusCode === HttpStatus.UNPROCESSABLE_ENTITY)
-          error = 'VALIDATION_ERROR';
-        else if (statusCode === HttpStatus.TOO_MANY_REQUESTS)
-          error = 'TOO_MANY_REQUESTS';
+        else if (statusCode === HttpStatus.UNPROCESSABLE_ENTITY) error = 'VALIDATION_ERROR';
+        else if (statusCode === HttpStatus.TOO_MANY_REQUESTS) error = 'TOO_MANY_REQUESTS';
         else error = `HTTP_${statusCode}`;
       }
     } else if (exception instanceof PrismaClientKnownRequestError) {
@@ -91,8 +90,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logger.warn(
         `Prisma ${exception.code}: ${exception.message}${requestId ? ` [${requestId}]` : ''}`
       );
+    } else if (exception instanceof PrismaClientUnknownRequestError) {
+      const raw = String(exception.message);
+      if (raw.includes('23P01') || raw.includes('no_overlapping')) {
+        // Exclusion constraint: overlapping appointment for this staff/business.
+        statusCode = HttpStatus.CONFLICT;
+        error = 'CONFLICT';
+        message = 'This time slot is no longer available';
+      } else {
+        statusCode = HttpStatus.BAD_REQUEST;
+        message = 'Database request failed';
+      }
+      this.logger.warn(`Prisma unknown request error: ${raw}${requestId ? ` [${requestId}]` : ''}`);
     } else if (exception instanceof Error) {
-      message = exception.message;
+      // Never echo internal error details to clients; log them server-side.
       this.logger.error(
         exception.stack ?? exception.message,
         requestId ? { requestId } : undefined

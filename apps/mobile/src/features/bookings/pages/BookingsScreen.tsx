@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
@@ -8,12 +8,11 @@ import {
   RefreshControl,
   StatusBar,
   ScrollView,
-  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@planity/ui';
-import { AppointmentStatus, getAppointmentStatusLabel } from '@planity/shared';
+import { getAppointmentStatusLabel } from '@planity/shared';
 import { useAuth } from '../../../application/providers';
 import { useBottomNavInset } from '../../../application/components/BottomNav';
 import { editorialTheme as THEME } from '../../../application/theme/editorialTheme';
@@ -28,36 +27,6 @@ interface Appointment {
   staff: { id: string; name: string } | null;
   serviceName?: string;
 }
-
-// Mock data for demonstration
-const MOCK_APPOINTMENTS: Appointment[] = [
-  {
-    id: '1',
-    status: AppointmentStatus.BOOKED,
-    startAtUtc: new Date(Date.now() + 86400000 * 2).toISOString(), // 2 days from now
-    endAtUtc: new Date(Date.now() + 86400000 * 2 + 3600000).toISOString(),
-    business: { id: '1', name: 'Maison de Beauté' },
-    staff: { id: '1', name: 'Julian Voss' },
-    serviceName: 'The Sculptural Cut',
-  },
-  {
-    id: '2',
-    status: AppointmentStatus.BOOKED,
-    startAtUtc: new Date(Date.now() + 86400000 * 10).toISOString(), // 10 days from now
-    endAtUtc: new Date(Date.now() + 86400000 * 10 + 3600000).toISOString(),
-    business: { id: '2', name: 'Noir Aesthetic' },
-    staff: { id: '2', name: 'Elena Thorne' },
-    serviceName: 'Glow Treatment',
-  },
-];
-
-const MOCK_PAST_APPOINTMENTS = [
-  {
-    id: 'past-1',
-    date: '05 SEP 2023',
-    serviceName: 'Editorial Color & Finish',
-  },
-];
 
 interface BookingCardProps {
   appointment: Appointment;
@@ -75,11 +44,8 @@ const BookingCard: React.FC<BookingCardProps> = ({ appointment, variant = 'defau
   const isDefault = variant === 'default';
 
   return (
-    <TouchableOpacity 
-      style={[
-        styles.card,
-        isDefault ? styles.cardDefault : styles.cardOutlined
-      ]} 
+    <TouchableOpacity
+      style={[styles.card, isDefault ? styles.cardDefault : styles.cardOutlined]}
       onPress={onPress}
       activeOpacity={0.9}
     >
@@ -90,36 +56,35 @@ const BookingCard: React.FC<BookingCardProps> = ({ appointment, variant = 'defau
           <View style={styles.statusBadge}>
             <Text style={styles.statusBadgeText}>{statusLabel.toUpperCase()}</Text>
           </View>
-          
+
           {/* Service Name */}
           <Text style={styles.serviceName}>
             {appointment.serviceName || appointment.business.name}
           </Text>
-          
+
           {/* Business Name */}
-          <Text style={styles.businessName}>
-            {appointment.business.name}
-          </Text>
+          <Text style={styles.businessName}>{appointment.business.name}</Text>
         </View>
 
         {/* Date */}
         <View style={styles.dateContainer}>
           <Text style={styles.dateNumber}>{day}</Text>
-          <Text style={styles.dateMeta}>{month} · {time}</Text>
+          <Text style={styles.dateMeta}>
+            {month} · {time}
+          </Text>
         </View>
       </View>
 
       {/* Staff Section */}
       <View style={[styles.staffSection, isDefault && styles.staffSectionDefault]}>
         <View style={styles.staffImageContainer}>
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop' }}
-            style={styles.staffImage}
-          />
+          <View style={styles.staffImagePlaceholder}>
+            <Ionicons name="person" size={22} color={THEME.colors.onSurfaceVariant} />
+          </View>
         </View>
         <View style={styles.staffInfo}>
-          <Text style={styles.staffRole}>Master Stylist</Text>
-          <Text style={styles.staffName}>{appointment.staff?.name || 'TBD'}</Text>
+          <Text style={styles.staffRole}>YOUR STYLIST</Text>
+          <Text style={styles.staffName}>{appointment.staff?.name || 'To be assigned'}</Text>
         </View>
         <TouchableOpacity style={styles.moreButton} activeOpacity={0.7}>
           <Ionicons name="ellipsis-vertical" size={20} color={THEME.colors.outline} />
@@ -135,20 +100,12 @@ export default function BookingsScreen() {
   const bottomInset = useBottomNavInset();
 
   const {
-    data: rawList = [],
+    data: appointments = [],
     isPending: loading,
     isError,
     refetch,
     isFetching,
   } = useAppointmentsUpcomingQuery<Appointment>(user?.id);
-
-  const appointments = useMemo(() => {
-    const enhanced = rawList.map((apt: Appointment, index: number) => ({
-      ...apt,
-      serviceName: apt.serviceName || (index === 0 ? 'The Sculptural Cut' : 'Glow Treatment'),
-    }));
-    return enhanced.length > 0 ? enhanced : MOCK_APPOINTMENTS;
-  }, [rawList]);
 
   const loadError = isError ? 'Could not load bookings' : null;
   const refreshing = isFetching && !loading;
@@ -174,11 +131,11 @@ export default function BookingsScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.surface} />
-      
+
       {/* Top App Bar */}
       <SafeAreaView style={styles.headerContainer} edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => router.back()}
             activeOpacity={0.7}
@@ -186,14 +143,13 @@ export default function BookingsScreen() {
             <Ionicons name="arrow-back" size={24} color={THEME.colors.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>ATELIER</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.headerAvatar}
             onPress={() => router.push('/(main)/profile')}
+            accessibilityRole="button"
+            accessibilityLabel="Open profile"
           >
-            <Image
-              source={{ uri: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' }}
-              style={styles.headerAvatarImage}
-            />
+            <Ionicons name="person" size={18} color={THEME.colors.onSurfaceVariant} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -227,9 +183,7 @@ export default function BookingsScreen() {
 
           {appointments.length === 0 ? (
             <View style={styles.empty}>
-              <Text style={styles.emptyText}>
-                {loadError || 'No upcoming bookings'}
-              </Text>
+              <Text style={styles.emptyText}>{loadError || 'No upcoming bookings'}</Text>
               <Text style={styles.emptySubtext}>
                 {loadError ? 'Pull down to refresh' : 'Book an appointment to see it here'}
               </Text>
@@ -241,7 +195,12 @@ export default function BookingsScreen() {
                   key={appointment.id}
                   appointment={appointment}
                   variant={index === 1 ? 'outlined' : 'default'}
-                  onPress={() => router.push({ pathname: '/(main)/bookings/[id]', params: { id: appointment.id } })}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(main)/bookings/[id]',
+                      params: { id: appointment.id },
+                    })
+                  }
                 />
               ))}
             </View>
@@ -255,23 +214,9 @@ export default function BookingsScreen() {
             <Text style={styles.sectionHeaderCount}>HISTORICAL</Text>
           </View>
 
-          {MOCK_PAST_APPOINTMENTS.map((item) => (
-            <TouchableOpacity 
-              key={item.id} 
-              style={styles.pastItem}
-              activeOpacity={0.7}
-            >
-              <View>
-                <Text style={styles.pastItemDate}>{item.date}</Text>
-                <Text style={styles.pastItemService}>{item.serviceName}</Text>
-              </View>
-              <Ionicons 
-                name="chevron-forward" 
-                size={20} 
-                color={THEME.colors.outline} 
-              />
-            </TouchableOpacity>
-          ))}
+          <View style={styles.empty}>
+            <Text style={styles.emptySubtext}>Your visit history will appear here.</Text>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -316,10 +261,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: THEME.colors.surfaceContainerHighest,
-  },
-  headerAvatarImage: {
-    width: '100%',
-    height: '100%',
   },
   scroll: {
     flex: 1,
@@ -459,9 +400,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: THEME.colors.surfaceContainerHighest,
   },
-  staffImage: {
+  staffImagePlaceholder: {
     width: '100%',
     height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   staffInfo: {
     flex: 1,
@@ -488,27 +431,6 @@ const styles = StyleSheet.create({
   pastSection: {
     opacity: 0.5,
     marginTop: THEME.spacing.xl,
-  },
-  pastItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: THEME.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: `${THEME.colors.outlineVariant}1A`, // 10% opacity
-  },
-  pastItemDate: {
-    fontSize: THEME.typography.caption.fontSize,
-    fontWeight: '700',
-    letterSpacing: 0.1,
-    color: THEME.colors.outline,
-    textTransform: 'uppercase',
-    marginBottom: THEME.spacing.xs,
-  },
-  pastItemService: {
-    fontSize: THEME.typography.body.fontSize,
-    fontWeight: '500',
-    color: THEME.colors.onSurface,
   },
   empty: {
     padding: THEME.spacing['2xl'],

@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
@@ -24,10 +16,7 @@ export class AppointmentsController {
 
   @Post()
   @ApiOperation({ summary: 'Create appointment' })
-  async create(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateAppointmentDto
-  ) {
+  async create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateAppointmentDto) {
     return this.appointmentsService.create(user.id, dto);
   }
 
@@ -54,10 +43,7 @@ export class AppointmentsController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get appointment details' })
-  async findOne(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id') id: string
-  ) {
+  async findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.appointmentsService.findOne(id, user);
   }
 
@@ -71,4 +57,3 @@ export class AppointmentsController {
     return this.appointmentsService.cancel(id, user, dto.reason);
   }
 }
-

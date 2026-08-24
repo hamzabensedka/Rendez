@@ -12,7 +12,6 @@ export function jwtExpiryToMs(expiry: string): number {
   }
   const n = parseInt(m[1], 10);
   const u = m[2].toLowerCase();
-  const unitMs =
-    u === 's' ? 1000 : u === 'm' ? 60_000 : u === 'h' ? 3_600_000 : 86_400_000;
+  const unitMs = u === 's' ? 1000 : u === 'm' ? 60_000 : u === 'h' ? 3_600_000 : 86_400_000;
   return n * unitMs;
 }

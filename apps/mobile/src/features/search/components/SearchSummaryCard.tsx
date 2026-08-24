@@ -19,33 +19,42 @@ export const SearchSummaryCard = React.memo<SearchSummaryCardProps>(function Sea
 }) {
   return (
     <View style={styles.container}>
-      <Card 
-        variant="elevated" 
-        padding="md"
-        style={styles.card}
-      >
-        <TouchableOpacity 
-          style={styles.touchable} 
-          onPress={onPress}
-          activeOpacity={0.7}
-        >
+      <Card variant="elevated" padding="md" style={styles.card}>
+        <TouchableOpacity style={styles.touchable} onPress={onPress} activeOpacity={0.7}>
           {/* Search Icon */}
-          <Ionicons name="search-outline" size={22} color={colors.light.accent} style={styles.icon} />
-          
+          <Ionicons
+            name="search-outline"
+            size={22}
+            color={colors.light.accent}
+            style={styles.icon}
+          />
+
           {/* Text Content */}
           <View style={styles.textContainer}>
             <View style={styles.titleRow}>
-              <Text variant="headline" style={styles.categoryText}>{category}</Text>
-              <Text variant="body" color={colors.light.border} style={styles.separator}> • </Text>
+              <Text variant="headline" style={styles.categoryText}>
+                {category}
+              </Text>
+              <Text variant="body" color={colors.light.border} style={styles.separator}>
+                {' '}
+                •{' '}
+              </Text>
               <Text variant="body" numberOfLines={1} style={styles.addressText}>
                 {address}
               </Text>
             </View>
-            <Text variant="footnote" color={colors.light.textSecondary}>{time}</Text>
+            <Text variant="footnote" color={colors.light.textSecondary}>
+              {time}
+            </Text>
           </View>
 
           {/* Edit/Pencil Icon */}
-          <Ionicons name="pencil-outline" size={20} color={colors.light.textSecondary} style={styles.pencilIcon} />
+          <Ionicons
+            name="pencil-outline"
+            size={20}
+            color={colors.light.textSecondary}
+            style={styles.pencilIcon}
+          />
         </TouchableOpacity>
       </Card>
     </View>
@@ -61,7 +70,7 @@ const styles = StyleSheet.create({
   },
   card: {
     // Card handles bg and shadow
-    // We might need to ensure Card accepts onPress if we want the ripple on the whole card, 
+    // We might need to ensure Card accepts onPress if we want the ripple on the whole card,
     // but here we use inner TouchableOpacity
   },
   touchable: {
