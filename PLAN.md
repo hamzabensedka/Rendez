@@ -27,3 +27,5 @@ Contracts:
 - [x] L3 QA GREEN complete (G19-G22) — typecheck/lint/test exit 0 workspace-wide; CI on Node 20
 - [x] gate-check.mjs: 22 gates, ALL MET (21 met, 1 abandoned)
 - NOTE: environment repair required: corrupted global pnpm store + pnpm 8.15 Windows symlink bugs + FS filter driver; handcrafted node_modules/.modules.yaml after forensic nx graph diagnosis; dev servers (expo/api watch/nx daemon) stopped during repair — restart needed.
+- [x] Baseline + Phase 1 committed as 4d9ad81
+- [x] Phase 2 (provider portal API) complete — 14 new tests; gate-check: 34 met / 1 abandoned across all ledgers. Provider mobile screens remain (next session).
