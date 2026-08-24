@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { UserRole } from '@planity/shared';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
@@ -82,7 +83,14 @@ describe('AppointmentsService', () => {
   beforeEach(async () => {
     mockPrisma = createMockPrisma();
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AppointmentsService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        AppointmentsService,
+        { provide: PrismaService, useValue: mockPrisma },
+        {
+          provide: NotificationsService,
+          useValue: { sendOnce: jest.fn().mockResolvedValue({ id: 'n-1', delivered: true }) },
+        },
+      ],
     }).compile();
 
     service = module.get<AppointmentsService>(AppointmentsService);

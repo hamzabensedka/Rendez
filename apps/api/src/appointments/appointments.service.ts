@@ -7,6 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
@@ -22,7 +23,10 @@ const isOverlapViolation = (err: unknown): boolean => {
 export class AppointmentsService {
   private readonly logger = new Logger(AppointmentsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService
+  ) {}
 
   async create(userId: string, dto: CreateAppointmentDto) {
     if (!dto.items.length) {
@@ -30,7 +34,7 @@ export class AppointmentsService {
     }
 
     try {
-      return await this.prisma.$transaction(async (tx: Tx) => {
+      await this.prisma.$transaction(async (tx: Tx) => {
         const business = await tx.business.findFirst({
           where: { id: dto.businessId, status: 'active', deletedAt: null },
           select: { id: true, timezone: true },
@@ -109,9 +113,10 @@ export class AppointmentsService {
             idempotencyKey: dto.idempotencyKey,
           },
           include: {
-            business: true,
+            business: { select: { id: true, name: true, timezone: true, email: true } },
             location: true,
             appointmentItems: true,
+            clientUser: { select: { id: true, name: true, email: true } },
           },
         });
 
@@ -129,6 +134,21 @@ export class AppointmentsService {
         });
 
         this.logger.log(`Created appointment ${appointment.id} for user ${userId}`);
+
+        // Post-commit notification (fire-and-forget; never fails the request).
+        void this.notifications
+          .sendOnce({
+            userId: appointment.clientUserId,
+            dedupKey: `booking-created:${appointment.id}`,
+            type: 'BOOKING_CONFIRMATION',
+            toEmail: appointment.clientUser?.email ?? null,
+            subject: `Booking confirmed — ${appointment.business.name}`,
+            html: `<p>Your appointment at <strong>${appointment.business.name}</strong> on ${appointment.startAtUtc.toISOString()} is confirmed.</p>`,
+          })
+          .catch((notifyErr) =>
+            this.logger.warn(`booking confirmation failed: ${String(notifyErr)}`)
+          );
+
         return appointment;
       });
     } catch (err) {
@@ -173,6 +193,7 @@ export class AppointmentsService {
       include: {
         business: true,
         location: true,
+        clientUser: { select: { id: true, name: true, email: true } },
         appointmentItems: { include: { serviceVariant: true } },
       },
     });
@@ -230,6 +251,19 @@ export class AppointmentsService {
     }
 
     this.logger.log(`Cancelled appointment ${id}`);
+
+    // Notify the client their booking was cancelled (fire-and-forget).
+    void this.notifications
+      .sendOnce({
+        userId: appointment.clientUserId,
+        dedupKey: `booking-cancelled:${id}`,
+        type: 'BOOKING_CANCELLED',
+        toEmail: appointment.clientUser?.email ?? null,
+        subject: `Booking cancelled — ${appointment.business.name}`,
+        html: `<p>Your appointment at <strong>${appointment.business.name}</strong> on ${appointment.startAtUtc.toISOString()} has been cancelled.</p>`,
+      })
+      .catch((err) => this.logger.warn(`cancellation notice failed: ${String(err)}`));
+
     return this.findOne(id, user);
   }
 }
