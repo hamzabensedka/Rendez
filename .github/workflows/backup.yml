@@ -1,0 +1,25 @@
+name: db-backup
+
+on:
+  schedule:
+    - cron: '0 3 * * 1' # weekly, Monday 03:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump database
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          docker run --rm -i postgres:16-alpine \
+            pg_dump "$DATABASE_URL" --no-owner --no-privileges \
+            | gzip > "planity-db-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
+          ls -lh planity-db-*.sql.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: db-dump-${{ github.run_id }}
+          path: planity-db-*.sql.gz
+          retention-days: 90

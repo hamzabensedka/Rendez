@@ -13,7 +13,7 @@ Every phase below ends with `pnpm typecheck && pnpm lint && pnpm test` green
 | 2 Provider portal | ✅ API `f0fed17`, mobile `86ee1fd` |
 | 3 Notifications | ✅ `4f49371` — in-process scheduler; BullMQ driver deferred to Phase 5 |
 | 4 Admin dashboard | ✅ `d8e3b47` — zero-dep static web app styled from editorialTheme tokens. **Platform note:** pnpm store corruption blocks adding an Expo dependency tree on this machine; when installs are healthy, port the four views onto the shared Expo shell reusing `@planity/ui` (the CSS in apps/admin mirrors those exact token values, and all endpoints it consumes stay identical) |
-| 5 Ops hardening | ⏭️ next — Dockerfiles, compose, CI image build, Sentry, backups, dependency classification fixes (helmet/ioredis/pino → prod deps) |
+| 5 Ops hardening | ✅ `docker/api.Dockerfile` + `compose.prod.yml` (healthchecks, migrations-on-start) · CI image build w/ tag-only publish · weekly pg_dump workflow + restore runbook (`docs/RUNBOOK.md`) · `.env.example` truth pass · dependency classification fixed. **Still deferred until dependency installs are healthy:** Sentry SDK + BullMQ queue driver swap |
 
 ## Global contracts (bind ALL phases)
 

@@ -51,7 +51,7 @@ Scope: P0 security holes closed, dead code purged, booking flow made correct, QA
   EXPECT: exit 0
   EVIDENCE: pending
 
-ABANDON: G9 Reverted helmet (and ioredis) devDependencies→dependencies move: the dependency-graph change triggered pnpm-8.15-hoisted relinks of @prisma/argon2 packages, which deterministically crash on this machine (corrupted global store + FS filter driver + pnpm Windows symlink bugs). Practical risk today is zero — no Dockerfile/prod packaging exists yet; runtime resolution works via hoisted tree. MUST be re-applied together with Phase-2 Dockerization on a healthy install.
+ABANDON: G9 Reverted helmet (and ioredis) devDependencies→dependencies move: the dependency-graph change triggered pnpm-8.15-hoisted relinks of @prisma/argon2 packages, which deterministically crash on this machine (corrupted global store + FS filter driver + pnpm Windows symlink bugs). Practical risk today is zero — no Dockerfile/prod packaging exists yet; runtime resolution works via hoisted tree. RESOLVED in Phase 5 (gates/phase-5.md P5-G6): moved to dependencies with lockfile-only sync; local node_modules untouched.
 
 - [x] G10: Unexpected errors return a generic body; internal messages logged server-side only
   EVIDENCE: http-exception.filter.ts Error-branch no longer sets message from exception; clients get 'An unexpected error occurred', stack logged server-side. PrismaClientUnknownRequestError branch maps 23P01/no_overlapping to 409 'This time slot is no longer available'
