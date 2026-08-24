@@ -19,6 +19,7 @@ import { ServiceCategoriesModule } from './service-categories/service-categories
 import { HealthModule } from './health/health.module';
 import { ProviderPortalModule } from './provider-portal/provider-portal.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     HealthModule,
     ProviderPortalModule,
     NotificationsModule,
+    AdminModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

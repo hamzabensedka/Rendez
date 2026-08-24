@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Planity Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Login view -->
+  <div id="login-view" class="login-wrap" hidden>
+    <form class="login-card" id="login-form">
+      <div class="login-brand">PLANITY</div>
+      <div class="section-label">Admin console</div>
+      <label class="field">Email
+        <input type="email" id="login-email" autocomplete="username" required />
+      </label>
+      <label class="field">Password
+        <input type="password" id="login-password" autocomplete="current-password" required />
+      </label>
+      <button class="primary" type="submit" style="width:100%">Log in</button>
+      <div class="error" id="login-error"></div>
+    </form>
+  </div>
+
+  <!-- App shell -->
+  <div id="app-view" class="shell" hidden>
+    <nav class="sidebar">
+      <div class="brand">PLANITY</div>
+      <a href="#/reviews"><button class="nav-item" data-nav="reviews">Reviews</button></a>
+      <a href="#/users"><button class="nav-item" data-nav="users">Users</button></a>
+      <a href="#/businesses"><button class="nav-item" data-nav="businesses">Businesses</button></a>
+      <a href="#/appointments"><button class="nav-item" data-nav="appointments">Appointments</button></a>
+      <div style="flex:1"></div>
+      <button class="outline small" id="logout-btn">Log out</button>
+    </nav>
+    <main class="main" id="view"></main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

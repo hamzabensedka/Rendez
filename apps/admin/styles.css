@@ -1,0 +1,162 @@
+/* Planity Admin — mirrors packages editorialTheme token values.
+   Swap path: this file is replaced by @planity/ui + editorialTheme when the
+   shared Expo shell becomes installable (see docs/ROADMAP.md Phase 4 note). */
+:root {
+  --c-primary: #000000;
+  --c-surface: #f9f9f9;
+  --c-surface-lowest: #ffffff;
+  --c-surface-low: #f3f3f3;
+  --c-surface-high: #e8e8e8;
+  --c-surface-highest: #e2e2e2;
+  --c-on-surface: #1b1b1b;
+  --c-on-surface-variant: #474747;
+  --c-on-primary: #e2e2e2;
+  --c-outline: #777777;
+  --c-outline-variant: #c6c6c6;
+  --c-success: #16a34a;
+  --c-danger: #b91c1c;
+
+  --sp-xs: 4px; --sp-sm: 8px; --sp-md: 12px; --sp-lg: 16px;
+  --sp-xl: 24px; --sp-2xl: 32px; --sp-3xl: 48px;
+
+  --fs-display: 48px; --lh-display: 56px; --ls-display: -0.02em;
+  --fs-headline: 28px; --lh-headline: 36px; --ls-headline: -0.01em;
+  --fs-title: 22px; --lh-title: 28px;
+  --fs-body: 16px; --lh-body: 24px;
+  --fs-label: 12px; --lh-label: 16px; --ls-label: 0.15em;
+  --fs-caption: 11px; --lh-caption: 14px; --ls-caption: 0.2em;
+
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--c-surface);
+  color: var(--c-on-surface);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+a { color: inherit; text-decoration: none; }
+
+/* ── Layout ─────────────────────────────────────────── */
+.shell { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--c-surface-lowest);
+  border-right: 1px solid var(--c-surface-high);
+  padding: var(--sp-xl) var(--sp-lg);
+  display: flex; flex-direction: column; gap: var(--sp-xs);
+}
+.main { flex: 1; padding: var(--sp-2xl) var(--sp-3xl); max-width: 1100px; }
+
+.brand {
+  font-size: var(--fs-title); font-weight: 700;
+  letter-spacing: 0.08em; margin-bottom: var(--sp-xl);
+}
+.nav-item {
+  display: block; padding: var(--sp-md) var(--sp-lg);
+  border-radius: var(--radius); cursor: pointer;
+  font-size: var(--fs-label); font-weight: 600;
+  letter-spacing: var(--ls-label); color: var(--c-on-surface-variant);
+  text-transform: uppercase; background: none; border: none; text-align: left; width: 100%;
+}
+.nav-item:hover { background: var(--c-surface-low); }
+.nav-item.active { background: var(--c-primary); color: var(--c-on-primary); }
+
+.section-label {
+  font-size: var(--fs-caption); font-weight: 600;
+  letter-spacing: var(--ls-caption); text-transform: uppercase;
+  color: var(--c-outline); margin-bottom: var(--sp-xs);
+}
+.headline {
+  font-size: var(--fs-headline); line-height: var(--lh-headline);
+  letter-spacing: var(--ls-headline); font-weight: 600;
+  margin: 0 0 var(--sp-xl) 0;
+}
+
+/* ── Cards / tables ─────────────────────────────────── */
+.card {
+  background: var(--c-surface-lowest);
+  border: 1px solid var(--c-surface-high);
+  border-radius: var(--radius);
+  padding: var(--sp-xl); margin-bottom: var(--sp-lg);
+}
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left; font-size: var(--fs-caption); font-weight: 600;
+  letter-spacing: var(--ls-caption); text-transform: uppercase;
+  color: var(--c-outline); padding: var(--sp-sm) var(--sp-md);
+  border-bottom: 1px solid var(--c-surface-highest);
+}
+td { padding: var(--sp-md); border-bottom: 1px solid var(--c-surface-low); vertical-align: top; }
+tr:hover td { background: var(--c-surface-lowest); }
+
+.badge {
+  display: inline-block; padding: 2px 10px; border-radius: 9999px;
+  font-size: var(--fs-caption); font-weight: 600; letter-spacing: var(--ls-caption);
+  background: var(--c-surface-high); color: var(--c-on-surface);
+}
+.badge.success { background: rgba(22,163,74,.12); color: var(--c-success); }
+.badge.danger { background: rgba(185,28,28,.1); color: var(--c-danger); }
+.badge.dark { background: var(--c-primary); color: var(--c-on-primary); }
+
+/* ── Controls ───────────────────────────────────────── */
+button {
+  font: inherit; cursor: pointer;
+  border-radius: 9999px; border: 1px solid transparent;
+  padding: var(--sp-sm) var(--sp-xl);
+  font-size: var(--fs-label); font-weight: 600;
+  letter-spacing: var(--ls-label); text-transform: uppercase;
+}
+button.primary { background: var(--c-primary); color: var(--c-on-primary); }
+button.secondary { background: var(--c-surface-high); color: var(--c-on-surface); }
+button.outline { background: transparent; border-color: var(--c-outline-variant); color: var(--c-on-surface); }
+button.small { padding: 4px 12px; font-size: 10px; }
+button.approve { background: rgba(22,163,74,.12); color: var(--c-success); }
+button.reject { background: rgba(185,28,28,.1); color: var(--c-danger); }
+button:disabled { opacity: .5; cursor: default; }
+
+input, select {
+  font: inherit; color: var(--c-on-surface);
+  background: var(--c-surface-lowest);
+  border: 1px solid var(--c-outline-variant);
+  border-radius: var(--radius);
+  padding: var(--sp-sm) var(--sp-md);
+}
+label.field {
+  display: block; margin-bottom: var(--sp-md);
+  font-size: var(--fs-caption); font-weight: 600;
+  letter-spacing: var(--ls-caption); text-transform: uppercase;
+  color: var(--c-on-surface-variant);
+}
+label.field input, label.field select {
+  display: block; width: 100%; margin-top: var(--sp-xs);
+  font-size: var(--fs-body); text-transform: none; letter-spacing: normal; font-weight: 400;
+}
+.toolbar { display: flex; gap: var(--sp-md); align-items: end; flex-wrap: wrap; margin-bottom: var(--sp-xl); }
+.toolbar > * { flex: 0 0 auto; }
+.toolbar label.field { min-width: 180px; }
+
+.muted { color: var(--c-on-surface-variant); font-size: var(--fs-label); }
+.error { color: var(--c-danger); font-size: var(--fs-label); margin-top: var(--sp-sm); }
+.empty { color: var(--c-outline); padding: var(--sp-xl); text-align: center; }
+
+.pager { display: flex; gap: var(--sp-sm); align-items: center; margin-top: var(--sp-lg); }
+
+/* ── Login ──────────────────────────────────────────── */
+.login-wrap {
+  min-height: 100vh; display: grid; place-items: center;
+  background: var(--c-surface);
+}
+.login-card {
+  width: 360px; background: var(--c-surface-lowest);
+  border: 1px solid var(--c-surface-high);
+  border-radius: var(--radius); padding: var(--sp-2xl);
+}
+.login-brand {
+  font-size: var(--fs-display); line-height: var(--lh-display);
+  letter-spacing: var(--ls-display); font-weight: 700;
+  margin-bottom: var(--sp-xl);
+}
