@@ -22,4 +22,13 @@ export const queryKeys = {
     ['availability', businessId, serviceVariantId, date] as const,
   appointmentsUpcoming: (userId: string | undefined) =>
     ['appointments', 'upcoming', userId] as const,
+  providerPortal: {
+    appointments: (businessId: string | undefined, status?: string) =>
+      ['providerPortal', 'appointments', businessId, status ?? 'all'] as const,
+    availabilityRules: (businessId: string | undefined) =>
+      ['providerPortal', 'availabilityRules', businessId] as const,
+    timeOffs: (businessId: string | undefined) =>
+      ['providerPortal', 'timeOffs', businessId] as const,
+    staff: (businessId: string | undefined) => ['providerPortal', 'staff', businessId] as const,
+  },
 };

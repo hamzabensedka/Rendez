@@ -10,6 +10,13 @@ interface User {
   role: string;
   status?: string;
   createdAt?: string;
+  /** Present when the account holds a Provider row (portal staff/owner). */
+  providerProfile?: {
+    id: string;
+    businessId: string | null;
+    isOwner: boolean;
+    displayName: string | null;
+  } | null;
 }
 
 export interface PendingRegistration {

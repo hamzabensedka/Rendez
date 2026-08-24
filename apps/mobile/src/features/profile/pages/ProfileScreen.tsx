@@ -65,6 +65,17 @@ export default function ProfileScreen() {
           </Text>
           <Text style={styles.name}>{user.name}</Text>
           <Text style={styles.email}>{user.email}</Text>
+
+          {user.role === 'providerOwner' || user.role === 'providerStaff' ? (
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => router.push('/(main)/provider-portal')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.primaryButtonText}>Provider portal</Text>
+            </TouchableOpacity>
+          ) : null}
+
           <TouchableOpacity
             style={styles.secondaryButton}
             onPress={handleLogout}

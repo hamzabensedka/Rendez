@@ -4,3 +4,4 @@ export { useServiceCategoriesQuery } from './useServiceCategoriesQuery';
 export type { ServiceCategoryDto } from './useServiceCategoriesQuery';
 export { useBusinessDetailQuery } from './useBusinessDetailQuery';
 export { useAppointmentsUpcomingQuery } from './useAppointmentsUpcomingQuery';
+export * from './useProviderPortal';
