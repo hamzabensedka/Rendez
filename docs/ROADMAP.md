@@ -4,6 +4,17 @@ Baseline: security-hardened, purged, QA-gated codebase (see GATES.md, 22/22 met)
 Every phase below ends with `pnpm typecheck && pnpm lint && pnpm test` green
 (same discipline as GATES.md — new gates file per leaf before work starts).
 
+## Status (updated as phases land)
+
+| Phase | State |
+|---|---|
+| Baseline purge + security | ✅ committed (`4d9ad81`) |
+| 1 Quick wins | ✅ committed (`4d9ad81`) |
+| 2 Provider portal | ✅ API `f0fed17`, mobile `86ee1fd` |
+| 3 Notifications | ✅ `4f49371` — in-process scheduler; BullMQ driver deferred to Phase 5 |
+| 4 Admin dashboard | ✅ `d8e3b47` — zero-dep static web app styled from editorialTheme tokens. **Platform note:** pnpm store corruption blocks adding an Expo dependency tree on this machine; when installs are healthy, port the four views onto the shared Expo shell reusing `@planity/ui` (the CSS in apps/admin mirrors those exact token values, and all endpoints it consumes stay identical) |
+| 5 Ops hardening | ⏭️ next — Dockerfiles, compose, CI image build, Sentry, backups, dependency classification fixes (helmet/ioredis/pino → prod deps) |
+
 ## Global contracts (bind ALL phases)
 
 | Contract | Rule |
