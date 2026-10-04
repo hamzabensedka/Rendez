@@ -11,6 +11,7 @@ import {
 } from '@expo-google-fonts/inter';
 import {
   PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 
@@ -29,6 +30,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     'Inter-Bold': Inter_700Bold,
     'Inter-Black': Inter_900Black,
     'PlusJakartaSans-Regular': PlusJakartaSans_400Regular,
+    'PlusJakartaSans-Medium': PlusJakartaSans_500Medium,
     'PlusJakartaSans-Bold': PlusJakartaSans_700Bold,
   });
 

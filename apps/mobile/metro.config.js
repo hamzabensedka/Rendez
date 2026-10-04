@@ -50,8 +50,22 @@ config.resolver.extraNodeModules = {
   ...pinnedPackages,
 };
 
+const webShims = {
+  'react-native-reanimated': path.join(projectRoot, 'shims/reanimated.web.js'),
+  'react-native-worklets': path.join(projectRoot, 'shims/worklets.web.js'),
+};
+
 const defaultResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (platform === 'web') {
+    const shimName = Object.keys(webShims).find(
+      (name) => moduleName === name || moduleName.startsWith(`${name}/`),
+    );
+    if (shimName) {
+      return { type: 'sourceFile', filePath: webShims[shimName] };
+    }
+  }
+
   const pinName = Object.keys(pinnedPackages).find(
     (name) => moduleName === name || moduleName.startsWith(`${name}/`)
   );

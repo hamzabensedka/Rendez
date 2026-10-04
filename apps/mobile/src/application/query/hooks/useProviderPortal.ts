@@ -43,12 +43,26 @@ function page<T>(response: { data: { data: T[] } }): T[] {
 
 // ── Appointments ───────────────────────────────────────────────────────
 
-export function useProviderAppointments(businessId: string | undefined, status?: string) {
+export function useProviderAppointments(
+  businessId: string | undefined,
+  status?: string,
+  range?: { from: string; to: string; limit?: number }
+) {
   return useQuery({
-    queryKey: queryKeys.providerPortal.appointments(businessId, status),
+    queryKey: queryKeys.providerPortal.appointments(
+      businessId,
+      status,
+      range?.from,
+      range?.to
+    ),
     queryFn: async (): Promise<ProviderAppointment[]> => {
-      const params = status && status !== 'all' ? `?status=${status}` : '';
-      const response = await api.get(`${BASE}/${businessId}/appointments${params}`);
+      const search = new URLSearchParams();
+      if (status && status !== 'all') search.set('status', status);
+      if (range?.from) search.set('from', range.from);
+      if (range?.to) search.set('to', range.to);
+      search.set('limit', String(range?.limit ?? 100));
+      const qs = search.toString();
+      const response = await api.get(`${BASE}/${businessId}/appointments${qs ? `?${qs}` : ''}`);
       return page<ProviderAppointment>(response);
     },
     enabled: Boolean(businessId),

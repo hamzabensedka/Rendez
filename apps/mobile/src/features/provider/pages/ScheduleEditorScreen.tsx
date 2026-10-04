@@ -1,18 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
   StyleSheet,
   ScrollView,
   StatusBar,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, Input } from '@planity/ui';
+import { Text } from '@planity/ui';
 import { useAuth } from '../../../application/providers';
-import { editorialTheme as THEME } from '../../../application/theme/editorialTheme';
+import { useBottomNavInset } from '../../../application/components/BottomNav';
 import {
   useAvailabilityRules,
   useReplaceAvailabilityRules,
@@ -20,32 +18,47 @@ import {
   useCreateTimeOff,
   useDeleteTimeOff,
 } from '../../../application/query/hooks';
+import { ProviderChrome } from '../components/ProviderChrome';
+import { AtelierButton } from '../components/AtelierButton';
+import { AtelierInput } from '../components/AtelierInput';
+import { formatHumanRange } from '../providerFormat';
+import { providerTheme as T } from '../providerTheme';
 
 const DAYS = [
-  { key: 1, label: 'MON' },
-  { key: 2, label: 'TUE' },
-  { key: 3, label: 'WED' },
-  { key: 4, label: 'THU' },
-  { key: 5, label: 'FRI' },
-  { key: 6, label: 'SAT' },
-  { key: 0, label: 'SUN' },
+  { key: 1, label: 'Monday' },
+  { key: 2, label: 'Tuesday' },
+  { key: 3, label: 'Wednesday' },
+  { key: 4, label: 'Thursday' },
+  { key: 5, label: 'Friday' },
+  { key: 6, label: 'Saturday' },
+  { key: 0, label: 'Sunday' },
 ];
 
-interface RuleDraft {
+interface DayHours {
   dayOfWeek: number;
   startTimeLocal: string;
   endTimeLocal: string;
+  closed: boolean;
 }
 
-function toLocalInput(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+function toWeek(rules: { dayOfWeek: number; startTimeLocal: string; endTimeLocal: string }[]): DayHours[] {
+  return DAYS.map((day) => {
+    const match = rules.find((rule) => rule.dayOfWeek === day.key);
+    if (!match) {
+      return { dayOfWeek: day.key, startTimeLocal: '09:00', endTimeLocal: '18:00', closed: true };
+    }
+    return {
+      dayOfWeek: day.key,
+      startTimeLocal: match.startTimeLocal,
+      endTimeLocal: match.endTimeLocal,
+      closed: false,
+    };
+  });
 }
 
 export default function ScheduleEditorScreen() {
-  const router = useRouter();
   const { user } = useAuth();
+  const bottomInset = useBottomNavInset();
   const businessId = user?.providerProfile?.businessId ?? undefined;
 
   const rulesQuery = useAvailabilityRules(businessId);
@@ -54,127 +67,105 @@ export default function ScheduleEditorScreen() {
   const createOff = useCreateTimeOff(businessId);
   const deleteOff = useDeleteTimeOff(businessId);
 
-  const [drafts, setDrafts] = useState<RuleDraft[]>([]);
+  const [week, setWeek] = useState<DayHours[]>([]);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    if (rulesQuery.data) {
-      setDrafts(
-        rulesQuery.data.map((rule) => ({
-          dayOfWeek: rule.dayOfWeek,
-          startTimeLocal: rule.startTimeLocal,
-          endTimeLocal: rule.endTimeLocal,
-        }))
-      );
-    }
+    if (rulesQuery.data) setWeek(toWeek(rulesQuery.data));
   }, [rulesQuery.data]);
 
-  const updateDraft = (index: number, patch: Partial<RuleDraft>) => {
-    setDrafts((current) =>
-      current.map((draft, i) => (i === index ? { ...draft, ...patch } : draft))
+  const updateDay = (dayOfWeek: number, patch: Partial<DayHours>) => {
+    setSaved(false);
+    setWeek((current) =>
+      current.map((row) => (row.dayOfWeek === dayOfWeek ? { ...row, ...patch } : row))
     );
   };
 
+  const payload = useMemo(
+    () =>
+      week
+        .filter((row) => !row.closed)
+        .map((row) => ({
+          dayOfWeek: row.dayOfWeek,
+          startTimeLocal: row.startTimeLocal,
+          endTimeLocal: row.endTimeLocal,
+        })),
+    [week]
+  );
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.surface} />
-      <SafeAreaView style={styles.headerContainer} edges={['top', 'left', 'right']}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} accessibilityRole="button">
-            <Ionicons name="arrow-back" size={24} color={THEME.colors.primary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>SCHEDULE</Text>
-          <View style={{ width: 24 }} />
-        </View>
+      <StatusBar barStyle="dark-content" backgroundColor={T.colors.paper} />
+      <SafeAreaView edges={['top', 'left', 'right']}>
+        <ProviderChrome title="Hours" subtitle="When the floor is open" />
       </SafeAreaView>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Weekly rules */}
-        <Text style={styles.sectionLabel}>WEEKLY HOURS</Text>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 24 }]}
+        showsVerticalScrollIndicator={false}
+      >
         {rulesQuery.isPending ? (
-          <ActivityIndicator color={THEME.colors.primary} />
+          <ActivityIndicator color={T.colors.ink} />
         ) : (
-          <View style={styles.rulesList}>
-            {drafts.length === 0 && (
-              <Text style={styles.hint}>No weekly hours yet. Add your first window.</Text>
-            )}
-            {drafts.map((draft, index) => (
-              <View key={index} style={styles.ruleRow}>
-                <TouchableOpacity
-                  onPress={() => updateDraft(index, { dayOfWeek: (draft.dayOfWeek + 1) % 7 })}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Day ${DAYS.find((day) => day.key === draft.dayOfWeek)?.label}, tap to change`}
-                >
-                  <Text style={styles.dayBadge}>
-                    {DAYS.find((day) => day.key === draft.dayOfWeek)?.label}
-                  </Text>
-                </TouchableOpacity>
-                <Input
-                  style={styles.timeInput}
-                  value={draft.startTimeLocal}
-                  onChangeText={(text) => updateDraft(index, { startTimeLocal: text })}
-                  placeholder="09:00"
-                />
-                <Text style={styles.dash}>–</Text>
-                <Input
-                  style={styles.timeInput}
-                  value={draft.endTimeLocal}
-                  onChangeText={(text) => updateDraft(index, { endTimeLocal: text })}
-                  placeholder="17:00"
-                />
-                <TouchableOpacity
-                  onPress={() => setDrafts((current) => current.filter((_, i) => i !== index))}
-                  accessibilityRole="button"
-                  accessibilityLabel="Remove this time window"
-                >
-                  <Ionicons name="trash-outline" size={20} color={THEME.colors.outline} />
-                </TouchableOpacity>
-              </View>
-            ))}
-            <Button
-              title="+ ADD WINDOW"
-              variant="ghost"
-              size="sm"
-              onPress={() =>
-                setDrafts((current) => [
-                  ...current,
-                  { dayOfWeek: 1, startTimeLocal: '09:00', endTimeLocal: '17:00' },
-                ])
-              }
-            />
-            <Button
-              title={replaceRules.isPending ? 'SAVING…' : saved ? 'SAVED ✓' : 'SAVE WEEKLY HOURS'}
+          <View>
+            {week.map((row) => {
+              const label = DAYS.find((d) => d.key === row.dayOfWeek)?.label ?? '';
+              return (
+                <View key={row.dayOfWeek} style={styles.dayRow}>
+                  <Pressable
+                    onPress={() => updateDay(row.dayOfWeek, { closed: !row.closed })}
+                    style={styles.dayNameHit}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${label}, ${row.closed ? 'closed' : 'open'}`}
+                  >
+                    <Text style={styles.dayName}>{label}</Text>
+                  </Pressable>
+                  {row.closed ? (
+                    <Text style={styles.closed}>Closed</Text>
+                  ) : (
+                    <View style={styles.times}>
+                      <AtelierInput
+                        value={row.startTimeLocal}
+                        onChangeText={(text) => updateDay(row.dayOfWeek, { startTimeLocal: text })}
+                      />
+                      <Text style={styles.dash}>–</Text>
+                      <AtelierInput
+                        value={row.endTimeLocal}
+                        onChangeText={(text) => updateDay(row.dayOfWeek, { endTimeLocal: text })}
+                      />
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+            <AtelierButton
+              title={replaceRules.isPending ? 'Saving' : saved ? 'Saved' : 'Save week'}
               loading={replaceRules.isPending}
-              disabled={replaceRules.isPending}
               onPress={() => {
-                setSaved(false);
-                replaceRules.mutate(drafts, { onSuccess: () => setSaved(true) });
+                replaceRules.mutate(payload, { onSuccess: () => setSaved(true) });
               }}
+              style={{ marginTop: 16 }}
             />
           </View>
         )}
 
-        {/* Time off */}
-        <Text style={[styles.sectionLabel, styles.gapTop]}>TIME OFF</Text>
+        <Text style={[styles.sectionLabel, styles.gapTop]}>Time away</Text>
         {(timeOffsQuery.data ?? []).length === 0 ? (
-          <Text style={styles.hint}>No upcoming time off.</Text>
+          <Text style={styles.hint}>Nothing booked off.</Text>
         ) : (
           (timeOffsQuery.data ?? []).map((off) => (
-            <View key={off.id} style={styles.offRow}>
-              <View style={styles.offInfo}>
-                <Text style={styles.offDates}>
-                  {toLocalInput(off.startAtUtc).replace('T', ' ')} →{' '}
-                  {toLocalInput(off.endAtUtc).replace('T', ' ')}
-                </Text>
+            <View key={off.id} style={styles.offCard}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.offDates}>{formatHumanRange(off.startAtUtc, off.endAtUtc)}</Text>
                 {off.reason ? <Text style={styles.hint}>{off.reason}</Text> : null}
               </View>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => deleteOff.mutate(off.id)}
                 accessibilityRole="button"
-                accessibilityLabel="Delete this time off"
+                accessibilityLabel="Remove this time away"
               >
-                <Ionicons name="close-circle-outline" size={22} color={THEME.colors.outline} />
-              </TouchableOpacity>
+                <Text style={styles.remove}>Remove</Text>
+              </Pressable>
             </View>
           ))
         )}
@@ -197,30 +188,28 @@ function TimeOffForm({
   const [reason, setReason] = useState('');
 
   return (
-    <View style={[styles.offForm]}>
-      <Text style={styles.sectionLabel}>ADD TIME OFF</Text>
-      <Input
-        label="FROM (date + time)"
-        value={start}
-        onChangeText={setStart}
-        placeholder="2026-09-01T09:00"
-      />
-      <Input label="TO" value={end} onChangeText={setEnd} placeholder="2026-09-01T17:00" />
-      <Input
-        label="REASON (OPTIONAL)"
-        value={reason}
-        onChangeText={setReason}
-        placeholder="holiday"
-      />
-      <Button
-        title="ADD"
-        variant="secondary"
+    <View style={styles.offForm}>
+      <Text style={styles.sectionLabel}>Add time away</Text>
+      <View style={styles.fromTo}>
+        <View style={styles.fromToCol}>
+          <AtelierInput value={start} onChangeText={setStart} placeholder="From (e.g. 12 Oct)" />
+        </View>
+        <View style={styles.fromToCol}>
+          <AtelierInput value={end} onChangeText={setEnd} placeholder="To (e.g. 15 Oct)" />
+        </View>
+      </View>
+      <AtelierInput value={reason} onChangeText={setReason} placeholder="Reason" />
+      <AtelierButton
+        title="Add"
         loading={submitting}
         onPress={() => {
           if (!start || !end) return;
+          const startAt = new Date(start.replace(' ', 'T'));
+          const endAt = new Date(end.replace(' ', 'T'));
+          if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime())) return;
           onSubmit({
-            startAtUtc: new Date(start).toISOString(),
-            endAtUtc: new Date(end).toISOString(),
+            startAtUtc: startAt.toISOString(),
+            endAtUtc: endAt.toISOString(),
             ...(reason ? { reason } : {}),
           });
           setStart('');
@@ -233,53 +222,48 @@ function TimeOffForm({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: THEME.colors.surface },
-  headerContainer: { backgroundColor: `${THEME.colors.surface}CC` },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: THEME.spacing.lg,
-    paddingVertical: THEME.spacing.md,
-  },
-  headerTitle: {
-    fontSize: THEME.typography.label.fontSize,
-    fontWeight: THEME.typography.label.fontWeight,
-    letterSpacing: THEME.typography.label.letterSpacing,
-    color: THEME.colors.onSurface,
-  },
-  content: { padding: THEME.spacing.lg, paddingBottom: THEME.spacing['3xl'] },
+  container: { flex: 1, backgroundColor: T.colors.paper },
+  content: { paddingHorizontal: 16, paddingTop: 32 },
   sectionLabel: {
-    fontSize: THEME.typography.caption.fontSize,
-    letterSpacing: THEME.typography.caption.letterSpacing,
-    color: THEME.colors.outline,
-    marginBottom: THEME.spacing.sm,
+    fontFamily: T.font.label,
+    fontSize: T.type.label.fontSize,
+    letterSpacing: T.type.label.letterSpacing,
+    color: T.colors.muted,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
-  gapTop: { marginTop: THEME.spacing['2xl'] },
-  rulesList: { gap: THEME.spacing.sm },
-  hint: { color: THEME.colors.onSurfaceVariant, fontSize: THEME.typography.caption.fontSize },
-  ruleRow: {
+  gapTop: { marginTop: 40 },
+  hint: { color: T.colors.muted, fontSize: 14, fontFamily: T.font.body },
+  dayRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: THEME.spacing.sm,
+    minHeight: 52,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: T.colors.rule,
+    gap: 12,
   },
-  dayBadge: {
-    width: 44,
-    color: THEME.colors.primary,
-    fontWeight: '700',
-    fontSize: THEME.typography.caption.fontSize,
-  },
-  timeInput: { flex: 1 },
-  dash: { color: THEME.colors.outline },
-  offRow: {
+  dayNameHit: { width: 110 },
+  dayName: { fontFamily: T.font.medium, fontSize: 16, lineHeight: 24, color: T.colors.ink },
+  closed: { fontFamily: T.font.medium, fontSize: 13, lineHeight: 16, color: T.colors.muted, marginLeft: 'auto' },
+  times: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
+  dash: { color: T.colors.ink, fontFamily: T.font.medium, fontSize: 13 },
+  offCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: THEME.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: THEME.colors.surfaceContainerHighest,
+    backgroundColor: T.colors.surface,
+    borderRadius: T.radius.card,
+    padding: 16,
+    marginBottom: 12,
   },
-  offInfo: { flex: 1, paddingRight: THEME.spacing.sm },
-  offDates: { color: THEME.colors.onSurface, fontSize: THEME.typography.body.fontSize - 2 },
-  offForm: { marginTop: THEME.spacing.md, gap: THEME.spacing.sm },
+  offDates: { fontFamily: T.font.display, fontSize: 16, lineHeight: 24, color: T.colors.ink },
+  remove: { fontFamily: T.font.body, fontSize: 14, lineHeight: 20, color: T.colors.muted },
+  offForm: {
+    marginTop: 24,
+    gap: 24,
+    backgroundColor: T.colors.surface,
+    borderRadius: T.radius.card,
+    padding: 24,
+  },
+  fromTo: { flexDirection: 'row', gap: 16 },
+  fromToCol: { flex: 1 },
 });

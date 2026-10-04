@@ -1,238 +1,153 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  StatusBar,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, StatusBar, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, Badge } from '@planity/ui';
+import { Text } from '@planity/ui';
 import { useAuth } from '../../../application/providers';
-import { editorialTheme as THEME } from '../../../application/theme/editorialTheme';
+import { useBottomNavInset } from '../../../application/components/BottomNav';
 import {
   useProviderAppointments,
   useTransitionAppointment,
+  useStaffList,
+  type ProviderAppointment,
 } from '../../../application/query/hooks';
-
-const STATUS_FILTERS = [
-  { key: 'all', label: 'ALL' },
-  { key: 'BOOKED', label: 'BOOKED' },
-  { key: 'COMPLETED', label: 'DONE' },
-  { key: 'CANCELLED', label: 'CANCELLED' },
-] as const;
-
-function formatSlot(iso: string): string {
-  const date = new Date(iso);
-  return date.toLocaleString([], {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+import { TeamDayGrid } from '../components/TeamDayGrid';
+import { AppointmentTicket } from '../components/AppointmentTicket';
+import { IconHit, ProviderChrome } from '../components/ProviderChrome';
+import { addDays, endOfLocalDay, startOfLocalDay } from '../calendarLayout';
+import { formatClock, formatHeadlineDate, serviceLine } from '../providerFormat';
+import { nextUp } from '../deskModel';
+import { providerTheme as T } from '../providerTheme';
 
 export default function ProviderHomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const bottomInset = useBottomNavInset();
   const businessId = user?.providerProfile?.businessId ?? undefined;
-  const [statusFilter, setStatusFilter] = useState<string>('all');
 
+  const [day, setDay] = useState(() => startOfLocalDay(new Date()));
+  const [selected, setSelected] = useState<ProviderAppointment | null>(null);
+
+  const range = useMemo(
+    () => ({
+      from: startOfLocalDay(day).toISOString(),
+      to: endOfLocalDay(day).toISOString(),
+      limit: 100,
+    }),
+    [day]
+  );
+
+  const staffQuery = useStaffList(businessId, false);
   const {
     data: appointments = [],
     isPending,
     isError,
-  } = useProviderAppointments(businessId, statusFilter);
+  } = useProviderAppointments(businessId, 'all', range);
   const transition = useTransitionAppointment(businessId);
+
+  const staff = (staffQuery.data ?? []).filter((s) => s.isActive);
+  const upcoming = useMemo(() => nextUp(appointments), [appointments]);
+
+  function shiftDay(delta: number) {
+    setSelected(null);
+    setDay((current) => addDays(current, delta));
+  }
+
+  function mutateStatus(status: string, reason?: string) {
+    if (!selected) return;
+    transition.mutate(
+      { appointmentId: selected.id, status, reason },
+      { onSuccess: () => setSelected(null) }
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.surface} />
+      <StatusBar barStyle="dark-content" backgroundColor={T.colors.paper} />
       <SafeAreaView style={styles.headerContainer} edges={['top', 'left', 'right']}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} accessibilityRole="button">
-            <Ionicons name="arrow-back" size={24} color={THEME.colors.primary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>PROVIDER</Text>
-          <View style={{ width: 24 }} />
+        <View style={styles.dateNav}>
+          <IconHit label="Previous day" onPress={() => shiftDay(-1)}>
+            <Ionicons name="chevron-back" size={16} color={T.colors.muted} />
+          </IconHit>
+          <IconHit label="Next day" onPress={() => shiftDay(1)}>
+            <Ionicons name="chevron-forward" size={16} color={T.colors.muted} />
+          </IconHit>
         </View>
+        <ProviderChrome
+          title={formatHeadlineDate(day)}
+          subtitle={
+            upcoming
+              ? `Next · ${formatClock(upcoming.startAtUtc)} ${upcoming.clientUser?.name ?? 'Walk-in'} · ${serviceLine(upcoming)}`
+              : 'The floor is quiet'
+          }
+          actions={
+            <>
+              <IconHit
+                label="Today"
+                onPress={() => {
+                  setSelected(null);
+                  setDay(startOfLocalDay(new Date()));
+                }}
+              >
+                <Ionicons name="calendar-outline" size={18} color={T.colors.ink} />
+              </IconHit>
+              <IconHit label="Hours" onPress={() => router.push('/(main)/provider-portal/schedule')}>
+                <Ionicons name="time-outline" size={18} color={T.colors.ink} />
+              </IconHit>
+            </>
+          }
+        />
       </SafeAreaView>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionLabel}>YOUR SCHEDULE</Text>
-        <Text style={styles.headline}>Appointments</Text>
-
-        <View style={styles.quickLinks}>
-          <Button
-            title="SCHEDULE"
-            variant="outline"
-            size="sm"
-            onPress={() => router.push('/(main)/provider-portal/schedule')}
-          />
-          <Button
-            title="STAFF"
-            variant="outline"
-            size="sm"
-            onPress={() => router.push('/(main)/provider-portal/staff')}
-          />
-        </View>
-
-        {/* Status filter pills */}
-        <View style={styles.filters}>
-          {STATUS_FILTERS.map((filter) => (
-            <TouchableOpacity
-              key={filter.key}
-              style={[styles.filterPill, statusFilter === filter.key && styles.filterPillActive]}
-              onPress={() => setStatusFilter(filter.key)}
-              accessibilityRole="button"
-              accessibilityLabel={`Filter ${filter.label}`}
-            >
-              <Text
-                style={
-                  statusFilter === filter.key ? styles.filterPillActiveText : styles.filterPillText
-                }
-              >
-                {filter.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {isPending ? (
-          <ActivityIndicator size="large" color={THEME.colors.primary} style={styles.center} />
+      <View style={styles.gridWrap}>
+        {isPending || staffQuery.isPending ? (
+          <ActivityIndicator size="large" color={T.colors.ink} style={styles.center} />
         ) : isError ? (
-          <Text style={styles.emptyText}>Could not load appointments.</Text>
-        ) : appointments.length === 0 ? (
-          <Text style={styles.emptyText}>No appointments for this filter.</Text>
+          <Text style={styles.emptyText}>Could not load the floor.</Text>
         ) : (
-          <View style={styles.list}>
-            {appointments.map((appointment) => (
-              <View key={appointment.id} style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <Badge label={(appointment.status ?? '').toUpperCase()} />
-                  <Text style={styles.slotTime}>{formatSlot(appointment.startAtUtc)}</Text>
-                </View>
-                <Text style={styles.clientName}>{appointment.clientUser?.name ?? 'Walk-in'}</Text>
-                <Text style={styles.serviceLine}>
-                  {(appointment.appointmentItems ?? [])
-                    .map((item) => item.serviceVariant?.name)
-                    .filter(Boolean)
-                    .join(' · ') || 'Service details at check-in'}
-                </Text>
-
-                {appointment.status === 'BOOKED' && (
-                  <View style={styles.actions}>
-                    <Button
-                      title="COMPLETE"
-                      size="sm"
-                      loading={transition.isPending}
-                      onPress={() =>
-                        transition.mutate({ appointmentId: appointment.id, status: 'COMPLETED' })
-                      }
-                    />
-                    <Button
-                      title="NO-SHOW"
-                      size="sm"
-                      variant="secondary"
-                      onPress={() =>
-                        transition.mutate({ appointmentId: appointment.id, status: 'NO_SHOW' })
-                      }
-                    />
-                    <Button
-                      title="CANCEL"
-                      size="sm"
-                      variant="outline"
-                      onPress={() =>
-                        transition.mutate({
-                          appointmentId: appointment.id,
-                          status: 'CANCELLED',
-                          reason: 'cancelled_by_provider',
-                        })
-                      }
-                    />
-                  </View>
-                )}
-              </View>
-            ))}
-          </View>
+          <TeamDayGrid
+            day={day}
+            staff={staff}
+            appointments={appointments}
+            selectedId={selected?.id ?? null}
+            onSelect={setSelected}
+          />
         )}
-      </ScrollView>
+      </View>
+
+      {selected ? (
+        <View style={{ paddingBottom: bottomInset }}>
+          <AppointmentTicket
+            appointment={selected}
+            busy={transition.isPending}
+            onClose={() => setSelected(null)}
+            onComplete={() => mutateStatus('COMPLETED')}
+            onNoShow={() => mutateStatus('NO_SHOW')}
+            onCancel={() => mutateStatus('CANCELLED', 'cancelled_by_provider')}
+          />
+        </View>
+      ) : (
+        <View style={{ height: bottomInset }} />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: THEME.colors.surface },
-  headerContainer: { backgroundColor: `${THEME.colors.surface}CC` },
-  header: {
+  container: { flex: 1, backgroundColor: T.colors.paper },
+  headerContainer: { backgroundColor: T.colors.paper },
+  dateNav: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: THEME.spacing.lg,
-    paddingVertical: THEME.spacing.md,
+    paddingHorizontal: 16,
+    paddingTop: 4,
   },
-  headerTitle: {
-    fontSize: THEME.typography.label.fontSize,
-    fontWeight: THEME.typography.label.fontWeight,
-    letterSpacing: THEME.typography.label.letterSpacing,
-    color: THEME.colors.onSurface,
-  },
-  content: { padding: THEME.spacing.lg, paddingBottom: THEME.spacing['3xl'] },
-  sectionLabel: {
-    fontSize: THEME.typography.caption.fontSize,
-    letterSpacing: THEME.typography.caption.letterSpacing,
-    color: THEME.colors.outline,
-    marginBottom: THEME.spacing.xs,
-  },
-  headline: {
-    fontSize: THEME.typography.display.fontSize,
-    fontWeight: THEME.typography.display.fontWeight,
-    color: THEME.colors.primary,
-    marginBottom: THEME.spacing.md,
-  },
-  quickLinks: { flexDirection: 'row', gap: THEME.spacing.sm, marginBottom: THEME.spacing.lg },
-  filters: { flexDirection: 'row', gap: THEME.spacing.sm, marginBottom: THEME.spacing.lg },
-  filterPill: {
-    paddingHorizontal: THEME.spacing.md,
-    paddingVertical: THEME.spacing.xs + 2,
-    borderRadius: 9999,
-    backgroundColor: THEME.colors.surfaceContainerHigh,
-  },
-  filterPillActive: { backgroundColor: THEME.colors.primary },
-  filterPillText: { color: THEME.colors.onSurface, fontSize: THEME.typography.caption.fontSize },
-  filterPillActiveText: {
-    color: THEME.colors.onPrimary,
-    fontSize: THEME.typography.caption.fontSize,
-  },
-  list: { gap: THEME.spacing.md },
-  card: {
-    backgroundColor: THEME.colors.surfaceContainerLow,
-    borderRadius: 12,
-    padding: THEME.spacing.lg,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: THEME.spacing.sm,
-  },
-  slotTime: { color: THEME.colors.onSurfaceVariant, fontSize: THEME.typography.caption.fontSize },
-  clientName: {
-    fontSize: THEME.typography.title.fontSize,
-    fontWeight: '600',
-    color: THEME.colors.primary,
-    marginBottom: 2,
-  },
-  serviceLine: { color: THEME.colors.onSurfaceVariant, marginBottom: THEME.spacing.md },
-  actions: { flexDirection: 'row', gap: THEME.spacing.sm },
-  center: { marginTop: THEME.spacing['2xl'] },
+  gridWrap: { flex: 1 },
+  center: { marginTop: 48 },
   emptyText: {
-    color: THEME.colors.onSurfaceVariant,
+    color: T.colors.muted,
     textAlign: 'center',
-    marginTop: THEME.spacing.xl,
+    marginTop: 32,
+    fontFamily: T.font.body,
   },
 });

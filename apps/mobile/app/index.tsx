@@ -1,7 +1,18 @@
 import { Redirect } from 'expo-router';
+import { ActivityIndicator, View } from 'react-native';
+import { useAuth } from '../src/application/providers';
+import { homeHrefForRole } from '../src/shared/lib/auth';
 
-// Default route: Open directly to tabs (Explore) for guest browsing
-// Users can browse without authentication
 export default function Index() {
-  return <Redirect href="/(main)/explore" />;
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  return <Redirect href={homeHrefForRole(user?.role)} />;
 }

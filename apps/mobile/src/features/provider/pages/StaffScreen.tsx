@@ -5,19 +5,21 @@ import {
   StyleSheet,
   ScrollView,
   StatusBar,
-  TouchableOpacity,
+  Pressable,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, Input, Badge } from '@planity/ui';
+import { Text } from '@planity/ui';
 import { useAuth } from '../../../application/providers';
-import { editorialTheme as THEME } from '../../../application/theme/editorialTheme';
+import { useBottomNavInset } from '../../../application/components/BottomNav';
 import { useStaffList, useCreateStaff, useUpdateStaff } from '../../../application/query/hooks';
+import { ProviderChrome } from '../components/ProviderChrome';
+import { AtelierButton } from '../components/AtelierButton';
+import { AtelierInput } from '../components/AtelierInput';
+import { providerTheme as T } from '../providerTheme';
 
 export default function StaffScreen() {
-  const router = useRouter();
   const { user } = useAuth();
+  const bottomInset = useBottomNavInset();
   const businessId = user?.providerProfile?.businessId ?? undefined;
 
   const staffQuery = useStaffList(businessId);
@@ -26,65 +28,61 @@ export default function StaffScreen() {
 
   const [name, setName] = useState('');
   const [roleTitle, setRoleTitle] = useState('');
+  const activeCount = (staffQuery.data ?? []).filter((m) => m.isActive).length;
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.surface} />
-      <SafeAreaView style={styles.headerContainer} edges={['top', 'left', 'right']}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} accessibilityRole="button">
-            <Ionicons name="arrow-back" size={24} color={THEME.colors.primary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>STAFF</Text>
-          <View style={{ width: 24 }} />
-        </View>
+      <StatusBar barStyle="dark-content" backgroundColor={T.colors.paper} />
+      <SafeAreaView edges={['top', 'left', 'right']}>
+        <ProviderChrome
+          title="Team"
+          subtitle={`${activeCount} on the floor`}
+        />
       </SafeAreaView>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: bottomInset + 24 }]}
+        showsVerticalScrollIndicator={false}
+      >
         {staffQuery.isPending ? (
-          <ActivityIndicator color={THEME.colors.primary} />
+          <ActivityIndicator color={T.colors.ink} />
         ) : (staffQuery.data ?? []).length === 0 ? (
-          <Text style={styles.hint}>No staff yet — add your first team member.</Text>
+          <Text style={styles.hint}>No one on the roster yet.</Text>
         ) : (
           (staffQuery.data ?? []).map((member) => (
             <View key={member.id} style={styles.row}>
-              <Ionicons name="person-circle-outline" size={28} color={THEME.colors.outline} />
               <View style={styles.memberInfo}>
                 <Text style={styles.memberName}>{member.name}</Text>
-                {member.roleTitle ? <Text style={styles.hint}>{member.roleTitle}</Text> : null}
+                <Text style={styles.hint}>{member.roleTitle || 'Floor'}</Text>
               </View>
-              <Badge label={member.isActive ? 'ACTIVE' : 'INACTIVE'} />
-              <TouchableOpacity
+              <Pressable
                 onPress={() =>
                   updateStaff.mutate({ staffId: member.id, isActive: !member.isActive })
                 }
                 accessibilityRole="button"
                 accessibilityLabel={
-                  member.isActive ? `Deactivate ${member.name}` : `Reactivate ${member.name}`
+                  member.isActive ? `Pause ${member.name}` : `Activate ${member.name}`
                 }
               >
-                <Ionicons
-                  name={member.isActive ? 'eye-off-outline' : 'eye-outline'}
-                  size={22}
-                  color={THEME.colors.outline}
-                />
-              </TouchableOpacity>
+                <Text style={[styles.toggle, !member.isActive && styles.paused]}>
+                  {member.isActive ? 'Active' : 'Paused'}
+                </Text>
+              </Pressable>
             </View>
           ))
         )}
 
-        <View style={[styles.form]}>
-          <Text style={[styles.sectionLabel, styles.gapTop]}>ADD TEAM MEMBER</Text>
-          <Input label="NAME" value={name} onChangeText={setName} placeholder="Alex Martin" />
-          <Input
-            label="ROLE (OPTIONAL)"
+        <View style={styles.form}>
+          <Text style={styles.sectionLabel}>Add a person</Text>
+          <AtelierInput label="Name" value={name} onChangeText={setName} placeholder="Alex Martin" />
+          <AtelierInput
+            label="Role"
             value={roleTitle}
             onChangeText={setRoleTitle}
-            placeholder="Senior Stylist"
+            placeholder="Colourist"
           />
-          <Button
-            title="ADD"
-            variant="secondary"
+          <AtelierButton
+            title="Add"
             loading={createStaff.isPending}
             onPress={() => {
               if (!name.trim()) return;
@@ -106,38 +104,39 @@ export default function StaffScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: THEME.colors.surface },
-  headerContainer: { backgroundColor: `${THEME.colors.surface}CC` },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: THEME.spacing.lg,
-    paddingVertical: THEME.spacing.md,
-  },
-  headerTitle: {
-    fontSize: THEME.typography.label.fontSize,
-    fontWeight: THEME.typography.label.fontWeight,
-    letterSpacing: THEME.typography.label.letterSpacing,
-    color: THEME.colors.onSurface,
-  },
-  content: { padding: THEME.spacing.lg, paddingBottom: THEME.spacing['3xl'] },
+  container: { flex: 1, backgroundColor: T.colors.paper },
+  content: { paddingHorizontal: 16 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: THEME.spacing.md,
-    paddingVertical: THEME.spacing.sm + 2,
-    borderBottomWidth: 1,
-    borderBottomColor: THEME.colors.surfaceContainerHighest,
+    paddingVertical: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: T.colors.rule,
   },
   memberInfo: { flex: 1 },
-  memberName: { color: THEME.colors.onSurface, fontWeight: '600' },
-  hint: { color: THEME.colors.onSurfaceVariant, fontSize: THEME.typography.caption.fontSize },
-  form: { marginTop: THEME.spacing.md, gap: THEME.spacing.sm },
-  sectionLabel: {
-    fontSize: THEME.typography.caption.fontSize,
-    letterSpacing: THEME.typography.caption.letterSpacing,
-    color: THEME.colors.outline,
+  memberName: {
+    fontFamily: T.font.headline,
+    fontSize: 20,
+    color: T.colors.ink,
   },
-  gapTop: { marginTop: THEME.spacing['2xl'], marginBottom: THEME.spacing.sm },
+  hint: {
+    color: T.colors.muted,
+    fontSize: 14,
+    fontFamily: T.font.body,
+    marginTop: 2,
+  },
+  toggle: {
+    fontFamily: T.font.medium,
+    fontSize: 14,
+    color: T.colors.ink,
+  },
+  paused: { color: T.colors.muted },
+  form: { marginTop: 40, gap: 16 },
+  sectionLabel: {
+    fontFamily: T.font.label,
+    fontSize: T.type.label.fontSize,
+    letterSpacing: T.type.label.letterSpacing,
+    color: T.colors.muted,
+    textTransform: 'uppercase',
+  },
 });

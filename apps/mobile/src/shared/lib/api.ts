@@ -1,7 +1,21 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { deleteToken, getToken, setToken } from './tokenStore';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/v1';
+// Browser detection without importing react-native (see tokenStore.ts).
+const isWeb = typeof document !== 'undefined';
+
+function resolveApiUrl(): string {
+  const fromEnv = process.env.EXPO_PUBLIC_API_URL;
+  // Expo web on this machine must not use the LAN IP: the browser origin is
+  // localhost:8081, and CORS + mixed-host requests fail. Native / devices keep
+  // EXPO_PUBLIC_API_URL (e.g. http://192.168.x.x:3000/v1).
+  if (isWeb) {
+    return process.env.EXPO_PUBLIC_WEB_API_URL || 'http://localhost:3000/v1';
+  }
+  return fromEnv || 'http://localhost:3000/v1';
+}
+
+const API_URL = resolveApiUrl();
 
 const api = axios.create({
   baseURL: API_URL,
@@ -12,7 +26,7 @@ const api = axios.create({
 
 // Add token to requests
 api.interceptors.request.use(async (config) => {
-  const token = await SecureStore.getItemAsync('accessToken');
+  const token = await getToken('accessToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -26,7 +40,7 @@ let refreshPromise: Promise<string> | null = null;
 async function refreshAccessToken(): Promise<string> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
-      const refreshToken = await SecureStore.getItemAsync('refreshToken');
+      const refreshToken = await getToken('refreshToken');
       if (!refreshToken) {
         throw new Error('No refresh token');
       }
@@ -37,9 +51,9 @@ async function refreshAccessToken(): Promise<string> {
 
       const { accessToken, refreshToken: newRefreshToken } = response.data;
 
-      await SecureStore.setItemAsync('accessToken', accessToken);
+      await setToken('accessToken', accessToken);
       if (newRefreshToken) {
-        await SecureStore.setItemAsync('refreshToken', newRefreshToken);
+        await setToken('refreshToken', newRefreshToken);
       }
       return accessToken as string;
     })().finally(() => {
@@ -63,8 +77,8 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        await SecureStore.deleteItemAsync('accessToken');
-        await SecureStore.deleteItemAsync('refreshToken');
+        await deleteToken('accessToken');
+        await deleteToken('refreshToken');
         throw refreshError;
       }
     }

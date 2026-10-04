@@ -1,64 +1,106 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../providers';
-import { editorialTheme } from '../theme/editorialTheme';
+import { providerTheme } from '../theme/providerTheme';
+import { isProviderRole } from '../../shared/lib/auth';
 
-const THEME = editorialTheme;
+const FLOOR = providerTheme;
 
-// Height of the visible nav content (icons + padding). Does NOT include safe area.
-const BOTTOM_NAV_CONTENT_HEIGHT = 64;
+const CONSUMER_NAV_CONTENT = 72;
+const PROVIDER_NAV_CONTENT = 72;
 
-/** Whether the global bottom nav is currently visible (hidden when not logged in or on Explore). */
-export function useIsBottomNavVisible(): boolean {
-  const { user } = useAuth();
-  const segments = useSegments();
-  const firstSegment = Array.isArray(segments) ? (segments as string[])[1] : undefined;
-  return !!user && firstSegment !== 'explore';
+function providerTab(segments: string[]): 'floor' | 'desk' | 'team' | 'account' | 'other' {
+  const path = segments.join('/');
+  if (path.includes('profile')) return 'account';
+  if (path.includes('desk')) return 'desk';
+  if (path.includes('staff')) return 'team';
+  if (path.includes('provider-portal') && !path.includes('schedule')) return 'floor';
+  return 'other';
 }
 
-/** Bottom padding for scroll content: safe area + nav bar when the nav is shown. */
-export function useBottomNavInset(): number {
+function clientTab(segments: string[]): 'explore' | 'appointments' | 'saved' | 'account' | 'other' {
+  const path = segments.join('/');
+  if (path.includes('profile')) return 'account';
+  if (path.includes('bookings')) return 'appointments';
+  if (path.includes('favorites')) return 'saved';
+  if (path.includes('explore') || path.includes('search-results') || path.includes('business')) {
+    return 'explore';
+  }
+  return 'other';
+}
+
+export function useIsBottomNavVisible(): boolean {
+  const { user } = useAuth();
+  return !!user;
+}
+
+export function useNavClearance(): number {
   const insets = useSafeAreaInsets();
   const visible = useIsBottomNavVisible();
-  if (!visible) {
+  const { user } = useAuth();
+  const height = isProviderRole(user?.role) ? PROVIDER_NAV_CONTENT : CONSUMER_NAV_CONTENT;
+  return visible ? height + insets.bottom : 0;
+}
+
+export function useBottomNavInset(): number {
+  const insets = useSafeAreaInsets();
+  const navClearance = useNavClearance();
+  if (navClearance === 0) {
     return insets.bottom + 24;
   }
-  return insets.bottom + BOTTOM_NAV_TOTAL + 16;
+  return navClearance + 16;
+}
+
+export function useFloatingBarOffset(): number {
+  const insets = useSafeAreaInsets();
+  const navClearance = useNavClearance();
+  return navClearance > 0 ? navClearance : insets.bottom;
+}
+
+export function useScrollClearance(overlayHeight = 0, extra = 16): number {
+  const chrome = useFloatingBarOffset();
+  return chrome + overlayHeight + extra;
 }
 
 interface NavItemProps {
   icon: string;
   activeIcon?: string;
+  label: string;
   isActive: boolean;
   onPress: () => void;
   accessibilityLabel: string;
+  showActiveMark?: boolean;
 }
 
 const NavItem: React.FC<NavItemProps> = ({
   icon,
   activeIcon,
+  label,
   isActive,
   onPress,
   accessibilityLabel,
+  showActiveMark = true,
 }) => {
   return (
-    <TouchableOpacity
+    <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      style={[styles.item, isActive && styles.itemActive]}
+      style={styles.item}
       onPress={onPress}
-      activeOpacity={0.8}
     >
+      {showActiveMark ? (
+        isActive ? <View style={styles.activeMark} /> : <View style={styles.activeMarkSpacer} />
+      ) : null}
       <Ionicons
-        name={(isActive ? activeIcon || icon : icon) as any}
+        name={(isActive ? activeIcon || icon : icon) as 'home-outline'}
         size={22}
-        color={isActive ? THEME.colors.onPrimary : THEME.colors.onSurfaceVariant}
-        style={{ opacity: isActive ? 1 : 0.6 }}
+        color={isActive ? FLOOR.colors.ink : FLOOR.colors.muted}
       />
-    </TouchableOpacity>
+      <Text style={[styles.label, isActive && styles.labelActive]}>{label}</Text>
+    </Pressable>
   );
 };
 
@@ -66,98 +108,157 @@ export function BottomNav() {
   const router = useRouter();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const segments = useSegments();
-  const firstSegment = Array.isArray(segments) ? (segments as string[])[1] : undefined;
-  const isExplore = firstSegment === 'explore';
+  const segments = useSegments() as string[];
+  const isProvider = isProviderRole(user?.role);
+  const pTab = providerTab(segments);
+  const cTab = clientTab(segments);
 
-  if (!user || isExplore) {
+  if (!user) {
     return null;
   }
 
   const navTo = (path: string) => () => {
-    router.push(path as any);
+    router.push(path as never);
   };
 
-  const isProfile = firstSegment === 'profile';
-  const isBookings = firstSegment === 'bookings';
-  const isFavorites = firstSegment === 'favorites';
-
-  return (
-    <View
-      style={[
-        styles.container,
-        {
-          height: BOTTOM_NAV_CONTENT_HEIGHT + insets.bottom,
-          paddingBottom: insets.bottom,
-        },
-      ]}
-    >
-      {/* Frosted glass effect container */}
-      <View style={styles.glassContainer}>
+  if (isProvider) {
+    return (
+      <View
+        style={[
+          styles.bar,
+          {
+            height: PROVIDER_NAV_CONTENT + insets.bottom,
+            paddingBottom: insets.bottom,
+          },
+        ]}
+      >
         <NavItem
-          icon="home-outline"
-          isActive={false}
-          onPress={navTo('/(main)/explore')}
-          accessibilityLabel="Home, Explore"
+          icon="grid-outline"
+          label="Floor"
+          isActive={pTab === 'floor'}
+          onPress={navTo('/(main)/provider-portal')}
+          accessibilityLabel="Floor"
         />
         <NavItem
-          icon="calendar-outline"
-          isActive={isBookings}
-          onPress={navTo('/(main)/bookings')}
-          accessibilityLabel="Bookings"
+          icon="list-outline"
+          label="Desk"
+          isActive={pTab === 'desk'}
+          onPress={navTo('/(main)/provider-portal/desk')}
+          accessibilityLabel="Desk"
         />
         <NavItem
-          icon="heart-outline"
-          activeIcon="heart"
-          isActive={isFavorites}
-          onPress={navTo('/(main)/favorites')}
-          accessibilityLabel="Favorites"
+          icon="people-outline"
+          label="Team"
+          isActive={pTab === 'team'}
+          onPress={navTo('/(main)/provider-portal/staff')}
+          accessibilityLabel="Team"
         />
         <NavItem
           icon="person-outline"
           activeIcon="person"
-          isActive={isProfile}
+          label="Account"
+          isActive={pTab === 'account'}
           onPress={navTo('/(main)/profile')}
-          accessibilityLabel="Profile"
+          accessibilityLabel="Account"
         />
       </View>
+    );
+  }
+
+  return (
+    <View
+      style={[
+        styles.bar,
+        styles.barClient,
+        {
+          height: CONSUMER_NAV_CONTENT + insets.bottom,
+          paddingBottom: insets.bottom,
+        },
+      ]}
+    >
+      <NavItem
+        icon="compass-outline"
+        label="Explore"
+        isActive={cTab === 'explore'}
+        onPress={navTo('/(main)/explore')}
+        accessibilityLabel="Explore"
+        showActiveMark={false}
+      />
+      <NavItem
+        icon="calendar-outline"
+        label="Appointments"
+        isActive={cTab === 'appointments'}
+        onPress={navTo('/(main)/bookings')}
+        accessibilityLabel="Appointments"
+        showActiveMark={false}
+      />
+      <NavItem
+        icon="heart-outline"
+        activeIcon="heart"
+        label="Saved"
+        isActive={cTab === 'saved'}
+        onPress={navTo('/(main)/favorites')}
+        accessibilityLabel="Saved"
+        showActiveMark={false}
+      />
+      <NavItem
+        icon="person-outline"
+        activeIcon="person"
+        label="Account"
+        isActive={cTab === 'account'}
+        onPress={navTo('/(main)/profile')}
+        accessibilityLabel="Account"
+        showActiveMark={false}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  bar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'transparent',
-  },
-  glassContainer: {
-    flex: 1,
+    backgroundColor: FLOOR.colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: FLOOR.colors.rule,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    backgroundColor: `${THEME.colors.surface}CC`, // 80% opacity for frosted glass
-    // Note: backdrop-filter blur is web-only, on mobile we use opacity
+    paddingHorizontal: 8,
+  },
+  barClient: {
+    backgroundColor: FLOOR.colors.paper,
   },
   item: {
-    width: 48,
-    height: 48,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 24,
+    gap: 2,
   },
-  itemActive: {
-    backgroundColor: THEME.colors.primary,
-    transform: [{ scale: 1.1 }],
+  activeMark: {
+    width: 16,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: FLOOR.colors.ink,
+    marginBottom: 2,
+  },
+  activeMarkSpacer: {
+    width: 16,
+    height: 2,
+    marginBottom: 2,
+  },
+  label: {
+    fontFamily: FLOOR.font.label,
+    fontSize: 10,
+    letterSpacing: 0.6,
+    color: FLOOR.colors.muted,
+  },
+  labelActive: {
+    color: FLOOR.colors.ink,
+    fontFamily: FLOOR.font.display,
   },
 });
 
-/**
- * Total height to add when positioning elements above the bottom nav.
- * This is the content height only - safe area is added separately via insets.bottom.
- */
-export const BOTTOM_NAV_TOTAL = BOTTOM_NAV_CONTENT_HEIGHT;
+export const BOTTOM_NAV_TOTAL = CONSUMER_NAV_CONTENT;

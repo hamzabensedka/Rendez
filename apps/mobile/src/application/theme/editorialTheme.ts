@@ -16,6 +16,7 @@ export const editorialTheme = {
     outline: '#777777',
     outlineVariant: '#c6c6c6',
     success: '#16A34A',
+    error: '#ba1a1a',
   },
   typography: {
     display: {

@@ -1,5 +1,5 @@
 import api from './api';
-import * as SecureStore from 'expo-secure-store';
+import { deleteToken, getToken, setToken } from './tokenStore';
 
 export interface LoginCredentials {
   email: string;
@@ -12,48 +12,76 @@ export interface RegisterData {
   password: string;
 }
 
-export interface AuthResponse {
-  user: {
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  status?: string;
+  createdAt?: string;
+  providerProfile?: {
     id: string;
-    email: string;
-    name: string;
-    role: string;
-  };
+    businessId: string | null;
+    isOwner: boolean;
+    displayName: string | null;
+  } | null;
+}
+
+export interface AuthResponse {
+  user: AuthUser;
   accessToken: string;
   refreshToken: string;
+}
+
+export function isProviderRole(role: string | undefined): boolean {
+  return role === 'providerOwner' || role === 'providerStaff';
+}
+
+export function homeHrefForRole(
+  role: string | undefined
+): '/(main)/provider-portal' | '/(main)/explore' {
+  if (isProviderRole(role)) {
+    return '/(main)/provider-portal';
+  }
+  return '/(main)/explore';
 }
 
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
   const response = await api.post<AuthResponse>('/auth/login', credentials);
   const { accessToken, refreshToken } = response.data;
 
-  await SecureStore.setItemAsync('accessToken', accessToken);
-  await SecureStore.setItemAsync('refreshToken', refreshToken);
+  await setToken('accessToken', accessToken);
+  await setToken('refreshToken', refreshToken);
 
-  return response.data;
+  try {
+    const user = await getCurrentUser();
+    return { ...response.data, user };
+  } catch {
+    return response.data;
+  }
 }
 
 export async function register(data: RegisterData): Promise<AuthResponse> {
   const response = await api.post<AuthResponse>('/auth/register', data);
   const { accessToken, refreshToken } = response.data;
 
-  await SecureStore.setItemAsync('accessToken', accessToken);
-  await SecureStore.setItemAsync('refreshToken', refreshToken);
+  await setToken('accessToken', accessToken);
+  await setToken('refreshToken', refreshToken);
 
   return response.data;
 }
 
 export async function logout(): Promise<void> {
   try {
-    const refreshToken = await SecureStore.getItemAsync('refreshToken');
+    const refreshToken = await getToken('refreshToken');
     if (refreshToken) {
       await api.post('/auth/logout', { refreshToken });
     }
   } catch {
     // Still clear local session if revoke fails (e.g. offline)
   } finally {
-    await SecureStore.deleteItemAsync('accessToken');
-    await SecureStore.deleteItemAsync('refreshToken');
+    await deleteToken('accessToken');
+    await deleteToken('refreshToken');
   }
 }
 

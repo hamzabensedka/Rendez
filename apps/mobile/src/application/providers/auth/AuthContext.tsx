@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import * as SecureStore from 'expo-secure-store';
 import { getCurrentUser, logout as apiLogout } from '../../../shared/lib/auth';
+import { deleteToken, getToken } from '../../../shared/lib/tokenStore';
 import { appQueryClient } from '../../query/queryClient';
 
 interface User {
@@ -22,6 +22,7 @@ interface User {
 export interface PendingRegistration {
   email: string;
   password: string;
+  name?: string;
 }
 
 interface AuthContextType {
@@ -50,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function checkAuth() {
     setError(null);
     try {
-      const token = await SecureStore.getItemAsync('accessToken');
+      const token = await getToken('accessToken');
       if (token) {
         const userData = await getCurrentUser();
         setUser(userData);
@@ -58,8 +59,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       }
     } catch (e) {
-      await SecureStore.deleteItemAsync('accessToken');
-      await SecureStore.deleteItemAsync('refreshToken');
+      await deleteToken('accessToken');
+      await deleteToken('refreshToken');
       if (__DEV__) {
         console.warn('[AuthContext] Bootstrap auth check failed:', e);
       }
@@ -70,6 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   function login(userData: User) {
+    appQueryClient.clear();
     setUser(userData);
     setError(null);
   }

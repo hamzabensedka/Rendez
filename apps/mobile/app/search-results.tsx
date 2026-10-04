@@ -1,5 +1,5 @@
-import SearchResultsScreen from '../src/features/search/pages/SearchResultsScreen';
+import { Redirect } from 'expo-router';
 
-export default function SearchResultsRoute() {
-  return <SearchResultsScreen />;
+export default function SearchResultsRedirect() {
+  return <Redirect href="/(main)/search-results" />;
 }

@@ -11,13 +11,20 @@ export default function TabsLayout() {
           headerShown: false,
         }}
       >
+        <Stack.Screen name="index" />
         <Stack.Screen name="explore" />
+        <Stack.Screen name="search-results" />
         <Stack.Screen name="bookings" />
         <Stack.Screen name="bookings/[id]" options={{ title: 'Appointment' }} />
         <Stack.Screen name="favorites" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="booking" />
-        <Stack.Screen name="business/[id]" />
+        <Stack.Screen name="business/[id]/index" />
+        <Stack.Screen name="business/[id]/reviews" />
+        <Stack.Screen name="provider-portal" />
+        <Stack.Screen name="provider-portal/desk" />
+        <Stack.Screen name="provider-portal/schedule" />
+        <Stack.Screen name="provider-portal/staff" />
       </Stack>
       <BottomNav />
     </View>

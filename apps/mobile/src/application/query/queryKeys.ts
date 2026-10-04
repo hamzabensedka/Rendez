@@ -18,13 +18,23 @@ export const queryKeys = {
       params.availDateKey,
     ] as const,
   business: (id: string | undefined) => ['business', id] as const,
-  availability: (businessId: string, serviceVariantId: string, date: string) =>
-    ['availability', businessId, serviceVariantId, date] as const,
+  businessReviews: (id: string | undefined) => ['business', id, 'reviews'] as const,
+  availability: (
+    businessId: string,
+    variantKey: string,
+    date: string,
+    staffId: string | null
+  ) => ['availability', businessId, variantKey, date, staffId ?? 'any'] as const,
   appointmentsUpcoming: (userId: string | undefined) =>
     ['appointments', 'upcoming', userId] as const,
   providerPortal: {
-    appointments: (businessId: string | undefined, status?: string) =>
-      ['providerPortal', 'appointments', businessId, status ?? 'all'] as const,
+    appointments: (
+      businessId: string | undefined,
+      status?: string,
+      from?: string,
+      to?: string
+    ) =>
+      ['providerPortal', 'appointments', businessId, status ?? 'all', from ?? '', to ?? ''] as const,
     availabilityRules: (businessId: string | undefined) =>
       ['providerPortal', 'availabilityRules', businessId] as const,
     timeOffs: (businessId: string | undefined) =>
