@@ -1,31 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Alert,
-  ActivityIndicator,
-  TextInput,
-  StatusBar,
-} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { homeHrefForRole, register, resendVerification } from '../../../shared/lib/auth';
 import { useAuth } from '../../../application/providers';
 import { providerTheme as T } from '../../../application/theme/providerTheme';
 
-const DIGITS = 6;
-
 export default function VerificationScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { login: setAuthUser, pendingRegistration, setPendingRegistration } = useAuth();
   const email = pendingRegistration?.email ?? '';
-  const password = pendingRegistration?.password ?? '';
-  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const inputRef = useRef<TextInput>(null);
+  const [resent, setResent] = useState(false);
 
   useEffect(() => {
     if (!pendingRegistration?.email || !pendingRegistration?.password) {
@@ -33,25 +20,16 @@ export default function VerificationScreen() {
     }
   }, [pendingRegistration, router]);
 
-  async function handleVerify() {
-    if (code.replace(/\D/g, '').length < DIGITS) {
-      Alert.alert('Enter the code', 'Check your email for the 6-digit code.');
-      return;
-    }
+  async function handleContinue() {
     setLoading(true);
     try {
-      const name =
-        pendingRegistration?.name?.trim() || (email || '').split('@')[0] || 'User';
-      const response = await register({ email: email || '', name, password: password || '' });
+      const name = pendingRegistration?.name?.trim() || email.split('@')[0] || 'User';
+      const response = await register({ email, name, password: pendingRegistration?.password ?? '' });
       setPendingRegistration(null);
       setAuthUser(response.user);
-      // The account is created; a verification link was emailed. Let the user in,
-      // and tell them to confirm via the link in their inbox.
-      Alert.alert(
-        'Verify your email',
-        `We sent a verification link to ${email}. Tap it to confirm your account.`,
-        [{ text: 'OK', onPress: () => router.replace(homeHrefForRole(response.user.role)) }]
-      );
+      // The account is created and a verification link was emailed. Let the user
+      // in and route them to their role home; they confirm via the inbox link.
+      router.replace(homeHrefForRole(response.user.role));
     } catch (error: unknown) {
       const message =
         error && typeof error === 'object' && 'response' in error
@@ -73,53 +51,42 @@ export default function VerificationScreen() {
     } catch {
       // Server always returns 200; ignore network noise.
     }
-    Alert.alert('Email sent', `If your account is pending verification, we emailed ${email}.`);
+    setResent(true);
   }
-
-  const digits = Array.from({ length: DIGITS }, (_, i) => code[i] ?? '');
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 48, paddingBottom: insets.bottom }]}>
       <StatusBar barStyle="dark-content" backgroundColor={T.colors.paper} />
-      <Text style={styles.title}>We sent a code</Text>
-      <Text style={styles.sub}>Check your email.</Text>
+      <Text style={styles.kicker}>VERIFY YOUR EMAIL</Text>
+      <Text style={styles.title}>Check your inbox</Text>
+      <Text style={styles.sub}>
+        We sent a verification link to <Text style={styles.email}>{email}</Text>. Tap it to confirm
+        your account — then continue below.
+      </Text>
 
-      <Pressable style={styles.otpRow} onPress={() => inputRef.current?.focus()}>
-        {digits.map((d, i) => (
-          <View key={i} style={[styles.slot, i === code.length && styles.slotFocus]}>
-            <Text style={styles.digit}>{d}</Text>
-          </View>
-        ))}
-      </Pressable>
-      <TextInput
-        ref={inputRef}
-        value={code}
-        onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, DIGITS))}
-        keyboardType="number-pad"
-        maxLength={DIGITS}
-        style={styles.hidden}
-        autoFocus
-      />
+      <View style={styles.card}>
+        <Text style={styles.cardText}>
+          Didn&apos;t get it? Check spam, or resend the link.
+        </Text>
+        <Pressable
+          onPress={handleResend}
+          disabled={resent}
+          style={({ pressed }) => [styles.outlineBtn, pressed && styles.pressed, resent && styles.resentBtn]}
+          accessibilityRole="button"
+          accessibilityLabel="Resend verification link"
+        >
+          <Text style={styles.outlineBtnText}>{resent ? 'Link sent' : 'Resend link'}</Text>
+        </Pressable>
+      </View>
 
       <Pressable
-        onPress={handleVerify}
+        onPress={handleContinue}
         disabled={loading}
         style={({ pressed }) => [styles.inkBtn, pressed && styles.pressed]}
         accessibilityRole="button"
-        accessibilityLabel="Verify"
+        accessibilityLabel="Continue"
       >
-        {loading ? (
-          <ActivityIndicator color={T.colors.bookedText} />
-        ) : (
-          <Text style={styles.inkBtnText}>Verify</Text>
-        )}
-      </Pressable>
-      <Pressable
-        onPress={handleResend}
-        style={styles.resend}
-        accessibilityRole="button"
-      >
-        <Text style={styles.resendText}>Resend code</Text>
+        {loading ? <ActivityIndicator color={T.colors.bookedText} /> : <Text style={styles.inkBtnText}>Continue</Text>}
       </Pressable>
     </View>
   );
@@ -127,10 +94,18 @@ export default function VerificationScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: T.colors.paper, paddingHorizontal: 24 },
+  kicker: {
+    fontFamily: T.font.label,
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 2,
+    color: T.colors.muted,
+    marginBottom: 8,
+  },
   title: {
     fontFamily: T.font.headline,
-    fontSize: 24,
-    lineHeight: 32,
+    fontSize: 28,
+    lineHeight: 34,
     fontWeight: '700',
     color: T.colors.ink,
   },
@@ -139,25 +114,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     color: T.colors.muted,
-    marginTop: 8,
-    marginBottom: 48,
+    marginTop: 12,
+    marginBottom: 32,
   },
-  otpRow: { flexDirection: 'row', justifyContent: 'flex-start', gap: 8, marginBottom: 40 },
-  slot: {
-    width: 40,
-    borderBottomWidth: 2,
-    borderBottomColor: T.colors.rule,
-    alignItems: 'center',
-    paddingBottom: 4,
+  email: { fontFamily: T.font.medium, color: T.colors.ink },
+  card: {
+    backgroundColor: T.colors.surface,
+    borderWidth: 1,
+    borderColor: T.colors.rule,
+    borderRadius: T.radius.card,
+    padding: 20,
+    marginBottom: 32,
   },
-  slotFocus: { borderBottomColor: T.colors.ink },
-  digit: {
-    fontFamily: T.font.display,
-    fontSize: 32,
-    lineHeight: 40,
-    color: T.colors.ink,
+  cardText: {
+    fontFamily: T.font.body,
+    fontSize: 14,
+    lineHeight: 20,
+    color: T.colors.muted,
+    marginBottom: 16,
   },
-  hidden: { position: 'absolute', opacity: 0, height: 0, width: 0 },
   inkBtn: {
     height: 52,
     backgroundColor: T.colors.ink,
@@ -173,7 +148,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: T.colors.bookedText,
   },
+  outlineBtn: {
+    height: 44,
+    borderWidth: 1,
+    borderColor: T.colors.rule,
+    borderRadius: T.radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 20,
+  },
+  outlineBtnText: {
+    fontFamily: T.font.label,
+    fontSize: 13,
+    lineHeight: 18,
+    letterSpacing: 0.4,
+    fontWeight: '600',
+    color: T.colors.ink,
+  },
+  resentBtn: { opacity: 0.5 },
   pressed: { opacity: 0.8 },
-  resend: { paddingVertical: 24 },
-  resendText: { fontFamily: T.font.body, fontSize: 16, lineHeight: 24, color: T.colors.muted },
 });
