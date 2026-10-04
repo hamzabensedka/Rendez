@@ -160,3 +160,21 @@ label.field input, label.field select {
   letter-spacing: var(--ls-display); font-weight: 700;
   margin-bottom: var(--sp-xl);
 }
+
+/* ── Modal ──────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0, 0, 0, 0.4);
+  display: grid; place-items: center; padding: var(--sp-xl);
+}
+.modal-card {
+  width: 420px; max-width: 100%;
+  background: var(--c-surface-lowest);
+  border: 1px solid var(--c-surface-high);
+  border-radius: var(--radius); padding: var(--sp-2xl);
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-actions {
+  display: flex; gap: var(--sp-sm); justify-content: flex-end;
+  margin-top: var(--sp-lg);
+}

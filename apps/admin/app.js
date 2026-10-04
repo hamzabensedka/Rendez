@@ -405,104 +405,167 @@ async function renderBilling() {
   bindBillingActions(document.getElementById('billing-results'));
 }
 
-// Wire per-row billing actions. Each reloads the view on success so the table
-// reflects the authoritative server state (Plan/invoice/payment transitions).
+// Wire per-row billing actions to open the corresponding modal. The modal
+// submits against the Phase 7a endpoints and reloads the view on success so the
+// table reflects authoritative server state.
 function bindBillingActions(container) {
   container.querySelectorAll('[data-action]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       const businessId = btn.dataset.id;
       const action = btn.dataset.action;
-      try {
-        if (action === 'transition') {
-          const next = promptPlan(btn.dataset.plan);
-          if (!next) return;
-          btn.disabled = true;
-          await api(`/admin/subscriptions/${businessId}`, {
-            method: 'PATCH',
-            body: JSON.stringify(next),
-          });
-        } else if (action === 'invoice') {
-          const invoice = promptInvoice();
-          if (!invoice) return;
-          btn.disabled = true;
-          await api(`/admin/subscriptions/${businessId}/invoices`, {
-            method: 'POST',
-            body: JSON.stringify(invoice),
-          });
-        } else if (action === 'markpaid') {
-          const payment = promptPayment();
-          if (!payment) return;
-          btn.disabled = true;
-          await api(`/admin/invoices/${payment.invoiceId}/mark-paid`, {
-            method: 'POST',
-            body: JSON.stringify(payment.body),
-          });
-        }
-        renderBilling();
-      } catch (error) {
-        btn.disabled = false;
-        alert(error.message);
-      }
+      if (action === 'transition') openPlanModal(businessId, btn.dataset.plan);
+      else if (action === 'invoice') openInvoiceModal(businessId);
+      else if (action === 'markpaid') openMarkPaidModal();
     });
   });
 }
 
+// ── Billing action modals ──────────────────────────────────────────────
 const BILLING_PLANS = ['TRIAL', 'ACTIVE', 'GRACE', 'SUSPENDED'];
-function promptPlan(current) {
-  const input = window.prompt(
-    `New plan status (${BILLING_PLANS.join('/')}):`,
-    current || 'ACTIVE'
-  );
-  if (!input) return null;
-  const planStatus = input.trim().toUpperCase();
-  if (!BILLING_PLANS.includes(planStatus)) {
-    alert(`Invalid plan: ${planStatus}`);
-    return null;
-  }
-  const body = { planStatus };
-  if (planStatus === 'ACTIVE') {
-    const periodEnd = window.prompt('Current period end (YYYY-MM-DD):', defaultDate(30));
-    if (!periodEnd) return null;
-    body.currentPeriodEnd = toIsoDate(periodEnd);
-  }
-  return body;
+const PAYMENT_METHODS = ['transfer', 'cmi', 'mobile_money', 'cash', 'manual'];
+
+function modalFieldError(id, message) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = message || '';
 }
-function promptInvoice() {
-  const amount = window.prompt('Invoice amount (e.g. 300.00):');
-  if (!amount) return null;
-  const currency = window.prompt('Currency (MAD/TND):', 'MAD') || 'MAD';
-  const periodStart = window.prompt('Period start (YYYY-MM-DD):', defaultDate(0));
-  if (!periodStart) return null;
-  const periodEnd = window.prompt('Period end (YYYY-MM-DD):', defaultDate(30));
-  if (!periodEnd) return null;
-  return {
-    amountCents: Math.round(parseFloat(amount) * 100),
-    currency: currency.trim().toUpperCase(),
-    periodStart: toIsoDate(periodStart),
-    periodEnd: toIsoDate(periodEnd),
-  };
+
+// Generic modal controller: builds the dialog, wires close/submit, runs the
+// provided onSubmit (which returns the request body or null on invalid input).
+function openModal({ title, bodyHtml, submitLabel = 'Save', onSubmit }) {
+  closeModal();
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'modal-overlay';
+  overlay.innerHTML = `<div class="modal-card" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <div class="section-label">${esc(title)}</div>
+    <form id="modal-form">${bodyHtml}
+      <div class="error" id="modal-error"></div>
+      <div class="modal-actions">
+        <button type="button" class="outline" id="modal-cancel">Cancel</button>
+        <button type="submit" class="primary">${esc(submitLabel)}</button>
+      </div>
+    </form>
+  </div>`;
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+  document.body.appendChild(overlay);
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    modalFieldError('modal-error', '');
+    const submitBtn = overlay.querySelector('button[type="submit"]');
+    let body;
+    try {
+      body = onSubmit(new FormData(event.target));
+    } catch (validationError) {
+      modalFieldError('modal-error', String(validationError.message || validationError));
+      return;
+    }
+    if (body === null || body === undefined) return; // onSubmit signalled abort
+    submitBtn.disabled = true;
+    try {
+      await body.request;
+      closeModal();
+      renderBilling();
+    } catch (error) {
+      submitBtn.disabled = false;
+      modalFieldError('modal-error', String(error.message || error).replace(/^Error:\s*/, ''));
+    }
+  });
+  const firstInput = overlay.querySelector('input, select');
+  if (firstInput) firstInput.focus();
 }
-function promptPayment() {
-  const invoiceId = window.prompt('Invoice ID to mark paid:');
-  if (!invoiceId) return null;
-  const method = window.prompt('Method (transfer/cmi/mobile_money/cash):', 'transfer');
-  if (!method) return null;
-  const externalRef = window.prompt('External reference (optional):', '');
-  return {
-    invoiceId: invoiceId.trim(),
-    body: {
-      method: method.trim(),
-      ...(externalRef ? { reference: externalRef.trim() } : {}),
+
+function closeModal() {
+  const existing = document.getElementById('modal-overlay');
+  if (existing) existing.remove();
+}
+
+function openPlanModal(businessId, current) {
+  openModal({
+    title: 'Transition plan',
+    submitLabel: 'Save plan',
+    bodyHtml: `
+      <label class="field">Plan status<select name="planStatus" id="modal-plan-status">
+        ${BILLING_PLANS.map((s) => `<option ${current === s ? 'selected' : ''}>${s}</option>`).join('')}
+      </select></label>
+      <label class="field" id="modal-period-field" hidden>Period end
+        <input type="date" name="currentPeriodEnd" value="${defaultDate(30)}" />
+      </label>
+      <div class="muted">ACTIVE sets a paid period; other statuses hide/lock the salon per policy.</div>`,
+    onSubmit: (form) => {
+      const planStatus = form.get('planStatus');
+      const body = { planStatus };
+      if (planStatus === 'ACTIVE') {
+        const periodEnd = form.get('currentPeriodEnd');
+        if (!periodEnd) throw new Error('Period end is required for ACTIVE');
+        body.currentPeriodEnd = toIsoDate(periodEnd);
+      }
+      return { request: api(`/admin/subscriptions/${businessId}`, { method: 'PATCH', body: JSON.stringify(body) }) };
     },
-  };
+  });
+  // Toggle the period-end field only for ACTIVE.
+  document.getElementById('modal-plan-status').addEventListener('change', (e) => {
+    document.getElementById('modal-period-field').hidden = e.target.value !== 'ACTIVE';
+  });
+  document.getElementById('modal-period-field').hidden =
+    document.getElementById('modal-plan-status').value !== 'ACTIVE';
 }
+
+function openInvoiceModal(businessId) {
+  openModal({
+    title: 'Create invoice',
+    submitLabel: 'Create',
+    bodyHtml: `
+      <label class="field">Amount<input name="amount" inputmode="decimal" placeholder="300.00" required /></label>
+      <label class="field">Currency<select name="currency">
+        <option>MAD</option><option>TND</option>
+      </select></label>
+      <label class="field">Period start<input type="date" name="periodStart" value="${defaultDate(0)}" required /></label>
+      <label class="field">Period end<input type="date" name="periodEnd" value="${defaultDate(30)}" required /></label>`,
+    onSubmit: (form) => {
+      const amount = parseFloat(form.get('amount'));
+      if (!Number.isFinite(amount) || amount < 0) throw new Error('Enter a valid amount');
+      const body = {
+        amountCents: Math.round(amount * 100),
+        currency: String(form.get('currency')).toUpperCase(),
+        periodStart: toIsoDate(form.get('periodStart')),
+        periodEnd: toIsoDate(form.get('periodEnd')),
+      };
+      return { request: api(`/admin/subscriptions/${businessId}/invoices`, { method: 'POST', body: JSON.stringify(body) }) };
+    },
+  });
+}
+
+function openMarkPaidModal() {
+  openModal({
+    title: 'Mark invoice paid',
+    submitLabel: 'Mark paid',
+    bodyHtml: `
+      <label class="field">Invoice ID<input name="invoiceId" placeholder="cuid…" required /></label>
+      <label class="field">Method<select name="method">
+        ${PAYMENT_METHODS.map((m) => `<option>${m}</option>`).join('')}
+      </select></label>
+      <label class="field">External reference (optional)<input name="reference" placeholder="transfer ref / txn id" /></label>
+      <div class="muted">Marks the invoice paid and reactivates the salon.</div>`,
+    onSubmit: (form) => {
+      const invoiceId = String(form.get('invoiceId') || '').trim();
+      if (!invoiceId) throw new Error('Invoice ID is required');
+      const reference = String(form.get('reference') || '').trim();
+      const body = { method: String(form.get('method')), ...(reference ? { reference } : {}) };
+      return { request: api(`/admin/invoices/${invoiceId}/mark-paid`, { method: 'POST', body: JSON.stringify(body) }) };
+    },
+  });
+}
+
 function defaultDate(addDays) {
   const d = new Date();
   d.setDate(d.getDate() + addDays);
   return d.toISOString().slice(0, 10);
 }
 function toIsoDate(ymd) {
-  return `${ymd.trim().slice(0, 10)}T00:00:00.000Z`;
+  return `${String(ymd).trim().slice(0, 10)}T00:00:00.000Z`;
 }
 
 // ── Router ─────────────────────────────────────────────────────────────
