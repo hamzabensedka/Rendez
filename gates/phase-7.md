@@ -70,11 +70,11 @@ Scope: gateway-agnostic subscription/access-control layer (all salons TRIAL, no 
   CHECK: pnpm test
   EXPECT: exit 0
   EVIDENCE: "Successfully ran target test for 2 projects", exit 0 — api 9 suites/87 tests (69 baseline + 11 billing + 7 auth-email), mobile 3 suites/9 tests. All PASS.
-- [ ] I4: Work committed; no stray uncommitted production files (CRLF/lockfile artifacts excluded)
+- [x] I4: Work committed; no stray uncommitted production files (CRLF/lockfile artifacts excluded)
   CHECK: git status --short
   EXPECT: only .gitignore / apps/api/package.json / pnpm-lock.yaml artifacts remain
-  EVIDENCE: pending
-- [ ] I5: graphify rebuilt
+  EVIDENCE: 2 commits — L1 billing (Subscription/invoice/enforcement/admin/seed/tests) and L2 auth-email (tokens/endpoints/mobile/tests + PLAN-phase7.md + gates/phase-7.md). git status --short shows exactly .gitignore, apps/api/package.json, pnpm-lock.yaml — verified CRLF-only/corrupted-store churn (git diff --ignore-cr-at-eol shows only lockfile), no production files uncommitted.
+- [x] I5: graphify rebuilt
   CHECK: python -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"
   EXPECT: exit 0 (PYTHONUTF8=1)
-  EVIDENCE: pending
+  EVIDENCE: "Rebuilt: 830 nodes, 1208 edges, 79 communities; graph.json and GRAPH_REPORT.md updated", exit 0 (PYTHONUTF8=1, -X utf8)
