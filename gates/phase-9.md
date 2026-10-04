@@ -8,49 +8,49 @@ pending-registration guard preserved).
 
 ## A — DESIGN + CLEAN CODE
 
-- [ ] A1: No OTP/digit-box UI remains (no DIGITS loop, no hidden TextInput, no slot styles)
-  CHECK: rg -n "DIGITS|otpRow|slot|digit|TextInput|hidden" apps/mobile/src/features/auth/pages/VerificationScreen.tsx
+- [x] A1: No OTP/digit-box UI remains (no DIGITS loop, no hidden TextInput, no slot styles)
+  CHECK: rg -n "DIGITS|otpRow|slot|digit|TextInput|hidden" ...
   EXPECT: /^$/ (exit 1, none found)
-  EVIDENCE: pending
-- [ ] A2: Uses only providerTheme tokens (T.colors / T.font / T.radius); no hardcoded hex in the screen
-  CHECK: rg -n "#[0-9a-fA-F]{6}" apps/mobile/src/features/auth/pages/VerificationScreen.tsx
+  EVIDENCE: exit 1 — DIGITS/otpRow/slotFocus/styles.digit/styles.hidden/keyboardType all gone
+- [x] A2: Uses only providerTheme tokens (T.colors / T.font / T.radius); no hardcoded hex in the screen
+  CHECK: rg -n "#[0-9a-fA-F]{6}" ...
   EXPECT: /^$/ (exit 1)
-  EVIDENCE: pending
-- [ ] A3: Copy reflects link-based verification ("check your inbox", "resend link"), not a code
-  CHECK: rg -n "6-digit|code" apps/mobile/src/features/auth/pages/VerificationScreen.tsx
+  EVIDENCE: exit 1 — no hex; all colors via T.colors
+- [x] A3: Copy reflects link-based verification ("check your inbox", "resend link"), not a code
+  CHECK: rg -n "6-digit|code" ...
   EXPECT: /^$/ (no code references)
-  EVIDENCE: pending
+  EVIDENCE: exit 1 — no "6-digit"/"sent a code"/"Resend code"/"the code"; copy says "verification link"
 
 ## B — FUNCTIONALITY
 
-- [ ] B1: Primary action creates the account via register() and routes to homeHrefForRole(user.role)
-  CHECK: rg -n "register\(|homeHrefForRole|setAuthUser" apps/mobile/src/features/auth/pages/VerificationScreen.tsx
+- [x] B1: Primary action creates the account via register() and routes to homeHrefForRole(user.role)
+  CHECK: rg -n "register\(|homeHrefForRole|setAuthUser" ...
   EXPECT: register + homeHrefForRole + setAuthUser present
-  EVIDENCE: pending
-- [ ] B2: Resend action calls resendVerification(email) and confirms via a non-blocking message
-  CHECK: rg -n "resendVerification" apps/mobile/src/features/auth/pages/VerificationScreen.tsx
+  EVIDENCE: register line 27, setAuthUser 29, router.replace(homeHrefForRole(...)) 32
+- [x] B2: Resend action calls resendVerification(email) and confirms via a non-blocking message
+  CHECK: rg -n "resendVerification" ...
   EXPECT: resendVerification present
-  EVIDENCE: pending
-- [ ] B3: Guard preserved: redirects back if pendingRegistration missing; setPendingRegistration(null) on success
-  CHECK: rg -n "pendingRegistration|setPendingRegistration\(null\)|router.back" apps/mobile/src/features/auth/pages/VerificationScreen.tsx
+  EVIDENCE: line 50; button shows "Link sent" (resent state) instead of blocking alert
+- [x] B3: Guard preserved: redirects back if pendingRegistration missing; setPendingRegistration(null) on success
+  CHECK: rg -n "pendingRegistration|setPendingRegistration\(null\)|router.back" ...
   EXPECT: guard + cleanup present
-  EVIDENCE: pending
+  EVIDENCE: router.back() guard line 19; setPendingRegistration(null) line 28
 
 ## C — QA + COMMIT
 
-- [ ] C1: Mobile typecheck/lint for the file passes
-  CHECK: pnpm --filter mobile typecheck (or eslint on the file)
+- [x] C1: Mobile typecheck/lint for the file passes
+  CHECK: cd apps/mobile; npx tsc --noEmit
   EXPECT: exit 0
-  EVIDENCE: pending
-- [ ] C2: pnpm test → exit 0 (workspace green)
+  EVIDENCE: TSC-EXIT=0
+- [x] C2: pnpm test → exit 0 (workspace green)
   CHECK: pnpm test
   EXPECT: exit 0
-  EVIDENCE: pending
-- [ ] C3: Committed; clean tree
+  EVIDENCE: TEST-EXIT=0 — "Successfully ran target test for 2 projects" (mobile re-ran)
+- [x] C3: Committed; clean tree
   CHECK: git status --short
   EXPECT: empty
-  EVIDENCE: pending
-- [ ] C4: graphify rebuilt
+  EVIDENCE: commit 45c768a; post-commit git status --short = empty
+- [x] C4: graphify rebuilt
   CHECK: python -c "from graphify.watch import _rebuild_code; ..."
   EXPECT: exit 0
-  EVIDENCE: pending
+  EVIDENCE: GRAPH-EXIT=0 — graph.json + GRAPH_REPORT.md updated
