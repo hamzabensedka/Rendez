@@ -1,5 +1,5 @@
 import type { ApiBusinessListItem } from '../components';
-import { DEFAULT_SALON_IMAGES } from '../constants';
+import { salonImageForId } from '../constants';
 
 export interface MapBusiness extends ApiBusinessListItem {
   _minPrice?: number;
@@ -11,9 +11,7 @@ export function getDisplayPrice(b: MapBusiness): string {
 }
 
 export function getCardImageUri(businessId: string): string {
-  let n = 0;
-  for (let i = 0; i < businessId.length; i++) n = (n * 31 + businessId.charCodeAt(i)) >>> 0;
-  return DEFAULT_SALON_IMAGES[n % DEFAULT_SALON_IMAGES.length];
+  return salonImageForId(businessId);
 }
 
 export function businessToFeature(b: MapBusiness) {

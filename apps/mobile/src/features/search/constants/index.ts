@@ -27,6 +27,12 @@ export const DEFAULT_SALON_IMAGES = [
   'https://lh3.googleusercontent.com/aida-public/AB6AXuCXB0y_8pppmOmoMDqWu5-AJ3U06c45bxZE9zaMzAKB1dd8JVkrcmYygYukJ1dYYEbUexBmQWCpm-1OxeAPjTBdZzK9bBpJzgWdbIFWDPJT-ikM-iLBGyHgRu7xYbQSi5c9VTXz9xUNL4rtOjeWN6iMRrSew3kF4Ze2opW1WpQyLBgwlypcB3ba-3KTt6XfTHo6qFmLjgzEtQ8gh6aZcml9HU9sugkunXFQ8WoaZYcWIiiqZcNRp82RQpgTuogo4tyBikQySvW390q7',
 ] as const;
 
+export function salonImageForId(id: string): string {
+  let n = 0;
+  for (let i = 0; i < id.length; i++) n = (n * 31 + id.charCodeAt(i)) >>> 0;
+  return DEFAULT_SALON_IMAGES[n % DEFAULT_SALON_IMAGES.length];
+}
+
 /** Trending treatments for search landing (Trending Near You). Images are B&W. */
 export const TRENDING_NEAR_YOU = [
   {

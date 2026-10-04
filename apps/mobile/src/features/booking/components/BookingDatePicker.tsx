@@ -1,23 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { getDatePickerDayLabel } from '@planity/shared';
-import { colors, spacing } from '@planity/ui';
-
-/** English month names for display. Locale: en-only until i18n is added. */
-const MONTH_NAMES = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 
 interface BookingDatePickerProps {
   availableDates: Date[];
@@ -32,35 +16,28 @@ export function BookingDatePicker({
 }: BookingDatePickerProps) {
   const today = new Date();
   return (
-    <View style={styles.dateSection}>
-      <View style={styles.sectionRow}>
-        <Text style={styles.sectionTitle}>SELECT DATE</Text>
-        <Text style={styles.sectionMonth}>
-          {MONTH_NAMES[selectedDate.getMonth()]} {selectedDate.getFullYear()}
-        </Text>
-      </View>
+    <View style={styles.section}>
+      <Text style={styles.heading}>Date</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.dateChipsContent}
+        contentContainerStyle={styles.row}
       >
         {availableDates.map((date, index) => {
           const isSelected = date.toDateString() === selectedDate.toDateString();
           return (
-            <TouchableOpacity
+            <Pressable
               key={index}
-              style={[styles.dateChip, isSelected && styles.dateChipSelected]}
+              style={[styles.chip, isSelected && styles.chipOn]}
               onPress={() => onSelectDate(date)}
-              accessibilityLabel={`Select ${getDatePickerDayLabel(date, today)} ${date.getDate()}`}
               accessibilityRole="button"
+              accessibilityLabel={`Select ${getDatePickerDayLabel(date, today)} ${date.getDate()}`}
             >
-              <Text style={[styles.dateChipDay, isSelected && styles.dateChipDaySelected]}>
+              <Text style={[styles.day, isSelected && styles.onText]}>
                 {getDatePickerDayLabel(date, today)}
               </Text>
-              <Text style={[styles.dateChipNum, isSelected && styles.dateChipNumSelected]}>
-                {date.getDate()}
-              </Text>
-            </TouchableOpacity>
+              <Text style={[styles.num, isSelected && styles.onText]}>{date.getDate()}</Text>
+            </Pressable>
           );
         })}
       </ScrollView>
@@ -69,58 +46,25 @@ export function BookingDatePicker({
 }
 
 const styles = StyleSheet.create({
-  dateSection: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+  section: { paddingHorizontal: 16, paddingTop: 16 },
+  heading: {
+    fontFamily: T.font.display,
+    fontSize: 16,
+    color: T.colors.ink,
+    marginBottom: 12,
   },
-  sectionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  row: { flexDirection: 'row', gap: 8, paddingBottom: 8 },
+  chip: {
+    minWidth: 56,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: T.radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: T.colors.rule,
     alignItems: 'center',
-    marginBottom: spacing.md,
   },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: colors.light.text,
-  },
-  sectionMonth: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: colors.light.textSecondary,
-  },
-  dateChipsContent: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingBottom: spacing.sm,
-  },
-  dateChip: {
-    minWidth: 64,
-    paddingVertical: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    backgroundColor: colors.light.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dateChipSelected: {
-    backgroundColor: colors.light.text,
-    borderColor: colors.light.text,
-  },
-  dateChipDay: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    color: colors.light.textSecondary,
-    marginBottom: 2,
-  },
-  dateChipDaySelected: { color: 'rgba(255,255,255,0.9)' },
-  dateChipNum: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.light.text,
-  },
-  dateChipNumSelected: { color: '#FFF' },
+  chipOn: { backgroundColor: T.colors.ink, borderColor: T.colors.ink },
+  day: { fontFamily: T.font.label, fontSize: 11, letterSpacing: 0.6, color: T.colors.muted },
+  num: { fontFamily: T.font.display, fontSize: 18, color: T.colors.ink, marginTop: 2 },
+  onText: { color: T.colors.bookedText },
 });

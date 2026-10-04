@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '@planity/ui';
 import type { BookingCartItem } from '../types';
 import type { BookingCartItemWithServiceName } from '../hooks/useBookingCart';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 
 interface AddServiceModalProps {
   visible: boolean;
@@ -16,25 +16,24 @@ export function AddServiceModal({ visible, onClose, items, onSelect }: AddServic
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
-        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={onClose} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         <View style={styles.modalContent}>
-          <TouchableOpacity
+          <Pressable
             onPress={onClose}
             style={styles.modalClose}
             accessibilityLabel="Close"
             accessibilityRole="button"
           >
-            <Ionicons name="close" size={24} color={colors.light.text} />
-          </TouchableOpacity>
-          <Text style={styles.modalTitle}>Add another service</Text>
+            <Ionicons name="close" size={22} color={T.colors.ink} />
+          </Pressable>
+          <Text style={styles.modalTitle}>Add another</Text>
           <FlatList
             data={items}
             keyExtractor={(item) => item.serviceVariantId}
             renderItem={({ item }) => (
-              <TouchableOpacity
+              <Pressable
                 style={styles.modalItem}
                 onPress={() => onSelect(item)}
-                activeOpacity={0.7}
                 accessibilityLabel={`Add ${item.name}`}
                 accessibilityRole="button"
               >
@@ -42,11 +41,11 @@ export function AddServiceModal({ visible, onClose, items, onSelect }: AddServic
                   <Text style={styles.modalItemName}>{item.name}</Text>
                   <Text style={styles.modalItemMeta}>
                     {item.durationMin} min
-                    {item.priceCents != null && ` • ${(item.priceCents / 100).toFixed(0)}€`}
+                    {item.priceCents != null ? `  ${(item.priceCents / 100).toFixed(0)}€` : ''}
                   </Text>
                 </View>
-                <Ionicons name="add-circle-outline" size={24} color={colors.light.text} />
-              </TouchableOpacity>
+                <Text style={styles.add}>Add</Text>
+              </Pressable>
             )}
             ListEmptyComponent={<Text style={styles.modalEmpty}>No other services available</Text>}
           />
@@ -59,53 +58,58 @@ export function AddServiceModal({ visible, onClose, items, onSelect }: AddServic
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(22, 20, 18, 0.28)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: colors.light.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing['2xl'],
+    backgroundColor: T.colors.paper,
+    borderTopLeftRadius: T.radius.card,
+    borderTopRightRadius: T.radius.card,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 32,
     maxHeight: '70%',
   },
   modalClose: {
     alignSelf: 'flex-end',
-    padding: spacing.xs,
-    marginBottom: spacing.xs,
+    padding: 8,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.light.text,
-    marginBottom: spacing.lg,
+    fontFamily: T.font.display,
+    fontSize: 24,
+    color: T.colors.ink,
+    marginBottom: 12,
   },
   modalItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.light.border,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: T.colors.rule,
+    gap: 12,
   },
   modalItemText: { flex: 1 },
   modalItemName: {
+    fontFamily: T.font.medium,
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.light.text,
+    color: T.colors.ink,
   },
   modalItemMeta: {
+    fontFamily: T.font.body,
     fontSize: 14,
-    color: colors.light.textSecondary,
+    color: T.colors.muted,
     marginTop: 2,
   },
-  modalEmpty: {
+  add: {
+    fontFamily: T.font.medium,
     fontSize: 14,
-    color: colors.light.textSecondary,
-    textAlign: 'center',
-    paddingVertical: spacing.xl,
+    color: T.colors.ink,
+  },
+  modalEmpty: {
+    fontFamily: T.font.body,
+    fontSize: 14,
+    color: T.colors.muted,
+    paddingVertical: 24,
   },
 });

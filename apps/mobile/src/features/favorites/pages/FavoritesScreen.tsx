@@ -1,361 +1,67 @@
 import React from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
   ActivityIndicator,
   StatusBar,
   ScrollView,
+  Text,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Text } from '@planity/ui';
 import { useAuth, useFavorites } from '../../../application/providers';
 import { useBottomNavInset } from '../../../application/components/BottomNav';
-import { editorialTheme as THEME } from '../../../application/theme/editorialTheme';
-
-interface FavoriteItemProps {
-  id: string;
-  name: string;
-  onPress: () => void;
-  onRemove: () => void;
-}
-
-const FavoriteItem: React.FC<FavoriteItemProps> = ({ name, onPress, onRemove }) => (
-  <View style={styles.itemContainer}>
-    {/* Image Container */}
-    <TouchableOpacity onPress={onPress} activeOpacity={0.9}>
-      <View style={styles.imageWrapper}>
-        {/* Placeholder until business images are served by the API */}
-        <View style={styles.imagePlaceholder}>
-          <Ionicons name="storefront-outline" size={40} color={THEME.colors.outline} />
-        </View>
-        {/* Favorite Button */}
-        <TouchableOpacity
-          style={styles.favoriteButton}
-          onPress={onRemove}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel={`Remove ${name} from favorites`}
-        >
-          <View style={styles.favoriteButtonInner}>
-            <Ionicons name="heart" size={18} color={THEME.colors.primary} />
-          </View>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-
-    {/* Info Section */}
-    <View style={styles.infoContainer}>
-      <View style={styles.infoLeft}>
-        <Text style={styles.salonName}>{name}</Text>
-      </View>
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-        <Text style={styles.viewDetails}>VIEW DETAILS</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-);
+import { providerTheme as T } from '../../../application/theme/providerTheme';
+import { SalonRow } from '../../../shared/ui/atelier/SalonRow';
+import { salonImageForId } from '../../search/constants';
 
 export default function FavoritesScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { favoriteItems, loading, toggleFavorite } = useFavorites();
-
-  // Redirect to login if not authenticated
-  React.useEffect(() => {
-    if (!user) {
-      router.replace('/(auth)/login');
-    }
-  }, [user, router]);
-
-  const handleRemoveFavorite = (businessId: string) => {
-    toggleFavorite(businessId);
-  };
-
+  const { favoriteItems, loading } = useFavorites();
   const bottomInset = useBottomNavInset();
 
+  React.useEffect(() => {
+    if (!user) router.replace('/(auth)/login');
+  }, [user, router]);
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={THEME.colors.surface} />
-
-      {/* Top App Bar */}
-      <SafeAreaView style={styles.headerContainer} edges={['top', 'left', 'right']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="arrow-back" size={24} color={THEME.colors.primary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>ATELIER</Text>
-          <TouchableOpacity
-            style={styles.headerAvatar}
-            onPress={() => router.push('/(main)/profile')}
-            accessibilityRole="button"
-            accessibilityLabel="Open profile"
-          >
-            <Ionicons name="person" size={18} color={THEME.colors.onSurfaceVariant} />
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Editorial Header */}
-        <View style={styles.editorialHeader}>
-          <Text style={styles.sectionLabel}>YOUR CURATED COLLECTION</Text>
-          <Text style={styles.headline}>Favorites</Text>
-
-          {/* Filter Chips */}
-          <View style={styles.chipContainer}>
-            <View style={styles.chipActive}>
-              <Text style={styles.chipActiveText}>ALL SERVICES</Text>
-            </View>
-            <View style={styles.chip}>
-              <Text style={styles.chipText}>RECENTLY ADDED</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Favorites List */}
-        {loading ? (
-          <View style={styles.center}>
-            <ActivityIndicator size="large" color={THEME.colors.primary} />
-          </View>
-        ) : favoriteItems.length === 0 ? (
-          <View style={styles.center}>
-            <Ionicons name="heart-outline" size={48} color={THEME.colors.outline} />
-            <Text style={styles.emptyTitle}>No favorites yet</Text>
-            <Text style={styles.emptySubtitle}>Studios you save will appear here.</Text>
-          </View>
-        ) : (
-          <View style={styles.listContainer}>
-            {favoriteItems.map((item) => (
-              <FavoriteItem
-                key={item.businessId}
-                id={item.businessId}
-                name={item.businessName ?? 'Studio'}
-                onPress={() => router.push(`/(main)/business/${item.businessId}`)}
-                onRemove={() => handleRemoveFavorite(item.businessId)}
-              />
-            ))}
-          </View>
-        )}
-
-        {/* Explore More Button */}
-        <TouchableOpacity
-          style={styles.exploreButton}
-          onPress={() => router.push('/(main)/explore')}
-          activeOpacity={0.8}
+    <View style={styles.screen}>
+      <StatusBar barStyle="dark-content" backgroundColor={T.colors.paper} />
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: bottomInset + 24 }}
         >
-          <Text style={styles.exploreButtonText}>EXPLORE MORE STUDIOS</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <Text style={styles.title}>Saved</Text>
+          {loading ? <ActivityIndicator color={T.colors.ink} style={{ marginTop: 24 }} /> : null}
+          {favoriteItems.map((item) => (
+            <SalonRow
+              key={item.businessId}
+              name={item.businessName ?? 'Salon'}
+              imageUri={salonImageForId(item.businessId)}
+              onPress={() => router.push(`/(main)/business/${item.businessId}`)}
+            />
+          ))}
+          {!loading && favoriteItems.length === 0 ? (
+            <Text style={styles.empty}>Nothing saved yet.</Text>
+          ) : null}
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: THEME.colors.surface,
+  screen: { flex: 1, backgroundColor: T.colors.paper },
+  safe: { flex: 1 },
+  title: {
+    fontFamily: T.font.display,
+    fontSize: T.type.display.fontSize,
+    lineHeight: T.type.display.lineHeight,
+    letterSpacing: T.type.display.letterSpacing,
+    color: T.colors.ink,
+    marginTop: 8,
+    marginBottom: 8,
   },
-  headerContainer: {
-    backgroundColor: `${THEME.colors.surface}CC`, // 80% opacity
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: THEME.spacing.lg,
-    paddingVertical: THEME.spacing.md,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  headerTitle: {
-    fontSize: THEME.typography.label.fontSize,
-    fontWeight: THEME.typography.label.fontWeight,
-    letterSpacing: THEME.typography.label.letterSpacing,
-    color: THEME.colors.onSurface,
-    textTransform: 'uppercase',
-  },
-  headerAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: THEME.colors.surfaceContainerHighest,
-    borderWidth: 1,
-    borderColor: `${THEME.colors.outline}33`, // 20% opacity
-  },
-  imagePlaceholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: THEME.colors.surfaceContainerHigh,
-  },
-  emptyTitle: {
-    fontSize: THEME.typography.title.fontSize,
-    fontWeight: '600',
-    color: THEME.colors.onSurface,
-    marginTop: THEME.spacing.md,
-  },
-  emptySubtitle: {
-    fontSize: THEME.typography.body.fontSize - 1,
-    color: THEME.colors.onSurfaceVariant,
-    marginTop: THEME.spacing.xs,
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: THEME.spacing.lg,
-  },
-  editorialHeader: {
-    marginTop: THEME.spacing.md,
-    marginBottom: THEME.spacing.xl,
-  },
-  sectionLabel: {
-    fontSize: THEME.typography.caption.fontSize,
-    fontWeight: THEME.typography.caption.fontWeight,
-    letterSpacing: THEME.typography.caption.letterSpacing,
-    color: THEME.colors.outline,
-    textTransform: 'uppercase',
-    marginBottom: THEME.spacing.sm,
-  },
-  headline: {
-    fontSize: THEME.typography.display.fontSize,
-    fontWeight: THEME.typography.display.fontWeight,
-    letterSpacing: THEME.typography.display.letterSpacing,
-    lineHeight: THEME.typography.display.lineHeight,
-    color: THEME.colors.primary,
-    marginBottom: THEME.spacing.md,
-  },
-  chipContainer: {
-    flexDirection: 'row',
-    gap: THEME.spacing.sm,
-  },
-  chipActive: {
-    backgroundColor: THEME.colors.primary,
-    paddingHorizontal: THEME.spacing.md,
-    paddingVertical: THEME.spacing.xs + 2,
-    borderRadius: 9999,
-  },
-  chipActiveText: {
-    fontSize: THEME.typography.caption.fontSize,
-    fontWeight: THEME.typography.caption.fontWeight,
-    letterSpacing: THEME.typography.caption.letterSpacing,
-    color: THEME.colors.onPrimary,
-    textTransform: 'uppercase',
-  },
-  chip: {
-    backgroundColor: THEME.colors.surfaceContainerHigh,
-    paddingHorizontal: THEME.spacing.md,
-    paddingVertical: THEME.spacing.xs + 2,
-    borderRadius: 9999,
-  },
-  chipText: {
-    fontSize: THEME.typography.caption.fontSize,
-    fontWeight: THEME.typography.caption.fontWeight,
-    letterSpacing: THEME.typography.caption.letterSpacing,
-    color: THEME.colors.onSurface,
-    textTransform: 'uppercase',
-  },
-  listContainer: {
-    gap: THEME.spacing['2xl'],
-  },
-  itemContainer: {
-    marginBottom: THEME.spacing.xl,
-  },
-  imageWrapper: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: THEME.colors.surfaceContainerLow,
-    marginBottom: THEME.spacing.md,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  favoriteButton: {
-    position: 'absolute',
-    top: THEME.spacing.md,
-    right: THEME.spacing.md,
-    zIndex: 10,
-  },
-  favoriteButtonInner: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: `${THEME.colors.surfaceContainerLowest}E6`, // 90% opacity
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  infoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  infoLeft: {
-    flex: 1,
-  },
-  salonName: {
-    fontSize: THEME.typography.title.fontSize,
-    fontWeight: '600',
-    letterSpacing: -0.01,
-    color: THEME.colors.primary,
-    marginBottom: THEME.spacing.xs,
-  },
-  viewDetails: {
-    fontSize: THEME.typography.label.fontSize - 1,
-    fontWeight: '700',
-    letterSpacing: 0.15,
-    color: THEME.colors.primary,
-    textTransform: 'uppercase',
-    borderBottomWidth: 2,
-    borderBottomColor: THEME.colors.primary,
-    paddingBottom: 2,
-  },
-  exploreButton: {
-    backgroundColor: THEME.colors.primary,
-    paddingVertical: THEME.spacing.lg,
-    paddingHorizontal: THEME.spacing.xl,
-    borderRadius: 9999,
-    alignItems: 'center',
-    alignSelf: 'center',
-    marginTop: THEME.spacing['2xl'],
-    marginBottom: THEME.spacing.xl,
-  },
-  exploreButtonText: {
-    fontSize: THEME.typography.label.fontSize,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-    color: THEME.colors.onPrimary,
-    textTransform: 'uppercase',
-  },
-  center: {
-    flex: 1,
-    padding: THEME.spacing.xl,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 200,
-  },
+  empty: { fontFamily: T.font.body, fontSize: 14, color: T.colors.muted, marginTop: 16 },
 });

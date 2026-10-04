@@ -1,7 +1,6 @@
 import React from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text } from '@planity/ui';
-import { colors, spacing } from '@planity/ui';
+import { ScrollView, StyleSheet, Pressable, Text } from 'react-native';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 
 export interface FilterPillItem {
   id: string;
@@ -22,39 +21,33 @@ export const RendezFilterPills = React.memo<RendezFilterPillsProps>(function Ren
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
-      style={styles.scroll}
     >
       {pills.map((pill) => (
-        <TouchableOpacity
-          key={pill.id}
-          style={styles.pill}
-          onPress={() => onSelect(pill.id)}
-          activeOpacity={0.7}
-        >
-          <Text variant="footnote" weight="500">
-            {pill.label}
-          </Text>
-        </TouchableOpacity>
+        <Pressable key={pill.id} style={styles.chip} onPress={() => onSelect(pill.id)}>
+          <Text style={styles.label}>{pill.label}</Text>
+        </Pressable>
       ))}
     </ScrollView>
   );
 });
 
 const styles = StyleSheet.create({
-  scroll: {
-    marginHorizontal: -spacing.lg,
-  },
   container: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: 16,
     gap: 8,
-    paddingBottom: spacing.sm,
+    paddingBottom: 8,
   },
-  pill: {
-    paddingHorizontal: 20,
+  chip: {
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    backgroundColor: colors.light.background,
+    borderRadius: T.radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: T.colors.rule,
+    backgroundColor: T.colors.paper,
+  },
+  label: {
+    fontFamily: T.font.medium,
+    fontSize: 13,
+    color: T.colors.ink,
   },
 });

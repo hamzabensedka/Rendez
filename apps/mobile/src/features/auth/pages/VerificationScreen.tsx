@@ -1,21 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '@planity/ui';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+  TextInput,
+  StatusBar,
+} from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { register } from '../../../shared/lib/auth';
+import { homeHrefForRole, register } from '../../../shared/lib/auth';
 import { useAuth } from '../../../application/providers';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
+
+const DIGITS = 6;
 
 export default function VerificationScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { login: setAuthUser, pendingRegistration, setPendingRegistration } = useAuth();
-  const { phone } = useLocalSearchParams<{ phone: string }>();
   const email = pendingRegistration?.email ?? '';
   const password = pendingRegistration?.password ?? '';
-
+  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (!pendingRegistration?.email || !pendingRegistration?.password) {
@@ -23,179 +33,128 @@ export default function VerificationScreen() {
     }
   }, [pendingRegistration, router]);
 
-  async function handleCreateAccount() {
+  async function handleVerify() {
+    if (code.replace(/\D/g, '').length < DIGITS) {
+      Alert.alert('Enter the code', 'Check your email for the 6-digit code.');
+      return;
+    }
     setLoading(true);
     try {
-      const name = (email || '').split('@')[0] || 'User';
+      const name =
+        pendingRegistration?.name?.trim() || (email || '').split('@')[0] || 'User';
       const response = await register({ email: email || '', name, password: password || '' });
       setPendingRegistration(null);
       setAuthUser(response.user);
-      router.replace('/(main)');
+      router.replace(homeHrefForRole(response.user.role));
     } catch (error: unknown) {
       const message =
         error && typeof error === 'object' && 'response' in error
           ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
           : undefined;
-      Alert.alert('Registration Failed', message || 'Could not create your account');
+      Alert.alert('Registration failed', message || 'Could not create your account');
     } finally {
       setLoading(false);
     }
   }
 
-  const displayPhone = phone || 'your number';
+  const digits = Array.from({ length: DIGITS }, (_, i) => code[i] ?? '');
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.headerBack}
-          accessibilityLabel="Back"
-          accessibilityRole="button"
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.light.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>CONFIRM DETAILS</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+    <View style={[styles.container, { paddingTop: insets.top + 48, paddingBottom: insets.bottom }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={T.colors.paper} />
+      <Text style={styles.title}>We sent a code</Text>
+      <Text style={styles.sub}>Check your email.</Text>
 
-      <View style={styles.content}>
-        <View style={styles.iconWrap}>
-          <Ionicons name="person-outline" size={32} color="#FFF" />
-        </View>
-
-        <Text style={styles.title}>Confirm your details</Text>
-        <Text style={styles.instruction}>
-          Review and create your account. We'll use this information for your booking.
-        </Text>
-
-        <View style={styles.detailsCard}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Email</Text>
-            <Text style={styles.detailValue} numberOfLines={1}>
-              {email || '—'}
-            </Text>
+      <Pressable style={styles.otpRow} onPress={() => inputRef.current?.focus()}>
+        {digits.map((d, i) => (
+          <View key={i} style={[styles.slot, i === code.length && styles.slotFocus]}>
+            <Text style={styles.digit}>{d}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Phone</Text>
-            <Text style={styles.detailValue} numberOfLines={1}>
-              {displayPhone}
-            </Text>
-          </View>
-        </View>
+        ))}
+      </Pressable>
+      <TextInput
+        ref={inputRef}
+        value={code}
+        onChangeText={(t) => setCode(t.replace(/\D/g, '').slice(0, DIGITS))}
+        keyboardType="number-pad"
+        maxLength={DIGITS}
+        style={styles.hidden}
+        autoFocus
+      />
 
-        <TouchableOpacity
-          style={[styles.createButton, loading && styles.createButtonDisabled]}
-          onPress={handleCreateAccount}
-          disabled={loading}
-          accessibilityLabel="Create my account"
-          accessibilityRole="button"
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <Text style={styles.createButtonText}>CREATE MY ACCOUNT</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      <Pressable
+        onPress={handleVerify}
+        disabled={loading}
+        style={({ pressed }) => [styles.inkBtn, pressed && styles.pressed]}
+        accessibilityRole="button"
+        accessibilityLabel="Verify"
+      >
+        {loading ? (
+          <ActivityIndicator color={T.colors.bookedText} />
+        ) : (
+          <Text style={styles.inkBtnText}>Verify</Text>
+        )}
+      </Pressable>
+      <Pressable
+        onPress={() => Alert.alert('Code resent', 'Check your email again.')}
+        style={styles.resend}
+        accessibilityRole="button"
+      >
+        <Text style={styles.resendText}>Resend code</Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.light.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  headerBack: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '500',
-    letterSpacing: 2,
-    color: colors.light.textSecondary,
-  },
-  headerSpacer: { width: 40 },
-  content: {
-    flex: 1,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing['2xl'],
-    maxWidth: 480,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  iconWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.light.text,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginBottom: spacing.xl,
-  },
+  container: { flex: 1, backgroundColor: T.colors.paper, paddingHorizontal: 24 },
   title: {
-    fontSize: 28,
+    fontFamily: T.font.headline,
+    fontSize: 24,
+    lineHeight: 32,
     fontWeight: '700',
-    color: colors.light.text,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
+    color: T.colors.ink,
   },
-  instruction: {
+  sub: {
+    fontFamily: T.font.body,
     fontSize: 16,
-    color: colors.light.textSecondary,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
     lineHeight: 24,
+    color: T.colors.muted,
+    marginTop: 8,
+    marginBottom: 48,
   },
-  detailsCard: {
-    backgroundColor: colors.light.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    padding: spacing.lg,
-    marginBottom: spacing.xl,
+  otpRow: { flexDirection: 'row', justifyContent: 'flex-start', gap: 8, marginBottom: 40 },
+  slot: {
+    width: 40,
+    borderBottomWidth: 2,
+    borderBottomColor: T.colors.rule,
+    alignItems: 'center',
+    paddingBottom: 4,
   },
-  detailRow: {
-    marginBottom: spacing.md,
+  slotFocus: { borderBottomColor: T.colors.ink },
+  digit: {
+    fontFamily: T.font.display,
+    fontSize: 32,
+    lineHeight: 40,
+    color: T.colors.ink,
   },
-  detailLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1,
-    color: colors.light.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  detailValue: {
-    fontSize: 16,
-    color: colors.light.text,
-  },
-  createButton: {
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: colors.light.text,
+  hidden: { position: 'absolute', opacity: 0, height: 0, width: 0 },
+  inkBtn: {
+    height: 52,
+    backgroundColor: T.colors.ink,
+    borderRadius: T.radius.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  createButtonDisabled: { opacity: 0.5 },
-  createButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: '#FFF',
+  inkBtnText: {
+    fontFamily: T.font.label,
+    fontSize: 14,
+    lineHeight: 20,
+    letterSpacing: 0.7,
+    fontWeight: '600',
+    color: T.colors.bookedText,
   },
+  pressed: { opacity: 0.8 },
+  resend: { paddingVertical: 24 },
+  resendText: { fontFamily: T.font.body, fontSize: 16, lineHeight: 24, color: T.colors.muted },
 });

@@ -59,9 +59,9 @@ export function MapSearchBottomCard({
 }
 
 const bw = {
-  surface: '#F4F4F4',
-  white: '#FFFFFF',
-  border: '#E5E5E5',
+  surface: '#FAF8F3',
+  white: '#FAF8F3',
+  border: '#D9D4CC',
 };
 
 const styles = StyleSheet.create({
@@ -83,20 +83,15 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   cardSlideSlotSingle: {
-    borderRadius: 16,
+    borderRadius: 4,
     backgroundColor: bw.white,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: bw.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
   },
   emptyCardPlaceholder: {
     width: 96,
     height: 96,
-    borderRadius: 12,
+    borderRadius: 4,
     backgroundColor: bw.surface,
   },
   emptyCardPlaceholderContent: {

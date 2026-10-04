@@ -1,8 +1,6 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Button } from '@planity/ui';
-import { colors, spacing, shadows } from '@planity/ui';
+import { ScrollView, StyleSheet, View, Pressable, Text } from 'react-native';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 import { SearchResultsFilter } from '../types';
 
 interface FilterBarProps {
@@ -19,24 +17,9 @@ export const FilterBar = React.memo<FilterBarProps>(function FilterBar({ filters
         contentContainerStyle={styles.scrollContent}
       >
         {filters.map((filter) => (
-          <Button
-            key={filter.id}
-            title={filter.label}
-            onPress={() => onSelect(filter.id)}
-            variant="secondary"
-            size="sm"
-            leftIcon={
-              filter.icon ? (
-                <Ionicons
-                  name={filter.icon as React.ComponentProps<typeof Ionicons>['name']}
-                  size={18}
-                  color={colors.light.accent}
-                />
-              ) : undefined
-            }
-            style={styles.chip}
-            textStyle={{ fontWeight: '500' }}
-          />
+          <Pressable key={filter.id} style={styles.chip} onPress={() => onSelect(filter.id)}>
+            <Text style={styles.label}>{filter.label}</Text>
+          </Pressable>
         ))}
       </ScrollView>
     </View>
@@ -45,18 +28,24 @@ export const FilterBar = React.memo<FilterBarProps>(function FilterBar({ filters
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.light.background,
-    paddingBottom: spacing.md,
+    backgroundColor: T.colors.paper,
+    paddingBottom: 8,
   },
   scrollContent: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.md,
+    paddingHorizontal: 16,
+    gap: 8,
   },
   chip: {
-    backgroundColor: colors.light.surface,
-    borderWidth: 0,
-    ...shadows.sm,
-    paddingVertical: spacing.sm + 2,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: T.radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: T.colors.rule,
+    backgroundColor: T.colors.paper,
+  },
+  label: {
+    fontFamily: T.font.medium,
+    fontSize: 13,
+    color: T.colors.ink,
   },
 });

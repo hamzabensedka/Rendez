@@ -1,23 +1,22 @@
 import React from 'react';
-import { StyleSheet, TextProps } from 'react-native';
-import { Text } from '@planity/ui';
-import { colors } from '@planity/ui';
+import { StyleSheet, Text, type TextProps } from 'react-native';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 
-export const APP_DISPLAY_NAME = 'Rendez';
+export const APP_DISPLAY_NAME = 'Atelier';
 
 export const AppLogo = React.memo<TextProps>(function AppLogo({ style, ...props }) {
   return (
-    <Text variant="headline" style={[styles.logo, style]} {...props}>
-      {APP_DISPLAY_NAME.toUpperCase()}
+    <Text style={[styles.logo, style]} {...props}>
+      ATELIER
     </Text>
   );
 });
 
 const styles = StyleSheet.create({
   logo: {
-    fontSize: 16,
-    color: colors.light.text,
-    letterSpacing: 4,
-    fontWeight: '700',
+    fontFamily: T.font.label,
+    fontSize: 13,
+    color: T.colors.ink,
+    letterSpacing: 2.4,
   },
 });

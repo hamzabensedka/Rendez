@@ -1,9 +1,8 @@
 import React, { useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '@planity/ui';
-import { ProfileButton } from './ProfileButton';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 import { AppLogo } from './AppLogo';
 
 interface SalonDetailsHeaderProps {
@@ -25,18 +24,16 @@ export const SalonDetailsHeader = React.memo<SalonDetailsHeaderProps>(function S
 
   return (
     <View style={styles.header}>
-      <TouchableOpacity
+      <Pressable
         style={styles.button}
         onPress={handleBack}
         accessibilityLabel="Back"
         accessibilityRole="button"
       >
-        <Ionicons name="arrow-back" size={24} color={colors.light.text} />
-      </TouchableOpacity>
-
+        <Ionicons name="arrow-back" size={22} color={T.colors.ink} />
+      </Pressable>
       <AppLogo />
-
-      <ProfileButton />
+      <View style={styles.button} />
     </View>
   );
 });
@@ -47,15 +44,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     height: 56,
-    paddingHorizontal: spacing.lg,
-    backgroundColor: colors.light.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.light.border,
+    paddingHorizontal: 16,
+    backgroundColor: T.colors.paper,
   },
   button: {
     width: 40,
     height: 40,
     justifyContent: 'center',
-    alignItems: 'center',
   },
 });

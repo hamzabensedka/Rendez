@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
 import api from '../../../shared/lib/api';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 
-interface ApiReview {
+export interface ApiReview {
   id: string;
   rating: number;
   comment: string | null;
@@ -11,7 +12,7 @@ interface ApiReview {
   clientName: string;
 }
 
-interface ReviewsResponse {
+export interface ReviewsResponse {
   data: ApiReview[];
   total: number;
   page: number;
@@ -24,16 +25,29 @@ interface SalonReviewsProps {
   businessId: string;
 }
 
+export const REVIEW_PREVIEW_LIMIT = 3;
+export const REVIEWS_PAGE_SIZE = 20;
+
 function formatDate(iso: string): string {
   try {
-    const d = new Date(iso);
-    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   } catch {
     return iso;
   }
 }
 
+export function ReviewCard({ review }: { review: ApiReview }) {
+  const who = [review.clientName, formatDate(review.createdAt)].filter(Boolean).join(' · ');
+  return (
+    <View style={styles.reviewItem}>
+      <Text style={styles.reviewWho}>{who}</Text>
+      {review.comment ? <Text style={styles.reviewText}>“{review.comment}”</Text> : null}
+    </View>
+  );
+}
+
 export const SalonReviews = React.memo(function SalonReviews({ businessId }: SalonReviewsProps) {
+  const router = useRouter();
   const [data, setData] = useState<ReviewsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +63,7 @@ export const SalonReviews = React.memo(function SalonReviews({ businessId }: Sal
       setError(null);
       try {
         const res = await api.get<ReviewsResponse>(`/businesses/${businessId}/reviews`, {
-          params: { page: 1, limit: 20 },
+          params: { page: 1, limit: REVIEW_PREVIEW_LIMIT },
         });
         if (!cancelled) setData(res.data);
       } catch (e) {
@@ -67,7 +81,7 @@ export const SalonReviews = React.memo(function SalonReviews({ businessId }: Sal
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="small" color="#1C1C1E" />
+        <ActivityIndicator size="small" color={T.colors.ink} />
       </View>
     );
   }
@@ -75,144 +89,80 @@ export const SalonReviews = React.memo(function SalonReviews({ businessId }: Sal
   if (error) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={styles.muted}>{error}</Text>
       </View>
     );
   }
 
   const reviews = data?.data ?? [];
-  const ratingAvg = data?.ratingAvg ?? 0;
-  const ratingCount = data?.ratingCount ?? 0;
-  const ratingStr = ratingAvg.toFixed(1).replace('.', ',');
+  const first = reviews[0];
+  const total = data?.total ?? data?.ratingCount ?? 0;
 
   return (
     <View style={styles.container}>
-      {/* Summary Card */}
-      <View style={styles.summaryCard}>
-        <View style={styles.ratingLeft}>
-          <Text style={styles.ratingBig}>{ratingStr}</Text>
-        </View>
-        <View style={styles.ratingRight}>
-          <Text style={styles.reviewCount}>
-            {ratingCount === 0
-              ? 'No reviews yet'
-              : `${ratingCount} review${ratingCount === 1 ? '' : 's'}`}
-          </Text>
-        </View>
-      </View>
-
-      {/* Reviews List */}
-      <View style={styles.reviewsList}>
-        {reviews.length === 0 ? (
-          <Text style={styles.emptyText}>No reviews yet</Text>
-        ) : (
-          reviews.map((review) => (
-            <View key={review.id} style={styles.reviewItem}>
-              <View style={styles.reviewHeader}>
-                <Text style={styles.reviewRating}>{review.rating}</Text>
-                <Ionicons name="star" size={14} color="#000" />
-                {review.clientName ? (
-                  <Text style={styles.reviewAuthor}> · {review.clientName}</Text>
-                ) : null}
-              </View>
-              {review.comment ? <Text style={styles.reviewText}>{review.comment}</Text> : null}
-              <Text style={styles.reviewDate}>{formatDate(review.createdAt)}</Text>
-            </View>
-          ))
-        )}
-      </View>
+      <Text style={styles.heading}>Reviews</Text>
+      {first?.comment ? (
+        <>
+          <Text style={styles.quote}>“{first.comment}”</Text>
+          {first.clientName ? <Text style={styles.by}>— {first.clientName}</Text> : null}
+        </>
+      ) : (
+        reviews.map((review) => <ReviewCard key={review.id} review={review} />)
+      )}
+      {total > 0 ? (
+        <Pressable
+          style={styles.all}
+          onPress={() => router.push(`/(main)/business/${businessId}/reviews`)}
+          accessibilityRole="button"
+          accessibilityLabel="All reviews"
+        >
+          <Text style={styles.allText}>All reviews</Text>
+        </Pressable>
+      ) : (
+        <Text style={styles.muted}>No reviews yet</Text>
+      )}
     </View>
   );
 });
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 8,
+    backgroundColor: T.colors.paper,
   },
-  summaryCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+  heading: {
+    fontFamily: T.font.display,
+    fontSize: 16,
+    color: T.colors.ink,
+    marginBottom: 12,
   },
-  ratingLeft: {
-    backgroundColor: '#1C1C1E',
-    width: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
+  quote: {
+    fontFamily: T.font.body,
+    fontSize: 16,
+    lineHeight: 22,
+    color: T.colors.ink,
   },
-  ratingBig: {
-    fontSize: 32,
-    color: '#FFFFFF',
-    fontFamily: 'Inter-Medium',
-    fontWeight: '600',
-  },
-  ratingRight: {
-    flex: 1,
-    padding: 16,
-    justifyContent: 'center',
-  },
-  reviewCount: {
-    fontSize: 13,
-    color: '#666666',
-    fontFamily: 'Inter-Regular',
-  },
-  reviewsList: {
-    marginBottom: 16,
-  },
-  emptyText: {
+  by: {
+    fontFamily: T.font.body,
     fontSize: 14,
-    color: '#666666',
-    marginBottom: 16,
+    color: T.colors.muted,
+    marginTop: 8,
   },
-  errorText: {
+  all: { paddingVertical: 16 },
+  allText: {
+    fontFamily: T.font.body,
     fontSize: 14,
-    color: '#666666',
+    color: T.colors.muted,
+    textDecorationLine: 'underline',
   },
   reviewItem: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: T.colors.rule,
   },
-  reviewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  reviewRating: {
-    fontSize: 15,
-    color: '#000000',
-    fontFamily: 'Inter-Medium',
-    marginRight: 4,
-  },
-  reviewAuthor: {
-    fontSize: 13,
-    color: '#666666',
-    marginLeft: 4,
-  },
-  reviewText: {
-    fontSize: 15,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
-    lineHeight: 22,
-    marginBottom: 8,
-  },
-  reviewDate: {
-    fontSize: 13,
-    color: '#666666',
-    fontFamily: 'Inter-Regular',
-  },
+  reviewWho: { fontFamily: T.font.medium, fontSize: 13, color: T.colors.muted, marginBottom: 6 },
+  reviewText: { fontFamily: T.font.body, fontSize: 16, lineHeight: 22, color: T.colors.ink },
+  muted: { fontFamily: T.font.body, fontSize: 14, color: T.colors.muted },
 });

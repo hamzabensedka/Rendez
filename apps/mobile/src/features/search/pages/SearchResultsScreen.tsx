@@ -2,6 +2,7 @@ import React, { useCallback, useState, useMemo, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
+  Text,
   StyleSheet,
   StatusBar,
   ActivityIndicator,
@@ -10,22 +11,20 @@ import {
 } from 'react-native';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Text } from '@planity/ui';
-import { colors, spacing } from '@planity/ui';
 import {
-  SearchResultsHeader,
   SearchExpandedView,
-  RendezSearchBar,
-  RendezSalonCard,
-  type RendezSalonCardData,
+  SearchResultRow,
   ServiceFilters,
   TimeFilter,
   type TimeFilterApplyPayload,
   type ApiBusinessListItem,
 } from '../components';
-import { DEFAULT_SALON_IMAGES } from '../constants';
 import MapSearchScreen from './MapSearchScreen';
+import { salonImageForId } from '../constants';
+import { resultFromPriceForId, resultSlotForId } from '../resultChrome';
+import { useBottomNavInset, useNavClearance } from '../../../application/components/BottomNav';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
+import { Ionicons } from '@expo/vector-icons';
 import {
   useBusinessesSearchQuery,
   useServiceCategoriesQuery,
@@ -33,28 +32,16 @@ import {
 import { searchAddresses, getCurrentLocation } from '../services/addressService';
 import type { AddressSuggestion } from '../types';
 
-function mapBusinessToRendezCard(b: ApiBusinessListItem): RendezSalonCardData {
-  const address =
-    b.locations && b.locations.length > 0
-      ? [b.locations[0].address1, b.locations[0].postalCode, b.locations[0].city]
-          .filter(Boolean)
-          .join(', ')
-      : '—';
-  return {
-    id: b.id,
-    name: b.name,
-    address,
-    rating: b.ratingAvg,
-    reviewCount: b.ratingCount,
-    priceLevel: '€',
-    categories: b.category || '—',
-    imageUri: DEFAULT_SALON_IMAGES[0],
-    slots: [],
-  };
+function neighborhoodOf(b: ApiBusinessListItem): string {
+  const loc = b.locations?.[0];
+  if (!loc) return '—';
+  return [loc.address2, loc.city].filter(Boolean).join(', ') || loc.city || '—';
 }
 
 export default function SearchResultsScreen() {
   const router = useRouter();
+  const navClearance = useNavClearance();
+  const bottomInset = useBottomNavInset();
   const params = useLocalSearchParams<{
     address?: string;
     city?: string;
@@ -90,7 +77,7 @@ export default function SearchResultsScreen() {
   }, [categoryRows]);
 
   const serviceSummaryLabel = useMemo(() => {
-    if (categorySlugs.length === 0) return 'Prestations';
+    if (categorySlugs.length === 0) return 'Services';
     const labels = categorySlugs.map((s) => labelBySlug.get(s) ?? s);
     return labels.length > 2 ? `${labels.slice(0, 2).join(', ')}…` : labels.join(', ');
   }, [categorySlugs, labelBySlug]);
@@ -98,13 +85,15 @@ export default function SearchResultsScreen() {
   const timeRowLabel = useMemo(() => {
     if (timeSummaryParam) return timeSummaryParam;
     if (availDateParam) return availDateParam;
-    return 'N’importe quand';
+    return 'Any time';
   }, [timeSummaryParam, availDateParam]);
 
-  const barAddressLine = useMemo(() => {
-    if (nearMe) return 'Près de moi';
-    return addressParam;
-  }, [nearMe, addressParam]);
+  const nearPillLabel = useMemo(() => {
+    if (nearMe) return 'Near';
+    if (cityParam) return cityParam;
+    if (addressParam) return addressParam.split(',')[0]?.trim() || 'Near';
+    return 'Near';
+  }, [nearMe, cityParam, addressParam]);
 
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isServiceFiltersVisible, setIsServiceFiltersVisible] = useState(false);
@@ -197,10 +186,6 @@ export default function SearchResultsScreen() {
       : message;
   }, [isError, queryError]);
 
-  const handleBack = useCallback(() => {
-    router.back();
-  }, [router]);
-
   const handleBusinessPress = useCallback(
     (businessId: string) => {
       router.push(`/(main)/business/${businessId}`);
@@ -288,6 +273,13 @@ export default function SearchResultsScreen() {
     [nearMe, setSearchParams]
   );
 
+  const listLoading = loading || (nearMe && !nearCoords);
+
+  const salonCountLabel = useMemo(() => {
+    const n = businesses.length;
+    return n === 1 ? '1 salon' : `${n} salons`;
+  }, [businesses.length]);
+
   const renderHeader = useCallback(
     () => (
       <View style={styles.headerContainer}>
@@ -306,54 +298,54 @@ export default function SearchResultsScreen() {
             onTimePress={handleTimePress}
           />
         ) : (
-          <View style={styles.searchBarWrapper}>
-            <RendezSearchBar
-              categoryLabel={serviceSummaryLabel}
-              addressLine={barAddressLine}
-              onPress={handleToggleSearch}
-            />
-          </View>
+          <>
+            <Text style={styles.title}>Results</Text>
+            <View style={styles.countRow}>
+              <Text style={styles.count}>{listLoading ? ' ' : salonCountLabel}</Text>
+              <TouchableOpacity
+                style={styles.mapBtn}
+                onPress={() => setViewMode((m) => (m === 'list' ? 'map' : 'list'))}
+                accessibilityRole="button"
+                accessibilityLabel={viewMode === 'list' ? 'Map' : 'List'}
+              >
+                <Ionicons
+                  name={viewMode === 'list' ? 'map-outline' : 'list-outline'}
+                  size={16}
+                  color={T.colors.ink}
+                />
+                <Text style={styles.mapBtnText}>{viewMode === 'list' ? 'MAP' : 'LIST'}</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.pillsRow}>
+              <TouchableOpacity
+                style={styles.pill}
+                onPress={handleTimePress}
+                accessibilityRole="button"
+                accessibilityLabel={timeRowLabel}
+              >
+                <Text style={styles.pillText}>{timeRowLabel}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.pill}
+                onPress={handleToggleSearch}
+                accessibilityRole="button"
+                accessibilityLabel={nearPillLabel}
+              >
+                <Text style={styles.pillText}>{nearPillLabel}</Text>
+                <Ionicons name="chevron-down" size={14} color={T.colors.ink} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.pill}
+                onPress={handleCategoryPress}
+                accessibilityRole="button"
+                accessibilityLabel={serviceSummaryLabel}
+              >
+                <Text style={styles.pillText}>{serviceSummaryLabel}</Text>
+                <Ionicons name="chevron-down" size={14} color={T.colors.ink} />
+              </TouchableOpacity>
+            </View>
+          </>
         )}
-        <View style={styles.pillsRow}>
-          <TouchableOpacity
-            style={[styles.mapPill, viewMode === 'list' && styles.mapPillActive]}
-            onPress={() => setViewMode('list')}
-            accessibilityRole="button"
-            accessibilityLabel="Liste"
-            accessibilityState={{ selected: viewMode === 'list' }}
-          >
-            <Ionicons
-              name="list-outline"
-              size={16}
-              color={viewMode === 'list' ? colors.light.background : colors.light.text}
-            />
-            <Text
-              variant="footnote"
-              style={[styles.mapPillText, viewMode === 'list' && styles.mapPillTextActive]}
-            >
-              Liste
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.mapPill, viewMode === 'map' && styles.mapPillActive]}
-            onPress={() => setViewMode('map')}
-            accessibilityRole="button"
-            accessibilityLabel="Carte"
-            accessibilityState={{ selected: viewMode === 'map' }}
-          >
-            <Ionicons
-              name="map-outline"
-              size={16}
-              color={viewMode === 'map' ? colors.light.background : colors.light.text}
-            />
-            <Text
-              variant="footnote"
-              style={[styles.mapPillText, viewMode === 'map' && styles.mapPillTextActive]}
-            >
-              Carte
-            </Text>
-          </TouchableOpacity>
-        </View>
       </View>
     ),
     [
@@ -369,40 +361,34 @@ export default function SearchResultsScreen() {
       handleToggleSearch,
       handleCategoryPress,
       handleTimePress,
-      barAddressLine,
+      nearPillLabel,
       viewMode,
+      salonCountLabel,
+      listLoading,
     ]
   );
 
   const renderItem = useCallback(
-    ({ item, index }: ListRenderItemInfo<ApiBusinessListItem>) => {
-      const cardData = mapBusinessToRendezCard(item);
-      cardData.imageUri = DEFAULT_SALON_IMAGES[index % DEFAULT_SALON_IMAGES.length];
-      cardData.categories =
-        labelBySlug.get(item.category ?? '') ?? item.category ?? cardData.categories;
-      return (
-        <View style={styles.cardWrapper}>
-          <RendezSalonCard
-            data={cardData}
-            onPress={() => handleBusinessPress(item.id)}
-            onBookNow={() => handleBusinessPress(item.id)}
-          />
-        </View>
-      );
-    },
-    [handleBusinessPress, labelBySlug]
+    ({ item }: ListRenderItemInfo<ApiBusinessListItem>) => (
+      <SearchResultRow
+        name={item.name}
+        neighborhood={neighborhoodOf(item)}
+        nextSlot={resultSlotForId(item.id, timeSummaryParam || availDateParam)}
+        fromPrice={resultFromPriceForId(item.id)}
+        imageUri={salonImageForId(item.id)}
+        onPress={() => handleBusinessPress(item.id)}
+      />
+    ),
+    [handleBusinessPress, timeSummaryParam, availDateParam]
   );
 
-  const listLoading = loading || (nearMe && !nearCoords);
-
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" />
-      <SearchResultsHeader onBack={handleBack} />
 
       {renderHeader()}
 
-      <View style={styles.mainContent}>
+      <View style={[styles.mainContent, { paddingBottom: navClearance }]}>
         {viewMode === 'list' ? (
           <FlashList
             data={businesses}
@@ -413,15 +399,16 @@ export default function SearchResultsScreen() {
               styles.listContent,
               businesses.length === 0 ? styles.listContentEmpty : null,
             ]}
+            ListFooterComponent={<View style={{ height: bottomInset - navClearance }} />}
             showsVerticalScrollIndicator={false}
             removeClippedSubviews={Platform.OS === 'android'}
             ListEmptyComponent={
               <View style={styles.empty}>
                 {listLoading ? (
-                  <ActivityIndicator size="small" color={colors.light.accent} />
+                  <ActivityIndicator size="small" color={T.colors.ink} />
                 ) : (
-                  <Text variant="body" color={colors.light.textSecondary}>
-                    {error || 'Aucun résultat. Modifiez les filtres ci-dessus.'}
+                  <Text style={styles.emptyText}>
+                    {error || 'No results. Change the filters above.'}
                   </Text>
                 )}
               </View>
@@ -455,39 +442,66 @@ export default function SearchResultsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.light.background,
+    backgroundColor: T.colors.paper,
   },
   headerContainer: {
-    backgroundColor: colors.light.background,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
+    backgroundColor: T.colors.paper,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
-  searchBarWrapper: {
-    marginBottom: spacing.md,
+  title: {
+    fontFamily: T.font.display,
+    fontSize: 40,
+    lineHeight: 44,
+    letterSpacing: -0.8,
+    color: T.colors.ink,
+  },
+  countRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 6,
+    marginBottom: 16,
+  },
+  count: {
+    fontFamily: T.font.body,
+    fontSize: 14,
+    lineHeight: 20,
+    color: T.colors.muted,
+  },
+  mapBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  mapBtnText: {
+    fontFamily: T.font.label,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    color: T.colors.ink,
   },
   pillsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  mapPill: {
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: 999,
-    backgroundColor: colors.light.surfaceSecondary,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: T.radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: T.colors.rule,
+    backgroundColor: T.colors.paper,
   },
-  mapPillText: {
-    color: colors.light.text,
-  },
-  mapPillActive: {
-    backgroundColor: colors.light.text,
-  },
-  mapPillTextActive: {
-    color: colors.light.background,
+  pillText: {
+    fontFamily: T.font.body,
+    fontSize: 14,
+    color: T.colors.ink,
   },
   /** Fills all space below search header so list/map use the full screen. */
   mainContent: {
@@ -502,9 +516,8 @@ const styles = StyleSheet.create({
     minHeight: 0,
   },
   listContent: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing['2xl'],
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
   /** Let empty / loading state fill the list area vertically. */
   listContentEmpty: {
@@ -515,7 +528,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   empty: {
-    padding: spacing['2xl'],
+    padding: 32,
     alignItems: 'center',
+  },
+  emptyText: {
+    fontFamily: T.font.body,
+    fontSize: 14,
+    color: T.colors.muted,
+    textAlign: 'center',
   },
 });

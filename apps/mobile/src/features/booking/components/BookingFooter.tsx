@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { colors, spacing } from '@planity/ui';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 
 interface BookingFooterProps {
   totalPriceCents: number;
@@ -8,13 +8,12 @@ interface BookingFooterProps {
   onConfirm: () => void;
   disabled: boolean;
   loading: boolean;
-  /** Offset from bottom (e.g. for global bottom nav + safe area). The bar is positioned at this value. */
   bottomOffset?: number;
 }
 
 export function BookingFooter({
   totalPriceCents,
-  confirmLabel = 'CONFIRM DATE',
+  confirmLabel = 'Continue',
   onConfirm,
   disabled,
   loading,
@@ -23,10 +22,8 @@ export function BookingFooter({
   return (
     <View style={[styles.bottomBar, { bottom: bottomOffset }]}>
       <View style={styles.totalBlock}>
-        <Text style={styles.totalLabel}>TOTAL PRICE</Text>
-        <Text style={styles.totalValue}>
-          {(totalPriceCents / 100).toFixed(2).replace('.', ',')} €
-        </Text>
+        <Text style={styles.totalLabel}>Total</Text>
+        <Text style={styles.totalValue}>{(totalPriceCents / 100).toFixed(0)}€</Text>
       </View>
       <TouchableOpacity
         style={[styles.confirmButton, (disabled || loading) && styles.confirmButtonDisabled]}
@@ -36,7 +33,7 @@ export function BookingFooter({
         accessibilityRole="button"
       >
         {loading ? (
-          <ActivityIndicator color="#FFF" />
+          <ActivityIndicator color={T.colors.bookedText} />
         ) : (
           <Text style={styles.confirmButtonText}>{confirmLabel}</Text>
         )}
@@ -54,44 +51,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.lg,
-    backgroundColor: colors.light.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.light.border,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
+    backgroundColor: T.colors.paper,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: T.colors.rule,
   },
   totalBlock: { flexDirection: 'column' },
   totalLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
-    color: colors.light.textSecondary,
+    fontFamily: T.font.label,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    color: T.colors.muted,
     marginBottom: 2,
   },
   totalValue: {
+    fontFamily: T.font.display,
     fontSize: 20,
-    fontWeight: '800',
-    color: colors.light.text,
+    color: T.colors.ink,
   },
   confirmButton: {
-    minWidth: 180,
-    height: 56,
-    borderRadius: 999,
-    backgroundColor: colors.light.text,
+    minWidth: 140,
+    height: 52,
+    borderRadius: T.radius.card,
+    backgroundColor: T.colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    paddingHorizontal: 20,
   },
   confirmButtonDisabled: { opacity: 0.5 },
   confirmButtonText: {
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 2,
-    color: '#FFF',
+    fontFamily: T.font.medium,
+    fontSize: 15,
+    color: T.colors.bookedText,
   },
 });

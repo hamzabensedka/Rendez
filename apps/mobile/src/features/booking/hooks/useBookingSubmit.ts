@@ -5,7 +5,7 @@ import { generateIdempotencyKey } from '@planity/shared';
 import api from '../../../shared/lib/api';
 import { useAuth } from '../../../application/providers';
 import type { BookingCartItem } from '../types';
-import type { BookingBusiness } from './useBookingData';
+import type { BookingBusiness, Slot } from './useBookingData';
 
 export interface UseBookingSubmitParams {
   businessId: string | undefined;
@@ -45,16 +45,19 @@ export function useBookingSubmit(params: UseBookingSubmitParams) {
   const { businessId, business, selectedServices, displayName } = params;
   const [booking, setBooking] = useState(false);
 
-  async function handleConfirmDate(selectedSlot: string | null) {
+  async function handleConfirmDate(selectedSlot: Slot | null) {
     if (!selectedSlot || !businessId || selectedServices.length === 0) {
       Alert.alert('Error', 'Please select a time slot and at least one service');
       return;
     }
+    const staffId = selectedSlot.staffId;
     if (!user) {
       router.push({
         pathname: '/(main)/booking/identification',
         params: {
-          selectedSlot,
+          selectedSlot: selectedSlot.startAt,
+          staffId: staffId ?? '',
+          staffName: business?.staff?.find((s) => s.id === staffId)?.name ?? '',
           existingServices: JSON.stringify(selectedServices),
           businessId,
           businessName: displayName,
@@ -72,11 +75,15 @@ export function useBookingSubmit(params: UseBookingSubmitParams) {
       const payload = {
         businessId,
         locationId,
+        ...(staffId ? { staffId } : {}),
         items: selectedServices.map((s) => ({ serviceVariantId: s.serviceVariantId, quantity: 1 })),
-        startAt: selectedSlot,
+        startAt: selectedSlot.startAt,
         idempotencyKey: generateIdempotencyKey(),
       };
-      const { data } = await api.post<{ id?: string }>('/appointments', payload);
+      const { data } = await api.post<{
+        id?: string;
+        staff?: { id: string; name: string } | null;
+      }>('/appointments', payload);
       const loc = business?.locations?.[0] as
         | { address1?: string; postalCode?: string; city?: string }
         | undefined;
@@ -88,16 +95,18 @@ export function useBookingSubmit(params: UseBookingSubmitParams) {
         selectedServices.length === 1
           ? selectedServices[0].name
           : selectedServices.map((s) => s.name).join(', ');
+      const assignedName = data?.staff?.name;
       router.replace({
         pathname: '/(main)/booking/success',
         params: {
           businessName: displayName,
           serviceLabel,
           durationMinutes: String(totalMinutes),
-          dateFormatted: formatSuccessDate(selectedSlot),
-          timeFormatted: formatSuccessTime(selectedSlot),
+          dateFormatted: formatSuccessDate(selectedSlot.startAt),
+          timeFormatted: formatSuccessTime(selectedSlot.startAt),
           address: address || undefined,
           appointmentId: data?.id,
+          staffName: assignedName,
         },
       });
     } catch (err: unknown) {

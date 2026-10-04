@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   TextInput,
   FlatList,
   ActivityIndicator,
   Keyboard,
+  Text,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text } from '@planity/ui';
-import { colors, spacing, radius, shadows } from '@planity/ui';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 import type { AddressSuggestion } from '../types';
 
 interface SearchExpandedViewProps {
@@ -48,52 +48,40 @@ export const SearchExpandedView = React.memo<SearchExpandedViewProps>(function S
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
+      <Pressable
         onPress={onClose}
         style={styles.closeIcon}
         accessibilityRole="button"
-        accessibilityLabel="Fermer"
+        accessibilityLabel="Close"
       >
-        <Ionicons name="close" size={24} color={colors.light.text} />
-      </TouchableOpacity>
+        <Ionicons name="close" size={22} color={T.colors.ink} />
+      </Pressable>
 
-      <TouchableOpacity style={styles.inputRow} onPress={onCategoryPress} activeOpacity={0.7}>
-        <Ionicons
-          name="pricetag-outline"
-          size={20}
-          color={colors.light.textSecondary}
-          style={styles.icon}
-        />
-        <Text variant="body" color={colors.light.text} numberOfLines={1} style={styles.flexText}>
+      <Pressable style={styles.inputRow} onPress={onCategoryPress}>
+        <Text style={styles.rowText} numberOfLines={1}>
           {serviceSummaryLabel}
         </Text>
-        <Ionicons name="chevron-forward" size={18} color={colors.light.textSecondary} />
-      </TouchableOpacity>
+        <Ionicons name="chevron-forward" size={16} color={T.colors.muted} />
+      </Pressable>
 
       <View style={styles.addressBlock}>
-        <View style={[styles.inputRow, styles.addressInputRow]}>
-          <Ionicons
-            name="location-outline"
-            size={20}
-            color={colors.light.textSecondary}
-            style={styles.icon}
-          />
+        <View style={styles.inputRow}>
           <TextInput
             style={styles.textInput}
-            placeholder="Adresses, ville"
-            placeholderTextColor={colors.light.textSecondary}
+            placeholder="Address, city"
+            placeholderTextColor={T.colors.muted}
             value={locationDraft}
             onChangeText={onLocationDraftChange}
             onFocus={() => setShowSuggestions(locationDraft.trim().length > 0)}
             returnKeyType="search"
             autoCorrect={false}
           />
-          {locationLoading ? <ActivityIndicator size="small" color={colors.light.accent} /> : null}
+          {locationLoading ? <ActivityIndicator size="small" color={T.colors.ink} /> : null}
         </View>
 
         {showSuggestions ? (
           <View style={styles.suggestionsBox}>
-            <TouchableOpacity
+            <Pressable
               style={styles.suggestionRow}
               onPress={() => {
                 Keyboard.dismiss();
@@ -101,24 +89,16 @@ export const SearchExpandedView = React.memo<SearchExpandedViewProps>(function S
                 setShowSuggestions(false);
               }}
               accessibilityRole="button"
-              accessibilityLabel="Près de moi"
+              accessibilityLabel="Near me"
             >
-              <Ionicons
-                name="navigate-outline"
-                size={20}
-                color={colors.light.accent}
-                style={styles.suggestionIcon}
-              />
-              <Text variant="body" weight="600" color={colors.light.text}>
-                Près de moi
-              </Text>
-            </TouchableOpacity>
+              <Text style={styles.nearMe}>Near me</Text>
+            </Pressable>
             <FlatList
               data={[...locationSuggestions]}
               keyExtractor={(item) => item.id}
               keyboardShouldPersistTaps="handled"
               renderItem={({ item }) => (
-                <TouchableOpacity
+                <Pressable
                   style={styles.suggestionRow}
                   onPress={() => {
                     Keyboard.dismiss();
@@ -126,26 +106,14 @@ export const SearchExpandedView = React.memo<SearchExpandedViewProps>(function S
                     setShowSuggestions(false);
                   }}
                 >
-                  <Ionicons
-                    name="location-outline"
-                    size={18}
-                    color={colors.light.textSecondary}
-                    style={styles.suggestionIcon}
-                  />
-                  <Text variant="body" color={colors.light.text} numberOfLines={2}>
+                  <Text style={styles.rowText} numberOfLines={2}>
                     {item.address}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               )}
               ListEmptyComponent={
                 !locationLoading && locationDraft.trim().length > 0 ? (
-                  <Text
-                    variant="footnote"
-                    color={colors.light.textSecondary}
-                    style={styles.emptySuggest}
-                  >
-                    Aucune suggestion
-                  </Text>
+                  <Text style={styles.emptySuggest}>No suggestions</Text>
                 ) : null
               }
             />
@@ -153,84 +121,68 @@ export const SearchExpandedView = React.memo<SearchExpandedViewProps>(function S
         ) : null}
       </View>
 
-      <TouchableOpacity style={styles.inputRow} onPress={onTimePress} activeOpacity={0.7}>
-        <Ionicons
-          name="time-outline"
-          size={20}
-          color={colors.light.textSecondary}
-          style={styles.icon}
-        />
-        <Text variant="body" color={colors.light.text} numberOfLines={1} style={styles.flexText}>
+      <Pressable style={styles.inputRow} onPress={onTimePress}>
+        <Text style={styles.rowText} numberOfLines={1}>
           {timeDisplay}
         </Text>
-        <Ionicons name="chevron-forward" size={18} color={colors.light.textSecondary} />
-      </TouchableOpacity>
+        <Ionicons name="chevron-forward" size={16} color={T.colors.muted} />
+      </Pressable>
     </View>
   );
 });
 
 const styles = StyleSheet.create({
   container: {
-    padding: spacing.lg,
-    paddingTop: spacing.sm,
-    backgroundColor: colors.light.background,
+    paddingBottom: 8,
+    backgroundColor: T.colors.paper,
     zIndex: 10,
   },
   closeIcon: {
-    alignSelf: 'flex-start',
-    marginBottom: spacing.md,
-    marginLeft: 4,
-    padding: 4,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    marginLeft: -8,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.light.surface,
-    paddingVertical: spacing.lg - 2,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.md,
-    marginBottom: spacing.sm,
-    ...shadows.sm,
-  },
-  addressInputRow: {
-    marginBottom: 0,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: T.colors.rule,
   },
   addressBlock: {
-    marginBottom: spacing.sm,
+    marginBottom: 0,
   },
-  icon: {
-    marginRight: spacing.md,
-  },
-  flexText: {
+  rowText: {
     flex: 1,
+    fontFamily: T.font.body,
+    fontSize: 16,
+    color: T.colors.ink,
   },
   textInput: {
     flex: 1,
+    fontFamily: T.font.body,
     fontSize: 16,
-    color: colors.light.text,
+    color: T.colors.ink,
     paddingVertical: 0,
   },
   suggestionsBox: {
-    marginTop: spacing.xs,
     maxHeight: 220,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    backgroundColor: colors.light.background,
-    overflow: 'hidden',
   },
   suggestionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
+    paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.light.border,
+    borderBottomColor: T.colors.rule,
   },
-  suggestionIcon: {
-    marginRight: spacing.sm,
+  nearMe: {
+    fontFamily: T.font.medium,
+    fontSize: 16,
+    color: T.colors.ink,
   },
   emptySuggest: {
-    padding: spacing.md,
+    fontFamily: T.font.body,
+    fontSize: 14,
+    color: T.colors.muted,
+    paddingVertical: 14,
   },
 });

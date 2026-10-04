@@ -13,7 +13,7 @@ export { SalonCard } from './SalonCard';
 export { RendezSalonCard, type RendezSalonCardData } from './RendezSalonCard';
 export { RendezSearchBar } from './RendezSearchBar';
 export { RendezFilterPills } from './RendezFilterPills';
-export { ProfileButton } from './ProfileButton';
+export { SearchResultRow } from './SearchResultRow';
 export { AppLogo, APP_DISPLAY_NAME } from './AppLogo';
 export { SalonDetailsHeader } from './SalonDetailsHeader';
 export { SalonTabs } from './SalonTabs';

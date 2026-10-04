@@ -1,8 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '@planity/ui';
-import { DEFAULT_SALON_IMAGES } from '../../search/constants';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 import type { BookingCartItem } from '../types';
 
 interface BookingServiceListProps {
@@ -16,136 +14,64 @@ export function BookingServiceList({
   items,
   onRemove,
   onAddAnother,
-  addAnotherLabel = 'ADD ANOTHER SERVICE',
+  addAnotherLabel = 'Add another',
 }: BookingServiceListProps) {
   if (items.length === 0) return null;
   return (
-    <View style={styles.serviceSection}>
+    <View style={styles.section}>
+      <Text style={styles.heading}>Services</Text>
       {items.map((item, index) => (
-        <View
-          key={`${item.serviceVariantId}-${index}`}
-          style={[styles.serviceCard, index > 0 && styles.serviceCardNotFirst]}
-        >
-          <View style={styles.serviceCardContent}>
-            <View style={styles.serviceCardLeft}>
-              <Text style={styles.serviceCardName}>{item.name}</Text>
-              <View style={styles.serviceCardMeta}>
-                <Text style={styles.serviceCardMetaText}>{item.durationMin} min</Text>
-                <Text style={styles.serviceCardDot}> • </Text>
-                <Text style={styles.serviceCardPrice}>
-                  {item.priceCents != null ? `${(item.priceCents / 100).toFixed(0)}€` : '—'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.removeButton}
-                onPress={() => onRemove(index)}
-                accessibilityLabel={`Remove ${item.name}`}
-                accessibilityRole="button"
-              >
-                <Ionicons name="close" size={16} color={colors.light.textSecondary} />
-                <Text style={styles.removeButtonText}>REMOVE</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.serviceCardImageWrap}>
-              <Image
-                source={{ uri: DEFAULT_SALON_IMAGES[index % DEFAULT_SALON_IMAGES.length] }}
-                style={styles.serviceCardImage}
-                resizeMode="cover"
-              />
-            </View>
+        <View key={`${item.serviceVariantId}-${index}`} style={styles.row}>
+          <View style={styles.body}>
+            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.meta}>{item.durationMin} min</Text>
           </View>
+          <Text style={styles.price}>
+            {item.priceCents != null ? `${(item.priceCents / 100).toFixed(0)}€` : '—'}
+          </Text>
+          <Pressable
+            onPress={() => onRemove(index)}
+            accessibilityLabel={`Remove ${item.name}`}
+            accessibilityRole="button"
+            hitSlop={8}
+          >
+            <Text style={styles.remove}>Remove</Text>
+          </Pressable>
         </View>
       ))}
-      <TouchableOpacity
-        style={styles.addServiceButton}
-        onPress={onAddAnother}
-        accessibilityLabel={addAnotherLabel}
-        accessibilityRole="button"
-      >
-        <Ionicons name="add" size={20} color={colors.light.textSecondary} />
-        <Text style={styles.addServiceButtonText}>{addAnotherLabel}</Text>
-      </TouchableOpacity>
+      <Pressable onPress={onAddAnother} style={styles.add} accessibilityRole="button">
+        <Text style={styles.addText}>{addAnotherLabel}</Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  serviceSection: { padding: spacing.lg },
-  serviceCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    backgroundColor: colors.light.surface,
-    overflow: 'hidden',
-    padding: spacing.md,
+  section: { paddingHorizontal: 16, paddingTop: 8 },
+  heading: {
+    fontFamily: T.font.display,
+    fontSize: 16,
+    color: T.colors.ink,
+    marginBottom: 8,
   },
-  serviceCardNotFirst: { marginTop: spacing.md },
-  serviceCardContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  serviceCardLeft: { flex: 1 },
-  serviceCardName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.light.text,
-    marginBottom: 4,
-  },
-  serviceCardMeta: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: T.colors.rule,
+    gap: 12,
   },
-  serviceCardMetaText: {
+  body: { flex: 1 },
+  name: { fontFamily: T.font.medium, fontSize: 16, color: T.colors.ink },
+  meta: { fontFamily: T.font.body, fontSize: 14, color: T.colors.muted, marginTop: 2 },
+  price: { fontFamily: T.font.medium, fontSize: 16, color: T.colors.ink },
+  remove: { fontFamily: T.font.body, fontSize: 14, color: T.colors.muted },
+  add: { paddingVertical: 14 },
+  addText: {
+    fontFamily: T.font.body,
     fontSize: 14,
-    fontWeight: '500',
-    color: colors.light.textSecondary,
-  },
-  serviceCardDot: { fontSize: 14, color: colors.light.textTertiary },
-  serviceCardPrice: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.light.text,
-  },
-  removeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: spacing.xl,
-  },
-  removeButtonText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-    color: colors.light.textSecondary,
-  },
-  serviceCardImageWrap: {
-    width: 96,
-    height: 96,
-    borderRadius: 8,
-    overflow: 'hidden',
-    backgroundColor: colors.light.surfaceSecondary,
-    marginLeft: spacing.md,
-  },
-  serviceCardImage: { width: '100%', height: '100%' },
-  addServiceButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: spacing.md,
-    paddingVertical: 10,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    alignSelf: 'center',
-  },
-  addServiceButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: colors.light.textSecondary,
+    color: T.colors.muted,
+    textDecorationLine: 'underline',
   },
 });

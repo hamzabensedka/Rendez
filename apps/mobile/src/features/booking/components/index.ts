@@ -5,3 +5,5 @@ export { BookingDatePicker } from './BookingDatePicker';
 export { BookingSlotsGrid } from './BookingSlotsGrid';
 export { BookingFooter } from './BookingFooter';
 export { AddServiceModal } from './AddServiceModal';
+export { StaffChips } from './StaffChips';
+export type { BookingStaffMember } from './StaffChips';

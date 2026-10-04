@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   Modal,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
@@ -14,6 +14,8 @@ import {
   useServiceCategoriesQuery,
   type ServiceCategoryDto,
 } from '../../../application/query/hooks';
+import { AtelierButton } from '../../../shared/ui/atelier/AtelierButton';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 
 interface ServiceFiltersProps {
   visible: boolean;
@@ -62,41 +64,36 @@ export const ServiceFilters = React.memo<ServiceFiltersProps>(function ServiceFi
       <SafeAreaProvider>
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
           <View style={styles.topBar}>
-            <TouchableOpacity
-              onPress={onClose}
-              style={styles.closeButton}
-              accessibilityRole="button"
-            >
-              <Ionicons name="close" size={28} color="#000" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleReset} accessibilityRole="button">
-              <Text style={styles.resetButton}>Réinitialiser</Text>
-            </TouchableOpacity>
+            <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button">
+              <Ionicons name="close" size={22} color={T.colors.ink} />
+            </Pressable>
+            <Pressable onPress={handleReset} accessibilityRole="button">
+              <Text style={styles.resetButton}>Reset</Text>
+            </Pressable>
           </View>
 
           <View style={styles.content}>
-            <Text style={styles.mainTitle}>Prestations</Text>
+            <Text style={styles.mainTitle}>Services</Text>
 
             {isPending ? (
-              <ActivityIndicator style={styles.loader} />
+              <ActivityIndicator style={styles.loader} color={T.colors.ink} />
             ) : isError ? (
-              <Text style={styles.errorText}>Impossible de charger les catégories.</Text>
+              <Text style={styles.errorText}>Unable to load categories.</Text>
             ) : (
               <ScrollView showsVerticalScrollIndicator={false}>
                 <View style={styles.chipsContainer}>
                   {categories.map((c: ServiceCategoryDto) => {
                     const isSelected = selectedSlugs.includes(c.slug);
                     return (
-                      <TouchableOpacity
+                      <Pressable
                         key={c.slug}
                         style={[styles.chip, isSelected && styles.chipSelected]}
                         onPress={() => toggleSlug(c.slug)}
-                        activeOpacity={0.7}
                       >
                         <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                           {c.label}
                         </Text>
-                      </TouchableOpacity>
+                      </Pressable>
                     );
                   })}
                 </View>
@@ -105,13 +102,7 @@ export const ServiceFilters = React.memo<ServiceFiltersProps>(function ServiceFi
           </View>
 
           <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.applyButton}
-              onPress={handleApply}
-              accessibilityRole="button"
-            >
-              <Text style={styles.applyButtonText}>Enregistrer</Text>
-            </TouchableOpacity>
+            <AtelierButton label="Save" onPress={handleApply} />
           </View>
         </SafeAreaView>
       </SafeAreaProvider>
@@ -122,7 +113,7 @@ export const ServiceFilters = React.memo<ServiceFiltersProps>(function ServiceFi
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: T.colors.paper,
   },
   topBar: {
     flexDirection: 'row',
@@ -132,23 +123,26 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   closeButton: {
-    padding: 4,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
   },
   resetButton: {
-    fontSize: 15,
-    color: '#000000',
+    fontFamily: T.font.body,
+    fontSize: 14,
+    color: T.colors.muted,
     textDecorationLine: 'underline',
-    fontFamily: 'Inter-Medium',
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   mainTitle: {
-    fontSize: 34,
-    fontWeight: '400',
-    color: '#000',
-    fontFamily: 'Inter-Regular',
+    fontFamily: T.font.display,
+    fontSize: 36,
+    lineHeight: 40,
+    letterSpacing: -0.6,
+    color: T.colors.ink,
     marginBottom: 24,
     marginTop: 8,
   },
@@ -156,51 +150,41 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   errorText: {
-    fontSize: 15,
-    color: '#666',
+    fontFamily: T.font.body,
+    fontSize: 14,
+    color: T.colors.muted,
     marginTop: 16,
   },
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 8,
     paddingBottom: 24,
   },
   chip: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    backgroundColor: '#FFFFFF',
+    borderRadius: T.radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: T.colors.rule,
+    backgroundColor: T.colors.paper,
   },
   chipSelected: {
-    backgroundColor: '#000000',
-    borderColor: '#000000',
+    backgroundColor: T.colors.ink,
+    borderColor: T.colors.ink,
   },
   chipText: {
-    fontSize: 15,
-    color: '#000000',
-    fontFamily: 'Inter-Regular',
+    fontFamily: T.font.body,
+    fontSize: 14,
+    color: T.colors.ink,
   },
   chipTextSelected: {
-    color: '#FFFFFF',
-    fontFamily: 'Inter-Medium',
+    color: T.colors.bookedText,
+    fontFamily: T.font.medium,
   },
   footer: {
     padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#F2F2F7',
-  },
-  applyButton: {
-    backgroundColor: '#1C1C1E',
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  applyButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: T.colors.rule,
   },
 });

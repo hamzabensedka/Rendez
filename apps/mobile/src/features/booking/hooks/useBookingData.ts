@@ -17,10 +17,16 @@ export interface ServiceVariant {
   service: { id: string; name: string };
 }
 
+export interface BookingStaff {
+  id: string;
+  name: string;
+}
+
 export interface BookingBusiness {
   id: string;
   name?: string;
   locations?: Array<{ id: string }>;
+  staff?: BookingStaff[];
   services?: Array<{
     id: string;
     name: string;
@@ -36,6 +42,7 @@ export interface BookingBusiness {
 export interface UseBookingDataResult {
   business: BookingBusiness | null;
   serviceVariant: ServiceVariant | null;
+  staff: BookingStaff[];
   slots: Slot[];
   availableDates: Date[];
   selectedDate: Date;
@@ -46,12 +53,22 @@ export interface UseBookingDataResult {
   loadAvailability: () => Promise<void>;
 }
 
+function toLocalDateParam(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 /**
  * Loads business + selected service variant and manages availability slots via TanStack Query.
  */
 export function useBookingData(
   businessId: string | undefined,
-  serviceVariantId: string | undefined
+  serviceVariantId: string | undefined,
+  selectedStaffId: string | null,
+  cartVariantIds: string[],
+  options?: { slots?: boolean }
 ): UseBookingDataResult {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -67,6 +84,7 @@ export function useBookingData(
   });
 
   const business = businessQuery.data ?? null;
+  const staff = business?.staff ?? [];
 
   const serviceVariant = useMemo((): ServiceVariant | null => {
     if (!business || !serviceVariantId) return null;
@@ -81,18 +99,26 @@ export function useBookingData(
     return null;
   }, [business, serviceVariantId]);
 
-  const dateStr = selectedDate.toISOString().split('T')[0];
+  const dateStr = toLocalDateParam(selectedDate);
+  const variantIds = cartVariantIds.length > 0 ? cartVariantIds : serviceVariantId ? [serviceVariantId] : [];
+  const extraIds = variantIds.filter((id) => id !== serviceVariantId);
+  const variantKey = variantIds.slice().sort().join(',');
 
   const availabilityQuery = useQuery({
-    queryKey: queryKeys.availability(businessId ?? '', serviceVariantId ?? '', dateStr),
+    queryKey: queryKeys.availability(businessId ?? '', variantKey, dateStr, selectedStaffId),
     queryFn: async () => {
       const response = await api.get(`/businesses/${businessId}/availability`, {
-        params: { serviceVariantId, date: dateStr },
+        params: {
+          serviceVariantId,
+          date: dateStr,
+          ...(selectedStaffId ? { staffId: selectedStaffId } : {}),
+          ...(extraIds.length ? { serviceVariantIds: extraIds.join(',') } : {}),
+        },
       });
       const apiSlots = response.data?.slots ?? [];
-      return Array.isArray(apiSlots) ? apiSlots : [];
+      return Array.isArray(apiSlots) ? (apiSlots as Slot[]) : [];
     },
-    enabled: Boolean(businessId && serviceVariantId),
+    enabled: Boolean(businessId && serviceVariantId && variantIds.length > 0 && options?.slots !== false),
   });
 
   const slots = availabilityQuery.data ?? [];
@@ -101,13 +127,14 @@ export function useBookingData(
   const loadAvailability = useCallback(async () => {
     if (!businessId || !serviceVariantId) return;
     await queryClient.invalidateQueries({
-      queryKey: queryKeys.availability(businessId, serviceVariantId, dateStr),
+      queryKey: queryKeys.availability(businessId, variantKey, dateStr, selectedStaffId),
     });
-  }, [queryClient, businessId, serviceVariantId, dateStr]);
+  }, [queryClient, businessId, serviceVariantId, variantKey, dateStr, selectedStaffId]);
 
   return {
     business,
     serviceVariant,
+    staff,
     slots,
     availableDates,
     selectedDate,

@@ -7,6 +7,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   StatusBar,
   TouchableOpacity,
@@ -24,8 +25,7 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Text } from '@planity/ui';
-import { useFavorites } from '../../../application/providers';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 import { OSM_RASTER_STYLE } from '../constants/mapStyle';
 import { fetchViewportBusinesses } from '../services/viewportService';
 import { useBusinessesSearchQuery } from '../../../application/query/hooks';
@@ -80,15 +80,15 @@ const PIN_ICON_HEIGHT = 0.1;
 const PIN_ICON_SIZE = (PIN_ICON_WIDTH + PIN_ICON_HEIGHT) / 2;
 
 const bw = {
-  primary: '#000000',
-  background: '#FFFFFF',
-  surface: '#F4F4F4',
-  border: '#E5E5E5',
-  text: '#000000',
-  textSecondary: '#666666',
-  textMuted: '#999999',
-  mapBg: '#F0F0F0',
-  white: '#FFFFFF',
+  primary: T.colors.ink,
+  background: T.colors.paper,
+  surface: T.colors.surface,
+  border: T.colors.rule,
+  text: T.colors.ink,
+  textSecondary: T.colors.muted,
+  textMuted: T.colors.muted,
+  mapBg: T.colors.past,
+  white: T.colors.surface,
 };
 
 /** Default Paris center when location unavailable */
@@ -115,7 +115,6 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
     nearMe?: string;
     availDate?: string;
   }>();
-  const { isFavorite, toggleFavorite } = useFavorites();
 
   const addressParam = searchParams.address?.trim() ?? '';
   const cityParam = searchParams.city?.trim() ?? '';
@@ -369,7 +368,6 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
   const handleMapReady = useCallback(() => setMapReady(true), []);
 
   const handleBack = useCallback(() => router.back(), [router]);
-  const handleProfile = useCallback(() => router.push('/(main)/profile'), [router]);
 
   const handleSearchInZone = useCallback(async () => {
     if (!MapView || !mapRef.current) return;
@@ -476,57 +474,55 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
   }));
 
   const renderCardInner = useCallback(
-    (b: MapBusiness) => (
-      <>
-        <Image
-          source={{ uri: getCardImageUri(b.id) }}
-          style={[styles.cardImage, styles.cardImageBw]}
-        />
-        <View style={styles.cardContent}>
+    (b: MapBusiness) => {
+      const neighborhood = b.locations?.[0]
+        ? [b.locations[0].city].filter(Boolean).join(', ') || '—'
+        : '—';
+      const next = availDateParam ? availDateParam : 'Today';
+      const price = getDisplayPrice(b);
+      return (
+        <View style={styles.cardInner}>
+          <Image
+            source={{ uri: getCardImageUri(b.id) }}
+            style={styles.cardImage}
+            accessibilityIgnoresInvertColors
+          />
+          <View style={styles.cardContent}>
           <View style={styles.cardRow}>
             <Text style={styles.cardName} numberOfLines={1}>
               {b.name}
             </Text>
             <TouchableOpacity
-              onPress={() => toggleFavorite(b.id)}
+              onPress={() => setSelectedBusiness(null)}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityLabel="Close"
             >
-              <Ionicons
-                name={isFavorite(b.id) ? 'heart' : 'heart-outline'}
-                size={22}
-                color={bw.primary}
-              />
+              <Ionicons name="close" size={20} color={bw.primary} />
             </TouchableOpacity>
           </View>
           <Text style={styles.cardAddress} numberOfLines={1}>
-            {b.locations?.[0]
-              ? [b.locations[0].postalCode, b.locations[0].city].filter(Boolean).join(' ')
-              : '—'}
-            {' • 0.4 km'}
+            {neighborhood}
           </Text>
-          <View style={styles.cardRating}>
-            <Ionicons name="star" size={12} color={bw.primary} />
-            <Text style={styles.cardRatingText}>{b.ratingAvg?.toFixed(1) ?? '—'}</Text>
-            <Text style={styles.cardReviews}>
-              (
-              {(b.ratingCount ?? 0) >= 1000
-                ? `${((b.ratingCount ?? 0) / 1000).toFixed(1)}k`
-                : (b.ratingCount ?? 0)}{' '}
-              avis)
-            </Text>
-          </View>
-          <View style={styles.cardFooter}>
-            <Text style={styles.cardService}>
-              {b.category ?? 'Prestation'} • {getDisplayPrice(b)}
-            </Text>
-            <TouchableOpacity style={styles.bookButton} onPress={handleBook}>
-              <Text style={styles.bookButtonText}>RÉSERVER</Text>
-            </TouchableOpacity>
+          <Text style={styles.nextLabel}>Next Available</Text>
+          <Text style={styles.nextTime}>
+            {next}
+            {price !== '—' ? `  ${price}` : ''}
+          </Text>
+          {b.category ? (
+            <View style={styles.staffRow}>
+              <View style={styles.staffChip}>
+                <Text style={styles.staffChipText}>{b.category}</Text>
+              </View>
+            </View>
+          ) : null}
+          <TouchableOpacity style={styles.bookButton} onPress={handleBook}>
+            <Text style={styles.bookButtonText}>View</Text>
+          </TouchableOpacity>
           </View>
         </View>
-      </>
-    ),
-    [toggleFavorite, isFavorite, handleBook]
+      );
+    },
+    [handleBook, availDateParam]
   );
 
   const handleMarkerPress = useCallback(
@@ -565,14 +561,8 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
             >
               <Ionicons name="arrow-back" size={24} color={bw.primary} />
             </TouchableOpacity>
-            <Text style={styles.logo}>PLANITY</Text>
-            <TouchableOpacity
-              onPress={handleProfile}
-              style={styles.iconButton}
-              accessibilityLabel="Profile"
-            >
-              <Ionicons name="person-outline" size={24} color={bw.primary} />
-            </TouchableOpacity>
+            <Text style={styles.logo}>ATELIER</Text>
+            <View style={styles.iconButton} />
           </View>
         )}
 
@@ -677,9 +667,9 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
               <View style={styles.mapPlaceholder}>
                 <Ionicons name="map-outline" size={48} color={bw.textMuted} />
                 <Text style={styles.mapPlaceholderText}>
-                  Carte disponible en build natif (MapLibre + OSM)
+                  Map is available in a native build (MapLibre + OSM)
                 </Text>
-                <Text style={styles.mapPlaceholderSub}>Expo Go n’affiche pas la carte.</Text>
+                <Text style={styles.mapPlaceholderSub}>Expo Go does not show the map.</Text>
               </View>
             </View>
           )}
@@ -691,8 +681,7 @@ export default function MapSearchScreen({ embedded, initialBusinesses }: MapSear
           )}
 
           <TouchableOpacity style={styles.fabSearchZone} onPress={handleSearchInZone}>
-            <Ionicons name="refresh" size={18} color={bw.primary} />
-            <Text style={styles.fabSearchZoneText}>RECHERCHER DANS CETTE ZONE</Text>
+            <Text style={styles.fabSearchZoneText}>Search this area</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.fabLocate} onPress={handleLocateMe}>
@@ -730,7 +719,13 @@ const styles = StyleSheet.create({
     borderBottomColor: bw.border,
   },
   iconButton: { padding: 8 },
-  logo: { fontSize: 18, fontWeight: '700', letterSpacing: 4, color: bw.primary },
+  logo: {
+    fontFamily: T.font.label,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 3,
+    color: bw.primary,
+  },
   mapContainer: { flex: 1, position: 'relative', minHeight: 280 },
   mapBackground: {
     position: 'absolute',
@@ -761,63 +756,86 @@ const styles = StyleSheet.create({
   fabSearchZone: {
     position: 'absolute',
     top: 16,
-    left: '50%',
-    marginLeft: -140,
-    flexDirection: 'row',
+    alignSelf: 'center',
+    left: 24,
+    right: 24,
     alignItems: 'center',
-    gap: 8,
     backgroundColor: bw.white,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 999,
-    borderWidth: 1,
+    borderRadius: T.radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: bw.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
   },
-  fabSearchZoneText: { fontSize: 11, fontWeight: '700', color: bw.primary },
+  fabSearchZoneText: {
+    fontFamily: T.font.medium,
+    fontSize: 13,
+    color: bw.primary,
+  },
   fabLocate: {
     position: 'absolute',
     bottom: 100,
     right: 16,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: T.radius.card,
     backgroundColor: bw.white,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: bw.border,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
   },
-  cardImage: { width: 96, height: 96, borderRadius: 12, backgroundColor: bw.surface },
-  cardImageBw: { opacity: 0.9 },
-  cardContent: { flex: 1, justifyContent: 'space-between', minHeight: 96 },
+  cardInner: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
+  cardImage: { width: 88, height: 88, borderRadius: T.radius.card, backgroundColor: bw.surface },
+  cardContent: { flex: 1 },
   cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  cardName: { fontSize: 14, fontWeight: '700', color: bw.primary, flex: 1 },
-  cardAddress: { fontSize: 11, color: bw.textSecondary, marginTop: 4 },
-  cardRating: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  cardRatingText: { fontSize: 11, fontWeight: '700', color: bw.primary },
-  cardReviews: { fontSize: 11, color: bw.textMuted },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
+  cardName: {
+    fontFamily: T.font.display,
+    fontSize: 22,
+    color: bw.primary,
+    flex: 1,
+    marginRight: 12,
   },
-  cardService: { fontSize: 12, fontWeight: '700', color: bw.primary },
-  bookButton: {
-    backgroundColor: bw.primary,
-    paddingHorizontal: 14,
+  cardAddress: {
+    fontFamily: T.font.body,
+    fontSize: 14,
+    color: bw.textSecondary,
+    marginTop: 4,
+  },
+  nextLabel: {
+    fontFamily: T.font.label,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    color: bw.textMuted,
+    marginTop: 16,
+  },
+  nextTime: {
+    fontFamily: T.font.medium,
+    fontSize: 16,
+    color: bw.primary,
+    marginTop: 4,
+  },
+  staffRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+  staffChip: {
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: T.radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: bw.border,
   },
-  bookButtonText: { fontSize: 10, fontWeight: '800', color: bw.white },
+  staffChipText: { fontFamily: T.font.medium, fontSize: 13, color: bw.primary },
+  bookButton: {
+    marginTop: 16,
+    backgroundColor: bw.primary,
+    paddingHorizontal: 16,
+    height: 48,
+    borderRadius: T.radius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookButtonText: {
+    fontFamily: T.font.medium,
+    fontSize: 15,
+    color: T.colors.bookedText,
+  },
 });

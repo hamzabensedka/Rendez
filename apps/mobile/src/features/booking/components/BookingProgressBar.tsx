@@ -1,59 +1,50 @@
 import React from 'react';
-import { View, Text, StyleSheet, type DimensionValue } from 'react-native';
-import { colors, spacing } from '@planity/ui';
+import { View, Text, StyleSheet } from 'react-native';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 
 interface BookingProgressBarProps {
   stepLabel: string;
   title: string;
-  progressPercent: string;
+  progressPercent: number;
 }
 
 export function BookingProgressBar({ stepLabel, title, progressPercent }: BookingProgressBarProps) {
   return (
-    <View style={styles.progressSection}>
-      <View style={styles.progressLabels}>
-        <Text style={styles.progressStep}>{stepLabel}</Text>
-        <Text style={styles.progressTitle}>{title}</Text>
-      </View>
-      <View style={styles.progressBarBg}>
-        <View style={[styles.progressBarFill, { width: progressPercent as DimensionValue }]} />
+    <View style={styles.wrap}>
+      <Text style={styles.step}>{stepLabel}</Text>
+      <Text style={styles.title}>{title}</Text>
+      <View style={styles.track}>
+        <View style={[styles.fill, { width: `${Math.min(100, Math.max(0, progressPercent))}%` }]} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  progressSection: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-    backgroundColor: colors.light.surface,
+  wrap: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: T.colors.paper,
   },
-  progressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: spacing.xs,
+  step: {
+    fontFamily: T.font.label,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    color: T.colors.muted,
+    marginBottom: 4,
   },
-  progressStep: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1,
-    color: colors.light.textSecondary,
+  title: {
+    fontFamily: T.font.display,
+    fontSize: 20,
+    color: T.colors.ink,
+    marginBottom: 12,
   },
-  progressTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.light.text,
-  },
-  progressBarBg: {
+  track: {
     height: 2,
-    backgroundColor: colors.light.border,
-    borderRadius: 1,
-    overflow: 'hidden',
+    backgroundColor: T.colors.rule,
   },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: colors.light.text,
-    borderRadius: 1,
+  fill: {
+    height: 2,
+    backgroundColor: T.colors.ink,
   },
 });

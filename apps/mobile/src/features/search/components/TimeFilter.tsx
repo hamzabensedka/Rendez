@@ -1,17 +1,16 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable, ScrollView } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Calendar } from 'react-native-calendars';
-import { colors, spacing, radius } from '@planity/ui';
+import { AtelierButton } from '../../../shared/ui/atelier/AtelierButton';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 
 export type TimeFilterPreset = 'any' | 'today' | 'tomorrow' | 'custom';
 
 export interface TimeFilterApplyPayload {
   preset: TimeFilterPreset;
-  /** YYYY-MM-DD when preset is today, tomorrow, or custom */
   availDate?: string;
-  /** Row label in search UI */
   summary: string;
 }
 
@@ -19,7 +18,6 @@ interface TimeFilterProps {
   visible: boolean;
   onClose: () => void;
   onApply: (payload: TimeFilterApplyPayload) => void;
-  /** ISO date when a concrete day is selected */
   initialAvailDate?: string;
   initialSummary?: string;
 }
@@ -76,11 +74,11 @@ export const TimeFilter = React.memo<TimeFilterProps>(function TimeFilter({
 
     let payload: TimeFilterApplyPayload;
     if (preset === 'any') {
-      payload = { preset: 'any', summary: 'N’importe quand' };
+      payload = { preset: 'any', summary: 'Any time' };
     } else if (preset === 'today') {
-      payload = { preset: 'today', availDate: today, summary: "Aujourd'hui" };
+      payload = { preset: 'today', availDate: today, summary: 'Today' };
     } else if (preset === 'tomorrow') {
-      payload = { preset: 'tomorrow', availDate: tomorrow, summary: 'Demain' };
+      payload = { preset: 'tomorrow', availDate: tomorrow, summary: 'Tomorrow' };
     } else {
       payload = {
         preset: 'custom',
@@ -95,16 +93,15 @@ export const TimeFilter = React.memo<TimeFilterProps>(function TimeFilter({
   const renderRadio = (label: string, value: TimeFilterPreset) => {
     const isSelected = preset === value;
     return (
-      <TouchableOpacity
+      <Pressable
         style={styles.radioRow}
         onPress={() => setState((s) => ({ ...s, preset: value }))}
-        activeOpacity={0.7}
       >
-        <View style={styles.radioCircle}>
+        <View style={[styles.radioCircle, isSelected && styles.radioCircleOn]}>
           {isSelected ? <View style={styles.radioDot} /> : null}
         </View>
         <Text style={styles.radioLabel}>{label}</Text>
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 
@@ -118,14 +115,10 @@ export const TimeFilter = React.memo<TimeFilterProps>(function TimeFilter({
       <SafeAreaProvider>
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
           <View style={styles.header}>
-            <TouchableOpacity
-              onPress={onClose}
-              style={styles.closeButton}
-              accessibilityRole="button"
-            >
-              <Ionicons name="close" size={28} color={colors.light.text} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Quand</Text>
+            <Pressable onPress={onClose} style={styles.closeButton} accessibilityRole="button">
+              <Ionicons name="close" size={22} color={T.colors.ink} />
+            </Pressable>
+            <Text style={styles.headerTitle}>When</Text>
             <View style={styles.placeholder} />
           </View>
 
@@ -135,10 +128,10 @@ export const TimeFilter = React.memo<TimeFilterProps>(function TimeFilter({
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.optionsSection}>
-              {renderRadio('N’importe quand', 'any')}
-              {renderRadio("Aujourd'hui", 'today')}
-              {renderRadio('Demain', 'tomorrow')}
-              {renderRadio('Choisir une date', 'custom')}
+              {renderRadio('Any time', 'any')}
+              {renderRadio('Today', 'today')}
+              {renderRadio('Tomorrow', 'tomorrow')}
+              {renderRadio('Choose a date', 'custom')}
             </View>
 
             {preset === 'custom' ? (
@@ -149,18 +142,21 @@ export const TimeFilter = React.memo<TimeFilterProps>(function TimeFilter({
                   markedDates={{
                     [selectedDay]: {
                       selected: true,
-                      selectedColor: colors.light.text,
+                      selectedColor: T.colors.ink,
                     },
                   }}
                   theme={{
-                    todayTextColor: colors.light.accent,
-                    arrowColor: colors.light.text,
-                    monthTextColor: colors.light.text,
-                    textDayFontFamily: 'System',
-                    textMonthFontFamily: 'System',
-                    textDayHeaderFontFamily: 'System',
-                    selectedDayBackgroundColor: colors.light.text,
-                    selectedDayTextColor: colors.light.background,
+                    calendarBackground: T.colors.paper,
+                    todayTextColor: T.colors.now,
+                    arrowColor: T.colors.ink,
+                    monthTextColor: T.colors.ink,
+                    dayTextColor: T.colors.ink,
+                    textDisabledColor: T.colors.muted,
+                    textDayFontFamily: T.font.body,
+                    textMonthFontFamily: T.font.display,
+                    textDayHeaderFontFamily: T.font.label,
+                    selectedDayBackgroundColor: T.colors.ink,
+                    selectedDayTextColor: T.colors.bookedText,
                   }}
                   style={styles.calendar}
                 />
@@ -169,13 +165,7 @@ export const TimeFilter = React.memo<TimeFilterProps>(function TimeFilter({
           </ScrollView>
 
           <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.applyButton}
-              onPress={handleApply}
-              accessibilityRole="button"
-            >
-              <Text style={styles.applyButtonText}>Enregistrer</Text>
-            </TouchableOpacity>
+            <AtelierButton label="Save" onPress={handleApply} />
           </View>
         </SafeAreaView>
       </SafeAreaProvider>
@@ -186,7 +176,7 @@ export const TimeFilter = React.memo<TimeFilterProps>(function TimeFilter({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.light.background,
+    backgroundColor: T.colors.paper,
   },
   header: {
     flexDirection: 'row',
@@ -196,75 +186,71 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   closeButton: {
-    padding: 4,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.light.text,
+    fontFamily: T.font.display,
+    fontSize: 20,
+    color: T.colors.ink,
   },
   placeholder: {
-    width: 36,
+    width: 40,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
   optionsSection: {
-    gap: 16,
+    gap: 8,
     marginBottom: 16,
   },
   radioRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: T.colors.rule,
   },
   radioCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: colors.light.text,
+    width: 18,
+    height: 18,
+    borderRadius: 2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: T.colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
+  radioCircleOn: {
+    backgroundColor: T.colors.ink,
+  },
   radioDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.light.text,
+    width: 6,
+    height: 6,
+    backgroundColor: T.colors.bookedText,
   },
   radioLabel: {
+    fontFamily: T.font.body,
     fontSize: 16,
-    color: colors.light.text,
+    color: T.colors.ink,
   },
   calendarWrap: {
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.light.border,
+    borderRadius: T.radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: T.colors.rule,
     overflow: 'hidden',
     marginBottom: 24,
-    backgroundColor: colors.light.surface,
+    backgroundColor: T.colors.paper,
   },
   calendar: {
-    paddingBottom: spacing.sm,
+    paddingBottom: 8,
   },
   footer: {
     padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: colors.light.border,
-  },
-  applyButton: {
-    backgroundColor: colors.light.text,
-    paddingVertical: 16,
-    borderRadius: radius.md,
-    alignItems: 'center',
-  },
-  applyButtonText: {
-    color: colors.light.background,
-    fontSize: 16,
-    fontWeight: '600',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: T.colors.rule,
   },
 });

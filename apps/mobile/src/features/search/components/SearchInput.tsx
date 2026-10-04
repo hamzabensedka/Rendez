@@ -1,8 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, TextInput, StyleSheet, Pressable, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text } from '@planity/ui';
-import { colors, spacing, radius, shadows } from '@planity/ui';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 
 interface SearchInputProps {
   value: string;
@@ -13,9 +12,7 @@ interface SearchInputProps {
   autoFocus?: boolean;
   maxLength?: number;
   testID?: string;
-  /** Called when user submits (e.g. presses search/return key). Use to navigate to results. */
   onSubmitEditing?: () => void;
-  /** Pill style: rounded-full, soft background, no border (search landing) */
   variant?: 'default' | 'pill';
 }
 
@@ -29,7 +26,6 @@ export const SearchInput = React.memo<SearchInputProps>(function SearchInput({
   maxLength,
   testID,
   onSubmitEditing,
-  variant = 'default',
 }) {
   const handleClear = useCallback(() => {
     if (onClear) {
@@ -44,74 +40,32 @@ export const SearchInput = React.memo<SearchInputProps>(function SearchInput({
     [value.length, showClearButton]
   );
 
-  const isPill = variant === 'pill';
   return (
-    <View style={[styles.wrapper, isPill && styles.wrapperPill]} testID={testID}>
-      <View style={[styles.searchCard, isPill && styles.searchCardPill]}>
-        {isPill ? (
-          <View style={styles.pillRow}>
-            <View style={styles.pillIconWrap} pointerEvents="none">
-              <Ionicons name="search" size={20} color={colors.light.textSecondary} />
-            </View>
-            <TextInput
-              style={[styles.input, styles.inputPill]}
-              placeholder={placeholder}
-              placeholderTextColor={colors.light.textTertiary}
-              value={value}
-              onChangeText={onChangeText}
-              onSubmitEditing={onSubmitEditing}
-              autoFocus={autoFocus}
-              maxLength={maxLength}
-              returnKeyType="search"
-              accessibilityLabel="Search"
-            />
-            {showClear ? (
-              <TouchableOpacity
-                onPress={handleClear}
-                style={styles.clearButton}
-                accessibilityLabel="Clear search"
-                accessibilityRole="button"
-              >
-                <Text variant="footnote" color={colors.light.accent}>
-                  Clear
-                </Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-        ) : (
-          <View style={styles.searchRow}>
-            <Ionicons
-              name="search"
-              size={20}
-              color={colors.light.textSecondary}
-              style={styles.searchIcon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder={placeholder}
-              placeholderTextColor={colors.light.textTertiary}
-              value={value}
-              onChangeText={onChangeText}
-              onSubmitEditing={onSubmitEditing}
-              autoFocus={autoFocus}
-              maxLength={maxLength}
-              returnKeyType="search"
-              accessibilityLabel="Search"
-            />
-            {showClear ? (
-              <TouchableOpacity
-                onPress={handleClear}
-                style={styles.clearButton}
-                accessibilityLabel="Clear search"
-                accessibilityRole="button"
-              >
-                <Text variant="footnote" color={colors.light.accent}>
-                  Clear
-                </Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-        )}
+    <View style={styles.wrapper} testID={testID}>
+      <View style={styles.row}>
+        <Ionicons name="search" size={18} color={T.colors.muted} />
+        <TextInput
+          style={styles.input}
+          placeholder={placeholder}
+          placeholderTextColor={T.colors.muted}
+          value={value}
+          onChangeText={onChangeText}
+          onSubmitEditing={onSubmitEditing}
+          autoFocus={autoFocus}
+          maxLength={maxLength}
+          returnKeyType="search"
+          accessibilityLabel="Search"
+        />
+        {showClear ? (
+          <Pressable
+            onPress={handleClear}
+            style={styles.clearButton}
+            accessibilityLabel="Clear search"
+            accessibilityRole="button"
+          >
+            <Text style={styles.clearText}>Clear</Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -119,65 +73,32 @@ export const SearchInput = React.memo<SearchInputProps>(function SearchInput({
 
 const styles = StyleSheet.create({
   wrapper: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.light.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.light.border,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: T.colors.paper,
   },
-  wrapperPill: {
-    paddingVertical: spacing.xl,
-    borderBottomWidth: 0,
-    backgroundColor: colors.light.background,
-  },
-  searchCard: {
-    backgroundColor: colors.light.background,
-    borderRadius: radius.lg,
-    ...shadows.xs,
-  },
-  searchCardPill: {
-    backgroundColor: colors.light.surfaceSecondary,
-    borderRadius: radius.full,
-    ...shadows.sm,
-  },
-  searchRow: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-  },
-  pillRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: spacing.lg,
-  },
-  pillIconWrap: {
-    position: 'absolute',
-    left: 20,
-    zIndex: 1,
-  },
-  searchRowPill: {
-    paddingVertical: 16,
-    paddingLeft: 56,
-    paddingRight: spacing.lg,
-  },
-  searchIcon: {
-    marginRight: spacing.md,
+    gap: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: T.colors.rule,
+    paddingVertical: 10,
   },
   input: {
     flex: 1,
+    fontFamily: T.font.body,
     fontSize: 16,
-    color: colors.light.text,
-    paddingVertical: 0,
-  },
-  inputPill: {
-    flex: 1,
-    fontSize: 16,
-    paddingLeft: 40,
+    color: T.colors.ink,
     paddingVertical: 0,
   },
   clearButton: {
-    paddingLeft: spacing.sm,
+    paddingLeft: 8,
+  },
+  clearText: {
+    fontFamily: T.font.body,
+    fontSize: 14,
+    color: T.colors.muted,
+    textDecorationLine: 'underline',
   },
 });

@@ -3,95 +3,66 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   Alert,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
 } from 'react-native';
-import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '@planity/ui';
-import { Input, Button } from '@planity/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { login } from '../../../shared/lib/auth';
 import { useAuth } from '../../../application/providers';
 import { useKeyboardHeight } from '../../../application/hooks/useKeyboardHeight';
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const MONTH_NAMES = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
-function formatSummaryDate(isoDate: string): string {
-  const d = new Date(isoDate);
-  const dayName = DAY_NAMES[d.getDay()];
-  const month = MONTH_NAMES[d.getMonth()];
-  const date = d.getDate();
-  const suffix =
-    date === 1 || date === 21 || date === 31
-      ? 'st'
-      : date === 2 || date === 22
-        ? 'nd'
-        : date === 3 || date === 23
-          ? 'rd'
-          : 'th';
-  return `${dayName}, ${month} ${date}${suffix}`;
-}
-
-function formatSummaryTime(isoDate: string): string {
-  const d = new Date(isoDate);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-}
+import { AtelierField } from '../../../shared/ui/atelier/AtelierField';
+import { AtelierButton } from '../../../shared/ui/atelier/AtelierButton';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 
 export default function BookingIdentificationScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { login: setAuthUser } = useAuth();
-  const { selectedSlot, existingServices, businessId, businessName } = useLocalSearchParams<{
-    selectedSlot: string;
-    existingServices: string;
-    businessId: string;
-    businessName?: string;
-  }>();
+  const { selectedSlot, existingServices, businessId, businessName, staffName } =
+    useLocalSearchParams<{
+      selectedSlot: string;
+      existingServices: string;
+      businessId: string;
+      businessName?: string;
+      staffName?: string;
+    }>();
 
   const keyboardHeight = useKeyboardHeight();
-  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [showLogin, setShowLogin] = useState(false);
   const [password, setPassword] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
 
-  const servicesLabel = React.useMemo(() => {
-    if (!existingServices) return '';
-    try {
-      const arr = JSON.parse(existingServices) as Array<{ name: string }>;
-      return Array.isArray(arr) ? arr.map((s) => s.name).join(', ') : '';
-    } catch {
-      return '';
+  const bookingParams = {
+    selectedSlot,
+    existingServices,
+    businessId,
+    businessName,
+    staffName,
+  };
+
+  function handleContinue() {
+    if (!name.trim() || !email.trim() || !phone.trim()) {
+      Alert.alert('Error', 'Please fill in name, email, and phone');
+      return;
     }
-  }, [existingServices]);
-
-  const dateLabel = selectedSlot ? formatSummaryDate(selectedSlot) : '';
-  const timeLabel = selectedSlot ? formatSummaryTime(selectedSlot) : '';
-
-  function handleModify() {
-    router.back();
-  }
-
-  function handleSignInTap() {
-    setShowLoginForm(true);
+    router.push({
+      pathname: '/(main)/booking/register',
+      params: {
+        ...bookingParams,
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+      },
+    });
   }
 
   async function handleLoginSubmit() {
@@ -103,7 +74,7 @@ export default function BookingIdentificationScreen() {
     try {
       const response = await login({ email: email.trim(), password });
       setAuthUser(response.user);
-      router.replace('/(main)');
+      router.back();
     } catch (error: unknown) {
       const message =
         error && typeof error === 'object' && 'response' in error
@@ -115,120 +86,80 @@ export default function BookingIdentificationScreen() {
     }
   }
 
-  function handleCreateAccount() {
-    router.push('/(main)/booking/register');
-  }
-
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
-          <Ionicons name="arrow-back" size={24} color={colors.light.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>PLANITY</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={T.colors.paper} />
+      <Pressable
+        onPress={() => router.back()}
+        style={styles.back}
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+      >
+        <Ionicons name="arrow-back" size={22} color={T.colors.ink} />
+      </Pressable>
 
       <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
-        keyboardVerticalOffset={0}
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: spacing['3xl'] + keyboardHeight },
-          ]}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: insets.bottom + 32 + keyboardHeight,
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.screenTitle}>AUTHENTICATION</Text>
+          <Text style={styles.title}>Identify</Text>
 
-          {/* Summary card - unchanged */}
-          <View style={styles.summarySection}>
-            <Text style={styles.sectionLabel}>SUMMARY</Text>
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryLeft}>
-                <View style={styles.calendarIconWrap}>
-                  <Ionicons name="calendar-outline" size={22} color={colors.light.text} />
-                </View>
-                <View style={styles.summaryText}>
-                  <Text style={styles.summaryDate}>{dateLabel}</Text>
-                  <Text style={styles.summaryTime}>{timeLabel}</Text>
-                  {servicesLabel ? (
-                    <Text style={styles.summaryServices}>{servicesLabel}</Text>
-                  ) : null}
-                </View>
-              </View>
-              <TouchableOpacity onPress={handleModify} style={styles.modifyButton}>
-                <Text style={styles.modifyText}>MODIFY</Text>
-              </TouchableOpacity>
+          <AtelierField
+            label="Name"
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+            autoComplete="name"
+          />
+          <AtelierField
+            label="Email Address"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+          />
+          <AtelierField
+            label="Phone Number"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            autoComplete="tel"
+          />
+
+          <AtelierButton label="Continue" onPress={handleContinue} />
+
+          <Pressable
+            onPress={() => setShowLogin((v) => !v)}
+            style={styles.signInLink}
+            accessibilityRole="button"
+          >
+            <Text style={styles.signInText}>Already have an account? Sign in</Text>
+          </Pressable>
+
+          {showLogin ? (
+            <View style={styles.loginBlock}>
+              <AtelierField
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+              <AtelierButton
+                label="Sign in"
+                onPress={handleLoginSubmit}
+                loading={loginLoading}
+              />
             </View>
-          </View>
-
-          <View style={styles.authSection}>
-            <Text style={styles.authHeading}>New to the app?</Text>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={handleCreateAccount}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.primaryButtonText}>CREATE MY ACCOUNT</Text>
-            </TouchableOpacity>
-
-            <View style={styles.orRow}>
-              <View style={styles.orLine} />
-              <Text style={styles.orText}>OR</Text>
-              <View style={styles.orLine} />
-            </View>
-
-            {!showLoginForm ? (
-              <>
-                <Text style={styles.authHeading}>Already have an account?</Text>
-                <TouchableOpacity
-                  style={styles.secondaryButton}
-                  onPress={handleSignInTap}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.secondaryButtonText}>SIGN IN</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <Animated.View
-                key="login-form"
-                entering={FadeInDown.duration(320)}
-                exiting={FadeOutUp.duration(200)}
-                style={styles.loginFormWrap}
-              >
-                <Text style={styles.authHeading}>Sign in</Text>
-                <Input
-                  label="Email"
-                  placeholder="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                />
-                <Input
-                  label="Password"
-                  placeholder="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  autoCapitalize="none"
-                />
-                <Button
-                  title={loginLoading ? 'Signing in…' : 'Sign in'}
-                  onPress={handleLoginSubmit}
-                  variant="primary"
-                  disabled={loginLoading}
-                  loading={loginLoading}
-                  style={styles.loginSubmitButton}
-                />
-              </Animated.View>
-            )}
-          </View>
+          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -236,191 +167,24 @@ export default function BookingIdentificationScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.light.background,
+  screen: { flex: 1, backgroundColor: T.colors.paper },
+  flex: { flex: 1 },
+  back: { width: 40, height: 40, justifyContent: 'center', marginLeft: 8 },
+  title: {
+    fontFamily: T.font.display,
+    fontSize: 36,
+    lineHeight: 40,
+    letterSpacing: -0.6,
+    color: T.colors.ink,
+    marginBottom: 28,
+    marginTop: 8,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.light.border,
-    backgroundColor: colors.light.surface,
-  },
-  headerBack: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: 3,
-    color: colors.light.text,
-  },
-  headerSpacer: {
-    width: 40,
-  },
-  screenTitle: {
-    fontSize: 28,
-    fontWeight: '300',
-    letterSpacing: 0.5,
-    color: colors.light.text,
-    textAlign: 'center',
-    textTransform: 'uppercase',
-    marginBottom: spacing.xl,
-  },
-  scroll: {
-    flex: 1,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing['3xl'],
-  },
-  summarySection: {
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: colors.light.textSecondary,
-    marginBottom: spacing.lg,
-  },
-  summaryCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    backgroundColor: colors.light.surfaceSecondary,
-    padding: spacing.lg,
-    borderRadius: 0,
-  },
-  summaryLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    flex: 1,
-  },
-  calendarIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 0,
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    backgroundColor: colors.light.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  summaryText: {
-    flex: 1,
-  },
-  summaryDate: {
+  signInLink: { paddingVertical: 20 },
+  signInText: {
+    fontFamily: T.font.body,
     fontSize: 14,
-    fontWeight: '700',
-    color: colors.light.text,
-    marginBottom: 2,
-  },
-  summaryTime: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.light.text,
-    marginBottom: 4,
-  },
-  summaryServices: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: colors.light.textSecondary,
-    textTransform: 'uppercase',
-  },
-  modifyButton: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-  modifyText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: colors.light.text,
+    color: T.colors.muted,
     textDecorationLine: 'underline',
   },
-  authSection: {
-    paddingTop: spacing['2xl'],
-    paddingBottom: spacing.xl,
-  },
-  authHeading: {
-    fontSize: 20,
-    fontWeight: '300',
-    letterSpacing: 0.5,
-    color: colors.light.text,
-    textAlign: 'center',
-    marginBottom: spacing.lg,
-  },
-  primaryButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.light.text,
-    paddingVertical: 16,
-    paddingHorizontal: spacing.lg,
-    width: '100%',
-    borderRadius: 999,
-  },
-  primaryButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: '#FFF',
-  },
-  orRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-    gap: spacing.md,
-  },
-  orLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.light.border,
-  },
-  orText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: colors.light.textSecondary,
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.light.text,
-    backgroundColor: 'transparent',
-    paddingVertical: 16,
-    paddingHorizontal: spacing.lg,
-    width: '100%',
-    borderRadius: 999,
-  },
-  secondaryButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: colors.light.text,
-  },
-  loginFormWrap: {
-    gap: 0,
-  },
-  loginSubmitButton: {
-    marginTop: spacing.md,
-  },
+  loginBlock: { marginTop: 4 },
 });

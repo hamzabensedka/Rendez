@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import { useWindowDimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing } from '@planity/ui';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 import type { Slot } from '../hooks/useBookingData';
 
-const INITIAL_SLOTS_VISIBLE = 6;
+const INITIAL_SLOTS_VISIBLE = 8;
 
 interface BookingSlotsGridProps {
   slots: Slot[];
@@ -25,173 +24,76 @@ export function BookingSlotsGrid({
   onRetry,
 }: BookingSlotsGridProps) {
   const { width } = useWindowDimensions();
-  const slotWidth = (width - spacing.lg * 2 - spacing.md * 2) / 3;
+  const slotWidth = (width - 32 - 24) / 4;
   const [showMoreSlots, setShowMoreSlots] = useState(false);
   const displaySlots = showMoreSlots ? slots : slots.slice(0, INITIAL_SLOTS_VISIBLE);
   const hasMoreSlots = slots.length > INITIAL_SLOTS_VISIBLE;
 
-  if (loading) {
-    return (
-      <View style={styles.timeSection}>
-        <Text style={styles.sectionTitle}>AVAILABLE TIME</Text>
-        <View style={styles.slotsLoading}>
-          <ActivityIndicator size="small" color={colors.light.text} />
-        </View>
-      </View>
-    );
-  }
-
-  if (slotsError) {
-    return (
-      <View style={styles.timeSection}>
-        <Text style={styles.sectionTitle}>AVAILABLE TIME</Text>
-        <View style={styles.slotsErrorWrap}>
-          <Text style={styles.slotsEmpty}>Unable to load times. Please try again.</Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={onRetry}
-            accessibilityLabel="Retry loading times"
-            accessibilityRole="button"
-          >
-            <Text style={styles.retryButtonText}>RETRY</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  if (slots.length === 0) {
-    return (
-      <View style={styles.timeSection}>
-        <Text style={styles.sectionTitle}>AVAILABLE TIME</Text>
-        <Text style={styles.slotsEmpty}>No slots available for this date</Text>
-      </View>
-    );
-  }
-
   return (
-    <View style={styles.timeSection}>
-      <Text style={styles.sectionTitle}>AVAILABLE TIME</Text>
-      <View style={styles.slotsGrid}>
-        {displaySlots.map((slot, index) => {
-          const date = new Date(slot.startAt);
-          const timeStr = date.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-          });
-          const isSelected = selectedSlot === slot.startAt;
-          return (
-            <TouchableOpacity
-              key={index}
-              style={[styles.slotChip, { width: slotWidth }, isSelected && styles.slotChipSelected]}
-              onPress={() => onSelectSlot(slot.startAt)}
-              activeOpacity={0.7}
-              accessibilityLabel={`Select time ${timeStr}`}
-              accessibilityRole="button"
-            >
-              <Text style={[styles.slotChipText, isSelected && styles.slotChipTextSelected]}>
-                {timeStr}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-      {hasMoreSlots && (
-        <TouchableOpacity
-          style={styles.seeMoreSlots}
-          onPress={() => setShowMoreSlots((v) => !v)}
-          accessibilityLabel={showMoreSlots ? 'See fewer slots' : 'See more slots'}
-          accessibilityRole="button"
-        >
-          <Text style={styles.seeMoreSlotsText}>
-            {showMoreSlots ? 'SEE FEWER SLOTS' : 'SEE MORE SLOTS'}
-          </Text>
-          <Ionicons
-            name={showMoreSlots ? 'chevron-up' : 'chevron-down'}
-            size={18}
-            color={colors.light.textSecondary}
-          />
-        </TouchableOpacity>
+    <View style={styles.section}>
+      <Text style={styles.heading}>Time</Text>
+      {loading ? (
+        <ActivityIndicator size="small" color={T.colors.ink} style={{ marginVertical: 24 }} />
+      ) : slotsError ? (
+        <Pressable onPress={onRetry} style={styles.retry}>
+          <Text style={styles.muted}>Unable to load times. Retry</Text>
+        </Pressable>
+      ) : slots.length === 0 ? (
+        <Text style={styles.muted}>No slots for this date</Text>
+      ) : (
+        <>
+          <View style={styles.grid}>
+            {displaySlots.map((slot, index) => {
+              const timeStr = new Date(slot.startAt).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+              });
+              const isSelected = selectedSlot === slot.startAt;
+              return (
+                <Pressable
+                  key={index}
+                  style={[styles.slot, { width: slotWidth }, isSelected && styles.slotOn]}
+                  onPress={() => onSelectSlot(slot.startAt)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select time ${timeStr}`}
+                >
+                  <Text style={[styles.slotText, isSelected && styles.slotTextOn]}>{timeStr}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {hasMoreSlots ? (
+            <Pressable onPress={() => setShowMoreSlots((v) => !v)} style={styles.more}>
+              <Text style={styles.muted}>{showMoreSlots ? 'Fewer times' : 'More times'}</Text>
+            </Pressable>
+          ) : null}
+        </>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  timeSection: {
-    padding: spacing.lg,
-    paddingTop: spacing.xl,
+  section: { padding: 16, paddingTop: 16 },
+  heading: {
+    fontFamily: T.font.display,
+    fontSize: 16,
+    color: T.colors.ink,
+    marginBottom: 12,
   },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: colors.light.text,
-  },
-  slotsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-  },
-  slotChip: {
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.light.border,
-    backgroundColor: colors.light.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  slotChipSelected: {
-    backgroundColor: colors.light.text,
-    borderColor: colors.light.text,
-  },
-  slotChipText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.light.text,
-  },
-  slotChipTextSelected: { color: '#FFF' },
-  slotsLoading: {
-    padding: spacing['2xl'],
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  slot: {
+    paddingVertical: 10,
+    borderRadius: T.radius.card,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: T.colors.rule,
     alignItems: 'center',
   },
-  slotsEmpty: {
-    fontSize: 14,
-    color: colors.light.textSecondary,
-    textAlign: 'center',
-    paddingVertical: spacing.xl,
-  },
-  slotsErrorWrap: {
-    paddingVertical: spacing.lg,
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  retryButton: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.light.border,
-  },
-  retryButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: colors.light.text,
-  },
-  seeMoreSlots: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: spacing.lg,
-    paddingVertical: 12,
-  },
-  seeMoreSlotsText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 2,
-    color: colors.light.textSecondary,
-  },
+  slotOn: { backgroundColor: T.colors.ink, borderColor: T.colors.ink },
+  slotText: { fontFamily: T.font.medium, fontSize: 14, color: T.colors.ink },
+  slotTextOn: { color: T.colors.bookedText },
+  muted: { fontFamily: T.font.body, fontSize: 14, color: T.colors.muted },
+  retry: { paddingVertical: 16 },
+  more: { paddingVertical: 16 },
 });

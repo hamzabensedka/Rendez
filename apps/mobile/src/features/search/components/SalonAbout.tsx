@@ -224,7 +224,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7', // Fallback color
   },
   mapBackground: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: '#E5F6FD', // Light blue map-like color
     // In a real app, use an Image component with a map static image here
   },

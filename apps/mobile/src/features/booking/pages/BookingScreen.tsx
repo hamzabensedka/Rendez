@@ -1,27 +1,25 @@
+// @refresh reset
 import React, { useState, useMemo } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { colors } from '@planity/ui';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFloatingBarOffset } from '../../../application/components/BottomNav';
 import { useBookingData } from '../hooks/useBookingData';
+import type { Slot } from '../hooks/useBookingData';
 import { useBookingCart } from '../hooks/useBookingCart';
 import { useBookingSubmit } from '../hooks/useBookingSubmit';
 import {
   BookingHeader,
-  BookingProgressBar,
   BookingServiceList,
   BookingDatePicker,
   BookingSlotsGrid,
   BookingFooter,
   AddServiceModal,
+  StaffChips,
 } from '../components';
 
 import type { BookingCartItem } from '../types';
-
-/** Step 2 of 4: Date & Time selection. All UI strings in this flow are en-only until i18n is added. */
-const BOOKING_STEP_LABEL = 'Step 2 of 4';
-const BOOKING_STEP_TITLE = 'Date & Time selection';
-const BOOKING_STEP_PERCENT = '50%';
 
 export default function BookingScreen() {
   const {
@@ -43,23 +41,17 @@ export default function BookingScreen() {
   }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const footerBottomOffset = useFloatingBarOffset();
 
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [addServiceModalVisible, setAddServiceModalVisible] = useState(false);
 
-  const {
-    business,
-    serviceVariant,
-    slots,
-    availableDates,
-    selectedDate,
-    setSelectedDate,
-    loadingSlots,
-    slotsError,
-    loadAvailability,
-  } = useBookingData(businessId, serviceVariantId);
+  const preview = useBookingData(businessId, serviceVariantId, selectedStaffId, [], {
+    slots: false,
+  });
 
-  const displayName = business?.name ?? paramBusinessName ?? 'Salon';
+  const displayName = preview.business?.name ?? paramBusinessName ?? 'Salon';
 
   const initialSingleItem = useMemo((): BookingCartItem | null => {
     if (paramServiceName && serviceVariantId) {
@@ -70,24 +62,41 @@ export default function BookingScreen() {
         priceCents: paramPriceCents ? parseInt(paramPriceCents, 10) : null,
       };
     }
-    if (serviceVariant) {
+    if (preview.serviceVariant) {
       return {
-        serviceVariantId: serviceVariant.id,
-        name: serviceVariant.name,
-        durationMin: serviceVariant.durationMin,
-        priceCents: serviceVariant.priceCents,
+        serviceVariantId: preview.serviceVariant.id,
+        name: preview.serviceVariant.name,
+        durationMin: preview.serviceVariant.durationMin,
+        priceCents: preview.serviceVariant.priceCents,
       };
     }
     return null;
-  }, [serviceVariantId, paramServiceName, paramDurationMin, paramPriceCents, serviceVariant]);
+  }, [serviceVariantId, paramServiceName, paramDurationMin, paramPriceCents, preview.serviceVariant]);
 
   const cart = useBookingCart(
     {
       paramExistingServices,
       initialSingleItem,
-      business,
+      business: preview.business,
     },
     () => router.back()
+  );
+
+  const {
+    business,
+    staff,
+    slots,
+    availableDates,
+    selectedDate,
+    setSelectedDate,
+    loadingSlots,
+    slotsError,
+    loadAvailability,
+  } = useBookingData(
+    businessId,
+    serviceVariantId,
+    selectedStaffId,
+    cart.selectedServices.map((s) => s.serviceVariantId)
   );
 
   const submit = useBookingSubmit({
@@ -96,6 +105,16 @@ export default function BookingScreen() {
     selectedServices: cart.selectedServices,
     displayName,
   });
+
+  function handleSelectStaff(id: string | null) {
+    setSelectedStaffId(id);
+    setSelectedSlot(null);
+  }
+
+  function handleSelectDate(d: Date) {
+    setSelectedDate(d);
+    setSelectedSlot(null);
+  }
 
   function handleAddAnotherPress() {
     if (business?.services && cart.availableVariantsToAdd.length > 0) {
@@ -114,36 +133,46 @@ export default function BookingScreen() {
 
   function handleAddService(item: BookingCartItem) {
     cart.handleAddService(item);
+    setSelectedSlot(null);
     setAddServiceModalVisible(false);
   }
 
-  // Footer sits at safe area bottom
-  const footerBottomOffset = insets.bottom;
+  function handleRemoveService(index: number) {
+    cart.handleRemoveService(index);
+    setSelectedSlot(null);
+  }
 
   return (
-    <View style={[styles.container, { paddingBottom: 140 + footerBottomOffset }]}>
-      <BookingHeader title={displayName} paddingTop={insets.top} />
-      <BookingProgressBar
-        stepLabel={BOOKING_STEP_LABEL}
-        title={BOOKING_STEP_TITLE}
-        progressPercent={BOOKING_STEP_PERCENT}
-      />
+    <View style={[styles.container, { paddingBottom: footerBottomOffset }]}>
+      <BookingHeader title="Your visit" paddingTop={insets.top} />
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <BookingServiceList
           items={cart.selectedServices}
-          onRemove={cart.handleRemoveService}
+          onRemove={handleRemoveService}
           onAddAnother={handleAddAnotherPress}
+        />
+        <StaffChips
+          staff={staff}
+          selectedStaffId={selectedStaffId}
+          onSelect={handleSelectStaff}
         />
         <BookingDatePicker
           availableDates={availableDates}
           selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
+          onSelectDate={handleSelectDate}
         />
         <BookingSlotsGrid
           slots={slots}
-          selectedSlot={selectedSlot}
-          onSelectSlot={setSelectedSlot}
+          selectedSlot={selectedSlot?.startAt ?? null}
+          onSelectSlot={(startAt) => {
+            const match = slots.find((s) => s.startAt === startAt) ?? { startAt, staffId: selectedStaffId };
+            setSelectedSlot(match);
+          }}
           loading={loadingSlots}
           slotsError={slotsError}
           onRetry={loadAvailability}
@@ -155,7 +184,6 @@ export default function BookingScreen() {
         onConfirm={() => submit.handleConfirmDate(selectedSlot)}
         disabled={!selectedSlot || cart.selectedServices.length === 0}
         loading={submit.booking}
-        bottomOffset={footerBottomOffset}
       />
 
       <AddServiceModal
@@ -171,7 +199,8 @@ export default function BookingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.light.background,
+    backgroundColor: T.colors.paper,
   },
   scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 24 },
 });

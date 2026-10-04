@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, StatusBar, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Pressable, StatusBar, ActivityIndicator, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Text } from '@planity/ui';
 import { useAuth } from '../../../application/providers';
 import { useBottomNavInset } from '../../../application/components/BottomNav';
-import { editorialTheme as THEME } from '../../../application/theme/editorialTheme';
+import { isProviderRole } from '../../../shared/lib/auth';
+import { providerTheme as T } from '../../../application/theme/providerTheme';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -19,70 +19,50 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator color={THEME.colors.primary} />
-      </View>
-    );
-  }
-
-  if (!user) {
-    return (
-      <View style={styles.container}>
-        <StatusBar barStyle="dark-content" />
-        <SafeAreaView style={styles.safe} edges={['top']}>
-          <View style={[styles.body, { paddingBottom: bottomInset + 24 }]}>
-            <Text variant="title2" style={styles.title}>
-              Account
-            </Text>
-            <Text style={styles.subtitle}>Sign in to manage bookings and favorites.</Text>
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={() => router.push('/(auth)/login')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.primaryButtonText}>Log in</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => router.push('/(auth)/register')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.secondaryButtonText}>Create account</Text>
-            </TouchableOpacity>
-          </View>
-        </SafeAreaView>
+      <View style={[styles.screen, styles.center]}>
+        <ActivityIndicator color={T.colors.ink} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <View style={styles.screen}>
+      <StatusBar barStyle="dark-content" backgroundColor={T.colors.paper} />
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={[styles.body, { paddingBottom: bottomInset + 24 }]}>
-          <Text variant="title2" style={styles.title}>
-            Account
-          </Text>
-          <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.email}>{user.email}</Text>
+        <View style={{ paddingHorizontal: 16, paddingBottom: bottomInset + 24 }}>
+          <Text style={styles.name}>{user?.name ?? 'Account'}</Text>
+          {user?.email ? <Text style={styles.email}>{user.email}</Text> : null}
 
-          {user.role === 'providerOwner' || user.role === 'providerStaff' ? (
-            <TouchableOpacity
-              style={styles.primaryButton}
-              onPress={() => router.push('/(main)/provider-portal')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.primaryButtonText}>Provider portal</Text>
-            </TouchableOpacity>
-          ) : null}
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={handleLogout}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.secondaryButtonText}>Log out</Text>
-          </TouchableOpacity>
+          {user ? (
+            <>
+              {isProviderRole(user.role) ? (
+                <Pressable
+                  style={styles.row}
+                  onPress={() => router.push('/(main)/provider-portal')}
+                >
+                  <Text style={styles.rowText}>Floor</Text>
+                </Pressable>
+              ) : null}
+              <Pressable style={styles.row} onPress={() => router.push('/(main)/bookings')}>
+                <Text style={styles.rowText}>Appointments</Text>
+              </Pressable>
+              <Pressable style={styles.row} onPress={() => router.push('/(main)/favorites')}>
+                <Text style={styles.rowText}>Saved</Text>
+              </Pressable>
+              <Pressable style={styles.row} onPress={handleLogout}>
+                <Text style={styles.rowText}>Sign out</Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Pressable style={styles.inkBtn} onPress={() => router.push('/(auth)/login')}>
+                <Text style={styles.inkBtnText}>Sign in</Text>
+              </Pressable>
+              <Pressable style={styles.textLink} onPress={() => router.push('/(auth)/register')}>
+                <Text style={styles.quiet}>Create account</Text>
+              </Pressable>
+            </>
+          )}
         </View>
       </SafeAreaView>
     </View>
@@ -90,57 +70,39 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: THEME.colors.surface,
-  },
-  centered: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  safe: {
-    flex: 1,
-  },
-  body: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-  },
-  title: {
-    marginBottom: 12,
-  },
-  subtitle: {
-    color: THEME.colors.onSurfaceVariant,
-    marginBottom: 24,
-  },
+  screen: { flex: 1, backgroundColor: T.colors.paper },
+  safe: { flex: 1 },
+  center: { alignItems: 'center', justifyContent: 'center' },
   name: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontFamily: T.font.display,
+    fontSize: T.type.display.fontSize,
+    lineHeight: T.type.display.lineHeight,
+    letterSpacing: T.type.display.letterSpacing,
+    color: T.colors.ink,
+    marginTop: 12,
   },
   email: {
-    color: THEME.colors.onSurfaceVariant,
-    marginBottom: 32,
+    fontFamily: T.font.body,
+    fontSize: 16,
+    color: T.colors.muted,
+    marginTop: 6,
+    marginBottom: 28,
   },
-  primaryButton: {
-    backgroundColor: THEME.colors.primary,
-    paddingVertical: 14,
-    borderRadius: 12,
+  row: {
+    paddingVertical: 18,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: T.colors.rule,
+  },
+  rowText: { fontFamily: T.font.body, fontSize: 16, color: T.colors.ink },
+  inkBtn: {
+    height: 52,
+    backgroundColor: T.colors.ink,
+    borderRadius: T.radius.card,
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'center',
+    marginTop: 16,
   },
-  primaryButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  secondaryButton: {
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: THEME.colors.outline,
-  },
-  secondaryButtonText: {
-    fontWeight: '600',
-  },
+  inkBtnText: { fontFamily: T.font.medium, fontSize: 15, color: T.colors.bookedText },
+  textLink: { paddingVertical: 16 },
+  quiet: { fontFamily: T.font.body, fontSize: 14, color: T.colors.muted },
 });
