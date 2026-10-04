@@ -91,6 +91,7 @@ model User {
   name         String
   role         UserRole   @default(client)
   status       UserStatus @default(active)
+  emailVerifiedAt DateTime? @map("email_verified_at")
   lastLoginAt  DateTime? @map("last_login_at")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
@@ -103,6 +104,8 @@ model User {
   notifications   Notification[]
   favorites       Favorite[]
   refreshTokenSessions RefreshTokenSession[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
 
   @@map("users")
 }
@@ -522,5 +525,37 @@ model SubscriptionInvoice {
   @@index([subscriptionId])
   @@index([status])
   @@map("subscription_invoices")
+}
+
+/// Single-use email-verification token (hashed at rest). Raw token is only ever
+/// sent to the user's email; the DB stores its SHA-256.
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("email_verification_tokens")
+}
+
+/// Single-use password-reset token (hashed at rest, short expiry). A successful
+/// reset revokes all refresh sessions for the user.
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 

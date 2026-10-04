@@ -90,3 +90,13 @@ export async function getCurrentUser() {
   // Canonical GET /auth/me returns the user profile object (same shape as former GET /users/me).
   return response.data;
 }
+
+/** Request a password-reset email. Always resolves (server never reveals existence). */
+export async function forgotPassword(email: string): Promise<void> {
+  await api.post('/auth/forgot-password', { email });
+}
+
+/** Resend the email-verification link. */
+export async function resendVerification(email: string): Promise<void> {
+  await api.post('/auth/resend-verification', { email });
+}

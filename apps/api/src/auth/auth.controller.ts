@@ -7,6 +7,12 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { LogoutDto } from './dto/logout.dto';
+import {
+  ForgotPasswordDto,
+  ResendVerificationDto,
+  ResetPasswordDto,
+  VerifyEmailDto,
+} from './dto/auth-email.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { AuthenticatedUser } from './types/authenticated-user.type';
@@ -76,5 +82,43 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Current user profile' })
   async me(@CurrentUser() user: AuthenticatedUser) {
     return this.usersService.findOne(user.id);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify email with a single-use token' })
+  @ApiResponse({ status: 200, description: 'Email verified' })
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.authService.verifyEmail(dto.token);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend the verification email (always 200)' })
+  @ApiResponse({ status: 200, description: 'Verification email sent if eligible' })
+  async resendVerification(@Body() dto: ResendVerificationDto) {
+    await this.authService.resendVerification(dto.email);
+    return { sent: true };
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Email a password-reset link (always 200)' })
+  @ApiResponse({ status: 200, description: 'Reset email sent if the account exists' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto.email);
+    return { sent: true };
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Reset password with a single-use token; revokes all sessions' })
+  @ApiResponse({ status: 200, description: 'Password reset' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.password);
   }
 }

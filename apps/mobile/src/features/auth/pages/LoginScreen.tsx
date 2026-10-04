@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { homeHrefForRole, login } from '../../../shared/lib/auth';
+import { homeHrefForRole, login, forgotPassword } from '../../../shared/lib/auth';
 import { useAuth } from '../../../application/providers';
 import { useKeyboardHeight } from '../../../application/hooks/useKeyboardHeight';
 import { DEV_LOGIN_ACCOUNTS } from '../devAccounts';
@@ -34,6 +34,22 @@ export default function LoginScreen() {
     setEmail(account.email);
     setPassword(account.password);
     setRole(account.label === 'Professional' ? 'professional' : 'client');
+  }
+
+  async function handleForgotPassword() {
+    if (!email) {
+      Alert.alert('Enter your email', 'Type your email above, then tap "Forgot password".');
+      return;
+    }
+    try {
+      await forgotPassword(email);
+    } catch {
+      // Server always returns 200; ignore network noise for UX simplicity.
+    }
+    Alert.alert(
+      'Check your email',
+      'If an account exists for that address, we sent a link to reset your password.'
+    );
   }
 
   async function handleLogin() {
@@ -156,6 +172,9 @@ export default function LoginScreen() {
             </Pressable>
 
             <View style={styles.links}>
+              <Pressable onPress={handleForgotPassword} accessibilityRole="button">
+                <Text style={styles.quiet}>Forgot password?</Text>
+              </Pressable>
               <Pressable
                 onPress={() => router.replace('/(main)/explore')}
                 accessibilityRole="button"

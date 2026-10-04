@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { homeHrefForRole, register } from '../../../shared/lib/auth';
+import { homeHrefForRole, register, resendVerification } from '../../../shared/lib/auth';
 import { useAuth } from '../../../application/providers';
 import { providerTheme as T } from '../../../application/theme/providerTheme';
 
@@ -45,7 +45,13 @@ export default function VerificationScreen() {
       const response = await register({ email: email || '', name, password: password || '' });
       setPendingRegistration(null);
       setAuthUser(response.user);
-      router.replace(homeHrefForRole(response.user.role));
+      // The account is created; a verification link was emailed. Let the user in,
+      // and tell them to confirm via the link in their inbox.
+      Alert.alert(
+        'Verify your email',
+        `We sent a verification link to ${email}. Tap it to confirm your account.`,
+        [{ text: 'OK', onPress: () => router.replace(homeHrefForRole(response.user.role)) }]
+      );
     } catch (error: unknown) {
       const message =
         error && typeof error === 'object' && 'response' in error
@@ -55,6 +61,19 @@ export default function VerificationScreen() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleResend() {
+    if (!email) {
+      Alert.alert('No email', 'Go back and enter your email again.');
+      return;
+    }
+    try {
+      await resendVerification(email);
+    } catch {
+      // Server always returns 200; ignore network noise.
+    }
+    Alert.alert('Email sent', `If your account is pending verification, we emailed ${email}.`);
   }
 
   const digits = Array.from({ length: DIGITS }, (_, i) => code[i] ?? '');
@@ -96,7 +115,7 @@ export default function VerificationScreen() {
         )}
       </Pressable>
       <Pressable
-        onPress={() => Alert.alert('Code resent', 'Check your email again.')}
+        onPress={handleResend}
         style={styles.resend}
         accessibilityRole="button"
       >
