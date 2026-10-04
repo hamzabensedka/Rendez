@@ -3,6 +3,137 @@ import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
 
+const REVIEW_TEMPLATES = [
+  {
+    email: 'marie.r@planity.com',
+    name: 'Marie R.',
+    rating: 5,
+    comment: 'Accueil impeccable et coupe exactement comme je voulais. Je reviens sans hésiter.',
+  },
+  {
+    email: 'thomas.b@planity.com',
+    name: 'Thomas B.',
+    rating: 5,
+    comment: 'Ponctuel, à l’écoute, et le résultat est nickel. Très bon salon.',
+  },
+  {
+    email: 'camille.d@planity.com',
+    name: 'Camille D.',
+    rating: 4,
+    comment: 'Belle prestation, un peu d’attente mais le résultat en valait la peine.',
+  },
+  {
+    email: 'lucas.m@planity.com',
+    name: 'Lucas M.',
+    rating: 5,
+    comment: 'Coloration parfaite, conseils clairs. Je recommande.',
+  },
+  {
+    email: 'sofia.l@planity.com',
+    name: 'Sofia L.',
+    rating: 4,
+    comment: 'Équipe professionnelle et salon très propre. Rdv pris en quelques clics.',
+  },
+] as const;
+
+async function seedApprovedReviews(passwordHash: string) {
+  const reviewers: Array<(typeof REVIEW_TEMPLATES)[number] & { id: string }> = [];
+  for (const template of REVIEW_TEMPLATES) {
+    const user = await prisma.user.upsert({
+      where: { email: template.email },
+      update: { name: template.name, role: 'client', status: 'active' },
+      create: {
+        email: template.email,
+        passwordHash,
+        name: template.name,
+        role: 'client',
+        status: 'active',
+      },
+    });
+    reviewers.push({ ...template, id: user.id });
+  }
+
+  const businesses = await prisma.business.findMany({
+    where: { status: 'active', deletedAt: null },
+    include: {
+      locations: { take: 1 },
+      staff: { where: { isActive: true }, take: 1 },
+      services: {
+        where: { isActive: true },
+        take: 1,
+        include: { serviceVariants: { take: 1 } },
+      },
+    },
+  });
+
+  let count = 0;
+  for (const biz of businesses) {
+    const location = biz.locations[0];
+    const variant = biz.services[0]?.serviceVariants[0];
+    if (!location || !variant) continue;
+    const staffId = biz.staff[0]?.id ?? null;
+
+    for (let i = 0; i < reviewers.length; i++) {
+      const reviewer = reviewers[i];
+      const startAtUtc = new Date(Date.UTC(2025, 10, 3 + i * 3, 8 + i, 0, 0));
+      const endAtUtc = new Date(startAtUtc.getTime() + variant.durationMin * 60 * 1000);
+      const idempotencyKey = `seed-review-${biz.id}-${i}`;
+
+      const appointment = await prisma.appointment.upsert({
+        where: { idempotencyKey },
+        create: {
+          businessId: biz.id,
+          locationId: location.id,
+          clientUserId: reviewer.id,
+          staffId,
+          status: 'COMPLETED',
+          startAtUtc,
+          endAtUtc,
+          timezoneSnapshot: 'Europe/Paris',
+          source: 'admin',
+          idempotencyKey,
+          appointmentItems: {
+            create: {
+              serviceVariantId: variant.id,
+              durationMinSnapshot: variant.durationMin,
+              priceCentsSnapshot: variant.priceCents,
+              bufferBeforeMinSnapshot: variant.bufferBeforeMin,
+              bufferAfterMinSnapshot: variant.bufferAfterMin,
+            },
+          },
+        },
+        update: {
+          status: 'COMPLETED',
+          startAtUtc,
+          endAtUtc,
+          clientUserId: reviewer.id,
+          staffId,
+        },
+      });
+
+      await prisma.review.upsert({
+        where: { appointmentId: appointment.id },
+        create: {
+          businessId: biz.id,
+          appointmentId: appointment.id,
+          clientUserId: reviewer.id,
+          rating: reviewer.rating,
+          comment: reviewer.comment,
+          status: 'approved',
+        },
+        update: {
+          rating: reviewer.rating,
+          comment: reviewer.comment,
+          status: 'approved',
+        },
+      });
+      count += 1;
+    }
+  }
+
+  console.log(`   + ${count} approved reviews across ${businesses.length} salons`);
+}
+
 async function main() {
   console.log('🌱 Seeding database...');
 
@@ -27,7 +158,11 @@ async function main() {
   const adminPassword = await argon2.hash('admin123');
   const admin = await prisma.user.upsert({
     where: { email: 'admin@planity.com' },
-    update: {},
+    update: {
+      passwordHash: adminPassword,
+      role: 'admin',
+      status: 'active',
+    },
     create: {
       email: 'admin@planity.com',
       passwordHash: adminPassword,
@@ -41,7 +176,11 @@ async function main() {
   const providerPassword = await argon2.hash('provider123');
   const providerUser = await prisma.user.upsert({
     where: { email: 'provider@planity.com' },
-    update: {},
+    update: {
+      passwordHash: providerPassword,
+      role: 'providerOwner',
+      status: 'active',
+    },
     create: {
       email: 'provider@planity.com',
       passwordHash: providerPassword,
@@ -55,7 +194,11 @@ async function main() {
   const clientPassword = await argon2.hash('client123');
   const client = await prisma.user.upsert({
     where: { email: 'client@planity.com' },
-    update: {},
+    update: {
+      passwordHash: clientPassword,
+      role: 'client',
+      status: 'active',
+    },
     create: {
       email: 'client@planity.com',
       passwordHash: clientPassword,
@@ -860,6 +1003,8 @@ async function main() {
       console.log('   + Backfilled business-level availability for business', b.id);
     }
   }
+
+  await seedApprovedReviews(clientPassword);
 
   console.log('✅ Seeding completed!');
   console.log('   + 3 coiffeur shops: Coiffure Élégance, Le Salon du Marais, Boucles & Co');

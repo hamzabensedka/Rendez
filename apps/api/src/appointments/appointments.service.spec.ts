@@ -8,6 +8,7 @@ import {
 import { AppointmentsService } from './appointments.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { AvailabilityService } from '../availability/availability.service';
 import { UserRole } from '@planity/shared';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
@@ -79,9 +80,15 @@ describe('AppointmentsService', () => {
   });
 
   let mockPrisma: ReturnType<typeof createMockPrisma>;
+  const mockAvailability = {
+    getAvailableSlots: jest.fn(),
+    invalidateForBusiness: jest.fn().mockResolvedValue(undefined),
+  };
 
   beforeEach(async () => {
     mockPrisma = createMockPrisma();
+    mockAvailability.getAvailableSlots.mockReset();
+    mockAvailability.invalidateForBusiness.mockReset().mockResolvedValue(undefined);
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AppointmentsService,
@@ -90,6 +97,7 @@ describe('AppointmentsService', () => {
           provide: NotificationsService,
           useValue: { sendOnce: jest.fn().mockResolvedValue({ id: 'n-1', delivered: true }) },
         },
+        { provide: AvailabilityService, useValue: mockAvailability },
       ],
     }).compile();
 
@@ -268,6 +276,12 @@ describe('AppointmentsService', () => {
         mockAppointment({ id: 'new-apt', businessId: businessA })
       );
       mockPrisma.appointmentItem.createMany.mockResolvedValue({ count: 1 });
+      mockAvailability.getAvailableSlots.mockResolvedValue({
+        date: '2026-01-01',
+        timezone: 'Europe/Paris',
+        slotStepMin: 15,
+        slots: [{ startAt: new Date(baseDto.startAt).toISOString(), staffId: staffA }],
+      });
     });
 
     it('rejects when locationId does not belong to businessId', async () => {
@@ -374,6 +388,64 @@ describe('AppointmentsService', () => {
       // end = start + 45min + 10min buffer; occupied start = start - 5min buffer
       const start = new Date(baseDto.startAt).getTime();
       expect(new Date(createArg.data.endAtUtc).getTime()).toBe(start + (45 + 10) * 60_000);
+    });
+
+    it('rejects inactive staff', async () => {
+      mockPrisma.location.findFirst.mockResolvedValue({ id: locationA, businessId: businessA });
+      mockPrisma.staff.findFirst.mockResolvedValue(null);
+
+      await expect(service.create(client1, baseDto)).rejects.toThrow(BadRequestException);
+      await expect(service.create(client1, baseDto)).rejects.toThrow(/inactive/i);
+    });
+
+    it('assigns a concrete staff member when staffId is omitted', async () => {
+      mockPrisma.location.findFirst.mockResolvedValue({ id: locationA, businessId: businessA });
+      mockPrisma.serviceVariant.findMany.mockResolvedValue([
+        {
+          id: 'variant-a',
+          durationMin: 30,
+          bufferBeforeMin: 0,
+          bufferAfterMin: 0,
+          priceCents: 1000,
+          isActive: true,
+          service: { businessId: businessA, isActive: true },
+        },
+      ]);
+      mockAvailability.getAvailableSlots.mockResolvedValue({
+        date: '2026-01-01',
+        timezone: 'Europe/Paris',
+        slotStepMin: 15,
+        slots: [{ startAt: new Date(baseDto.startAt).toISOString(), staffId: staffB }],
+      });
+
+      await service.create(client1, { ...baseDto, staffId: undefined });
+
+      const createArg = mockPrisma.appointment.create.mock.calls[0][0];
+      expect(createArg.data.staffId).toBe(staffB);
+    });
+
+    it('rejects a startAt that is not in the live slot list', async () => {
+      mockPrisma.location.findFirst.mockResolvedValue({ id: locationA, businessId: businessA });
+      mockPrisma.staff.findFirst.mockResolvedValue({ id: staffA, businessId: businessA });
+      mockPrisma.serviceVariant.findMany.mockResolvedValue([
+        {
+          id: 'variant-a',
+          durationMin: 30,
+          bufferBeforeMin: 0,
+          bufferAfterMin: 0,
+          priceCents: 1000,
+          isActive: true,
+          service: { businessId: businessA, isActive: true },
+        },
+      ]);
+      mockAvailability.getAvailableSlots.mockResolvedValue({
+        date: '2026-01-01',
+        timezone: 'Europe/Paris',
+        slotStepMin: 15,
+        slots: [],
+      });
+
+      await expect(service.create(client1, baseDto)).rejects.toThrow(ConflictException);
     });
   });
 });

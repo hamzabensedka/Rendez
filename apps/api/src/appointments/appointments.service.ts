@@ -7,8 +7,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { DateTime } from 'luxon';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+import { AvailabilityService } from '../availability/availability.service';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 type Tx = PrismaService | Parameters<Parameters<PrismaService['$transaction']>[0]>[0];
@@ -25,7 +27,8 @@ export class AppointmentsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly notifications: NotificationsService
+    private readonly notifications: NotificationsService,
+    private readonly availability: AvailabilityService
   ) {}
 
   async create(userId: string, dto: CreateAppointmentDto) {
@@ -34,7 +37,7 @@ export class AppointmentsService {
     }
 
     try {
-      await this.prisma.$transaction(async (tx: Tx) => {
+      const appointment = await this.prisma.$transaction(async (tx: Tx) => {
         const business = await tx.business.findFirst({
           where: { id: dto.businessId, status: 'active', deletedAt: null },
           select: { id: true, timezone: true },
@@ -53,12 +56,12 @@ export class AppointmentsService {
 
         if (dto.staffId) {
           const staff = await tx.staff.findFirst({
-            where: { id: dto.staffId, businessId: dto.businessId },
+            where: { id: dto.staffId, businessId: dto.businessId, isActive: true },
             select: { id: true },
           });
           if (!staff) {
             throw new BadRequestException(
-              'The selected staff member does not belong to this business'
+              'The selected staff member does not belong to this business or is inactive'
             );
           }
         }
@@ -101,12 +104,36 @@ export class AppointmentsService {
         // availability slot generator.
         const end = new Date(start.getTime() + durationMs + bufferAfterMs);
 
+        const extraVariantIds = variantIds.filter((id) => id !== variantIds[0]);
+        const dateInTz = DateTime.fromJSDate(start, { zone: 'utc' })
+          .setZone(business.timezone)
+          .toFormat('yyyy-MM-dd');
+        const available = await this.availability.getAvailableSlots(
+          dto.businessId,
+          dateInTz,
+          variantIds[0],
+          dto.staffId,
+          extraVariantIds,
+          true
+        );
+        const startMs = start.getTime();
+        const matching = available.slots.find(
+          (slot) => new Date(slot.startAt).getTime() === startMs && Boolean(slot.staffId)
+        );
+        if (!matching?.staffId) {
+          throw new ConflictException('This time slot is no longer available');
+        }
+        if (dto.staffId && matching.staffId !== dto.staffId) {
+          throw new ConflictException('This time slot is no longer available');
+        }
+        const assignedStaffId = dto.staffId ?? matching.staffId;
+
         const appointment = await tx.appointment.create({
           data: {
             businessId: dto.businessId,
             locationId: dto.locationId,
             clientUserId: userId,
-            staffId: dto.staffId,
+            staffId: assignedStaffId,
             startAtUtc: start,
             endAtUtc: end,
             timezoneSnapshot: business.timezone,
@@ -115,6 +142,7 @@ export class AppointmentsService {
           include: {
             business: { select: { id: true, name: true, timezone: true, email: true } },
             location: true,
+            staff: { select: { id: true, name: true } },
             appointmentItems: true,
             clientUser: { select: { id: true, name: true, email: true } },
           },
@@ -151,6 +179,8 @@ export class AppointmentsService {
 
         return appointment;
       });
+      await this.availability.invalidateForBusiness(dto.businessId);
+      return appointment;
     } catch (err) {
       if (isOverlapViolation(err)) {
         throw new ConflictException('This time slot is no longer available');
@@ -175,6 +205,7 @@ export class AppointmentsService {
         include: {
           business: true,
           location: true,
+          staff: { select: { id: true, name: true } },
           appointmentItems: { include: { serviceVariant: true } },
         },
         orderBy: { startAtUtc: upcoming ? 'asc' : 'desc' },
@@ -193,6 +224,7 @@ export class AppointmentsService {
       include: {
         business: true,
         location: true,
+        staff: { select: { id: true, name: true } },
         clientUser: { select: { id: true, name: true, email: true } },
         appointmentItems: { include: { serviceVariant: true } },
       },

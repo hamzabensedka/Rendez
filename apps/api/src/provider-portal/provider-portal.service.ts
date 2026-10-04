@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
+import { AvailabilityService } from '../availability/availability.service';
 import {
   CreateStaffDto,
   ReplaceAvailabilityRulesDto,
@@ -25,7 +26,10 @@ const PROVIDER_TRANSITIONS = ['COMPLETED', 'NO_SHOW', 'CANCELLED'] as const;
 
 @Injectable()
 export class ProviderPortalService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly availability: AvailabilityService
+  ) {}
 
   /**
    * Server-side ownership: the caller must hold a Provider row linked to the
@@ -71,7 +75,7 @@ export class ProviderPortalService {
       await this.assertStaffInBusiness(businessId, dto.staffId);
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       await tx.availabilityRule.deleteMany({
         where: { businessId, staffId: dto.staffId ?? null },
       });
@@ -89,6 +93,8 @@ export class ProviderPortalService {
       });
       return { created: dto.rules.length };
     });
+    await this.availability.invalidateForBusiness(businessId);
+    return result;
   }
 
   // ── Time off ──────────────────────────────────────────────────────────
@@ -115,7 +121,7 @@ export class ProviderPortalService {
     if (!(start < end)) {
       throw new BadRequestException('Time off must end after it starts');
     }
-    return this.prisma.timeOff.create({
+    const created = await this.prisma.timeOff.create({
       data: {
         businessId,
         staffId: dto.staffId ?? null,
@@ -124,6 +130,8 @@ export class ProviderPortalService {
         reason: dto.reason ?? null,
       },
     });
+    await this.availability.invalidateForBusiness(businessId);
+    return created;
   }
 
   async deleteTimeOff(user: AuthenticatedUser, businessId: string, timeOffId: string) {
@@ -134,6 +142,7 @@ export class ProviderPortalService {
     if (deleted.count === 0) {
       throw new NotFoundException('Time off not found for this business');
     }
+    await this.availability.invalidateForBusiness(businessId);
     return { deleted: true };
   }
 
@@ -149,9 +158,11 @@ export class ProviderPortalService {
 
   async createStaff(user: AuthenticatedUser, businessId: string, dto: CreateStaffDto) {
     await this.assertMembership(user.id, businessId);
-    return this.prisma.staff.create({
+    const row = await this.prisma.staff.create({
       data: { businessId, name: dto.name, roleTitle: dto.roleTitle ?? null },
     });
+    await this.availability.invalidateForBusiness(businessId);
+    return row;
   }
 
   async updateStaff(
@@ -172,6 +183,7 @@ export class ProviderPortalService {
     if (updated.count === 0) {
       throw new NotFoundException('Staff member not found for this business');
     }
+    await this.availability.invalidateForBusiness(businessId);
     return this.prisma.staff.findFirst({ where: { id: staffId, businessId } });
   }
 

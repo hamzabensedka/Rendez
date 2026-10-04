@@ -9,15 +9,52 @@ import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 
 envSchema.validate();
 
-function parseAllowedOrigins(): string[] {
-  const raw = process.env.ALLOWED_ORIGINS;
-  if (!raw || raw.trim() === '') {
-    return ['http://localhost:19006'];
-  }
-  return raw
+const DEV_WEB_ORIGINS = [
+  'http://localhost:8081',
+  'http://127.0.0.1:8081',
+  'http://localhost:19006',
+  'http://127.0.0.1:19006',
+  'http://localhost:8082',
+  'http://localhost:19000',
+];
+
+function originsFromEnv(): string[] {
+  return (process.env.ALLOWED_ORIGINS ?? '')
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
+}
+
+function isLocalDevOrigin(origin: string): boolean {
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === 'localhost' || hostname === '127.0.0.1';
+  } catch {
+    return false;
+  }
+}
+
+function corsOrigin(
+  origin: string | undefined,
+  callback: (err: Error | null, allow?: boolean) => void
+) {
+  if (!origin) {
+    callback(null, true);
+    return;
+  }
+
+  const allowed = new Set([...DEV_WEB_ORIGINS, ...originsFromEnv()]);
+  if (allowed.has(origin)) {
+    callback(null, true);
+    return;
+  }
+
+  if (process.env.NODE_ENV !== 'production' && isLocalDevOrigin(origin)) {
+    callback(null, true);
+    return;
+  }
+
+  callback(null, false);
 }
 
 async function bootstrap() {
@@ -26,7 +63,12 @@ async function bootstrap() {
   app.useLogger(app.get(PinoLogger));
   const logger = app.get(PinoLogger);
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      // Browser clients (Expo web) call this API from another origin.
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    })
+  );
   app.setGlobalPrefix('v1');
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalPipes(
@@ -38,7 +80,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: parseAllowedOrigins(),
+    origin: corsOrigin,
     credentials: true,
   });
 

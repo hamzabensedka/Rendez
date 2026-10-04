@@ -142,6 +142,28 @@ export class RedisCacheService implements OnModuleInit, OnModuleDestroy {
     await this.set(key, JSON.stringify(value), ttlSeconds);
   }
 
+  /** Drop every key that starts with `prefix` (Redis SCAN or in-memory). */
+  async delByPrefix(prefix: string): Promise<void> {
+    if (this.client) {
+      try {
+        let cursor = '0';
+        do {
+          const [next, keys] = await this.client.scan(cursor, 'MATCH', `${prefix}*`, 'COUNT', 200);
+          cursor = next;
+          if (keys.length > 0) {
+            await this.client.del(...keys);
+          }
+        } while (cursor !== '0');
+      } catch {
+        /* ignore — cache is optional */
+      }
+      return;
+    }
+    for (const key of [...this.memory.keys()]) {
+      if (key.startsWith(prefix)) this.memory.delete(key);
+    }
+  }
+
   /**
    * Acquire a short-lived distributed lock (SET NX EX). Returns true if acquired.
    */

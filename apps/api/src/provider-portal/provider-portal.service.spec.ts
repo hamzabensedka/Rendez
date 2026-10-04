@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ProviderPortalService } from './provider-portal.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { AvailabilityService } from '../availability/availability.service';
 import { UserRole } from '@planity/shared';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
@@ -51,7 +52,14 @@ describe('ProviderPortalService', () => {
     });
 
     const moduleRef = await Test.createTestingModule({
-      providers: [ProviderPortalService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        ProviderPortalService,
+        { provide: PrismaService, useValue: prisma },
+        {
+          provide: AvailabilityService,
+          useValue: { invalidateForBusiness: jest.fn().mockResolvedValue(undefined) },
+        },
+      ],
     }).compile();
 
     service = moduleRef.get(ProviderPortalService);
