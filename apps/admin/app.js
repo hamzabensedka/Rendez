@@ -115,6 +115,22 @@ function statusBadge(status) {
   return `<span class="badge ${cls}">${esc(String(status).toUpperCase())}</span>`;
 }
 
+// Billing plan statuses (TRIAL/ACTIVE/GRACE/SUSPENDED) reuse the badge palette.
+function planBadge(planStatus) {
+  const cls =
+    planStatus === 'ACTIVE'
+      ? 'success'
+      : planStatus === 'SUSPENDED'
+        ? 'danger'
+        : planStatus === 'TRIAL'
+          ? 'dark'
+          : ''; // GRACE -> neutral
+  return `<span class="badge ${cls}">${esc(String(planStatus).toUpperCase())}</span>`;
+}
+function fmtDate(value) {
+  return value ? esc(String(value).slice(0, 10)) : '—';
+}
+
 // ── Reviews moderation ─────────────────────────────────────────────────
 async function renderReviews(page = 1) {
   setNav('reviews');
@@ -309,6 +325,186 @@ async function renderAppointments() {
   await draw();
 }
 
+// ── Billing / Subscriptions ─────────────────────────────────────────────
+let billingFilters = { planStatus: '', page: 1 };
+async function renderBilling() {
+  setNav('billing');
+  const f = billingFilters;
+  view().innerHTML = `
+    <div class="section-label">B2B SUBSCRIPTIONS</div><h1 class="headline">Salon billing</h1>
+    <form class="toolbar" id="billing-filters">
+      <label class="field">Plan status<select name="planStatus">
+        <option value="">(any)</option>
+        ${['TRIAL', 'ACTIVE', 'GRACE', 'SUSPENDED'].map((s) => `<option ${f.planStatus === s ? 'selected' : ''}>${s}</option>`).join('')}
+      </select></label>
+      <button class="primary" type="submit">Filter</button>
+    </form>
+    <div id="billing-results"><div class="empty">Loading…</div></div>`;
+
+  document.getElementById('billing-filters').addEventListener('submit', (event) => {
+    event.preventDefault();
+    billingFilters = {
+      planStatus: new FormData(event.target).get('planStatus') || '',
+      page: 1,
+    };
+    renderBilling();
+  });
+
+  const params = new URLSearchParams();
+  if (f.planStatus) params.set('planStatus', f.planStatus);
+  params.set('page', String(f.page || 1));
+  params.set('limit', '20');
+
+  let payload;
+  try {
+    payload = await api(`/admin/subscriptions?${params.toString()}`);
+  } catch (error) {
+    document.getElementById('billing-results').innerHTML =
+      `<div class="error">${esc(error.message)}</div>`;
+    return;
+  }
+
+  const rows = payload.data
+    .map((biz) => {
+      const sub = biz.subscription;
+      const plan = sub ? sub.planStatus : 'none';
+      const planDate = sub
+        ? sub.planStatus === 'TRIAL'
+          ? sub.trialEndsAt
+          : sub.planStatus === 'GRACE'
+            ? sub.graceEndsAt
+            : sub.currentPeriodEnd
+        : null;
+      return `<tr>
+        <td>${esc(biz.name)}<div class="muted">${esc(biz.slug)}</div></td>
+        <td>${sub ? planBadge(plan) : '<span class="muted">no subscription</span>'}</td>
+        <td>${sub ? `<div class="muted">${sub.planStatus === 'TRIAL' ? 'trial ends' : sub.planStatus === 'GRACE' ? 'grace ends' : 'period end'} ${fmtDate(planDate)}</div>` : '<span class="muted">—</span>'}</td>
+        <td class="muted">${fmtDate(biz.createdAt)}</td>
+        <td>
+          ${sub ? `<button class="outline small" data-action="transition" data-id="${esc(biz.id)}" data-plan="${esc(plan)}">Plan</button>
+          <button class="outline small" data-action="invoice" data-id="${esc(biz.id)}">Invoice</button>
+          ${sub.planStatus !== 'ACTIVE' ? `<button class="approve small" data-action="markpaid" data-id="${esc(biz.id)}">Mark paid</button>` : ''}` : ''}
+        </td>
+      </tr>`;
+    })
+    .join('');
+
+  document.getElementById('billing-results').innerHTML = `<div class="card">
+    <table><thead><tr><th>Salon</th><th>Plan</th><th>Billing date</th><th>Joined</th><th>Actions</th></tr></thead>
+    <tbody>${rows || '<tr><td colspan="5" class="empty">No salons match.</td></tr>'}</tbody></table>
+    ${pager(payload.meta, (p) => {
+      billingFilters.page = p;
+      renderBilling();
+    })}
+  </div>`;
+
+  bindPager(document.getElementById('billing-results'), (p) => {
+    billingFilters.page = p;
+    renderBilling();
+  });
+  bindBillingActions(document.getElementById('billing-results'));
+}
+
+// Wire per-row billing actions. Each reloads the view on success so the table
+// reflects the authoritative server state (Plan/invoice/payment transitions).
+function bindBillingActions(container) {
+  container.querySelectorAll('[data-action]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const businessId = btn.dataset.id;
+      const action = btn.dataset.action;
+      try {
+        if (action === 'transition') {
+          const next = promptPlan(btn.dataset.plan);
+          if (!next) return;
+          btn.disabled = true;
+          await api(`/admin/subscriptions/${businessId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(next),
+          });
+        } else if (action === 'invoice') {
+          const invoice = promptInvoice();
+          if (!invoice) return;
+          btn.disabled = true;
+          await api(`/admin/subscriptions/${businessId}/invoices`, {
+            method: 'POST',
+            body: JSON.stringify(invoice),
+          });
+        } else if (action === 'markpaid') {
+          const payment = promptPayment();
+          if (!payment) return;
+          btn.disabled = true;
+          await api(`/admin/invoices/${payment.invoiceId}/mark-paid`, {
+            method: 'POST',
+            body: JSON.stringify(payment.body),
+          });
+        }
+        renderBilling();
+      } catch (error) {
+        btn.disabled = false;
+        alert(error.message);
+      }
+    });
+  });
+}
+
+const BILLING_PLANS = ['TRIAL', 'ACTIVE', 'GRACE', 'SUSPENDED'];
+function promptPlan(current) {
+  const input = window.prompt(
+    `New plan status (${BILLING_PLANS.join('/')}):`,
+    current || 'ACTIVE'
+  );
+  if (!input) return null;
+  const planStatus = input.trim().toUpperCase();
+  if (!BILLING_PLANS.includes(planStatus)) {
+    alert(`Invalid plan: ${planStatus}`);
+    return null;
+  }
+  const body = { planStatus };
+  if (planStatus === 'ACTIVE') {
+    const periodEnd = window.prompt('Current period end (YYYY-MM-DD):', defaultDate(30));
+    if (!periodEnd) return null;
+    body.currentPeriodEnd = toIsoDate(periodEnd);
+  }
+  return body;
+}
+function promptInvoice() {
+  const amount = window.prompt('Invoice amount (e.g. 300.00):');
+  if (!amount) return null;
+  const currency = window.prompt('Currency (MAD/TND):', 'MAD') || 'MAD';
+  const periodStart = window.prompt('Period start (YYYY-MM-DD):', defaultDate(0));
+  if (!periodStart) return null;
+  const periodEnd = window.prompt('Period end (YYYY-MM-DD):', defaultDate(30));
+  if (!periodEnd) return null;
+  return {
+    amountCents: Math.round(parseFloat(amount) * 100),
+    currency: currency.trim().toUpperCase(),
+    periodStart: toIsoDate(periodStart),
+    periodEnd: toIsoDate(periodEnd),
+  };
+}
+function promptPayment() {
+  const invoiceId = window.prompt('Invoice ID to mark paid:');
+  if (!invoiceId) return null;
+  const method = window.prompt('Method (transfer/cmi/mobile_money/cash):', 'transfer');
+  if (!method) return null;
+  const externalRef = window.prompt('External reference (optional):', '');
+  return {
+    invoiceId: invoiceId.trim(),
+    body: {
+      method: method.trim(),
+      ...(externalRef ? { reference: externalRef.trim() } : {}),
+    },
+  };
+}
+function defaultDate(addDays) {
+  const d = new Date();
+  d.setDate(d.getDate() + addDays);
+  return d.toISOString().slice(0, 10);
+}
+function toIsoDate(ymd) {
+  return `${ymd.trim().slice(0, 10)}T00:00:00.000Z`;
+}
+
 // ── Router ─────────────────────────────────────────────────────────────
 function route() {
   if (!state.token) return showLogin();
@@ -325,6 +521,7 @@ function route() {
   const hash = location.hash.replace('#/', '') || 'reviews';
   if (hash === 'users') renderUsers();
   else if (hash === 'businesses') renderBusinesses();
+  else if (hash === 'billing') renderBilling();
   else if (hash === 'appointments') renderAppointments();
   else renderReviews();
 }
