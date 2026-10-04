@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Verify Code - Atelier Floor</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with specific configuration -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "paper-bg": "#F3F0E8",
+                        "on-surface": "#161412",
+                        "ink-muted": "#6B6560",
+                        "hairline": "#D9D4CC",
+                        "secondary": "#b62419",
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                    },
+                    spacing: {
+                        "margin-edge": "1rem",
+                    },
+                    fontFamily: {
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "ui-label": ["Plus Jakarta Sans"],
+                    },
+                    fontSize: {
+                        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+                        "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "ui-label": ["14px", { lineHeight: "20px", fontWeight: "600", letterSpacing: "0.05em" }],
+                        "otp-digit": ["32px", { lineHeight: "40px", fontWeight: "600" }],
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.paper-bg');
+            color: theme('colors.on-surface');
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Hide number input spinners */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        .otp-input {
+            width: 40px;
+            text-align: center;
+            border-bottom: 2px solid theme('colors.hairline');
+            background: transparent;
+            font-size: 32px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            color: theme('colors.on-surface');
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            border-radius: 0;
+            padding: 0 0 4px 0;
+            margin: 0 4px;
+            transition: border-color 0.2s ease;
+        }
+
+        .otp-input:focus {
+            outline: none;
+            border-bottom-color: theme('colors.on-surface');
+            box-shadow: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="h-full flex flex-col pt-16 px-6 sm:px-8">
+<main class="flex-1 w-full max-w-md mx-auto">
+<!-- Header Section -->
+<header class="mb-12">
+<h1 class="font-headline-md text-headline-md text-on-surface mb-2">We sent a code</h1>
+<p class="font-body-lg text-body-lg text-ink-muted">Check your email.</p>
+</header>
+<!-- OTP Input Form -->
+<form class="flex flex-col gap-10" onsubmit="event.preventDefault();">
+<!-- Code Inputs -->
+<div class="flex justify-start gap-2 sm:gap-4 w-full" id="otp-container">
+<input autocomplete="one-time-code" autofocus="" class="otp-input" maxlength="1" pattern="\d*" type="number"/>
+<input class="otp-input" maxlength="1" pattern="\d*" type="number"/>
+<input class="otp-input" maxlength="1" pattern="\d*" type="number"/>
+<input class="otp-input" maxlength="1" pattern="\d*" type="number"/>
+<input class="otp-input" maxlength="1" pattern="\d*" type="number"/>
+<input class="otp-input" maxlength="1" pattern="\d*" type="number"/>
+</div>
+<!-- Actions -->
+<div class="flex flex-col items-start gap-6 mt-4">
+<button class="w-full bg-on-surface text-paper-bg font-ui-label text-ui-label py-4 px-6 rounded transition-opacity active:opacity-80" type="submit">
+                    Verify
+                </button>
+<button class="text-ink-muted font-body-lg text-body-lg hover:text-on-surface transition-colors focus:outline-none" type="button">
+                    Resend code
+                </button>
+</div>
+</form>
+</main>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = document.querySelectorAll('.otp-input');
+
+            inputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    // Ensure only one character
+                    if (e.target.value.length > 1) {
+                        e.target.value = e.target.value.slice(0, 1);
+                    }
+                    
+                    // Move to next input
+                    if (e.target.value.length === 1 && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    // Handle backspace
+                    if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                });
+
+                // Prevent non-numeric pasting and handle multi-character paste
+                input.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, inputs.length - index);
+                    
+                    if (pastedData) {
+                        for (let i = 0; i < pastedData.length; i++) {
+                            if (index + i < inputs.length) {
+                                inputs[index + i].value = pastedData[i];
+                                if (index + i < inputs.length - 1) {
+                                    inputs[index + i + 1].focus();
+                                } else {
+                                    inputs[index + i].blur();
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body></html>

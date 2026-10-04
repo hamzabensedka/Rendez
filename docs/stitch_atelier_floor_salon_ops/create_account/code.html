@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Account - Atelier</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+              "tertiary-fixed-dim": "#c8c6c7",
+              "secondary-fixed": "#ffdad5",
+              "on-surface": "#1c1b1b",
+              "on-primary": "#ffffff",
+              "surface-container": "#f1edec",
+              "ink-muted": "#6B6560",
+              "primary-container": "#1d1b19",
+              "inverse-on-surface": "#f4f0ef",
+              "paper-raised": "#FAF8F3",
+              "on-secondary-fixed": "#410000",
+              "on-primary-fixed-variant": "#494644",
+              "primary-fixed": "#e8e1dd",
+              "on-error-container": "#93000a",
+              "surface-dim": "#ddd9d8",
+              "error-container": "#ffdad6",
+              "success-muted": "#3F6B4A",
+              "inverse-surface": "#313030",
+              "secondary-container": "#fd5845",
+              "background": "#fdf8f7",
+              "tertiary-container": "#1b1b1c",
+              "surface-bright": "#fdf8f7",
+              "tertiary-fixed": "#e5e2e3",
+              "block-past": "#E7E2D8",
+              "surface-variant": "#e6e2e0",
+              "on-secondary-container": "#5c0000",
+              "on-secondary-fixed-variant": "#930303",
+              "paper-bg": "#F3F0E8",
+              "on-background": "#1c1b1b",
+              "surface-container-highest": "#e6e2e0",
+              "surface-container-low": "#f7f3f1",
+              "on-tertiary-container": "#858384",
+              "hairline": "#D9D4CC",
+              "primary-fixed-dim": "#cbc5c2",
+              "secondary": "#b62419",
+              "outline-variant": "#cec5bd",
+              "primary": "#000000",
+              "on-secondary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "surface-tint": "#615e5b",
+              "on-tertiary-fixed": "#1b1b1c",
+              "on-primary-container": "#878380",
+              "on-tertiary-fixed-variant": "#474647",
+              "error": "#ba1a1a",
+              "on-primary-fixed": "#1d1b19",
+              "secondary-fixed-dim": "#ffb4a8",
+              "outline": "#7d766f",
+              "tertiary": "#000000",
+              "surface": "#fdf8f7",
+              "on-tertiary": "#ffffff",
+              "surface-container-high": "#ebe7e6",
+              "inverse-primary": "#cbc5c2",
+              "on-surface-variant": "#4c4640",
+              "on-error": "#ffffff",
+              "ink": "#161412" // Added specific ink color requested
+            },
+            "borderRadius": {
+              "DEFAULT": "0.125rem", // 2px
+              "lg": "0.25rem", // 4px
+              "xl": "0.5rem",
+              "full": "0.75rem"
+            },
+            "spacing": {
+              "row-height-time": "3rem",
+              "hairline-width": "1px",
+              "margin-edge": "1rem",
+              "gutter-column": "0.75rem"
+            },
+            "fontFamily": {
+              "body-lg": ["Plus Jakarta Sans"],
+              "headline-md": ["Plus Jakarta Sans"],
+              "tabular-time": ["Plus Jakarta Sans"],
+              "display-date": ["Plus Jakarta Sans"],
+              "body-sm": ["Plus Jakarta Sans"],
+              "ui-label": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+              "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+              "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+              "tabular-time": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+              "display-date": ["40px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+              "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+              "ui-label": ["11px", {"lineHeight": "16px", "letterSpacing": "0.16em", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-paper-bg h-full flex flex-col font-body-lg text-ink antialiased">
+<!-- No Navigation per request -->
+<main class="flex-1 px-margin-edge py-12 flex flex-col justify-center max-w-md mx-auto w-full">
+<header class="mb-12">
+<h1 class="font-display-date text-display-date text-ink tracking-tight mb-2">Create account</h1>
+<p class="font-body-lg text-body-lg text-ink-muted">Join Atelier Floor</p>
+</header>
+<form action="#" class="flex flex-col gap-8 w-full" method="POST">
+<div class="relative">
+<label class="block font-ui-label text-ui-label text-ink-muted mb-2 uppercase" for="name">Full Name</label>
+<input class="block w-full border-0 border-b border-hairline bg-transparent p-0 pb-2 focus:ring-0 focus:border-ink font-body-lg text-body-lg text-ink placeholder-transparent transition-colors" id="name" name="name" placeholder="Full Name" required="" type="text"/>
+</div>
+<div class="relative">
+<label class="block font-ui-label text-ui-label text-ink-muted mb-2 uppercase" for="email">Email Address</label>
+<input class="block w-full border-0 border-b border-hairline bg-transparent p-0 pb-2 focus:ring-0 focus:border-ink font-body-lg text-body-lg text-ink placeholder-transparent transition-colors" id="email" name="email" placeholder="Email Address" required="" type="email"/>
+</div>
+<div class="relative">
+<label class="block font-ui-label text-ui-label text-ink-muted mb-2 uppercase" for="password">Password</label>
+<input class="block w-full border-0 border-b border-hairline bg-transparent p-0 pb-2 focus:ring-0 focus:border-ink font-body-lg text-body-lg text-ink placeholder-transparent transition-colors" id="password" name="password" placeholder="Password" required="" type="password"/>
+</div>
+<button class="w-full bg-ink text-paper-bg py-4 mt-4 rounded-lg font-headline-md text-body-lg font-semibold tracking-wide hover:opacity-90 active:scale-[0.98] transition-all" type="submit">
+                Create account
+            </button>
+</form>
+<div class="mt-8 text-center">
+<a class="font-body-sm text-body-sm text-ink-muted hover:text-ink transition-colors" href="#">
+                Already have an account? Sign in
+            </a>
+</div>
+</main>
+</body></html>
