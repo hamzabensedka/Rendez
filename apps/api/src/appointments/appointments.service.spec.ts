@@ -9,6 +9,7 @@ import { AppointmentsService } from './appointments.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AvailabilityService } from '../availability/availability.service';
+import { BillingService } from '../billing/billing.service';
 import { UserRole } from '@planity/shared';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
@@ -98,6 +99,13 @@ describe('AppointmentsService', () => {
           useValue: { sendOnce: jest.fn().mockResolvedValue({ id: 'n-1', delivered: true }) },
         },
         { provide: AvailabilityService, useValue: mockAvailability },
+        {
+          provide: BillingService,
+          useValue: {
+            isSuspended: jest.fn().mockResolvedValue(false),
+            canOperate: jest.fn().mockResolvedValue(true),
+          },
+        },
       ],
     }).compile();
 

@@ -61,6 +61,22 @@ enum PaymentStatus {
   refunded
 }
 
+// B2B salon billing (subscription to stay on the app). Distinct from the
+// client-pays-salon `Payment`/`PaymentProvider` concern above.
+enum BillingPlanStatus {
+  TRIAL
+  ACTIVE
+  GRACE
+  SUSPENDED
+}
+
+enum InvoiceStatus {
+  draft
+  pending
+  paid
+  void
+}
+
 // Extensions
 // Enable pg_trgm for text search
 // Run: CREATE EXTENSION IF NOT EXISTS pg_trgm;
@@ -163,6 +179,7 @@ model Business {
   reviews           Review[]
   promotions        Promotion[]
   favorites         Favorite[]
+  subscription      Subscription?
 
   @@index([slug])
   @@index([status])
@@ -456,5 +473,54 @@ model Notification {
   @@index([userId])
   @@index([status])
   @@map("notifications")
+}
+
+/// B2B salon subscription — whether a business may operate on the app.
+/// Gateway-agnostic: access state lives here, decoupled from how money moves.
+/// While the product is free, every business sits on TRIAL; flipping to paid is
+/// a data/config change (set planStatus, record invoices), not a code rewrite.
+model Subscription {
+  id               String            @id @default(uuid())
+  businessId       String            @unique @map("business_id")
+  planStatus       BillingPlanStatus @default(TRIAL) @map("plan_status")
+  trialEndsAt      DateTime?         @map("trial_ends_at") @db.Timestamptz
+  currentPeriodEnd DateTime?         @map("current_period_end") @db.Timestamptz
+  graceEndsAt      DateTime?         @map("grace_ends_at") @db.Timestamptz
+  suspendedAt      DateTime?         @map("suspended_at") @db.Timestamptz
+  notes            String?
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  business Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  invoices SubscriptionInvoice[]
+
+  @@index([planStatus])
+  @@map("subscriptions")
+}
+
+/// A billing period invoice for a salon subscription. Populated only once the
+/// product starts charging; reconciliation is manual (bank transfer / CMI /
+/// mobile money) via the admin dashboard — `method` records how it was paid.
+model SubscriptionInvoice {
+  id             String        @id @default(uuid())
+  subscriptionId String        @map("subscription_id")
+  periodStart    DateTime      @map("period_start") @db.Timestamptz
+  periodEnd      DateTime      @map("period_end") @db.Timestamptz
+  amountCents    Int           @map("amount_cents")
+  currency       String        @default("MAD")
+  status         InvoiceStatus @default(pending)
+  method         String?       // manual | transfer | cmi | paymee | d17 | cash
+  reference      String?       // external ref / transfer reference
+  paidAt         DateTime?     @map("paid_at") @db.Timestamptz
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([status])
+  @@map("subscription_invoices")
 }
 

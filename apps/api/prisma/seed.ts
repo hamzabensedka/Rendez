@@ -134,6 +134,25 @@ async function seedApprovedReviews(passwordHash: string) {
   console.log(`   + ${count} approved reviews across ${businesses.length} salons`);
 }
 
+async function seedTrialSubscriptions() {
+  const businesses = await prisma.business.findMany({
+    where: { deletedAt: null },
+    select: { id: true },
+  });
+  // Complimentary launch window: ~6 months of TRIAL from seed time.
+  const trialEndsAt = new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000);
+  let count = 0;
+  for (const biz of businesses) {
+    await prisma.subscription.upsert({
+      where: { businessId: biz.id },
+      update: {},
+      create: { businessId: biz.id, planStatus: 'TRIAL', trialEndsAt },
+    });
+    count += 1;
+  }
+  console.log(`   + ${count} TRIAL subscriptions (6-month complimentary window)`);
+}
+
 async function main() {
   console.log('🌱 Seeding database...');
 
@@ -1005,6 +1024,10 @@ async function main() {
   }
 
   await seedApprovedReviews(clientPassword);
+
+  // Billing foundation: every business gets a TRIAL subscription (product is free
+  // for the first months; flipping to paid later is a data change, not a rewrite).
+  await seedTrialSubscriptions();
 
   console.log('✅ Seeding completed!');
   console.log('   + 3 coiffeur shops: Coiffure Élégance, Le Salon du Marais, Boucles & Co');

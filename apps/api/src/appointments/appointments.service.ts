@@ -11,6 +11,7 @@ import { DateTime } from 'luxon';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { AvailabilityService } from '../availability/availability.service';
+import { BillingService } from '../billing/billing.service';
 import { AuthenticatedUser } from '../auth/types/authenticated-user.type';
 
 type Tx = PrismaService | Parameters<Parameters<PrismaService['$transaction']>[0]>[0];
@@ -28,7 +29,8 @@ export class AppointmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
-    private readonly availability: AvailabilityService
+    private readonly availability: AvailabilityService,
+    private readonly billing: BillingService
   ) {}
 
   async create(userId: string, dto: CreateAppointmentDto) {
@@ -44,6 +46,12 @@ export class AppointmentsService {
         });
         if (!business) {
           throw new NotFoundException('Business not found or not active');
+        }
+
+        // Salon billing: a SUSPENDED business cannot take new bookings
+        // (TRIAL/ACTIVE/GRACE operate normally).
+        if (await this.billing.isSuspended(dto.businessId)) {
+          throw new ForbiddenException('This business is not accepting bookings');
         }
 
         const location = await tx.location.findFirst({

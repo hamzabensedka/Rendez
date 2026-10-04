@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DateTime } from 'luxon';
 import { PrismaService } from '../prisma/prisma.service';
+import { BillingService } from '../billing/billing.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { DEFAULT_PAGE, DEFAULT_LIMIT, MAX_LIMIT } from '@planity/shared';
 
@@ -45,6 +46,15 @@ const businessListInclude = {
   _count: { select: { services: true, staff: true } },
 } as const;
 
+/**
+ * Public listings hide SUSPENDED businesses (no subscription row = pre-billing =
+ * always visible). The lazy GRACE->SUSPENDED lapse is enforced at booking time and
+ * by admin writes; the persisted planStatus drives the cheap DB filter here.
+ */
+const notSuspendedFilter: Prisma.BusinessWhereInput = {
+  OR: [{ subscription: null }, { subscription: { planStatus: { not: 'SUSPENDED' } } }],
+};
+
 export type BusinessListItem = Prisma.BusinessGetPayload<{
   include: typeof businessListInclude;
 }>;
@@ -86,7 +96,10 @@ function geoBoundingBox(lat: number, lng: number, radiusKm: number) {
 
 @Injectable()
 export class BusinessesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private billing: BillingService
+  ) {}
 
   /**
    * Return businesses with at least one location inside the viewport bounds.
@@ -97,6 +110,7 @@ export class BusinessesService {
     const where: Prisma.BusinessWhereInput = {
       status: 'active',
       deletedAt: null,
+      AND: [notSuspendedFilter],
       locations: {
         some: {
           lat: { gte: south, lte: north },
@@ -124,7 +138,9 @@ export class BusinessesService {
       const dt = DateTime.fromISO(availDate.trim(), { zone: 'Europe/Paris' });
       if (dt.isValid) {
         const dayOfWeek = dt.weekday % 7;
+        // Preserve notSuspendedFilter (already in where.AND) and add the date clauses.
         where.AND = [
+          ...(Array.isArray(where.AND) ? where.AND : [notSuspendedFilter]),
           {
             availabilityRules: {
               some: { dayOfWeek },
@@ -164,6 +180,7 @@ export class BusinessesService {
     const where: Prisma.BusinessWhereInput = {
       status: 'active',
       deletedAt: null,
+      AND: [notSuspendedFilter],
     };
 
     const cityFilter = city?.trim();
@@ -291,7 +308,10 @@ export class BusinessesService {
       throw new NotFoundException('Business not found');
     }
 
-    // Normalize location/address: add a consistent formatted address for clients
+    // Hide suspended salons from the public detail view (incl. lazy GRACE lapse).
+    if (await this.billing.isSuspended(business.id)) {
+      throw new NotFoundException('Business not found');
+    }
     const locations = business.locations.map((loc) => ({
       ...loc,
       address: this.formatLocationAddress(loc),

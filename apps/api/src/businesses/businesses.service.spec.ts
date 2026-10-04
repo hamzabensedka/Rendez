@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { BusinessesService } from './businesses.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { BillingService } from '../billing/billing.service';
 
 describe('BusinessesService', () => {
   let service: BusinessesService;
@@ -36,7 +37,17 @@ describe('BusinessesService', () => {
       },
     };
     const module: TestingModule = await Test.createTestingModule({
-      providers: [BusinessesService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        BusinessesService,
+        { provide: PrismaService, useValue: prisma },
+        {
+          provide: BillingService,
+          useValue: {
+            isSuspended: jest.fn().mockResolvedValue(false),
+            canOperate: jest.fn().mockResolvedValue(true),
+          },
+        },
+      ],
     }).compile();
 
     service = module.get<BusinessesService>(BusinessesService);

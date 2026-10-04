@@ -69,6 +69,22 @@ export enum NotificationChannel {
   PUSH = 'PUSH',
 }
 
+// B2B salon subscription status (gateway-agnostic access state).
+export enum BillingPlanStatus {
+  TRIAL = 'TRIAL',
+  ACTIVE = 'ACTIVE',
+  GRACE = 'GRACE',
+  SUSPENDED = 'SUSPENDED',
+}
+
+// Salon subscription invoice status.
+export enum InvoiceStatus {
+  DRAFT = 'draft',
+  PENDING = 'pending',
+  PAID = 'paid',
+  VOID = 'void',
+}
+
 // Common types
 export interface PaginationParams {
   page?: number;
